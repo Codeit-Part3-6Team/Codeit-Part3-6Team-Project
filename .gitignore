@@ -1,31 +1,74 @@
 # Python
 __pycache__/
 *.py[cod]
+*$py.class
 .pytest_cache/
 .mypy_cache/
 .ruff_cache/
+.coverage
+htmlcov/
+.tox/
 .venv/
 venv/
+env/
+ENV/
+site/
+build/
+dist/
+*.egg-info/
 
 # Data and artifacts
 data/raw/*
 data/interim/*
+data/external/*
 outputs/*
+experiments/*
 models/*
+checkpoints/*
+artifacts/*
+logs/*
+wandb/
+mlruns/
+lightning_logs/
 *.pt
 *.pth
 *.ckpt
+*.safetensors
+*.onnx
+*.pkl
+*.joblib
+*.h5
+*.bin
 
 # Keep lightweight scaffold placeholders
 !data/raw/.gitkeep
 !data/interim/.gitkeep
+!data/external/.gitkeep
 !outputs/.gitkeep
+!experiments/.gitkeep
 !models/.gitkeep
+!checkpoints/.gitkeep
+!artifacts/.gitkeep
+
+# Notebook / Colab
+.ipynb_checkpoints/
+*.ipynb_checkpoints/
+
+# Environment and secrets
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.secret
+secrets.*
 
 # Local/OS
 .DS_Store
 Thumbs.db
-.env
+desktop.ini
+
+# Local installers and generated conda files
 miniconda-installer.exe
 .miniconda/
 condaenv.*.requirements.txt
