@@ -1,0 +1,31 @@
+# Python
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.venv/
+venv/
+
+# Data and artifacts
+data/raw/*
+data/interim/*
+outputs/*
+models/*
+*.pt
+*.pth
+*.ckpt
+
+# Keep lightweight scaffold placeholders
+!data/raw/.gitkeep
+!data/interim/.gitkeep
+!outputs/.gitkeep
+!models/.gitkeep
+
+# Local/OS
+.DS_Store
+Thumbs.db
+.env
+miniconda-installer.exe
+.miniconda/
+condaenv.*.requirements.txt

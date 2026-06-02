@@ -1,0 +1,40 @@
+experiment:
+  name: smoke_test
+  author: team
+  seed: 42
+  contract_version: v1.0
+
+paths:
+  data_dir: data/processed
+  output_dir: outputs/smoke_test
+  backup_dir:
+
+data:
+  task: image_classification
+  train_csv: train.csv
+  valid_csv: valid.csv
+  test_csv: test.csv
+  image_col: image_path
+  label_col: label
+  class_map: class_map.json
+  dataset_info: dataset_info.json
+
+model:
+  name: mean_rgb_centroid
+  num_classes: auto
+
+train:
+  epochs: 1
+
+metric:
+  monitor: valid_accuracy
+  mode: max
+
+report:
+  - accuracy
+
+backup:
+  enabled: false
+  on_best: false
+  on_finish: false
+

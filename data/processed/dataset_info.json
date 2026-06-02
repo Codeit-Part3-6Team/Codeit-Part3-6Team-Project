@@ -1,0 +1,15 @@
+{
+  "name": "dummy_ppm_color_dataset",
+  "version": "v1.0",
+  "contract_version": "v1.0",
+  "task": "image_classification",
+  "description": "Tiny PPM images for pipeline smoke testing.",
+  "splits": {
+    "train": 6,
+    "valid": 2,
+    "test": 2
+  },
+  "classes": ["blue", "red"],
+  "image_format": "ppm_p3_ascii"
+}
+

@@ -1,0 +1,17 @@
+# smoke test 스캐폴드는 Python 표준 라이브러리만으로 실행됩니다.
+# 더미 모델을 실제 ML 스택으로 교체할 때 아래 패키지를 설치합니다.
+numpy
+pandas
+Pillow
+PyYAML
+scikit-learn
+torch
+torchvision
+timm
+transformers
+datasets
+accelerate
+evaluate
+fastapi
+uvicorn
+pytest

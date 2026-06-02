@@ -1,0 +1,47 @@
+experiment:
+  name: exp001_text_baseline
+  author: name
+  seed: 42
+  contract_version: v1.0
+
+paths:
+  data_dir: data/text_processed
+  output_dir: outputs/exp001_text_baseline
+  backup_dir:
+
+data:
+  task: text_classification
+  train_csv: train.csv
+  valid_csv: valid.csv
+  test_csv: test.csv
+  text_col: text
+  label_col: label
+  class_map: class_map.json
+  dataset_info: dataset_info.json
+  max_length: 128
+
+model:
+  name: keyword_text_classifier
+  hf_model_name: klue/bert-base
+  num_classes: auto
+
+train:
+  epochs: 1
+  loss: cross_entropy
+  optimizer:
+    name: adamw
+    lr: 0.00002
+    weight_decay: 0.01
+
+metric:
+  monitor: valid_accuracy
+  mode: max
+
+report:
+  - accuracy
+
+backup:
+  enabled: false
+  on_best: true
+  on_finish: true
+
