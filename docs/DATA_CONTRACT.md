@@ -45,7 +45,7 @@ text,label
 실행:
 
 ```bash
-python src/validate_data.py --data-dir data/processed
+python scripts/run_validate.py --data-dir data/processed
 ```
 
 ## 변경 규칙

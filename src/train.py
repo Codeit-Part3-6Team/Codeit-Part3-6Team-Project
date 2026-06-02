@@ -1,13 +1,18 @@
 from __future__ import annotations
 
-import argparse
 import sys
 from pathlib import Path
 
 if __package__ is None or __package__ == "":
     sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-from src.artifacts import maybe_backup, write_history, write_run_info
+from src.artifacts import (
+    maybe_backup,
+    resolve_experiment_dir,
+    write_experiment_readme,
+    write_history,
+    write_run_info,
+)
 from src.config import load_config, write_config_copy, write_json
 from src.data import load_dataset, read_ppm_mean_rgb
 from src.metrics import accuracy
@@ -30,7 +35,7 @@ def run_training(config_path: str | Path, project_root: str | Path) -> dict[str,
     root = Path(project_root)
     config = load_config(config_path)
     data_dir = root / config["paths"]["data_dir"]
-    output_dir = root / config["paths"]["output_dir"]
+    output_dir = resolve_experiment_dir(root, config)
     ensure_dir(output_dir)
     logger = setup_logger("train", output_dir / "train.log")
     set_seed(config.get("experiment", {}).get("seed"))
@@ -64,11 +69,13 @@ def run_training(config_path: str | Path, project_root: str | Path) -> dict[str,
     }
     history = [{"epoch": 1, **metrics}]
 
+    command = f"python scripts/run_train.py --config {Path(config_path).as_posix()} --project-root {root.as_posix()}"
     write_config_copy(config_path, output_dir)
     write_json(output_dir / "best_model.json", model.to_dict())
     write_json(output_dir / "metrics.json", metrics)
     write_history(output_dir / "history.csv", history)
     write_run_info(output_dir, config)
+    write_experiment_readme(output_dir, config, metrics, command)
     logger.info("Artifacts saved to %s", output_dir)
 
     backup_cfg = config.get("backup", {})
@@ -81,12 +88,9 @@ def run_training(config_path: str | Path, project_root: str | Path) -> dict[str,
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--config", required=True)
-    parser.add_argument("--project-root", default=".")
-    args = parser.parse_args()
-    metrics = run_training(args.config, args.project_root)
-    print(metrics)
+    from scripts.run_train import main as script_main
+
+    script_main()
 
 
 if __name__ == "__main__":

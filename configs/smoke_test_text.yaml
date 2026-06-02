@@ -6,7 +6,7 @@ experiment:
 
 paths:
   data_dir: data/text_processed
-  output_dir: outputs/smoke_test_text
+  output_dir: experiments/smoke_test_text
   backup_dir:
 
 data:
@@ -37,4 +37,3 @@ backup:
   enabled: false
   on_best: false
   on_finish: false
-

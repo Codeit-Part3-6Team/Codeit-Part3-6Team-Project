@@ -312,7 +312,7 @@ app/        데모 앱
 docs/       설명 문서
 reports/    실험 기록과 보고서 자료
 tests/      자동 확인 코드</code></pre>
-      <p class="muted">앞으로 실험 자동화가 추가되면 <code>experiments/</code> 폴더도 사용합니다. 이 폴더에는 실험별 결과가 한 덩어리로 저장됩니다.</p>
+      <p class="muted">실험을 실행하면 <code>experiments/</code> 폴더에 실험별 결과가 한 덩어리로 저장됩니다.</p>
     </section>
 
     <section>
@@ -328,10 +328,10 @@ tests/      자동 확인 코드</code></pre>
       <pre><code>conda activate codeit-ml-pipeline
 pytest
 
-python src/validate_data.py --data-dir data/text_processed
+python scripts/run_validate.py --data-dir data/text_processed
 
-python src/train.py --config configs/smoke_test_text.yaml --project-root .
-python src/predict.py --config configs/smoke_test_text.yaml --project-root . --input data/text_processed/sample_positive.txt</code></pre>
+python scripts/run_train.py --config configs/smoke_test_text.yaml --project-root .
+python scripts/run_predict.py --config configs/smoke_test_text.yaml --project-root . --input data/text_processed/sample_positive.txt</code></pre>
     </section>
 
     <section>

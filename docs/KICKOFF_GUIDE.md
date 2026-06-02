@@ -219,8 +219,7 @@ tests/      자동 확인 코드
 - `reports/`: 실험 결과와 발표 자료를 모으는 곳
 - `tests/`: 기본 기능이 깨지지 않았는지 확인하는 곳
 
-앞으로 실험 자동화가 추가되면 `experiments/` 폴더도 사용합니다.
-이 폴더에는 실험별 결과가 한 덩어리로 저장됩니다.
+실험을 실행하면 `experiments/` 폴더에 실험별 결과가 한 덩어리로 저장됩니다.
 
 ## 9. 첫날에 할 일
 
@@ -246,14 +245,14 @@ pytest
 텍스트 데이터 검증 예시:
 
 ```bash
-python src/validate_data.py --data-dir data/text_processed
+python scripts/run_validate.py --data-dir data/text_processed
 ```
 
 텍스트 smoke test 예시:
 
 ```bash
-python src/train.py --config configs/smoke_test_text.yaml --project-root .
-python src/predict.py --config configs/smoke_test_text.yaml --project-root . --input data/text_processed/sample_positive.txt
+python scripts/run_train.py --config configs/smoke_test_text.yaml --project-root .
+python scripts/run_predict.py --config configs/smoke_test_text.yaml --project-root . --input data/text_processed/sample_positive.txt
 ```
 
 ## 10. Daily Report는 짧게 씁니다

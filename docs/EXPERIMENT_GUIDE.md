@@ -5,11 +5,12 @@
 ## 필수 산출물
 
 ```text
-outputs/{experiment_name}/
+experiments/{experiment_name}/
 |-- config.yaml
 |-- metrics.json
 |-- history.csv
 |-- run_info.json
+|-- README.md
 `-- best_model.*
 ```
 
@@ -26,4 +27,3 @@ exp_id, owner, date, config, model, data_version, metric, result_path, notes
 - 가능하면 한 실험에서 주요 변경점은 하나만 둔다.
 - 성공한 실험과 실패한 실험을 모두 기록한다.
 - validation/test/predict transform은 결정적으로 동작해야 한다.
-

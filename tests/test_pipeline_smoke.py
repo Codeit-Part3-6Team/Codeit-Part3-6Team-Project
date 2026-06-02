@@ -12,13 +12,15 @@ def test_image_smoke_training_writes_artifacts(isolated_project: Path):
         isolated_project / "configs" / "smoke_test.yaml",
         isolated_project,
     )
-    output_dir = isolated_project / "outputs" / "smoke_test"
+    output_dir = isolated_project / "experiments" / "smoke_test"
 
     assert metrics == {"valid_accuracy": 1.0, "test_accuracy": 1.0}
     assert (output_dir / "best_model.json").exists()
+    assert (output_dir / "config.yaml").exists()
     assert (output_dir / "metrics.json").exists()
     assert (output_dir / "history.csv").exists()
     assert (output_dir / "run_info.json").exists()
+    assert (output_dir / "README.md").exists()
     assert (output_dir / "train.log").exists()
 
     saved_metrics = json.loads((output_dir / "metrics.json").read_text(encoding="utf-8"))
@@ -37,5 +39,5 @@ def test_text_smoke_training_and_prediction(isolated_project: Path):
 
     assert metrics == {"valid_accuracy": 1.0, "test_accuracy": 1.0}
     assert prediction == "positive"
-    assert (isolated_project / "outputs" / "smoke_test_text" / "best_model.json").exists()
+    assert (isolated_project / "experiments" / "smoke_test_text" / "best_model.json").exists()
 

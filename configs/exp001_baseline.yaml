@@ -6,7 +6,7 @@ experiment:
 
 paths:
   data_dir: data/processed
-  output_dir: outputs/exp001_baseline
+  output_dir: experiments/exp001_baseline
   backup_dir:
 
 data:
@@ -59,4 +59,3 @@ backup:
   enabled: false
   on_best: true
   on_finish: true
-

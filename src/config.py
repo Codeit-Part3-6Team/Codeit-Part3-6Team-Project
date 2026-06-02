@@ -17,11 +17,15 @@ def load_config(path: str | Path) -> dict[str, Any]:
     return loaded or {}
 
 
-def write_config_copy(config_path: str | Path, output_dir: str | Path) -> None:
+def write_config_copy(
+    config_path: str | Path,
+    output_dir: str | Path,
+    filename: str = "config.yaml",
+) -> None:
     output = Path(output_dir)
     output.mkdir(parents=True, exist_ok=True)
     source = Path(config_path)
-    (output / source.name).write_text(source.read_text(encoding="utf-8"), encoding="utf-8")
+    (output / filename).write_text(source.read_text(encoding="utf-8"), encoding="utf-8")
 
 
 def write_json(path: str | Path, payload: dict[str, Any]) -> None:

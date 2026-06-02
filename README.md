@@ -34,28 +34,29 @@ conda activate codeit-ml-pipeline
 현재 스캐폴드는 외부 ML 패키지 없이도 흐름을 검증할 수 있도록 작은 ASCII PPM 이미지를 사용합니다.
 
 ```bash
-python src/validate_data.py --data-dir data/processed
-python src/train.py --config configs/smoke_test.yaml --project-root .
-python src/predict.py --config configs/smoke_test.yaml --project-root . --input data/processed/images/red_000.ppm
+python scripts/run_validate.py --data-dir data/processed
+python scripts/run_train.py --config configs/smoke_test.yaml --project-root .
+python scripts/run_predict.py --config configs/smoke_test.yaml --project-root . --input data/processed/images/red_000.ppm
 ```
 
 텍스트 분류 smoke test:
 
 ```bash
-python src/validate_data.py --data-dir data/text_processed
-python src/train.py --config configs/smoke_test_text.yaml --project-root .
-python src/predict.py --config configs/smoke_test_text.yaml --project-root . --input data/text_processed/sample_positive.txt
+python scripts/run_validate.py --data-dir data/text_processed
+python scripts/run_train.py --config configs/smoke_test_text.yaml --project-root .
+python scripts/run_predict.py --config configs/smoke_test_text.yaml --project-root . --input data/text_processed/sample_positive.txt
 ```
 
 예상 산출물:
 
 ```text
-outputs/smoke_test/
+experiments/smoke_test/
 |-- best_model.json
 |-- config.yaml
 |-- history.csv
 |-- metrics.json
 |-- predictions.csv
+|-- README.md
 `-- run_info.json
 ```
 
