@@ -22,6 +22,15 @@ def test_load_config_reads_huggingface_text_config(repo_root):
     assert config["train"]["batch_size"] == 4
 
 
+def test_load_config_reads_tiny_huggingface_smoke_config(repo_root):
+    config = load_config(repo_root / "configs" / "smoke_test_hf_tiny.yaml")
+
+    assert config["experiment"]["name"] == "smoke_test_hf_tiny"
+    assert config["model"]["name"] == "huggingface_sequence_classifier"
+    assert config["model"]["model_name"] == "hf-internal-testing/tiny-random-distilbert"
+    assert config["data"]["max_length"] == 64
+
+
 def test_fallback_yaml_parser_handles_nested_dicts_lists_and_scalars():
     parsed = _parse_simple_yaml(
         """

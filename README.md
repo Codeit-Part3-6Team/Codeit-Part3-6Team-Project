@@ -58,6 +58,15 @@ python scripts/run_predict.py --config configs/smoke_test_text.yaml --project-ro
 
 HuggingFace 실험은 처음 실행할 때 base model을 내려받기 때문에 인터넷 연결이 필요합니다. 실제 프로젝트 데이터에서는 Colab/GPU 환경 사용을 권장합니다.
 
+환경이 HuggingFace 모델까지 실제로 실행 가능한지 빠르게 확인하려면 작은 테스트 모델을 사용합니다. 이 config는 성능 검증용이 아니라 다운로드, 학습, 저장, 예측 흐름 확인용입니다.
+
+```bash
+python scripts/run_train.py --config configs/smoke_test_hf_tiny.yaml --project-root .
+python scripts/run_predict.py --config configs/smoke_test_hf_tiny.yaml --project-root . --input data/text_processed/sample_positive.txt
+```
+
+실제 fine-tuning 후보 config:
+
 ```bash
 python scripts/run_train.py --config configs/exp002_hf_text_finetune.yaml --project-root .
 python scripts/run_predict.py --config configs/exp002_hf_text_finetune.yaml --project-root . --input data/text_processed/sample_positive.txt

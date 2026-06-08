@@ -15,6 +15,15 @@ python scripts/run_predict.py --config configs/smoke_test_text.yaml --project-ro
 
 처음 실행할 때는 base model을 내려받기 때문에 인터넷 연결이 필요합니다. CPU에서도 실행은 가능하지만, 실제 프로젝트 데이터에서는 GPU/Colab 사용을 권장합니다.
 
+환경 확인용 tiny model:
+
+```bash
+python scripts/run_train.py --config configs/smoke_test_hf_tiny.yaml --project-root .
+python scripts/run_predict.py --config configs/smoke_test_hf_tiny.yaml --project-root . --input data/text_processed/sample_positive.txt
+```
+
+실제 실험 후보:
+
 ```bash
 python scripts/run_train.py --config configs/exp002_hf_text_finetune.yaml --project-root .
 python scripts/run_predict.py --config configs/exp002_hf_text_finetune.yaml --project-root . --input data/text_processed/sample_positive.txt
