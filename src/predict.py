@@ -11,6 +11,7 @@ from src.config import load_config
 from src.artifacts import resolve_experiment_dir
 from src.data import read_ppm_mean_rgb
 from src.models.centroid import MeanRgbCentroidClassifier
+from src.models.huggingface_text import MODEL_TYPE, HuggingFaceSequenceClassifier
 from src.models.text_keyword import KeywordTextClassifier
 
 
@@ -30,6 +31,12 @@ def predict_one(config_path: str | Path, project_root: str | Path, input_path: s
             text_path = candidate if candidate.is_absolute() else root / candidate
             input_text = text_path.read_text(encoding="utf-8") if text_path.exists() else str(input_path)
             return model.predict_one(input_text)
+    if payload["model_type"] == MODEL_TYPE:
+        model = HuggingFaceSequenceClassifier.from_artifact(model_path.parent)
+        candidate = Path(input_path)
+        text_path = candidate if candidate.is_absolute() else root / candidate
+        input_text = text_path.read_text(encoding="utf-8") if text_path.exists() else str(input_path)
+        return model.predict_one(input_text)
     raise ValueError(f"Unsupported model artifact: {payload.get('model_type')}")
 
 

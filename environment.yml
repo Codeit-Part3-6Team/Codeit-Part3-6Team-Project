@@ -1,25 +1,9 @@
 name: codeit-ml-pipeline
 channels:
-  - pytorch
   - conda-forge
   - defaults
 dependencies:
-  - python=3.11
+  - python=3.11.15
   - pip
-  - numpy
-  - pandas
-  - pillow
-  - pyyaml
-  - scikit-learn
-  - pytest
   - pip:
-      - torch
-      - torchvision
-      - timm
-      - transformers
-      - datasets
-      - accelerate
-      - evaluate
-      - fastapi
-      - uvicorn
-
+      - -r requirements.txt

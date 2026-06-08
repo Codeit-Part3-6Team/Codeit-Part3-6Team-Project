@@ -2,12 +2,17 @@ from __future__ import annotations
 
 from src.models import build_model
 from src.models.centroid import MeanRgbCentroidClassifier
+from src.models.huggingface_text import is_huggingface_model
 from src.models.text_keyword import KeywordTextClassifier
 
 
 def test_build_model_uses_registry():
     assert isinstance(build_model("mean_rgb_centroid"), MeanRgbCentroidClassifier)
     assert isinstance(build_model("keyword_text_classifier"), KeywordTextClassifier)
+
+
+def test_registry_marks_huggingface_model_as_config_driven():
+    assert is_huggingface_model("huggingface_sequence_classifier")
 
 
 def test_centroid_classifier_predicts_nearest_label_after_roundtrip():
@@ -35,4 +40,3 @@ def test_keyword_text_classifier_predicts_keyword_label_after_roundtrip():
 
     assert restored.predict_one("great result") == "positive"
     assert restored.predict_one("slow and wrong") == "negative"
-
