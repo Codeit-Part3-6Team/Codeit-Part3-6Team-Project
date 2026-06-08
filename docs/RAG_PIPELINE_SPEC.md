@@ -11,11 +11,12 @@ RAG 파이프라인은 **문서를 작은 근거 단위로 쪼개고, 질문과 
 raw document
   -> parsed document
   -> chunks
-  -> embeddings
-  -> vector index
   -> retrieved chunks
   -> answer + citations
 ```
+
+현재 smoke pipeline은 여기까지 구현되어 있습니다.
+`embeddings -> vector index` 단계는 다음 확장 단계로 남겨둡니다.
 
 ## 왜 계약이 필요한가
 
@@ -49,8 +50,6 @@ src/
 `-- rag/
     |-- document_loader.py
     |-- chunker.py
-    |-- embedder.py
-    |-- vector_store.py
     |-- retriever.py
     |-- answerer.py
     `-- pipeline.py
@@ -63,13 +62,71 @@ scripts/
 
 처음에는 PDF/HWP까지 바로 가지 않고, 작은 `.txt` 문서로 smoke test를 먼저 통과시킵니다.
 
+## 현재 구현된 smoke pipeline
+
+현재 구현은 외부 모델이나 vector DB 없이 RAG 운영 흐름을 먼저 검증하는 버전입니다.
+
+실행 config:
+
+```text
+configs/rag_smoke_test.yaml
+```
+
+샘플 데이터:
+
+```text
+data/rag_smoke/
+|-- rfp_sample.txt
+`-- eval_questions.csv
+```
+
+실행 명령:
+
+```bash
+python scripts/run_rag_ingest.py --config configs/rag_smoke_test.yaml --project-root .
+python scripts/run_rag_retrieve.py --config configs/rag_smoke_test.yaml --project-root . --question "예산이 얼마야?"
+python scripts/run_rag_chat.py --config configs/rag_smoke_test.yaml --project-root . --question "예산이 얼마야?"
+python scripts/run_rag_chat.py --config configs/rag_smoke_test.yaml --project-root . --evaluate
+```
+
+현재 구현된 단계:
+
+- `document_loader.py`: txt 문서를 section 단위 document row로 변환
+- `chunker.py`: document row를 검색 가능한 chunk row로 변환
+- `retriever.py`: keyword 기반 top-k 검색
+- `answerer.py`: 검색된 chunk에서 답변 문장 추출 및 citation 생성
+- `pipeline.py`: ingest/retrieve/chat/evaluation 실행과 산출물 저장
+
+현재 산출물:
+
+```text
+experiments/rag_smoke_test/
+|-- parsed_documents.csv
+|-- chunks.csv
+|-- retrieval_results.jsonl
+|-- answers.jsonl
+|-- evaluation_results.csv
+|-- metrics.json
+|-- config.yaml
+`-- run_info.json
+```
+
+현재 metric:
+
+- `retrieval_hit_rate`
+- `answer_contains_expected_rate`
+- `citation_correct_rate`
+- `not_found_rate`
+
+이 구현의 목적은 성능이 아니라, RAG 프로젝트에서도 config 기반 실행, citation 추적, 평가 산출물 저장, 실험 요약이 끝까지 이어지는지 확인하는 것입니다.
+
 ## 1. Document Input
 
 원본 문서를 파싱한 뒤에는 최소한 아래 정보를 보존합니다.
 
 ```csv
 document_id,title,source_path,page,section,text
-rfp_sample_001,샘플 RFP,data/rag_smoke/rfp_sample.txt,1,사업 개요,"본 사업의 예산은 5천만 원입니다."
+rfp_sample,샘플 RFP,data/rag_smoke/rfp_sample.txt,1,사업 개요,"본 사업의 예산은 5천만 원입니다."
 ```
 
 필수 컬럼:
@@ -92,7 +149,7 @@ rfp_sample_001,샘플 RFP,data/rag_smoke/rfp_sample.txt,1,사업 개요,"본 사
 
 ```csv
 chunk_id,document_id,source_path,page_start,page_end,section,text,token_count
-rfp_sample_001_chunk_0001,rfp_sample_001,data/rag_smoke/rfp_sample.txt,1,1,사업 개요,"본 사업의 예산은 5천만 원입니다.",18
+rfp_sample_chunk_0001,rfp_sample,data/rag_smoke/rfp_sample.txt,1,1,사업 개요,"본 사업의 예산은 5천만 원입니다.",18
 ```
 
 필수 컬럼:
@@ -121,6 +178,7 @@ chunk:
 ## 3. Embedding Output
 
 chunk를 embedding으로 바꾼 뒤에는 vector와 metadata가 함께 관리되어야 합니다.
+이 단계는 아직 구현 전이며, keyword retriever 다음에 붙일 확장 후보입니다.
 
 파일 예시:
 
@@ -134,7 +192,7 @@ experiments/rag_smoke_test/
 `embeddings.jsonl` 예시:
 
 ```json
-{"chunk_id":"rfp_sample_001_chunk_0001","embedding_model":"sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2","vector":[0.01,0.02,0.03]}
+{"chunk_id":"rfp_sample_chunk_0001","embedding_model":"sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2","vector":[0.01,0.02,0.03]}
 ```
 
 필수 정보:
@@ -159,9 +217,9 @@ experiments/rag_smoke_test/
   "retrieved_chunks": [
     {
       "rank": 1,
-      "chunk_id": "rfp_sample_001_chunk_0001",
+      "chunk_id": "rfp_sample_chunk_0001",
       "score": 0.87,
-      "document_id": "rfp_sample_001",
+      "document_id": "rfp_sample",
       "source_path": "data/rag_smoke/rfp_sample.txt",
       "page": 1,
       "section": "사업 개요",
@@ -196,8 +254,8 @@ experiments/rag_smoke_test/
   "answer": "이 사업의 예산은 5천만 원입니다.",
   "citations": [
     {
-      "chunk_id": "rfp_sample_001_chunk_0001",
-      "document_id": "rfp_sample_001",
+      "chunk_id": "rfp_sample_chunk_0001",
+      "document_id": "rfp_sample",
       "source_path": "data/rag_smoke/rfp_sample.txt",
       "page": 1,
       "section": "사업 개요"
@@ -234,9 +292,9 @@ RAG 평가는 label이 있는 질문 세트가 있을 때 가능합니다.
 
 ```csv
 question,expected_answer,expected_chunk_ids
-예산이 얼마야?,5천만 원,rfp_sample_001_chunk_0001
-마감일은 언제야?,2026년 7월 10일,rfp_sample_001_chunk_0002
-참가 자격은 뭐야?,최근 3년 이내 유사 사업 수행 경험,rfp_sample_001_chunk_0003
+예산이 얼마야?,5천만 원,rfp_sample_chunk_0001
+마감일은 언제야?,2026년 7월 10일,rfp_sample_chunk_0002
+참가 자격은 뭐야?,최근 3년 이내 유사 사업 수행 경험,rfp_sample_chunk_0003
 ```
 
 필수 컬럼:
@@ -361,7 +419,7 @@ metric:
 예상 답변:
 
 ```text
-이 사업의 예산은 5천만 원입니다. [source: rfp_sample_001, page 1]
+이 사업의 예산은 5천만 원입니다. [source: rfp_sample, page 1]
 ```
 
 ## 11. 구현 순서
