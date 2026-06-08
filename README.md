@@ -90,6 +90,14 @@ experiments/smoke_test_text/
 
 HuggingFace 실험은 추가로 `hf_model/` 폴더에 tokenizer와 model weight를 저장합니다.
 
+여러 실험을 비교하려면 요약 스크립트를 실행합니다.
+
+```bash
+python scripts/summarize_experiments.py --project-root .
+```
+
+기본 산출물은 `reports/experiment_summary.csv`와 `reports/experiment_summary.json`입니다.
+
 ## 운영 원칙
 
 - `data/raw`는 원본 데이터로 둡니다.

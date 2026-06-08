@@ -21,3 +21,18 @@ python scripts/run_predict.py --config configs/exp002_hf_text_finetune.yaml --pr
 ```
 
 실험 결과는 config의 `paths.output_dir`에 따라 `experiments/{experiment_name}/` 아래에 저장됩니다.
+
+## 실험 결과 요약
+
+여러 실험의 `metrics.json`, `config.yaml`, `run_info.json`을 모아 비교용 CSV/JSON을 생성합니다.
+
+```bash
+python scripts/summarize_experiments.py --project-root .
+```
+
+기본 산출물:
+
+```text
+reports/experiment_summary.csv
+reports/experiment_summary.json
+```

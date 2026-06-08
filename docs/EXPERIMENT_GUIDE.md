@@ -25,6 +25,21 @@ python scripts/run_train.py --config configs/exp002_hf_text_finetune.yaml --proj
 
 처음 실행할 때는 base model 다운로드가 필요합니다. 로컬 CPU에서도 동작은 가능하지만, 실제 데이터셋에서는 Colab/GPU 환경을 권장합니다.
 
+## 실험 결과 요약
+
+여러 실험 결과를 한 번에 비교하려면 요약 스크립트를 실행합니다.
+
+```bash
+python scripts/summarize_experiments.py --project-root .
+```
+
+기본적으로 다음 파일이 생성됩니다.
+
+```text
+reports/experiment_summary.csv
+reports/experiment_summary.json
+```
+
 ## 필수 산출물
 
 ```text
@@ -49,6 +64,19 @@ experiments/{experiment_name}/hf_model/
 exp_id, owner, date, config, model, data_version, metric, result_path, notes
 ```
 
+## 실험 이름 규칙
+
+실험명은 `exp번호_대상_핵심변경` 형태를 권장합니다.
+
+```text
+exp001_text_baseline
+exp002_hf_text_finetune
+exp003_hf_lr2e-5_max128
+exp004_hf_roberta_max256
+```
+
+좋은 실험명은 이름만 봐도 무엇을 바꿨는지 대략 알 수 있어야 합니다.
+
 ## 규칙
 
 - 학습 전에 data validation을 통과시킵니다.
@@ -57,3 +85,4 @@ exp_id, owner, date, config, model, data_version, metric, result_path, notes
 - 성공한 실험과 실패한 실험을 모두 기록합니다.
 - validation/test/predict transform은 결정적으로 동작해야 합니다.
 - HuggingFace base model, max length, batch size, learning rate는 config에 남깁니다.
+- 실험 README의 결론, 다음 액션, 실패/주의 사항을 실험 직후에 적습니다.
