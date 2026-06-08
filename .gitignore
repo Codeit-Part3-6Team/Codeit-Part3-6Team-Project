@@ -30,6 +30,8 @@ logs/*
 wandb/
 mlruns/
 lightning_logs/
+reports/experiment_summary.csv
+reports/experiment_summary.json
 *.pt
 *.pth
 *.ckpt
