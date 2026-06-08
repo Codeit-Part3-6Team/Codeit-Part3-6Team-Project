@@ -122,3 +122,5 @@ python scripts/summarize_experiments.py --project-root .
 - `docs/KICKOFF_GUIDE.md`: 수정하기 쉬운 Markdown 원본
 - `docs/kickoff.html`: 팀원 공유/브리핑용 HTML 문서
 - `docs/COLAB_GUIDE.md`: Colab/Drive 기반 실험 실행 가이드
+- `docs/GIT_WORKFLOW.md`: 브랜치, 커밋, PR 운영 규칙
+- `docs/TEAM_WORKFLOW.md`: Issue, Kanban, Daily Report 운영 가이드
