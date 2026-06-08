@@ -11,6 +11,7 @@ def build_model(name: str) -> MeanRgbCentroidClassifier | KeywordTextClassifier:
     HuggingFace 모델은 base model 이름, label map, weight 저장 폴더가 필요하므로
     이 registry가 아니라 `src.train`의 전용 경로에서 처리합니다.
     """
+    # registry에는 의존성이 거의 없는 smoke model만 넣어 빠른 테스트를 유지합니다.
     if name == "mean_rgb_centroid":
         return MeanRgbCentroidClassifier()
     if name == "keyword_text_classifier":

@@ -26,6 +26,7 @@ def setup_logger(
     logger.addHandler(stream_handler)
 
     if log_path:
+        # 실험별 train.log/predict.log를 남기기 위해 파일 handler를 선택적으로 붙입니다.
         path = Path(log_path)
         path.parent.mkdir(parents=True, exist_ok=True)
         file_handler = logging.FileHandler(path, encoding="utf-8")

@@ -54,6 +54,7 @@ def _parse_simple_yaml(text: str) -> dict[str, Any]:
 
     def parse_block(indent: int) -> Any:
         nonlocal index
+        # 같은 indentation의 첫 줄이 list item이면 list, 아니면 dict로 해석합니다.
         container: Any = [] if _current_line_is_list(index, indent) else {}
         while index < len(lines):
             raw_line = lines[index]
@@ -76,6 +77,7 @@ def _parse_simple_yaml(text: str) -> dict[str, Any]:
             if value_text:
                 container[key] = _parse_scalar(value_text)
             elif index < len(lines):
+                # 값이 비어 있으면 다음 indentation block을 nested 값으로 읽습니다.
                 next_indent = len(lines[index]) - len(lines[index].lstrip(" "))
                 container[key] = parse_block(next_indent) if next_indent > indent else None
             else:

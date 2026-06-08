@@ -87,6 +87,7 @@ def run_training(config_path: str | Path, project_root: str | Path) -> dict[str,
     test_pred = model.predict(_features(test_rows, task))
     test_true = [row["label"] for row in test_rows]
 
+    # 현재 scaffold는 accuracy만 계산하지만, 이 지점이 macro f1/confusion matrix 확장 위치입니다.
     metrics = {
         "valid_accuracy": accuracy(valid_true, valid_pred),
         "test_accuracy": accuracy(test_true, test_pred),
@@ -105,6 +106,7 @@ def run_training(config_path: str | Path, project_root: str | Path) -> dict[str,
 
     backup_cfg = config.get("backup", {})
     if backup_cfg.get("enabled") and backup_cfg.get("on_finish"):
+        # Colab 런타임이 끊겨도 결과를 잃지 않도록 Drive 같은 외부 경로에 복사할 수 있습니다.
         maybe_backup(output_dir, config["paths"].get("backup_dir"))
         logger.info("Artifacts backed up to %s", config["paths"].get("backup_dir"))
 
@@ -163,6 +165,7 @@ def _run_huggingface_training(
         batch_size=int(config.get("train", {}).get("batch_size", 8)),
     )
     test_true = [row[label_col] for row in test_rows]
+    # HF 경로도 smoke model과 같은 metrics.json 형식을 유지해 summary 스크립트를 공유합니다.
     metrics = {
         **hf_metrics,
         "test_accuracy": accuracy(test_true, test_pred),
@@ -182,6 +185,7 @@ def _run_huggingface_training(
 
     backup_cfg = config.get("backup", {})
     if backup_cfg.get("enabled") and backup_cfg.get("on_finish"):
+        # HuggingFace weight는 폴더 artifact라서 maybe_backup이 디렉터리까지 복사합니다.
         maybe_backup(output_dir, config["paths"].get("backup_dir"))
         logger.info("Artifacts backed up to %s", config["paths"].get("backup_dir"))
 

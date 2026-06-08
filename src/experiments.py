@@ -54,6 +54,7 @@ def write_experiment_summary(
     rows = collect_experiment_summaries(root, experiments_dir)
     target = _resolve_path(root, output_path)
     ensure_dir(target.parent)
+    # CSV는 사람이 표로 보기 좋고, JSON은 나중에 대시보드/자동화에서 재사용하기 좋습니다.
     with target.open("w", encoding="utf-8", newline="") as f:
         writer = csv.DictWriter(f, fieldnames=SUMMARY_COLUMNS)
         writer.writeheader()
@@ -76,6 +77,7 @@ def _summarize_experiment(project_root: Path, experiment_dir: Path) -> dict[str,
     model = config.get("model", {})
     data = config.get("data", {})
     paths = config.get("paths", {})
+    # metrics.json이 없으면 실패/미완료 실험일 가능성이 높으므로 상태를 따로 표시합니다.
     status = "ok" if metrics_path.exists() else "missing_metrics"
 
     return {
