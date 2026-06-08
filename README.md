@@ -127,6 +127,7 @@ python scripts/summarize_experiments.py --project-root .
 ## 킥오프 문서
 
 - `docs/PIPELINE_OVERVIEW.md`: 전체 파이프라인 설명 문서
+- `docs/RAG_PIPELINE_SPEC.md`: RAG 전환을 위한 document/chunk/retrieval/answer 계약
 - `docs/KICKOFF_GUIDE.md`: 수정하기 쉬운 Markdown 원본
 - `docs/kickoff.html`: 팀원 공유/브리핑용 HTML 문서
 - `docs/COLAB_GUIDE.md`: Colab/Drive 기반 실험 실행 가이드
