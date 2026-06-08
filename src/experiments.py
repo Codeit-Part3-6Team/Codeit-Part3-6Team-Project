@@ -30,7 +30,7 @@ def collect_experiment_summaries(
     experiments_dir: str | Path = "experiments",
 ) -> list[dict[str, Any]]:
     root = Path(project_root)
-    base_dir = root / experiments_dir
+    base_dir = _resolve_path(root, experiments_dir)
     if not base_dir.exists():
         return []
 
@@ -49,7 +49,7 @@ def write_experiment_summary(
 ) -> list[dict[str, Any]]:
     root = Path(project_root)
     rows = collect_experiment_summaries(root, experiments_dir)
-    target = root / output_path
+    target = _resolve_path(root, output_path)
     ensure_dir(target.parent)
     with target.open("w", encoding="utf-8", newline="") as f:
         writer = csv.DictWriter(f, fieldnames=SUMMARY_COLUMNS)
@@ -99,3 +99,8 @@ def _relative_path(root: Path, path: Path) -> str:
         return path.relative_to(root).as_posix()
     except ValueError:
         return path.as_posix()
+
+
+def _resolve_path(root: Path, path: str | Path) -> Path:
+    candidate = Path(path)
+    return candidate if candidate.is_absolute() else root / candidate

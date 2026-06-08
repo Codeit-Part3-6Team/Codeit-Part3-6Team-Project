@@ -120,3 +120,8 @@ def maybe_backup(output_dir: str | Path, backup_dir: str | Path | None) -> None:
     for item in source.iterdir():
         if item.is_file():
             shutil.copy2(item, target / item.name)
+        elif item.is_dir():
+            destination = target / item.name
+            if destination.exists():
+                shutil.rmtree(destination)
+            shutil.copytree(item, destination)

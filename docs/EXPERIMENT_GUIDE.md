@@ -24,6 +24,7 @@ python scripts/run_train.py --config configs/exp002_hf_text_finetune.yaml --proj
 ```
 
 처음 실행할 때는 base model 다운로드가 필요합니다. 로컬 CPU에서도 동작은 가능하지만, 실제 데이터셋에서는 Colab/GPU 환경을 권장합니다.
+Colab에서 Drive 경로를 사용하려면 `docs/COLAB_GUIDE.md`와 `configs/exp002_hf_text_finetune_colab.yaml`을 참고합니다.
 
 ## 실험 결과 요약
 

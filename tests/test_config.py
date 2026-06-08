@@ -31,6 +31,14 @@ def test_load_config_reads_tiny_huggingface_smoke_config(repo_root):
     assert config["data"]["max_length"] == 64
 
 
+def test_load_config_reads_colab_huggingface_config(repo_root):
+    config = load_config(repo_root / "configs" / "exp002_hf_text_finetune_colab.yaml")
+
+    assert config["experiment"]["name"] == "exp002_hf_text_finetune_colab"
+    assert config["paths"]["data_dir"].startswith("/content/drive/MyDrive/")
+    assert config["backup"]["enabled"] is True
+
+
 def test_fallback_yaml_parser_handles_nested_dicts_lists_and_scalars():
     parsed = _parse_simple_yaml(
         """

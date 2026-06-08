@@ -6,6 +6,7 @@ import subprocess
 import sys
 from pathlib import Path
 
+from src.artifacts import maybe_backup
 from src.experiments import collect_experiment_summaries, write_experiment_summary
 from src.train import run_training
 
@@ -40,6 +41,21 @@ def test_collect_experiment_summaries_handles_empty_experiments_dir(isolated_pro
     assert rows == []
 
 
+def test_write_experiment_summary_accepts_absolute_paths(isolated_project: Path):
+    run_training(isolated_project / "configs" / "smoke_test_text.yaml", isolated_project)
+    output_path = isolated_project / "reports" / "absolute_summary.csv"
+
+    rows = write_experiment_summary(
+        isolated_project,
+        output_path=output_path,
+        experiments_dir=isolated_project / "experiments",
+    )
+
+    assert len(rows) == 1
+    assert output_path.exists()
+    assert output_path.with_suffix(".json").exists()
+
+
 def test_summarize_experiments_script_writes_report(isolated_project: Path, repo_root: Path):
     run_training(isolated_project / "configs" / "smoke_test_text.yaml", isolated_project)
 
@@ -57,3 +73,16 @@ def test_summarize_experiments_script_writes_report(isolated_project: Path, repo
 
     assert "wrote reports/experiment_summary.csv (1 experiments)" in result.stdout
     assert (isolated_project / "reports" / "experiment_summary.csv").exists()
+
+
+def test_maybe_backup_copies_files_and_model_directories(tmp_path: Path):
+    output_dir = tmp_path / "experiments" / "unit"
+    model_dir = output_dir / "hf_model"
+    model_dir.mkdir(parents=True)
+    (output_dir / "metrics.json").write_text("{}", encoding="utf-8")
+    (model_dir / "config.json").write_text("{}", encoding="utf-8")
+
+    maybe_backup(output_dir, tmp_path / "drive_backup" / "unit")
+
+    assert (tmp_path / "drive_backup" / "unit" / "metrics.json").exists()
+    assert (tmp_path / "drive_backup" / "unit" / "hf_model" / "config.json").exists()
