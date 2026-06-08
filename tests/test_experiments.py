@@ -8,6 +8,7 @@ from pathlib import Path
 
 from src.artifacts import maybe_backup
 from src.experiments import collect_experiment_summaries, write_experiment_summary
+from src.rag.pipeline import run_rag_evaluation
 from src.train import run_training
 
 
@@ -54,6 +55,16 @@ def test_write_experiment_summary_accepts_absolute_paths(isolated_project: Path)
     assert len(rows) == 1
     assert output_path.exists()
     assert output_path.with_suffix(".json").exists()
+
+
+def test_write_experiment_summary_collects_rag_metrics(isolated_project: Path):
+    run_rag_evaluation(isolated_project / "configs" / "rag_smoke_test.yaml", isolated_project)
+
+    rows = write_experiment_summary(isolated_project)
+
+    assert rows[0]["experiment"] == "rag_smoke_test"
+    assert rows[0]["retrieval_hit_rate"] == 1.0
+    assert rows[0]["citation_correct_rate"] == 1.0
 
 
 def test_summarize_experiments_script_writes_report(isolated_project: Path, repo_root: Path):

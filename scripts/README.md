@@ -31,6 +31,30 @@ python scripts/run_predict.py --config configs/exp002_hf_text_finetune.yaml --pr
 
 실험 결과는 config의 `paths.output_dir`에 따라 `experiments/{experiment_name}/` 아래에 저장됩니다.
 
+## RAG smoke test
+
+RFP 분석 챗봇 후보를 위한 최소 RAG 흐름입니다.
+처음에는 외부 모델 없이 txt 문서, keyword retrieval, 추출형 답변으로 파이프라인 연결만 확인합니다.
+
+```bash
+python scripts/run_rag_ingest.py --config configs/rag_smoke_test.yaml --project-root .
+python scripts/run_rag_retrieve.py --config configs/rag_smoke_test.yaml --project-root . --question "예산이 얼마야?"
+python scripts/run_rag_chat.py --config configs/rag_smoke_test.yaml --project-root . --question "예산이 얼마야?"
+python scripts/run_rag_chat.py --config configs/rag_smoke_test.yaml --project-root . --evaluate
+```
+
+기본 산출물:
+
+```text
+experiments/rag_smoke_test/
+|-- parsed_documents.csv
+|-- chunks.csv
+|-- retrieval_results.jsonl
+|-- answers.jsonl
+|-- evaluation_results.csv
+`-- metrics.json
+```
+
 ## 실험 결과 요약
 
 여러 실험의 `metrics.json`, `config.yaml`, `run_info.json`을 모아 비교용 CSV/JSON을 생성합니다.

@@ -54,6 +54,15 @@ python scripts/run_train.py --config configs/smoke_test_text.yaml --project-root
 python scripts/run_predict.py --config configs/smoke_test_text.yaml --project-root . --input data/text_processed/sample_positive.txt
 ```
 
+RAG 문서 검색/답변:
+
+```bash
+python scripts/run_rag_ingest.py --config configs/rag_smoke_test.yaml --project-root .
+python scripts/run_rag_retrieve.py --config configs/rag_smoke_test.yaml --project-root . --question "예산이 얼마야?"
+python scripts/run_rag_chat.py --config configs/rag_smoke_test.yaml --project-root . --question "예산이 얼마야?"
+python scripts/run_rag_chat.py --config configs/rag_smoke_test.yaml --project-root . --evaluate
+```
+
 ## HuggingFace Fine-Tuning 예시
 
 HuggingFace 실험은 처음 실행할 때 base model을 내려받기 때문에 인터넷 연결이 필요합니다. 실제 프로젝트 데이터에서는 Colab/GPU 환경 사용을 권장합니다.
@@ -106,6 +115,7 @@ python scripts/summarize_experiments.py --project-root .
 ```
 
 기본 산출물은 `reports/experiment_summary.csv`와 `reports/experiment_summary.json`입니다.
+분류 실험은 accuracy를, RAG 실험은 retrieval hit rate와 citation correctness를 중심으로 비교합니다.
 
 ## 운영 원칙
 
