@@ -6,15 +6,15 @@ from typing import Any
 
 
 def load_config(path: str | Path) -> dict[str, Any]:
-    """Load an experiment config.
+    """실험 설정 파일을 읽어 dict로 반환합니다.
 
-    PyYAML is used when available. The fallback parser exists so the tiny smoke
-    pipeline can still run in very minimal environments, but production-style
-    configs should be parsed with PyYAML via `requirements.txt`.
+    기본은 PyYAML을 사용합니다. 다만 smoke test가 아주 최소 환경에서도
+    돌아갈 수 있도록 작은 fallback parser를 함께 둡니다.
     """
     config_path = Path(path)
     text = config_path.read_text(encoding="utf-8")
     try:
+        # 팀 프로젝트에서는 PyYAML을 쓰는 것이 기본이고, fallback은 최소 실행을 위한 안전망입니다.
         import yaml  # type: ignore
     except ImportError:
         return _parse_simple_yaml(text)
@@ -27,7 +27,7 @@ def write_config_copy(
     output_dir: str | Path,
     filename: str = "config.yaml",
 ) -> None:
-    """Copy the config used for a run into the experiment artifact directory."""
+    """실험에 사용한 config를 산출물 폴더에 복사합니다."""
     output = Path(output_dir)
     output.mkdir(parents=True, exist_ok=True)
     source = Path(config_path)
@@ -35,15 +35,15 @@ def write_config_copy(
 
 
 def write_json(path: str | Path, payload: dict[str, Any]) -> None:
-    """Write UTF-8 JSON with stable indentation for human-readable artifacts."""
+    """사람이 읽기 좋은 UTF-8 JSON 산출물을 저장합니다."""
     Path(path).write_text(json.dumps(payload, indent=2, ensure_ascii=False), encoding="utf-8")
 
 
 def _parse_simple_yaml(text: str) -> dict[str, Any]:
-    """Parse the small YAML subset used by scaffold configs.
+    """스캐폴드 config에서 쓰는 작은 YAML 부분집합만 파싱합니다.
 
-    This is intentionally limited to nested dictionaries, simple lists, and
-    scalar values. It is not a full YAML implementation.
+    dict, 단순 list, 기본 scalar 정도만 지원합니다. 완전한 YAML parser가
+    아니므로 실제 프로젝트 환경에서는 PyYAML 설치를 전제로 봅니다.
     """
     lines = [
         raw.rstrip()
@@ -93,7 +93,7 @@ def _parse_simple_yaml(text: str) -> dict[str, Any]:
 
 
 def _parse_scalar(value: str) -> Any:
-    """Convert a simple YAML scalar into a Python value."""
+    """문자열 scalar를 bool, number, list, None 등으로 변환합니다."""
     if value in {"", "null", "None", "~"}:
         return None
     if value == "true":

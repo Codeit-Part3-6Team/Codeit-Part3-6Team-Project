@@ -29,7 +29,7 @@ def collect_experiment_summaries(
     project_root: str | Path,
     experiments_dir: str | Path = "experiments",
 ) -> list[dict[str, Any]]:
-    """Collect one summary row per experiment directory."""
+    """실험 폴더마다 비교용 summary row를 하나씩 수집합니다."""
     root = Path(project_root)
     base_dir = _resolve_path(root, experiments_dir)
     if not base_dir.exists():
@@ -37,6 +37,7 @@ def collect_experiment_summaries(
 
     rows: list[dict[str, Any]] = []
     for experiment_dir in sorted(path for path in base_dir.iterdir() if path.is_dir()):
+        # .gitkeep 같은 숨김/관리용 항목은 실험 결과로 보지 않습니다.
         if experiment_dir.name.startswith("."):
             continue
         rows.append(_summarize_experiment(root, experiment_dir))
@@ -48,7 +49,7 @@ def write_experiment_summary(
     output_path: str | Path = "reports/experiment_summary.csv",
     experiments_dir: str | Path = "experiments",
 ) -> list[dict[str, Any]]:
-    """Write experiment comparison reports as CSV and JSON."""
+    """실험 비교 리포트를 CSV와 JSON으로 저장합니다."""
     root = Path(project_root)
     rows = collect_experiment_summaries(root, experiments_dir)
     target = _resolve_path(root, output_path)
@@ -62,7 +63,7 @@ def write_experiment_summary(
 
 
 def _summarize_experiment(project_root: Path, experiment_dir: Path) -> dict[str, Any]:
-    """Build a summary row from config, metrics, and run metadata."""
+    """config, metrics, run metadata를 모아 summary row를 만듭니다."""
     config_path = experiment_dir / "config.yaml"
     metrics_path = experiment_dir / "metrics.json"
     run_info_path = experiment_dir / "run_info.json"
@@ -94,12 +95,12 @@ def _summarize_experiment(project_root: Path, experiment_dir: Path) -> dict[str,
 
 
 def _normalize_row(row: dict[str, Any]) -> dict[str, Any]:
-    """Keep CSV output stable even when future summary rows add fields."""
+    """나중에 field가 추가되어도 CSV column 순서를 안정적으로 유지합니다."""
     return {column: row.get(column, "") for column in SUMMARY_COLUMNS}
 
 
 def _relative_path(root: Path, path: Path) -> str:
-    """Prefer project-relative paths in human-facing reports."""
+    """사람이 읽는 리포트에는 가능한 project-relative path를 사용합니다."""
     try:
         return path.relative_to(root).as_posix()
     except ValueError:
@@ -107,6 +108,6 @@ def _relative_path(root: Path, path: Path) -> str:
 
 
 def _resolve_path(root: Path, path: str | Path) -> Path:
-    """Resolve paths for both local runs and absolute Colab/Drive paths."""
+    """로컬 상대경로와 Colab/Drive 절대경로를 모두 처리합니다."""
     candidate = Path(path)
     return candidate if candidate.is_absolute() else root / candidate

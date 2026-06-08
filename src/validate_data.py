@@ -11,11 +11,10 @@ from src.data import read_json, read_split_csv, summarize_labels
 
 
 def validate_data(data_dir: str | Path) -> dict[str, object]:
-    """Validate that a processed dataset satisfies the project data contract.
+    """processed dataset이 프로젝트 Data Contract를 만족하는지 검증합니다.
 
-    The validator supports the current smoke-test tasks:
-    image classification and text classification. It returns a structured
-    result instead of printing directly so scripts and tests can reuse it.
+    현재 smoke test task인 image classification과 text classification을 지원합니다.
+    scripts와 tests에서 재사용할 수 있도록 출력 대신 구조화된 dict를 반환합니다.
     """
     base = Path(data_dir)
     required_files = ["train.csv", "valid.csv", "test.csv", "class_map.json", "dataset_info.json"]
@@ -41,6 +40,7 @@ def validate_data(data_dir: str | Path) -> dict[str, object]:
     }
     required_columns = required_columns_by_task.get(str(task), ["label"])
 
+    # 모든 split에 같은 계약을 적용해야 학습/평가/예측 단계의 입력 차이를 줄일 수 있습니다.
     for split in ["train", "valid", "test"]:
         rows = read_split_csv(base / f"{split}.csv")
         if not rows:
@@ -82,7 +82,7 @@ def validate_data(data_dir: str | Path) -> dict[str, object]:
 
 
 def main() -> None:
-    """CLI entry point kept for backward compatibility with `python src/...`."""
+    """`python src/...` 방식 실행을 위한 보조 CLI 진입점입니다."""
     parser = argparse.ArgumentParser()
     parser.add_argument("--data-dir", default="data/processed")
     args = parser.parse_args()

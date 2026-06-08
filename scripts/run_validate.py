@@ -12,7 +12,7 @@ from src.validate_data import validate_data
 
 
 def main() -> None:
-    """Validate a processed dataset before training or prediction."""
+    """학습/예측 전에 processed dataset이 계약을 만족하는지 검증합니다."""
     parser = argparse.ArgumentParser()
     parser.add_argument("--data-dir", default="data/processed")
     parser.add_argument("--project-root", default=".")

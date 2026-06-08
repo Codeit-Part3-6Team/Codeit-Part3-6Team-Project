@@ -6,17 +6,17 @@ from typing import Any
 
 
 class MeanRgbCentroidClassifier:
-    """Tiny image classifier used only to verify the pipeline wiring.
+    """파이프라인 연결을 검증하기 위한 아주 작은 이미지 분류기입니다.
 
-    It averages RGB values per class and predicts the nearest class centroid.
-    This is intentionally simple; it is not meant to be a production model.
+    class별 평균 RGB centroid를 저장하고 가장 가까운 centroid를 예측합니다.
+    실제 성능 모델이 아니라 data/load/train/predict/artifact 흐름을 확인하기 위한 모델입니다.
     """
 
     def __init__(self) -> None:
         self.centroids: dict[str, tuple[float, float, float]] = {}
 
     def fit(self, samples: list[tuple[tuple[float, float, float], str]]) -> None:
-        """Store the mean RGB centroid for each label."""
+        """label별 평균 RGB centroid를 저장합니다."""
         grouped: dict[str, list[tuple[float, float, float]]] = defaultdict(list)
         for features, label in samples:
             grouped[label].append(features)
@@ -26,7 +26,7 @@ class MeanRgbCentroidClassifier:
         }
 
     def predict_one(self, features: tuple[float, float, float]) -> str:
-        """Predict the nearest centroid label for one RGB feature vector."""
+        """RGB feature 하나에 대해 가장 가까운 centroid label을 예측합니다."""
         if not self.centroids:
             raise RuntimeError("Model is not fitted")
         return min(
@@ -35,16 +35,16 @@ class MeanRgbCentroidClassifier:
         )
 
     def predict(self, features: list[tuple[float, float, float]]) -> list[str]:
-        """Predict labels for multiple RGB feature vectors."""
+        """여러 RGB feature에 대한 label을 예측합니다."""
         return [self.predict_one(item) for item in features]
 
     def to_dict(self) -> dict[str, Any]:
-        """Serialize the lightweight model to JSON-compatible data."""
+        """가벼운 모델 상태를 JSON-compatible dict로 변환합니다."""
         return {"model_type": "mean_rgb_centroid", "centroids": self.centroids}
 
     @classmethod
     def from_dict(cls, payload: dict[str, Any]) -> "MeanRgbCentroidClassifier":
-        """Restore a model saved by `to_dict`."""
+        """`to_dict`로 저장한 모델 상태를 복원합니다."""
         model = cls()
         model.centroids = {
             label: tuple(float(v) for v in values)

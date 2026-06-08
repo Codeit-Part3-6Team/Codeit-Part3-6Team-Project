@@ -12,7 +12,7 @@ from src.train import run_training
 
 
 def main() -> None:
-    """Train one experiment from a config file and print final metrics."""
+    """config 파일 하나로 실험 학습을 실행하고 최종 metric을 출력합니다."""
     parser = argparse.ArgumentParser()
     parser.add_argument("--config", required=True)
     parser.add_argument("--project-root", default=".")

@@ -8,18 +8,18 @@ from typing import Any
 
 
 def read_json(path: str | Path) -> dict[str, Any]:
-    """Read a UTF-8 JSON file used by data contracts or experiment artifacts."""
+    """Data Contract나 실험 산출물에서 쓰는 UTF-8 JSON 파일을 읽습니다."""
     return json.loads(Path(path).read_text(encoding="utf-8"))
 
 
 def read_split_csv(path: str | Path) -> list[dict[str, str]]:
-    """Read a train/valid/test split CSV into row dictionaries."""
+    """train/valid/test split CSV를 row dict 목록으로 읽습니다."""
     with Path(path).open("r", encoding="utf-8", newline="") as f:
         return list(csv.DictReader(f))
 
 
 def load_dataset(data_dir: str | Path, split_csv: str) -> list[dict[str, str]]:
-    """Load one dataset split and attach absolute image paths when needed."""
+    """split 하나를 읽고, 이미지 데이터면 절대 이미지 경로를 추가합니다."""
     data_path = Path(data_dir)
     rows = read_split_csv(data_path / split_csv)
     for row in rows:
@@ -29,7 +29,7 @@ def load_dataset(data_dir: str | Path, split_csv: str) -> list[dict[str, str]]:
 
 
 def summarize_labels(rows: list[dict[str, str]], label_col: str = "label") -> dict[str, int]:
-    """Count labels in a split for validation and reporting."""
+    """검증과 리포팅을 위해 split 안의 label 개수를 셉니다."""
     return dict(Counter(row[label_col] for row in rows))
 
 

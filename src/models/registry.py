@@ -6,10 +6,10 @@ from src.models.text_keyword import KeywordTextClassifier
 
 
 def build_model(name: str) -> MeanRgbCentroidClassifier | KeywordTextClassifier:
-    """Build lightweight smoke-test models by config `model.name`.
+    """config의 `model.name`에 맞는 가벼운 smoke model을 생성합니다.
 
-    HuggingFace models are intentionally excluded because they need additional
-    config values and artifact directories that are handled by `src.train`.
+    HuggingFace 모델은 base model 이름, label map, weight 저장 폴더가 필요하므로
+    이 registry가 아니라 `src.train`의 전용 경로에서 처리합니다.
     """
     if name == "mean_rgb_centroid":
         return MeanRgbCentroidClassifier()

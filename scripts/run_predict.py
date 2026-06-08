@@ -17,7 +17,7 @@ from src.utils.paths import ensure_dir
 
 
 def main() -> None:
-    """Run one prediction and append the result to the experiment directory."""
+    """입력 하나를 예측하고 결과를 실험 폴더에 저장합니다."""
     parser = argparse.ArgumentParser()
     parser.add_argument("--config", required=True)
     parser.add_argument("--project-root", default=".")
@@ -28,6 +28,7 @@ def main() -> None:
     output_dir = resolve_experiment_dir(args.project_root, load_config(args.config))
     ensure_dir(output_dir)
     logger = setup_logger("predict", output_dir / "predict.log")
+    # 예측 결과도 실험 산출물에 남겨야 발표/디버깅 때 어떤 입력을 넣었는지 추적할 수 있습니다.
     with (output_dir / "predictions.csv").open("w", encoding="utf-8", newline="") as f:
         writer = csv.DictWriter(f, fieldnames=["input", "prediction"])
         writer.writeheader()

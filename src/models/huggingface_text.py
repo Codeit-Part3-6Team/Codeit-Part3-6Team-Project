@@ -10,12 +10,12 @@ MODEL_TYPE = "huggingface_sequence_classifier"
 
 
 def is_huggingface_model(name: str) -> bool:
-    """Return True when a config model name should use the HuggingFace path."""
+    """config의 model.name이 HuggingFace 전용 경로를 써야 하는지 확인합니다."""
     return name == MODEL_TYPE
 
 
 class _TextDataset:
-    """Minimal torch Dataset that tokenizes rows on access."""
+    """row를 필요할 때 tokenizer에 통과시키는 최소 torch Dataset입니다."""
 
     def __init__(
         self,
@@ -53,11 +53,11 @@ class _TextDataset:
 
 
 class HuggingFaceSequenceClassifier:
-    """Adapter for fine-tuning HuggingFace sequence classification models.
+    """HuggingFace sequence classification 모델을 학습/저장/예측하는 adapter입니다.
 
-    The rest of the scaffold uses small JSON-serializable smoke models. A
-    HuggingFace model also needs tokenizer files and model weights, so this
-    adapter saves both metadata (`best_model.json`) and a `hf_model/` directory.
+    smoke model은 JSON 하나로 저장할 수 있지만, HuggingFace 모델은 tokenizer와
+    weight 파일이 필요합니다. 그래서 metadata는 `best_model.json`에 저장하고
+    실제 모델 파일은 `hf_model/` 폴더에 저장합니다.
     """
 
     def __init__(
@@ -88,7 +88,7 @@ class HuggingFaceSequenceClassifier:
 
     @classmethod
     def from_artifact(cls, artifact_dir: str | Path) -> "HuggingFaceSequenceClassifier":
-        """Load tokenizer/model weights from a saved experiment directory."""
+        """저장된 실험 폴더에서 tokenizer와 model weight를 다시 불러옵니다."""
         try:
             from transformers import AutoModelForSequenceClassification, AutoTokenizer
         except ImportError as exc:
@@ -119,7 +119,7 @@ class HuggingFaceSequenceClassifier:
         text_col: str = "text",
         label_col: str = "label",
     ) -> tuple[dict[str, float], list[dict[str, float]]]:
-        """Fine-tune for the configured number of epochs and return metrics/history."""
+        """config의 epoch 수만큼 fine-tuning하고 metrics와 history를 반환합니다."""
         import torch
         from torch.optim import AdamW
         from torch.utils.data import DataLoader
@@ -157,6 +157,7 @@ class HuggingFaceSequenceClassifier:
                 optimizer.step()
                 total_loss += float(loss.detach().cpu())
 
+            # 매 epoch마다 valid 성능을 남겨 history.csv에서 학습 흐름을 볼 수 있게 합니다.
             valid_pred = self.predict([row[text_col] for row in valid_rows], batch_size=batch_size)
             valid_true = [row[label_col] for row in valid_rows]
             row_metrics = {
@@ -173,7 +174,7 @@ class HuggingFaceSequenceClassifier:
         return metrics, history
 
     def predict(self, texts: list[str], batch_size: int = 8) -> list[str]:
-        """Predict labels for a list of texts."""
+        """여러 텍스트에 대한 label 예측을 반환합니다."""
         import torch
         from torch.utils.data import DataLoader, TensorDataset
 
@@ -204,18 +205,18 @@ class HuggingFaceSequenceClassifier:
         return predictions
 
     def predict_one(self, text: str) -> str:
-        """Predict one label for one text."""
+        """단일 텍스트에 대한 label 예측을 반환합니다."""
         return self.predict([text])[0]
 
     def save(self, output_dir: str | Path) -> None:
-        """Save tokenizer and model weights to `hf_model/`."""
+        """tokenizer와 model weight를 `hf_model/` 폴더에 저장합니다."""
         model_dir = Path(output_dir) / "hf_model"
         model_dir.mkdir(parents=True, exist_ok=True)
         self.model.save_pretrained(model_dir)
         self.tokenizer.save_pretrained(model_dir)
 
     def to_dict(self) -> dict[str, Any]:
-        """Return metadata needed to reload the HuggingFace artifact."""
+        """HuggingFace artifact를 다시 불러오기 위한 metadata를 반환합니다."""
         return {
             "model_type": MODEL_TYPE,
             "base_model_name": self.model_name,
@@ -227,6 +228,6 @@ class HuggingFaceSequenceClassifier:
 
 
 def build_label_map(rows: list[dict[str, str]], label_col: str = "label") -> dict[str, int]:
-    """Build a deterministic label-to-id map when no class_map.json is configured."""
+    """class_map.json이 없을 때 label 목록으로 deterministic label map을 만듭니다."""
     labels = sorted({row[label_col] for row in rows})
     return {label: index for index, label in enumerate(labels)}

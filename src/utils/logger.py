@@ -10,7 +10,7 @@ def setup_logger(
     log_path: str | Path | None = None,
     level: int = logging.INFO,
 ) -> logging.Logger:
-    """Create a logger that writes to stdout and optionally to a file."""
+    """stdout과 선택적 파일 경로에 동시에 기록하는 logger를 만듭니다."""
     logger = logging.getLogger(name)
     logger.setLevel(level)
     logger.handlers.clear()

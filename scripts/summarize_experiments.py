@@ -12,7 +12,7 @@ from src.experiments import SUMMARY_COLUMNS, write_experiment_summary
 
 
 def main() -> None:
-    """Create CSV/JSON reports that compare all experiment directories."""
+    """여러 실험 폴더를 비교하는 CSV/JSON 리포트를 생성합니다."""
     parser = argparse.ArgumentParser()
     parser.add_argument("--project-root", default=".")
     parser.add_argument("--experiments-dir", default="experiments")

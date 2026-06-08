@@ -16,7 +16,7 @@ from src.models.text_keyword import KeywordTextClassifier
 
 
 def predict_one(config_path: str | Path, project_root: str | Path, input_path: str | Path) -> str:
-    """Run one prediction using the artifact produced by the matching config."""
+    """config가 가리키는 실험 artifact를 사용해 입력 하나를 예측합니다."""
     root = Path(project_root)
     config = load_config(config_path)
     model_path = resolve_experiment_dir(root, config) / "best_model.json"
@@ -42,7 +42,7 @@ def predict_one(config_path: str | Path, project_root: str | Path, input_path: s
 
 
 def main() -> None:
-    """Delegate CLI parsing to the official script entry point."""
+    """공식 scripts 진입점으로 CLI 처리를 위임합니다."""
     from scripts.run_predict import main as script_main
 
     script_main()

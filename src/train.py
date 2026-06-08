@@ -30,7 +30,7 @@ from src.validate_data import validate_data
 
 
 def _features(rows: list[dict[str, str]], task: str) -> list[tuple[float, float, float]] | list[str]:
-    """Convert raw split rows into the feature shape expected by smoke models."""
+    """split row를 smoke model이 받을 수 있는 feature 형태로 변환합니다."""
     if task == "image_classification":
         return [read_ppm_mean_rgb(row["absolute_image_path"]) for row in rows]
     if task == "text_classification":
@@ -39,7 +39,7 @@ def _features(rows: list[dict[str, str]], task: str) -> list[tuple[float, float,
 
 
 def run_training(config_path: str | Path, project_root: str | Path) -> dict[str, float]:
-    """Run a config-driven training job and write standard experiment artifacts."""
+    """config 하나를 기준으로 학습을 실행하고 표준 실험 산출물을 저장합니다."""
     root = Path(project_root)
     config = load_config(config_path)
     data_dir = root / config["paths"]["data_dir"]
@@ -55,14 +55,15 @@ def run_training(config_path: str | Path, project_root: str | Path) -> dict[str,
         raise RuntimeError(f"Data validation failed: {validation['errors']}")
     logger.info("Data validation passed")
 
+    # train/valid/test를 같은 loader로 읽어야 split 간 입력 계약 차이를 빨리 발견할 수 있습니다.
     train_rows = load_dataset(data_dir, config["data"]["train_csv"])
     valid_rows = load_dataset(data_dir, config["data"]["valid_csv"])
     test_rows = load_dataset(data_dir, config["data"]["test_csv"])
     task = config["data"]["task"]
     model_name = config["model"]["name"]
 
-    # HuggingFace models need config-only values such as base model and label map,
-    # so they bypass the lightweight smoke-model registry.
+    # HuggingFace 모델은 base model, label map 같은 config 값이 더 필요하므로
+    # 가벼운 smoke model registry를 거치지 않고 전용 학습 경로로 보냅니다.
     if is_huggingface_model(model_name):
         return _run_huggingface_training(
             config_path=config_path,
@@ -93,6 +94,7 @@ def run_training(config_path: str | Path, project_root: str | Path) -> dict[str,
     history = [{"epoch": 1, **metrics}]
 
     command = f"python scripts/run_train.py --config {Path(config_path).as_posix()} --project-root {root.as_posix()}"
+    # 아래 파일들이 실험 재현과 팀원 간 결과 공유의 최소 단위입니다.
     write_config_copy(config_path, output_dir)
     write_json(output_dir / "best_model.json", model.to_dict())
     write_json(output_dir / "metrics.json", metrics)
@@ -120,7 +122,7 @@ def _run_huggingface_training(
     test_rows: list[dict[str, str]],
     logger,
 ) -> dict[str, float]:
-    """Train a HuggingFace sequence classifier and save it in the standard layout."""
+    """HuggingFace 텍스트 분류 모델을 학습하고 표준 산출물 구조로 저장합니다."""
     if config["data"]["task"] != "text_classification":
         raise ValueError("HuggingFace sequence classification requires text_classification data.")
 
@@ -130,6 +132,7 @@ def _run_huggingface_training(
     label_col = data_cfg.get("label_col", "label")
     class_map_path = data_cfg.get("class_map")
     if class_map_path:
+        # class_map.json이 있으면 데이터 계약에 정의된 label id를 우선 사용합니다.
         label2id = {
             label: int(index)
             for label, index in read_json(project_root / config["paths"]["data_dir"] / class_map_path).items()
@@ -187,7 +190,7 @@ def _run_huggingface_training(
 
 
 def main() -> None:
-    """Delegate CLI parsing to the official script entry point."""
+    """공식 scripts 진입점으로 CLI 처리를 위임합니다."""
     from scripts.run_train import main as script_main
 
     script_main()
