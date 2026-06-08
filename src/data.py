@@ -8,15 +8,18 @@ from typing import Any
 
 
 def read_json(path: str | Path) -> dict[str, Any]:
+    """Read a UTF-8 JSON file used by data contracts or experiment artifacts."""
     return json.loads(Path(path).read_text(encoding="utf-8"))
 
 
 def read_split_csv(path: str | Path) -> list[dict[str, str]]:
+    """Read a train/valid/test split CSV into row dictionaries."""
     with Path(path).open("r", encoding="utf-8", newline="") as f:
         return list(csv.DictReader(f))
 
 
 def load_dataset(data_dir: str | Path, split_csv: str) -> list[dict[str, str]]:
+    """Load one dataset split and attach absolute image paths when needed."""
     data_path = Path(data_dir)
     rows = read_split_csv(data_path / split_csv)
     for row in rows:
@@ -26,6 +29,7 @@ def load_dataset(data_dir: str | Path, split_csv: str) -> list[dict[str, str]]:
 
 
 def summarize_labels(rows: list[dict[str, str]], label_col: str = "label") -> dict[str, int]:
+    """Count labels in a split for validation and reporting."""
     return dict(Counter(row[label_col] for row in rows))
 
 

@@ -6,7 +6,12 @@ from typing import Any
 
 
 def load_config(path: str | Path) -> dict[str, Any]:
-    """Load YAML-like config with a PyYAML fast path and a small fallback parser."""
+    """Load an experiment config.
+
+    PyYAML is used when available. The fallback parser exists so the tiny smoke
+    pipeline can still run in very minimal environments, but production-style
+    configs should be parsed with PyYAML via `requirements.txt`.
+    """
     config_path = Path(path)
     text = config_path.read_text(encoding="utf-8")
     try:
@@ -22,6 +27,7 @@ def write_config_copy(
     output_dir: str | Path,
     filename: str = "config.yaml",
 ) -> None:
+    """Copy the config used for a run into the experiment artifact directory."""
     output = Path(output_dir)
     output.mkdir(parents=True, exist_ok=True)
     source = Path(config_path)
@@ -29,10 +35,16 @@ def write_config_copy(
 
 
 def write_json(path: str | Path, payload: dict[str, Any]) -> None:
+    """Write UTF-8 JSON with stable indentation for human-readable artifacts."""
     Path(path).write_text(json.dumps(payload, indent=2, ensure_ascii=False), encoding="utf-8")
 
 
 def _parse_simple_yaml(text: str) -> dict[str, Any]:
+    """Parse the small YAML subset used by scaffold configs.
+
+    This is intentionally limited to nested dictionaries, simple lists, and
+    scalar values. It is not a full YAML implementation.
+    """
     lines = [
         raw.rstrip()
         for raw in text.splitlines()
@@ -81,6 +93,7 @@ def _parse_simple_yaml(text: str) -> dict[str, Any]:
 
 
 def _parse_scalar(value: str) -> Any:
+    """Convert a simple YAML scalar into a Python value."""
     if value in {"", "null", "None", "~"}:
         return None
     if value == "true":

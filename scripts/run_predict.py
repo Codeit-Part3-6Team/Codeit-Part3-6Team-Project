@@ -17,6 +17,7 @@ from src.utils.paths import ensure_dir
 
 
 def main() -> None:
+    """Run one prediction and append the result to the experiment directory."""
     parser = argparse.ArgumentParser()
     parser.add_argument("--config", required=True)
     parser.add_argument("--project-root", default=".")
@@ -37,4 +38,3 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
-

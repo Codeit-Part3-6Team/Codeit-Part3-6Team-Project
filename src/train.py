@@ -30,6 +30,7 @@ from src.validate_data import validate_data
 
 
 def _features(rows: list[dict[str, str]], task: str) -> list[tuple[float, float, float]] | list[str]:
+    """Convert raw split rows into the feature shape expected by smoke models."""
     if task == "image_classification":
         return [read_ppm_mean_rgb(row["absolute_image_path"]) for row in rows]
     if task == "text_classification":
@@ -38,6 +39,7 @@ def _features(rows: list[dict[str, str]], task: str) -> list[tuple[float, float,
 
 
 def run_training(config_path: str | Path, project_root: str | Path) -> dict[str, float]:
+    """Run a config-driven training job and write standard experiment artifacts."""
     root = Path(project_root)
     config = load_config(config_path)
     data_dir = root / config["paths"]["data_dir"]
@@ -59,6 +61,8 @@ def run_training(config_path: str | Path, project_root: str | Path) -> dict[str,
     task = config["data"]["task"]
     model_name = config["model"]["name"]
 
+    # HuggingFace models need config-only values such as base model and label map,
+    # so they bypass the lightweight smoke-model registry.
     if is_huggingface_model(model_name):
         return _run_huggingface_training(
             config_path=config_path,
@@ -116,6 +120,7 @@ def _run_huggingface_training(
     test_rows: list[dict[str, str]],
     logger,
 ) -> dict[str, float]:
+    """Train a HuggingFace sequence classifier and save it in the standard layout."""
     if config["data"]["task"] != "text_classification":
         raise ValueError("HuggingFace sequence classification requires text_classification data.")
 
@@ -182,6 +187,7 @@ def _run_huggingface_training(
 
 
 def main() -> None:
+    """Delegate CLI parsing to the official script entry point."""
     from scripts.run_train import main as script_main
 
     script_main()

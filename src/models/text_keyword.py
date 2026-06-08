@@ -5,13 +5,19 @@ from typing import Any
 
 
 class KeywordTextClassifier:
-    """텍스트 파이프라인 smoke test용 의존성 없는 단순 분류기."""
+    """Tiny keyword-count classifier used for text pipeline smoke tests.
+
+    The model memorizes token counts per label and predicts the label with the
+    largest overlap. It exists to validate data loading, artifact writing, and
+    prediction plumbing before a real HuggingFace model is used.
+    """
 
     def __init__(self) -> None:
         self.label_token_counts: dict[str, dict[str, int]] = {}
         self.label_counts: dict[str, int] = {}
 
     def fit(self, samples: list[tuple[str, str]]) -> None:
+        """Count tokens per label from `(text, label)` samples."""
         token_counts: dict[str, Counter[str]] = defaultdict(Counter)
         label_counts: Counter[str] = Counter()
         for text, label in samples:
@@ -23,6 +29,7 @@ class KeywordTextClassifier:
         }
 
     def predict_one(self, text: str) -> str:
+        """Predict one label by token overlap with each label vocabulary."""
         if not self.label_token_counts:
             raise RuntimeError("Model is not fitted")
         tokens = _tokenize(text)
@@ -32,9 +39,11 @@ class KeywordTextClassifier:
         return max(scores, key=lambda label: (scores[label], self.label_counts.get(label, 0)))
 
     def predict(self, texts: list[str]) -> list[str]:
+        """Predict labels for multiple texts."""
         return [self.predict_one(text) for text in texts]
 
     def to_dict(self) -> dict[str, Any]:
+        """Serialize the lightweight model to JSON-compatible data."""
         return {
             "model_type": "keyword_text_classifier",
             "label_token_counts": self.label_token_counts,
@@ -43,6 +52,7 @@ class KeywordTextClassifier:
 
     @classmethod
     def from_dict(cls, payload: dict[str, Any]) -> "KeywordTextClassifier":
+        """Restore a model saved by `to_dict`."""
         model = cls()
         model.label_token_counts = {
             label: {token: int(count) for token, count in counts.items()}
@@ -55,9 +65,9 @@ class KeywordTextClassifier:
 
 
 def _tokenize(text: str) -> list[str]:
+    """Tokenize enough for smoke tests without adding external NLP dependencies."""
     return [
         token.strip(".,!?;:()[]{}\"'").lower()
         for token in text.split()
         if token.strip(".,!?;:()[]{}\"'")
     ]
-

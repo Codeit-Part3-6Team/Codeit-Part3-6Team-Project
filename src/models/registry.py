@@ -6,6 +6,11 @@ from src.models.text_keyword import KeywordTextClassifier
 
 
 def build_model(name: str) -> MeanRgbCentroidClassifier | KeywordTextClassifier:
+    """Build lightweight smoke-test models by config `model.name`.
+
+    HuggingFace models are intentionally excluded because they need additional
+    config values and artifact directories that are handled by `src.train`.
+    """
     if name == "mean_rgb_centroid":
         return MeanRgbCentroidClassifier()
     if name == "keyword_text_classifier":

@@ -11,6 +11,12 @@ from src.data import read_json, read_split_csv, summarize_labels
 
 
 def validate_data(data_dir: str | Path) -> dict[str, object]:
+    """Validate that a processed dataset satisfies the project data contract.
+
+    The validator supports the current smoke-test tasks:
+    image classification and text classification. It returns a structured
+    result instead of printing directly so scripts and tests can reuse it.
+    """
     base = Path(data_dir)
     required_files = ["train.csv", "valid.csv", "test.csv", "class_map.json", "dataset_info.json"]
     errors: list[str] = []
@@ -76,6 +82,7 @@ def validate_data(data_dir: str | Path) -> dict[str, object]:
 
 
 def main() -> None:
+    """CLI entry point kept for backward compatibility with `python src/...`."""
     parser = argparse.ArgumentParser()
     parser.add_argument("--data-dir", default="data/processed")
     args = parser.parse_args()

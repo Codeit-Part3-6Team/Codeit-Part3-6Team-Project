@@ -12,6 +12,7 @@ from src.train import run_training
 
 
 def main() -> None:
+    """Train one experiment from a config file and print final metrics."""
     parser = argparse.ArgumentParser()
     parser.add_argument("--config", required=True)
     parser.add_argument("--project-root", default=".")
@@ -23,4 +24,3 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
-

@@ -10,6 +10,7 @@ def setup_logger(
     log_path: str | Path | None = None,
     level: int = logging.INFO,
 ) -> logging.Logger:
+    """Create a logger that writes to stdout and optionally to a file."""
     logger = logging.getLogger(name)
     logger.setLevel(level)
     logger.handlers.clear()
@@ -32,4 +33,3 @@ def setup_logger(
         logger.addHandler(file_handler)
 
     return logger
-

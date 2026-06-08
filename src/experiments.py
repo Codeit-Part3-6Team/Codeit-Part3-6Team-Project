@@ -29,6 +29,7 @@ def collect_experiment_summaries(
     project_root: str | Path,
     experiments_dir: str | Path = "experiments",
 ) -> list[dict[str, Any]]:
+    """Collect one summary row per experiment directory."""
     root = Path(project_root)
     base_dir = _resolve_path(root, experiments_dir)
     if not base_dir.exists():
@@ -47,6 +48,7 @@ def write_experiment_summary(
     output_path: str | Path = "reports/experiment_summary.csv",
     experiments_dir: str | Path = "experiments",
 ) -> list[dict[str, Any]]:
+    """Write experiment comparison reports as CSV and JSON."""
     root = Path(project_root)
     rows = collect_experiment_summaries(root, experiments_dir)
     target = _resolve_path(root, output_path)
@@ -60,6 +62,7 @@ def write_experiment_summary(
 
 
 def _summarize_experiment(project_root: Path, experiment_dir: Path) -> dict[str, Any]:
+    """Build a summary row from config, metrics, and run metadata."""
     config_path = experiment_dir / "config.yaml"
     metrics_path = experiment_dir / "metrics.json"
     run_info_path = experiment_dir / "run_info.json"
@@ -91,10 +94,12 @@ def _summarize_experiment(project_root: Path, experiment_dir: Path) -> dict[str,
 
 
 def _normalize_row(row: dict[str, Any]) -> dict[str, Any]:
+    """Keep CSV output stable even when future summary rows add fields."""
     return {column: row.get(column, "") for column in SUMMARY_COLUMNS}
 
 
 def _relative_path(root: Path, path: Path) -> str:
+    """Prefer project-relative paths in human-facing reports."""
     try:
         return path.relative_to(root).as_posix()
     except ValueError:
@@ -102,5 +107,6 @@ def _relative_path(root: Path, path: Path) -> str:
 
 
 def _resolve_path(root: Path, path: str | Path) -> Path:
+    """Resolve paths for both local runs and absolute Colab/Drive paths."""
     candidate = Path(path)
     return candidate if candidate.is_absolute() else root / candidate

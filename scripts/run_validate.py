@@ -12,6 +12,7 @@ from src.validate_data import validate_data
 
 
 def main() -> None:
+    """Validate a processed dataset before training or prediction."""
     parser = argparse.ArgumentParser()
     parser.add_argument("--data-dir", default="data/processed")
     parser.add_argument("--project-root", default=".")
@@ -29,4 +30,3 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
-

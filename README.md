@@ -117,6 +117,13 @@ python scripts/summarize_experiments.py --project-root .
 - 모든 실험은 config, metrics, history, code version, artifact path를 남깁니다.
 - 텍스트 프로젝트는 `keyword_text_classifier`로 smoke test를 먼저 통과시킨 뒤 HuggingFace 모델로 교체합니다.
 
+## 코드 문서화 원칙
+
+- public 함수와 클래스에는 역할을 설명하는 docstring을 남깁니다.
+- 주석은 “무엇을 하는가”보다 “왜 이렇게 하는가”를 설명할 때 사용합니다.
+- smoke model은 실제 성능 모델이 아니라 파이프라인 검증용임을 명확히 표시합니다.
+- 실험 산출물은 팀원이 나중에 읽고 이어서 기록할 수 있는 형태로 남깁니다.
+
 ## 킥오프 문서
 
 - `docs/PIPELINE_OVERVIEW.md`: 전체 파이프라인 설명 문서

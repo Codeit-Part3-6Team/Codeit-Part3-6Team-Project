@@ -11,6 +11,7 @@ from src.config import write_json
 
 
 def resolve_experiment_dir(project_root: str | Path, config: dict[str, Any]) -> Path:
+    """Return the directory where one experiment should write its artifacts."""
     root = Path(project_root)
     experiment_name = config.get("experiment", {}).get("name")
     if not experiment_name:
@@ -22,6 +23,7 @@ def resolve_experiment_dir(project_root: str | Path, config: dict[str, Any]) -> 
 
 
 def get_git_commit() -> str | None:
+    """Return the current git commit hash when the project is inside a repo."""
     try:
         result = subprocess.run(
             ["git", "rev-parse", "HEAD"],
@@ -35,6 +37,7 @@ def get_git_commit() -> str | None:
 
 
 def write_run_info(output_dir: str | Path, config: dict[str, Any]) -> None:
+    """Write environment metadata that helps reproduce an experiment later."""
     payload = {
         "experiment": config.get("experiment", {}),
         "python": platform.python_version(),
@@ -45,6 +48,7 @@ def write_run_info(output_dir: str | Path, config: dict[str, Any]) -> None:
 
 
 def write_history(path: str | Path, rows: list[dict[str, Any]]) -> None:
+    """Write epoch-level metrics to CSV."""
     if not rows:
         return
     with Path(path).open("w", encoding="utf-8", newline="") as f:
@@ -59,6 +63,7 @@ def write_experiment_readme(
     metrics: dict[str, float],
     command: str,
 ) -> None:
+    """Create a human-editable README inside an experiment directory."""
     experiment = config.get("experiment", {})
     data = config.get("data", {})
     model = config.get("model", {})
@@ -112,6 +117,7 @@ config 기반 실험 실행 결과입니다. 자세한 해석과 다음 액션�
 
 
 def maybe_backup(output_dir: str | Path, backup_dir: str | Path | None) -> None:
+    """Copy experiment artifacts to a backup directory such as Google Drive."""
     if not backup_dir:
         return
     source = Path(output_dir)
