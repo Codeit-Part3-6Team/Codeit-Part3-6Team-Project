@@ -18,7 +18,9 @@ def resolve_experiment_dir(project_root: str | Path, config: dict[str, Any]) -> 
         raise ValueError("config.experiment.name is required")
     output_dir = config.get("paths", {}).get("output_dir")
     if output_dir:
+        # Colab/Drive처럼 절대경로나 명시 경로가 필요할 때는 config의 output_dir를 우선합니다.
         return root / output_dir
+    # output_dir가 없으면 실험 이름을 기준으로 표준 experiments 폴더를 사용합니다.
     return root / "experiments" / str(experiment_name)
 
 
@@ -131,4 +133,5 @@ def maybe_backup(output_dir: str | Path, backup_dir: str | Path | None) -> None:
             destination = target / item.name
             if destination.exists():
                 shutil.rmtree(destination)
+            # HuggingFace의 hf_model/처럼 폴더 단위 artifact도 백업 대상입니다.
             shutil.copytree(item, destination)

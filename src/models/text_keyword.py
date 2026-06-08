@@ -21,6 +21,7 @@ class KeywordTextClassifier:
         label_counts: Counter[str] = Counter()
         for text, label in samples:
             label_counts[label] += 1
+            # 형태소 분석 없이 공백 token만 사용해 외부 NLP 의존성을 만들지 않습니다.
             token_counts[label].update(_tokenize(text))
         self.label_counts = dict(label_counts)
         self.label_token_counts = {
@@ -35,6 +36,7 @@ class KeywordTextClassifier:
         scores: dict[str, int] = {}
         for label, counts in self.label_token_counts.items():
             scores[label] = sum(counts.get(token, 0) for token in tokens)
+        # 점수가 같으면 학습 샘플이 더 많은 label을 선택해 결과가 deterministic하게 나오도록 합니다.
         return max(scores, key=lambda label: (scores[label], self.label_counts.get(label, 0)))
 
     def predict(self, texts: list[str]) -> list[str]:

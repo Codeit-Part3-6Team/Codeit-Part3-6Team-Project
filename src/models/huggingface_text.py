@@ -130,6 +130,7 @@ class HuggingFaceSequenceClassifier:
         lr = float(optimizer_config.get("lr", 2e-5))
         weight_decay = float(optimizer_config.get("weight_decay", 0.01))
 
+        # CUDA가 잡히면 그대로 GPU를 쓰고, Colab/로컬 CPU에서도 같은 코드가 돌도록 fallback합니다.
         device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         self.model.to(device)
 
@@ -195,6 +196,7 @@ class HuggingFaceSequenceClassifier:
         predictions: list[str] = []
         self.model.eval()
         with torch.no_grad():
+            # 평가/예측에서는 gradient를 만들지 않아 메모리 사용을 줄입니다.
             for input_ids, attention_mask in loader:
                 outputs = self.model(
                     input_ids=input_ids.to(device),
@@ -212,6 +214,7 @@ class HuggingFaceSequenceClassifier:
         """tokenizer와 model weight를 `hf_model/` 폴더에 저장합니다."""
         model_dir = Path(output_dir) / "hf_model"
         model_dir.mkdir(parents=True, exist_ok=True)
+        # HuggingFace 표준 save_pretrained 포맷을 쓰면 from_pretrained로 바로 복원할 수 있습니다.
         self.model.save_pretrained(model_dir)
         self.tokenizer.save_pretrained(model_dir)
 

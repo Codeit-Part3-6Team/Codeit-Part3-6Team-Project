@@ -22,6 +22,7 @@ def predict_one(config_path: str | Path, project_root: str | Path, input_path: s
     model_path = resolve_experiment_dir(root, config) / "best_model.json"
     payload = json.loads(model_path.read_text(encoding="utf-8"))
     task = config["data"]["task"]
+    # best_model.json의 model_type을 기준으로 저장된 artifact를 어떤 클래스로 복원할지 결정합니다.
     if payload["model_type"] == "mean_rgb_centroid":
         model = MeanRgbCentroidClassifier.from_dict(payload)
         return model.predict_one(read_ppm_mean_rgb(root / input_path))
@@ -30,12 +31,14 @@ def predict_one(config_path: str | Path, project_root: str | Path, input_path: s
         if task == "text_classification":
             candidate = Path(input_path)
             text_path = candidate if candidate.is_absolute() else root / candidate
+            # 텍스트 예측은 파일 경로와 직접 입력 문자열을 모두 허용해 데모/테스트를 쉽게 합니다.
             input_text = text_path.read_text(encoding="utf-8") if text_path.exists() else str(input_path)
             return model.predict_one(input_text)
     if payload["model_type"] == MODEL_TYPE:
         model = HuggingFaceSequenceClassifier.from_artifact(model_path.parent)
         candidate = Path(input_path)
         text_path = candidate if candidate.is_absolute() else root / candidate
+        # HuggingFace 경로도 keyword smoke model과 같은 입력 규칙을 유지합니다.
         input_text = text_path.read_text(encoding="utf-8") if text_path.exists() else str(input_path)
         return model.predict_one(input_text)
     raise ValueError(f"Unsupported model artifact: {payload.get('model_type')}")

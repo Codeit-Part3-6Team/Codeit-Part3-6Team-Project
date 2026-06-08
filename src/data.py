@@ -23,6 +23,8 @@ def load_dataset(data_dir: str | Path, split_csv: str) -> list[dict[str, str]]:
     data_path = Path(data_dir)
     rows = read_split_csv(data_path / split_csv)
     for row in rows:
+        # image_path는 CSV 안에서는 data_dir 기준 상대경로로 관리하고,
+        # 학습 코드에서는 바로 읽을 수 있도록 absolute_image_path를 덧붙입니다.
         if "image_path" in row:
             row["absolute_image_path"] = str(data_path / row["image_path"])
     return rows

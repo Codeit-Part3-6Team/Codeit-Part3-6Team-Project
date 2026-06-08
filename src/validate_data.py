@@ -34,6 +34,7 @@ def validate_data(data_dir: str | Path) -> dict[str, object]:
     valid_labels = set(class_map)
     seen_paths: dict[str, str] = {}
     split_summaries: dict[str, dict[str, int]] = {}
+    # task마다 필요한 입력 컬럼이 달라서 Data Contract도 task 기준으로 분기합니다.
     required_columns_by_task = {
         "image_classification": ["image_path", "label"],
         "text_classification": ["text", "label"],
@@ -61,11 +62,13 @@ def validate_data(data_dir: str | Path) -> dict[str, object]:
                     errors.append(f"{split}.csv line {index}: file not found: {image_path}")
                 previous_split = seen_paths.get(image_path)
                 if previous_split and previous_split != split:
+                    # 같은 sample이 train과 test에 동시에 있으면 평가 점수가 과대평가될 수 있습니다.
                     errors.append(f"Duplicate sample across splits: {image_path} in {previous_split} and {split}")
                 seen_paths[image_path] = split
             if task == "text_classification" and not row.get("text", "").strip():
                 errors.append(f"{split}.csv line {index}: empty text")
             if label not in valid_labels:
+                # class_map에 없는 label은 모델 출력 id와 매칭되지 않으므로 초기에 막습니다.
                 errors.append(f"{split}.csv line {index}: unknown label: {label}")
         split_summaries[split] = summarize_labels(rows)
 
