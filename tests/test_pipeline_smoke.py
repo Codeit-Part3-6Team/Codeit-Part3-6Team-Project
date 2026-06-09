@@ -22,9 +22,13 @@ def test_image_smoke_training_writes_artifacts(isolated_project: Path):
     assert (output_dir / "run_info.json").exists()
     assert (output_dir / "README.md").exists()
     assert (output_dir / "train.log").exists()
+    assert (output_dir / "run_status.json").exists()
 
     saved_metrics = json.loads((output_dir / "metrics.json").read_text(encoding="utf-8"))
+    run_status = json.loads((output_dir / "run_status.json").read_text(encoding="utf-8"))
     assert saved_metrics["valid_accuracy"] == 1.0
+    assert run_status["operation"] == "train"
+    assert run_status["status"] == "success"
 
 
 def test_text_smoke_training_and_prediction(isolated_project: Path):
@@ -41,3 +45,40 @@ def test_text_smoke_training_and_prediction(isolated_project: Path):
     assert prediction == "positive"
     assert (isolated_project / "experiments" / "smoke_test_text" / "best_model.json").exists()
 
+
+def test_training_writes_failure_artifacts(isolated_project: Path):
+    config = isolated_project / "configs" / "train_failure.yaml"
+    config.write_text(
+        """
+experiment:
+  name: train_failure
+  seed: 42
+paths:
+  data_dir: data/missing_dataset
+  output_dir: experiments/train_failure
+data:
+  task: text_classification
+  train_csv: train.csv
+  valid_csv: valid.csv
+  test_csv: test.csv
+model:
+  name: keyword_text_classifier
+""",
+        encoding="utf-8",
+    )
+
+    try:
+        run_training(config, isolated_project)
+    except RuntimeError:
+        pass
+    else:
+        raise AssertionError("run_training should fail when data validation fails")
+
+    output_dir = isolated_project / "experiments" / "train_failure"
+    run_status = json.loads((output_dir / "run_status.json").read_text(encoding="utf-8"))
+    failure_log = (output_dir / "failure.log").read_text(encoding="utf-8")
+
+    assert run_status["operation"] == "train"
+    assert run_status["status"] == "failed"
+    assert run_status["error"]["type"] == "RuntimeError"
+    assert "Data validation failed" in failure_log

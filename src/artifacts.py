@@ -4,6 +4,8 @@ import csv
 import platform
 import shutil
 import subprocess
+import traceback
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
@@ -47,6 +49,40 @@ def write_run_info(output_dir: str | Path, config: dict[str, Any]) -> None:
         "git_commit": get_git_commit(),
     }
     write_json(Path(output_dir) / "run_info.json", payload)
+
+
+def write_run_status(
+    output_dir: str | Path,
+    operation: str,
+    status: str,
+    result: dict[str, Any] | None = None,
+    error: dict[str, str] | None = None,
+) -> None:
+    """실행 상태를 run_status.json으로 저장합니다."""
+    payload: dict[str, Any] = {
+        "operation": operation,
+        "status": status,
+        "updated_at": datetime.now(timezone.utc).isoformat(),
+    }
+    if result is not None:
+        payload["result"] = result
+    if error is not None:
+        payload["error"] = error
+    write_json(Path(output_dir) / "run_status.json", payload)
+
+
+def write_failure_artifact(output_dir: str | Path, operation: str, exc: Exception) -> None:
+    """실패 상태와 traceback을 저장해 나중에 원인을 확인할 수 있게 합니다."""
+    error = {"type": type(exc).__name__, "message": str(exc)}
+    write_run_status(output_dir, operation, "failed", error=error)
+    failure_text = (
+        f"operation: {operation}\n"
+        f"failed_at: {datetime.now(timezone.utc).isoformat()}\n"
+        f"error_type: {type(exc).__name__}\n"
+        f"message: {exc}\n\n"
+        f"{traceback.format_exc()}"
+    )
+    Path(output_dir, "failure.log").write_text(failure_text, encoding="utf-8")
 
 
 def write_history(path: str | Path, rows: list[dict[str, Any]]) -> None:

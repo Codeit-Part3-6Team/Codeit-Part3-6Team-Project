@@ -1,12 +1,10 @@
 from __future__ import annotations
 
 import csv
-import traceback
-from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
-from src.artifacts import resolve_experiment_dir, write_run_info
+from src.artifacts import resolve_experiment_dir, write_failure_artifact, write_run_info, write_run_status
 from src.config import load_config, write_config_copy, write_json
 from src.rag.answerer import build_answer
 from src.rag.chunker import chunk_documents
@@ -286,34 +284,12 @@ def _write_run_status(
     result: dict[str, Any] | None = None,
     error: dict[str, str] | None = None,
 ) -> None:
-    payload: dict[str, Any] = {
-        "operation": operation,
-        "status": status,
-        "updated_at": _utc_now(),
-    }
-    if result is not None:
-        payload["result"] = result
-    if error is not None:
-        payload["error"] = error
-    write_json(Path(output_dir) / "run_status.json", payload)
+    write_run_status(output_dir, operation, status, result=result, error=error)
 
 
 def _write_failure_artifact(output_dir: str | Path, operation: str, exc: Exception) -> None:
     """실패 원인과 traceback을 파일로 남긴 뒤 호출부가 예외를 다시 올리게 합니다."""
-    error = {"type": type(exc).__name__, "message": str(exc)}
-    _write_run_status(output_dir, operation, "failed", error=error)
-    failure_text = (
-        f"operation: {operation}\n"
-        f"failed_at: {_utc_now()}\n"
-        f"error_type: {type(exc).__name__}\n"
-        f"message: {exc}\n\n"
-        f"{traceback.format_exc()}"
-    )
-    Path(output_dir, "failure.log").write_text(failure_text, encoding="utf-8")
-
-
-def _utc_now() -> str:
-    return datetime.now(timezone.utc).isoformat()
+    write_failure_artifact(output_dir, operation, exc)
 
 
 def _read_csv(path: str | Path) -> list[dict[str, str]]:

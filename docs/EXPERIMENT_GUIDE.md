@@ -50,6 +50,7 @@ experiments/{experiment_name}/
 |-- metrics.json
 |-- history.csv
 |-- run_info.json
+|-- run_status.json
 |-- README.md
 `-- best_model.json
 ```
@@ -59,6 +60,9 @@ HuggingFace 실험은 추가로 다음 폴더를 생성합니다.
 ```text
 experiments/{experiment_name}/hf_model/
 ```
+
+실패한 실험은 같은 폴더에 `failure.log`를 남깁니다.
+`run_status.json`의 `status`가 `failed`이면 이 파일에서 에러 타입, 메시지, traceback을 확인합니다.
 
 ## 실험 로그 컬럼
 

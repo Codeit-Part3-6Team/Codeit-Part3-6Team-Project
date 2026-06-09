@@ -36,7 +36,7 @@
 |---|---|---|
 | 백업 | `on_finish` 중심 | 중간 백업, 실패 시 백업, RAG 산출물 백업 정책 추가 |
 | best model 저장 | 분류/HF 중심 | RAG에서는 best retriever/index 기준을 별도 정의 |
-| 로그 | RAG 실패 artifact는 있음 | 학습 파이프라인에도 `failure.log`, `run_status.json` 적용 |
+| 로그 | RAG/train 실패 artifact는 있음 | predict와 기타 스크립트에도 같은 패턴 적용 |
 | metric | accuracy/RAG 기본 metric 중심 | macro f1, confusion matrix, retrieval@k, answer faithfulness 후보 추가 |
 | 문서 loader 품질 | 입구는 있음 | 실제 PDF/HWP/HWPX 샘플 기반 보정 필요 |
 | HuggingFace trainer 기능 | 기본 학습 가능 | early stopping, scheduler, checkpoint save/resume 명시화 필요 |
@@ -69,8 +69,8 @@
 2. **실제 샘플 문서 E2E**
    실제 RFP 문서 하나를 기준으로 loader, chunk, retrieval, answer, evaluation 산출물 품질을 확인합니다.
 
-3. **학습 파이프라인 failure artifact**
-   RAG에 적용한 `run_status.json`/`failure.log` 패턴을 train/predict에도 적용합니다.
+3. **예측 파이프라인 failure artifact**
+   RAG/train에 적용한 `run_status.json`/`failure.log` 패턴을 predict에도 적용합니다.
 
 4. **Checkpoint/Resume**
    HuggingFace fine-tuning을 실제로 돌릴 가능성이 커졌을 때 별도 브랜치에서 보강합니다.

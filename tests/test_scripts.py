@@ -62,3 +62,28 @@ def test_run_train_and_predict_scripts_write_experiment_artifacts(
     assert "'prediction': 'positive'" in result.stdout
     assert (output_dir / "predictions.csv").exists()
     assert (output_dir / "README.md").exists()
+    assert (output_dir / "run_status.json").exists()
+
+
+def test_run_train_script_resolves_config_from_project_root(
+    isolated_project: Path,
+    repo_root: Path,
+    tmp_path: Path,
+):
+    result = subprocess.run(
+        [
+            sys.executable,
+            str(repo_root / "scripts" / "run_train.py"),
+            "--project-root",
+            str(isolated_project),
+            "--config",
+            "configs/smoke_test_text.yaml",
+        ],
+        check=True,
+        capture_output=True,
+        text=True,
+        cwd=tmp_path,
+    )
+
+    assert "'valid_accuracy': 1.0" in result.stdout
+    assert (isolated_project / "experiments" / "smoke_test_text" / "run_status.json").exists()

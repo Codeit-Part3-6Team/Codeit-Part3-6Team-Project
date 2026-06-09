@@ -145,9 +145,12 @@ experiments/smoke_test_text/
 |-- metrics.json
 |-- predictions.csv
 |-- README.md
+|-- run_status.json
 |-- run_info.json
 `-- train.log
 ```
+
+학습이 실패하면 같은 실험 폴더에 `failure.log`를 남깁니다.
 
 HuggingFace 실험은 추가로 다음 폴더를 만듭니다.
 
