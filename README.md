@@ -63,6 +63,8 @@ python scripts/run_rag_chat.py --config configs/rag_smoke_test.yaml --project-ro
 python scripts/run_rag_chat.py --config configs/rag_smoke_test.yaml --project-root . --evaluate
 ```
 
+RAG smoke test는 외부 모델 없이 hashing embedding 기반 semantic retrieval과 추출형 답변으로 동작합니다.
+
 ## HuggingFace Fine-Tuning 예시
 
 HuggingFace 실험은 처음 실행할 때 base model을 내려받기 때문에 인터넷 연결이 필요합니다. 실제 프로젝트 데이터에서는 Colab/GPU 환경 사용을 권장합니다.

@@ -11,12 +11,13 @@ RAG 파이프라인은 **문서를 작은 근거 단위로 쪼개고, 질문과 
 raw document
   -> parsed document
   -> chunks
+  -> embeddings
   -> retrieved chunks
   -> answer + citations
 ```
 
 현재 smoke pipeline은 여기까지 구현되어 있습니다.
-`embeddings -> vector index` 단계는 다음 확장 단계로 남겨둡니다.
+별도 vector DB/index는 아직 만들지 않고, `embeddings.jsonl`을 읽어 cosine similarity로 검색합니다.
 
 ## 왜 계약이 필요한가
 
@@ -50,6 +51,8 @@ src/
 `-- rag/
     |-- document_loader.py
     |-- chunker.py
+    |-- embedder.py
+    |-- vector_store.py
     |-- retriever.py
     |-- answerer.py
     `-- pipeline.py
@@ -65,6 +68,7 @@ scripts/
 ## 현재 구현된 smoke pipeline
 
 현재 구현은 외부 모델이나 vector DB 없이 RAG 운영 흐름을 먼저 검증하는 버전입니다.
+embedding은 문자 n-gram 기반 hashing vector를 사용하고, 검색은 cosine similarity에 keyword 보정을 더해 수행합니다.
 
 실행 config:
 
@@ -93,7 +97,9 @@ python scripts/run_rag_chat.py --config configs/rag_smoke_test.yaml --project-ro
 
 - `document_loader.py`: txt 문서를 section 단위 document row로 변환
 - `chunker.py`: document row를 검색 가능한 chunk row로 변환
-- `retriever.py`: keyword 기반 top-k 검색
+- `embedder.py`: chunk text를 hashing embedding으로 변환
+- `vector_store.py`: 질문 embedding과 chunk embedding을 비교해 top-k 검색
+- `retriever.py`: keyword fallback 검색
 - `answerer.py`: 검색된 chunk에서 답변 문장 추출 및 citation 생성
 - `pipeline.py`: ingest/retrieve/chat/evaluation 실행과 산출물 저장
 
@@ -103,6 +109,7 @@ python scripts/run_rag_chat.py --config configs/rag_smoke_test.yaml --project-ro
 experiments/rag_smoke_test/
 |-- parsed_documents.csv
 |-- chunks.csv
+|-- embeddings.jsonl
 |-- retrieval_results.jsonl
 |-- answers.jsonl
 |-- evaluation_results.csv
@@ -118,7 +125,7 @@ experiments/rag_smoke_test/
 - `citation_correct_rate`
 - `not_found_rate`
 
-이 구현의 목적은 성능이 아니라, RAG 프로젝트에서도 config 기반 실행, citation 추적, 평가 산출물 저장, 실험 요약이 끝까지 이어지는지 확인하는 것입니다.
+이 구현의 목적은 성능이 아니라, RAG 프로젝트에서도 config 기반 실행, embedding 산출물 저장, citation 추적, 평가 산출물 저장, 실험 요약이 끝까지 이어지는지 확인하는 것입니다.
 
 ## 1. Document Input
 
@@ -178,7 +185,8 @@ chunk:
 ## 3. Embedding Output
 
 chunk를 embedding으로 바꾼 뒤에는 vector와 metadata가 함께 관리되어야 합니다.
-이 단계는 아직 구현 전이며, keyword retriever 다음에 붙일 확장 후보입니다.
+현재 smoke pipeline에서는 `hashing-char-ngram-v1` embedding을 사용합니다.
+이 방식은 외부 모델 없이 vector retrieval 계약을 검증하기 위한 것이며, 실제 프로젝트에서는 sentence-transformers 같은 모델로 교체할 수 있습니다.
 
 파일 예시:
 
@@ -379,8 +387,10 @@ rag:
     unit: char
   embedding:
     provider: local
-    model_name: sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2
+    model_name: hashing-char-ngram-v1
+    dimension: 64
   retriever:
+    method: semantic
     top_k: 3
     score_threshold: 0.0
   answerer:
@@ -392,7 +402,7 @@ metric:
   mode: max
 ```
 
-처음 smoke pipeline에서는 `answerer.mode: extractive`로 시작합니다.
+현재 smoke pipeline에서는 `answerer.mode: extractive`로 시작합니다.
 즉 LLM 답변 생성 전에, 검색된 chunk에서 문장을 찾아 반환하는 방식으로 파이프라인을 먼저 검증합니다.
 
 ## 10. Smoke Test 목표
@@ -403,6 +413,7 @@ metric:
 
 - txt 문서를 읽을 수 있다.
 - chunk를 만들 수 있다.
+- embedding 산출물을 만들 수 있다.
 - 질문과 관련 있는 chunk를 찾을 수 있다.
 - 답변에 citation을 붙일 수 있다.
 - 실험 산출물을 저장할 수 있다.
@@ -428,12 +439,14 @@ metric:
 2. `data/rag_smoke/rfp_sample.txt` 작성
 3. `src/rag/document_loader.py` 작성
 4. `src/rag/chunker.py` 작성
-5. `src/rag/retriever.py` 작성
-6. `scripts/run_rag_ingest.py` 작성
-7. `scripts/run_rag_retrieve.py` 작성
-8. `scripts/run_rag_chat.py` 작성
-9. RAG smoke test 추가
-10. 실험 summary에 RAG metric 연결
+5. `src/rag/embedder.py` 작성
+6. `src/rag/vector_store.py` 작성
+7. `src/rag/retriever.py` 작성
+8. `scripts/run_rag_ingest.py` 작성
+9. `scripts/run_rag_retrieve.py` 작성
+10. `scripts/run_rag_chat.py` 작성
+11. RAG smoke test 추가
+12. 실험 summary에 RAG metric 연결
 
-처음에는 embedding/vector store 없이 keyword retrieval로 시작해도 됩니다.
+현재는 hashing embedding과 in-memory cosine retrieval까지 구현되어 있습니다.
 그 다음 단계에서 sentence-transformers, FAISS/Chroma 등을 붙이면 됩니다.

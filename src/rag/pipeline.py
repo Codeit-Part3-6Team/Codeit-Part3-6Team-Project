@@ -9,7 +9,9 @@ from src.config import load_config, write_config_copy, write_json
 from src.rag.answerer import build_answer
 from src.rag.chunker import chunk_documents
 from src.rag.document_loader import load_text_documents
+from src.rag.embedder import DEFAULT_EMBEDDING_MODEL, embed_chunks
 from src.rag.retriever import retrieve_chunks
+from src.rag.vector_store import retrieve_chunks_by_vector
 from src.utils.paths import ensure_dir
 
 
@@ -27,7 +29,7 @@ CHUNK_COLUMNS = [
 
 
 def run_rag_ingest(config_path: str | Path, project_root: str | Path = ".") -> dict[str, int]:
-    """RAG 원본 문서를 읽고 parsed_documents.csv와 chunks.csv를 저장합니다."""
+    """RAG 원본 문서를 읽고 document/chunk/embedding 산출물을 저장합니다."""
     root = Path(project_root)
     config = load_config(config_path)
     output_dir = resolve_experiment_dir(root, config)
@@ -41,12 +43,19 @@ def run_rag_ingest(config_path: str | Path, project_root: str | Path = ".") -> d
         chunk_size=int(chunk_cfg.get("size", 500)),
         overlap=int(chunk_cfg.get("overlap", 80)),
     )
+    embedding_cfg = config.get("rag", {}).get("embedding", {})
+    embeddings = embed_chunks(
+        chunks,
+        dimension=int(embedding_cfg.get("dimension", 64)),
+        model_name=embedding_cfg.get("model_name", DEFAULT_EMBEDDING_MODEL),
+    )
 
     write_config_copy(config_path, output_dir)
     _write_csv(output_dir / "parsed_documents.csv", documents, DOCUMENT_COLUMNS)
     _write_csv(output_dir / "chunks.csv", chunks, CHUNK_COLUMNS)
+    _write_jsonl(output_dir / "embeddings.jsonl", embeddings)
     write_run_info(output_dir, config)
-    return {"documents": len(documents), "chunks": len(chunks)}
+    return {"documents": len(documents), "chunks": len(chunks), "embeddings": len(embeddings)}
 
 
 def run_rag_retrieve(
@@ -59,21 +68,37 @@ def run_rag_retrieve(
     config = load_config(config_path)
     output_dir = resolve_experiment_dir(root, config)
     chunks_path = output_dir / "chunks.csv"
-    if not chunks_path.exists():
+    embeddings_path = output_dir / "embeddings.jsonl"
+    if not chunks_path.exists() or not embeddings_path.exists():
         # 사용자가 retrieve부터 실행해도 최소 파이프라인은 자동으로 준비되게 합니다.
         run_rag_ingest(config_path, root)
 
     retriever_cfg = config.get("rag", {}).get("retriever", {})
+    embedding_cfg = config.get("rag", {}).get("embedding", {})
     chunks = _read_csv(chunks_path)
-    retrieved = retrieve_chunks(
-        question,
-        chunks,
-        top_k=int(retriever_cfg.get("top_k", 3)),
-        score_threshold=float(retriever_cfg.get("score_threshold", 0.0)),
-    )
+    method = retriever_cfg.get("method", "keyword")
+    if method == "semantic":
+        retrieved = retrieve_chunks_by_vector(
+            question,
+            chunks,
+            _read_jsonl(embeddings_path),
+            top_k=int(retriever_cfg.get("top_k", 3)),
+            score_threshold=float(retriever_cfg.get("score_threshold", 0.0)),
+            dimension=int(embedding_cfg.get("dimension", 64)),
+        )
+    elif method == "keyword":
+        retrieved = retrieve_chunks(
+            question,
+            chunks,
+            top_k=int(retriever_cfg.get("top_k", 3)),
+            score_threshold=float(retriever_cfg.get("score_threshold", 0.0)),
+        )
+    else:
+        raise ValueError(f"Unsupported RAG retriever method: {method}")
     payload = {
         "question": question,
         "top_k": int(retriever_cfg.get("top_k", 3)),
+        "retriever_method": method,
         "retrieved_chunks": retrieved,
     }
     _append_jsonl(output_dir / "retrieval_results.jsonl", payload)
@@ -173,6 +198,24 @@ def _append_jsonl(path: str | Path, payload: dict[str, Any]) -> None:
 
     with Path(path).open("a", encoding="utf-8") as f:
         f.write(json.dumps(payload, ensure_ascii=False) + "\n")
+
+
+def _write_jsonl(path: str | Path, rows: list[dict[str, Any]]) -> None:
+    import json
+
+    with Path(path).open("w", encoding="utf-8") as f:
+        for row in rows:
+            f.write(json.dumps(row, ensure_ascii=False) + "\n")
+
+
+def _read_jsonl(path: str | Path) -> list[dict[str, Any]]:
+    import json
+
+    rows: list[dict[str, Any]] = []
+    for line in Path(path).read_text(encoding="utf-8").splitlines():
+        if line.strip():
+            rows.append(json.loads(line))
+    return rows
 
 
 def _resolve_path(root: Path, path: str | Path) -> Path:

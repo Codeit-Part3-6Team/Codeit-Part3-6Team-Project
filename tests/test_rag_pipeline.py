@@ -17,7 +17,8 @@ def test_rag_smoke_pipeline_writes_artifacts(isolated_project: Path):
     metrics = run_rag_evaluation(config, isolated_project)
 
     output_dir = isolated_project / "experiments" / "rag_smoke_test"
-    assert ingest_summary == {"documents": 3, "chunks": 3}
+    assert ingest_summary == {"documents": 3, "chunks": 3, "embeddings": 3}
+    assert retrieval["retriever_method"] == "semantic"
     assert retrieval["retrieved_chunks"][0]["chunk_id"] == "rfp_sample_chunk_0001"
     assert answer["status"] == "answered"
     assert "5천만 원" in answer["answer"]
@@ -26,6 +27,7 @@ def test_rag_smoke_pipeline_writes_artifacts(isolated_project: Path):
     assert metrics["citation_correct_rate"] == 1.0
     assert (output_dir / "parsed_documents.csv").exists()
     assert (output_dir / "chunks.csv").exists()
+    assert (output_dir / "embeddings.jsonl").exists()
     assert (output_dir / "evaluation_results.csv").exists()
     assert (output_dir / "metrics.json").exists()
 

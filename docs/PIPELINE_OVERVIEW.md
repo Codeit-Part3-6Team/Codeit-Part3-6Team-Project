@@ -196,16 +196,17 @@ RAG 프로젝트로 방향이 바뀌어도 가운데 운영 구조는 유지할 
 text -> model -> predicted_label
 
 RAG 프로젝트:
-document -> chunk -> retrieve -> answer + citations
+document -> chunk -> embedding -> retrieve -> answer + citations
 ```
 
 즉, 파이프라인의 앞단과 뒷단은 바뀌지만 “config로 실행하고, 실험 산출물을 남기고, 결과를 요약한다”는 운영 구조는 그대로 가져갈 수 있습니다.
 
-현재 RAG smoke pipeline은 외부 모델 없이 `txt` 문서와 keyword retrieval로 구현되어 있습니다.
+현재 RAG smoke pipeline은 외부 모델 없이 `txt` 문서와 hashing embedding 기반 semantic retrieval로 구현되어 있습니다.
 목표는 성능이 아니라 다음 항목을 빠르게 검증하는 것입니다.
 
 - txt 문서를 section 단위로 읽을 수 있는가
 - chunk metadata가 유지되는가
+- embedding 산출물이 저장되는가
 - 질문에 맞는 chunk를 top-k로 찾을 수 있는가
 - 답변에 citation을 붙일 수 있는가
 - `metrics.json`과 `evaluation_results.csv`를 남길 수 있는가
@@ -217,13 +218,14 @@ RAG smoke 산출물:
 experiments/rag_smoke_test/
 |-- parsed_documents.csv
 |-- chunks.csv
+|-- embeddings.jsonl
 |-- retrieval_results.jsonl
 |-- answers.jsonl
 |-- evaluation_results.csv
 `-- metrics.json
 ```
 
-다음 확장 후보는 `embedding -> vector index -> semantic retrieval`입니다.
+다음 확장 후보는 `sentence-transformers embedding -> vector index -> semantic retrieval 고도화`입니다.
 
 ## 아직 보강하면 좋은 부분
 
