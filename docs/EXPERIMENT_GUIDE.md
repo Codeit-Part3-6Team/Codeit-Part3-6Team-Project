@@ -129,5 +129,37 @@ backup:
 - `include_logs`: `false`면 `*.log` 파일을 백업에서 제외합니다.
 - `include_checkpoints`: `false`면 `hf_model/`, `checkpoints/`, `*.pt`, `*.ckpt` 같은 큰 모델 산출물을 제외합니다.
 
-`on_best`는 config에 남겨두었지만, 현재 기본 smoke/HuggingFace 학습 루프에서는
-별도 best checkpoint 이벤트로 동작하지 않습니다. best 기준 산출물은 `best_model.json`에 기록합니다.
+`backup.on_best`는 백업 시점 정책이고, 모델 저장 기준은 아래 `checkpoint.save_best`에서 제어합니다.
+현재 HuggingFace 학습 루프는 monitor metric이 개선될 때 `checkpoints/best`를 저장합니다.
+
+## 학습 제어 정책
+
+HuggingFace fine-tuning은 아래 config 블록을 실제 학습 루프에 반영합니다.
+일반 smoke 모델은 같은 config 계약을 갖지만, 현재는 빠른 파이프라인 검증용이라 checkpoint/scheduler를 적용하지 않습니다.
+
+```yaml
+checkpoint:
+  enabled: true
+  dir: checkpoints
+  save_best: true
+  save_last: true
+  save_every_epoch: false
+  resume_from:
+
+early_stopping:
+  enabled: true
+  patience: 3
+  min_delta: 0.0
+
+scheduler:
+  enabled: true
+  name: linear
+  warmup_ratio: 0.1
+  warmup_steps:
+```
+
+- `checkpoint.save_best`: monitor metric이 개선될 때 `checkpoints/best`를 저장합니다.
+- `checkpoint.save_last`: 매 epoch 후 `checkpoints/last`를 저장합니다.
+- `checkpoint.resume_from`: 이전 checkpoint 디렉터리를 지정해 optimizer/scheduler 상태까지 복원합니다.
+- `early_stopping`: monitor metric 개선이 `patience`만큼 멈추면 학습을 종료합니다.
+- `scheduler`: HuggingFace `get_scheduler`를 사용해 learning rate schedule을 적용합니다.

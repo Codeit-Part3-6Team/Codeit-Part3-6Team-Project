@@ -42,6 +42,25 @@ metric:
   monitor: valid_accuracy
   mode: max
 
+checkpoint:
+  enabled: true
+  dir: checkpoints
+  save_best: true
+  save_last: true
+  save_every_epoch: false
+  resume_from:
+
+early_stopping:
+  enabled: true
+  patience: 3
+  min_delta: 0.0
+
+scheduler:
+  enabled: true
+  name: linear
+  warmup_ratio: 0.1
+  warmup_steps:
+
 report:
   - accuracy
 

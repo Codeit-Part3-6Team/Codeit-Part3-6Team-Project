@@ -6,7 +6,7 @@ from pathlib import Path
 import pytest
 
 from src.predict import predict_one
-from src.train import run_training
+from src.train import _huggingface_train_config, run_training
 
 
 def test_image_smoke_training_writes_artifacts(isolated_project: Path):
@@ -148,3 +148,23 @@ artifact_policy:
 
     with pytest.raises(FileExistsError):
         run_training(config, isolated_project)
+
+
+def test_huggingface_train_config_merges_experiment_controls(isolated_project: Path):
+    config = {
+        "train": {"epochs": 3, "batch_size": 2},
+        "metric": {"monitor": "valid_accuracy", "mode": "max"},
+        "checkpoint": {"enabled": True, "resume_from": "experiments/unit/checkpoints/last"},
+        "early_stopping": {"enabled": True, "patience": 2},
+        "scheduler": {"enabled": True, "name": "linear"},
+    }
+
+    train_config = _huggingface_train_config(config, isolated_project)
+
+    assert train_config["epochs"] == 3
+    assert train_config["metric"]["monitor"] == "valid_accuracy"
+    assert train_config["early_stopping"]["patience"] == 2
+    assert train_config["scheduler"]["name"] == "linear"
+    assert train_config["checkpoint"]["resume_from"] == str(
+        isolated_project / "experiments" / "unit" / "checkpoints" / "last"
+    )

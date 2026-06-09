@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 from pathlib import Path
 from typing import Any
 
@@ -129,9 +130,16 @@ class HuggingFaceSequenceClassifier:
         optimizer_config = train_config.get("optimizer", {})
         lr = float(optimizer_config.get("lr", 2e-5))
         weight_decay = float(optimizer_config.get("weight_decay", 0.01))
+        metric_config = train_config.get("metric", {})
+        checkpoint_config = train_config.get("checkpoint", {})
+        early_stopping_config = train_config.get("early_stopping", {})
+        scheduler_config = train_config.get("scheduler", {})
 
         # CUDA가 잡히면 그대로 GPU를 쓰고, Colab/로컬 CPU에서도 같은 코드가 돌도록 fallback합니다.
         device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        resume_from = checkpoint_config.get("resume_from")
+        if resume_from:
+            self._load_model_checkpoint(resume_from)
         self.model.to(device)
 
         train_dataset = _TextDataset(
@@ -144,9 +152,18 @@ class HuggingFaceSequenceClassifier:
         )
         train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
         optimizer = AdamW(self.model.parameters(), lr=lr, weight_decay=weight_decay)
+        scheduler = _build_scheduler(optimizer, scheduler_config, epochs, len(train_loader))
+        state = self._load_training_state(resume_from, optimizer, scheduler, device) if resume_from else {}
+        start_epoch = int(state.get("epoch", 0)) + 1
+        best_score = state.get("best_score")
+        no_improve_epochs = int(state.get("no_improve_epochs", 0))
+        monitor = str(metric_config.get("monitor", "valid_accuracy"))
+        mode = str(metric_config.get("mode", "max"))
+        min_delta = float(early_stopping_config.get("min_delta", 0.0))
+        patience = int(early_stopping_config.get("patience", 3))
 
         history: list[dict[str, float]] = []
-        for epoch in range(1, epochs + 1):
+        for epoch in range(start_epoch, epochs + 1):
             self.model.train()
             total_loss = 0.0
             for batch in train_loader:
@@ -156,6 +173,8 @@ class HuggingFaceSequenceClassifier:
                 loss = outputs.loss
                 loss.backward()
                 optimizer.step()
+                if scheduler is not None:
+                    scheduler.step()
                 total_loss += float(loss.detach().cpu())
 
             # 매 epoch마다 valid 성능을 남겨 history.csv에서 학습 흐름을 볼 수 있게 합니다.
@@ -167,12 +186,139 @@ class HuggingFaceSequenceClassifier:
                 "valid_accuracy": accuracy(valid_true, valid_pred),
             }
             history.append(row_metrics)
+            score = float(row_metrics.get(monitor, row_metrics["valid_accuracy"]))
+            improved = _is_improved(score, best_score, mode=mode, min_delta=min_delta)
+            if improved:
+                best_score = score
+                no_improve_epochs = 0
+            else:
+                no_improve_epochs += 1
+
+            self._save_epoch_checkpoints(
+                output_dir=output_dir,
+                epoch=epoch,
+                metrics=row_metrics,
+                checkpoint_config=checkpoint_config,
+                optimizer=optimizer,
+                scheduler=scheduler,
+                best_score=best_score,
+                no_improve_epochs=no_improve_epochs,
+                improved=improved,
+            )
+
+            if early_stopping_config.get("enabled") and no_improve_epochs >= patience:
+                break
 
         self.save(output_dir)
+        final_metrics = history[-1] if history else state.get("metrics", {})
         metrics = {
-            "valid_accuracy": history[-1]["valid_accuracy"] if history else 0.0,
+            "valid_accuracy": float(final_metrics.get("valid_accuracy", 0.0)),
         }
         return metrics, history
+
+    def _load_model_checkpoint(self, checkpoint_dir: str | Path) -> None:
+        """resume_from 경로의 model/tokenizer weight를 현재 adapter에 불러옵니다."""
+        from transformers import AutoModelForSequenceClassification, AutoTokenizer
+
+        path = Path(checkpoint_dir)
+        self.model = AutoModelForSequenceClassification.from_pretrained(path)
+        self.tokenizer = AutoTokenizer.from_pretrained(path)
+
+    def _load_training_state(
+        self,
+        checkpoint_dir: str | Path,
+        optimizer: Any,
+        scheduler: Any | None,
+        device: Any,
+    ) -> dict[str, Any]:
+        """optimizer/scheduler/trainer_state를 복원해 중단된 학습을 이어갈 수 있게 합니다."""
+        import torch
+
+        path = Path(checkpoint_dir)
+        optimizer_path = path / "optimizer.pt"
+        scheduler_path = path / "scheduler.pt"
+        state_path = path / "trainer_state.json"
+        if optimizer_path.exists():
+            optimizer.load_state_dict(torch.load(optimizer_path, map_location=device))
+        if scheduler is not None and scheduler_path.exists():
+            scheduler.load_state_dict(torch.load(scheduler_path, map_location=device))
+        if state_path.exists():
+            return json.loads(state_path.read_text(encoding="utf-8"))
+        return {}
+
+    def _save_epoch_checkpoints(
+        self,
+        output_dir: str | Path,
+        epoch: int,
+        metrics: dict[str, float],
+        checkpoint_config: dict[str, Any],
+        optimizer: Any,
+        scheduler: Any | None,
+        best_score: float | None,
+        no_improve_epochs: int,
+        improved: bool,
+    ) -> None:
+        """config.checkpoint 정책에 따라 best/last/epoch checkpoint를 저장합니다."""
+        if not checkpoint_config.get("enabled"):
+            return
+        checkpoint_root = Path(output_dir) / str(checkpoint_config.get("dir", "checkpoints"))
+        if checkpoint_config.get("save_last", True):
+            self._save_checkpoint(
+                checkpoint_root / "last",
+                epoch,
+                metrics,
+                optimizer,
+                scheduler,
+                best_score,
+                no_improve_epochs,
+            )
+        if checkpoint_config.get("save_best", True) and improved:
+            self._save_checkpoint(
+                checkpoint_root / "best",
+                epoch,
+                metrics,
+                optimizer,
+                scheduler,
+                best_score,
+                no_improve_epochs,
+            )
+        if checkpoint_config.get("save_every_epoch"):
+            self._save_checkpoint(
+                checkpoint_root / f"epoch_{epoch}",
+                epoch,
+                metrics,
+                optimizer,
+                scheduler,
+                best_score,
+                no_improve_epochs,
+            )
+
+    def _save_checkpoint(
+        self,
+        checkpoint_dir: Path,
+        epoch: int,
+        metrics: dict[str, float],
+        optimizer: Any,
+        scheduler: Any | None,
+        best_score: float | None,
+        no_improve_epochs: int,
+    ) -> None:
+        """HuggingFace weight와 학습 상태를 한 checkpoint 디렉터리에 저장합니다."""
+        import torch
+
+        checkpoint_dir.mkdir(parents=True, exist_ok=True)
+        self.model.save_pretrained(checkpoint_dir)
+        self.tokenizer.save_pretrained(checkpoint_dir)
+        torch.save(optimizer.state_dict(), checkpoint_dir / "optimizer.pt")
+        if scheduler is not None:
+            torch.save(scheduler.state_dict(), checkpoint_dir / "scheduler.pt")
+        state = {
+            "epoch": epoch,
+            "metrics": metrics,
+            "best_score": best_score,
+            "no_improve_epochs": no_improve_epochs,
+        }
+        (checkpoint_dir / "trainer_state.json").write_text(json.dumps(state, indent=2), encoding="utf-8")
 
     def predict(self, texts: list[str], batch_size: int = 8) -> list[str]:
         """여러 텍스트에 대한 label 예측을 반환합니다."""
@@ -234,3 +380,31 @@ def build_label_map(rows: list[dict[str, str]], label_col: str = "label") -> dic
     """class_map.json이 없을 때 label 목록으로 deterministic label map을 만듭니다."""
     labels = sorted({row[label_col] for row in rows})
     return {label: index for index, label in enumerate(labels)}
+
+
+def _build_scheduler(optimizer: Any, scheduler_config: dict[str, Any], epochs: int, steps_per_epoch: int) -> Any | None:
+    """config.scheduler 설정으로 HuggingFace scheduler를 생성합니다."""
+    if not scheduler_config.get("enabled"):
+        return None
+    from transformers import get_scheduler
+
+    name = str(scheduler_config.get("name", "linear"))
+    total_steps = max(epochs * max(steps_per_epoch, 1), 1)
+    warmup_steps = scheduler_config.get("warmup_steps")
+    if warmup_steps is None:
+        warmup_steps = int(total_steps * float(scheduler_config.get("warmup_ratio", 0.0)))
+    return get_scheduler(
+        name=name,
+        optimizer=optimizer,
+        num_warmup_steps=int(warmup_steps),
+        num_training_steps=total_steps,
+    )
+
+
+def _is_improved(score: float, best_score: float | None, *, mode: str, min_delta: float) -> bool:
+    """monitor metric이 best score를 갱신했는지 판단합니다."""
+    if best_score is None:
+        return True
+    if mode == "min":
+        return score < best_score - min_delta
+    return score > best_score + min_delta

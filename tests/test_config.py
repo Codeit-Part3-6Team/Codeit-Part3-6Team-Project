@@ -27,6 +27,11 @@ def test_load_config_reads_huggingface_text_config(repo_root):
     assert config["model"]["name"] == "huggingface_sequence_classifier"
     assert config["model"]["model_name"] == "distilbert-base-multilingual-cased"
     assert config["train"]["batch_size"] == 4
+    assert config["checkpoint"]["enabled"] is True
+    assert config["checkpoint"]["save_best"] is True
+    assert config["early_stopping"]["enabled"] is True
+    assert config["scheduler"]["enabled"] is True
+    assert config["scheduler"]["name"] == "linear"
 
 
 def test_load_config_reads_tiny_huggingface_smoke_config(repo_root):
@@ -36,6 +41,8 @@ def test_load_config_reads_tiny_huggingface_smoke_config(repo_root):
     assert config["model"]["name"] == "huggingface_sequence_classifier"
     assert config["model"]["model_name"] == "hf-internal-testing/tiny-random-distilbert"
     assert config["data"]["max_length"] == 64
+    assert config["checkpoint"]["enabled"] is True
+    assert config["scheduler"]["enabled"] is True
 
 
 def test_load_config_reads_colab_huggingface_config(repo_root):

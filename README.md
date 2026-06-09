@@ -183,3 +183,30 @@ backup:
 
 `include_logs: false`는 `*.log` 파일을 제외하고, `include_checkpoints: false`는
 `hf_model/`, `checkpoints/`, `*.pt`, `*.ckpt`처럼 용량이 큰 모델 산출물을 제외합니다.
+
+## 학습 제어 정책
+
+HuggingFace fine-tuning은 config에서 checkpoint, resume, early stopping, scheduler를 제어합니다.
+
+```yaml
+checkpoint:
+  enabled: true
+  dir: checkpoints
+  save_best: true
+  save_last: true
+  save_every_epoch: false
+  resume_from:
+
+early_stopping:
+  enabled: true
+  patience: 3
+  min_delta: 0.0
+
+scheduler:
+  enabled: true
+  name: linear
+  warmup_ratio: 0.1
+  warmup_steps:
+```
+
+`checkpoint.resume_from`에는 `experiments/.../checkpoints/last`처럼 이전 checkpoint 경로를 넣어 중단된 학습을 이어갈 수 있습니다.

@@ -197,7 +197,7 @@ def _run_huggingface_training(
         train_rows=train_rows,
         valid_rows=valid_rows,
         output_dir=output_dir,
-        train_config=config.get("train", {}),
+        train_config=_huggingface_train_config(config, project_root),
         text_col=text_col,
         label_col=label_col,
     )
@@ -231,6 +231,20 @@ def _run_huggingface_training(
 def _resolve_path(root: Path, path: str | Path) -> Path:
     candidate = Path(path)
     return candidate if candidate.is_absolute() else root / candidate
+
+
+def _huggingface_train_config(config: dict[str, Any], project_root: Path) -> dict[str, Any]:
+    """HF trainer가 필요한 공통 실험 제어 config를 하나로 묶습니다."""
+    train_config = dict(config.get("train", {}))
+    train_config["metric"] = config.get("metric", {})
+    train_config["scheduler"] = config.get("scheduler", {})
+    train_config["early_stopping"] = config.get("early_stopping", {})
+    checkpoint_config = dict(config.get("checkpoint", {}))
+    resume_from = checkpoint_config.get("resume_from")
+    if resume_from:
+        checkpoint_config["resume_from"] = str(_resolve_path(project_root, resume_from))
+    train_config["checkpoint"] = checkpoint_config
+    return train_config
 
 
 def main() -> None:
