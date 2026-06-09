@@ -92,11 +92,12 @@ def test_compare_rag_retrievers_writes_report(isolated_project: Path, repo_root:
         [
             isolated_project / "configs" / "rag_smoke_keyword.yaml",
             isolated_project / "configs" / "rag_smoke_test.yaml",
+            isolated_project / "configs" / "rag_smoke_hybrid.yaml",
         ],
         isolated_project,
     )
 
-    assert [row["retriever_method"] for row in rows] == ["keyword", "semantic"]
+    assert [row["retriever_method"] for row in rows] == ["keyword", "semantic", "hybrid"]
     assert rows[0]["retrieval_hit_rate"] == 1.0
     assert (isolated_project / "reports" / "rag_retriever_comparison.csv").exists()
 
@@ -112,7 +113,16 @@ def test_compare_rag_retrievers_writes_report(isolated_project: Path, repo_root:
         text=True,
     )
 
-    assert "wrote reports/rag_retriever_comparison.csv (2 retrievers)" in result.stdout
+    assert "wrote reports/rag_retriever_comparison.csv (3 retrievers)" in result.stdout
+
+
+def test_rag_hybrid_retriever_config_runs_pipeline(isolated_project: Path):
+    config = isolated_project / "configs" / "rag_smoke_hybrid.yaml"
+
+    metrics = run_rag_evaluation(config, isolated_project)
+
+    assert metrics["retrieval_hit_rate"] == 1.0
+    assert (isolated_project / "experiments" / "rag_smoke_hybrid" / "metrics.json").exists()
 
 
 def test_rag_evaluation_writes_failure_artifacts(isolated_project: Path):

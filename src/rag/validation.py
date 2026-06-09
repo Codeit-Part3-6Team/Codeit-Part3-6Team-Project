@@ -12,7 +12,7 @@ from src.rag.document_loader import SUPPORTED_FILE_TYPES
 SUPPORTED_EMBEDDING_PROVIDERS = {"local", "huggingface"}
 SUPPORTED_VECTOR_STORES = {"memory", "faiss", "chroma", "elasticsearch"}
 SUPPORTED_RETRIEVERS = {"keyword", "semantic", "hybrid"}
-SUPPORTED_RUNTIME_RETRIEVERS = {"keyword", "semantic"}
+SUPPORTED_RUNTIME_RETRIEVERS = {"keyword", "semantic", "hybrid"}
 SUPPORTED_RERANKER_PROVIDERS = {"local", "huggingface"}
 SUPPORTED_ANSWERERS = {"extractive", "llm"}
 SUPPORTED_ANSWERER_PROVIDERS = {"local", "openai", "huggingface"}
@@ -212,6 +212,13 @@ def _validate_retriever_config(retriever: dict[str, Any], errors: list[str]) -> 
     score_threshold = _as_float(retriever.get("score_threshold", 0.0), "rag.retriever.score_threshold", errors)
     if score_threshold is not None and score_threshold < 0:
         errors.append("rag.retriever.score_threshold must be zero or positive")
+    if method == "hybrid":
+        keyword_weight = _as_float(retriever.get("keyword_weight", 0.4), "rag.retriever.keyword_weight", errors)
+        semantic_weight = _as_float(retriever.get("semantic_weight", 0.6), "rag.retriever.semantic_weight", errors)
+        if keyword_weight is not None and keyword_weight < 0:
+            errors.append("rag.retriever.keyword_weight must be zero or positive")
+        if semantic_weight is not None and semantic_weight < 0:
+            errors.append("rag.retriever.semantic_weight must be zero or positive")
 
 
 def _validate_reranker_config(

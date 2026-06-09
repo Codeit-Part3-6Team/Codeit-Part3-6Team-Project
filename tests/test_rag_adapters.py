@@ -20,8 +20,9 @@ def test_rag_adapter_registry_describes_implemented_and_contract_only_options():
     assert ("vector_store", "memory") in implemented
     assert ("retriever", "keyword") in implemented
     assert ("retriever", "semantic") in implemented
+    assert ("retriever", "hybrid") in implemented
     assert ("answerer", "extractive/local") in implemented
-    assert ("embedding", "huggingface") in contract_only
+    assert ("embedding", "huggingface") in implemented
     assert ("vector_store", "faiss") in contract_only
     assert ("answerer", "llm/openai") in contract_only
 
@@ -69,10 +70,50 @@ def test_extractive_answerer_adapter_builds_answer():
     assert answer["answer"] == "문서에서 확인하지 못했습니다."
 
 
+def test_hybrid_retriever_adapter_combines_keyword_and_semantic_scores():
+    chunks = [
+        {
+            "chunk_id": "c1",
+            "document_id": "doc",
+            "source_path": "doc.txt",
+            "page_start": "1",
+            "section": "budget",
+            "text": "The project budget is fifty million won.",
+        },
+        {
+            "chunk_id": "c2",
+            "document_id": "doc",
+            "source_path": "doc.txt",
+            "page_start": "1",
+            "section": "docs",
+            "text": "The required document is a business registration certificate.",
+        },
+    ]
+    embeddings = build_embedding_adapter({"provider": "local", "dimension": 8}).embed_chunks(chunks)
+    hybrid = build_retriever_adapter(
+        {"method": "hybrid", "top_k": 1, "keyword_weight": 0.5, "semantic_weight": 0.5},
+        {"dimension": 8},
+    )
+
+    rows = hybrid.retrieve("What is the project budget?", chunks, embeddings)
+
+    assert rows[0]["chunk_id"] == "c1"
+    assert rows[0]["rank"] == 1
+
+
+def test_huggingface_embedding_adapter_is_registered_without_loading_model():
+    adapter = build_embedding_adapter(
+        {
+            "provider": "huggingface",
+            "model_name": "sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2",
+            "device": "cpu",
+            "normalize": True,
+        }
+    )
+
+    assert adapter.model_name == "sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2"
+
+
 def test_contract_only_adapters_raise_clear_errors():
-    with pytest.raises(NotImplementedError, match="embedding provider"):
-        build_embedding_adapter({"provider": "huggingface"})
-    with pytest.raises(NotImplementedError, match="retriever method"):
-        build_retriever_adapter({"method": "hybrid"}, {})
     with pytest.raises(NotImplementedError, match="answerer"):
         build_answerer_adapter({"mode": "llm", "provider": "openai"})

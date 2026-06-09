@@ -1,0 +1,54 @@
+experiment:
+  name: rag_smoke_hybrid
+  author: team
+  seed: 42
+  contract_version: rag-v0.1
+
+paths:
+  raw_docs_dir: data/rag_smoke
+  output_dir: experiments/rag_smoke_hybrid
+
+artifact_policy:
+  run_id:
+  on_existing: overwrite
+
+rag:
+  loader:
+    file_types: [txt, pdf, docx, hwpx, hwp]
+  chunk:
+    size: 500
+    overlap: 80
+    unit: char
+  embedding:
+    provider: local
+    model_name: hashing-char-ngram-v1
+    dimension: 64
+    device: auto
+    normalize: true
+  vector_store:
+    type: memory
+    path:
+    collection_name: rag_smoke_hybrid
+  retriever:
+    method: hybrid
+    top_k: 3
+    score_threshold: 0.0
+    keyword_weight: 0.4
+    semantic_weight: 0.6
+  reranker:
+    enabled: false
+    provider: huggingface
+    model_name:
+    top_k: 3
+  answerer:
+    mode: extractive
+    provider: local
+    model_name:
+    fallback_message: 문서에서 확인하지 못했습니다.
+
+evaluation:
+  questions_path: data/rag_smoke/eval_questions.csv
+
+metric:
+  monitor: retrieval_hit_rate
+  mode: max

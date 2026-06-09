@@ -25,7 +25,7 @@
 | RAG config validation | 있음 | `scripts/check_rag_pipeline.py` |
 | RAG dry-run/check 명령 | 있음 | 산출물 생성 전 경로/설정/문서 수 점검 |
 | RAG 실전 config 계약 | 있음 | embedding/vector_store/reranker/answerer provider validation |
-| RAG adapter registry | 있음 | local/memory/keyword/semantic/extractive 구현체와 contract-only 옵션 분류 |
+| RAG adapter registry | 있음 | local/HF embedding, memory vector store, keyword/semantic/hybrid retriever, extractive answerer 분류 |
 | RAG failure artifact | 있음 | `run_status.json`, 실패 시 `failure.log` |
 | artifact run_id | 있음 | `artifact_policy.run_id`로 실험 하위 run 폴더 분리 |
 | overwrite 방지 | 있음 | `artifact_policy.on_existing: fail` |

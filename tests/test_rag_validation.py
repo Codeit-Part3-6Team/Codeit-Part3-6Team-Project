@@ -120,7 +120,6 @@ evaluation:
     assert any("embedding.model_name is required" in error for error in result["errors"])
     assert any("vector_store.url is required" in error for error in result["errors"])
     assert any("vector_store.index_name is required" in error for error in result["errors"])
-    assert any("retriever method is not implemented" in error for error in result["errors"])
     assert any("answerer.model_name is required" in error for error in result["errors"])
 
 

@@ -6,14 +6,17 @@ from typing import Any, Protocol
 
 from src.rag.answerer import build_answer
 from src.rag.embedder import DEFAULT_EMBEDDING_MODEL, embed_chunks
-from src.rag.retriever import retrieve_chunks
-from src.rag.vector_store import retrieve_chunks_by_vector
+from src.rag.embedder import embed_text as local_embed_text
+from src.rag.retriever import _score, _tokenize, retrieve_chunks
 
 
 class RagEmbeddingAdapter(Protocol):
     """chunk 목록을 embedding artifact row로 변환하는 adapter 계약입니다."""
 
     def embed_chunks(self, chunks: list[dict[str, str]]) -> list[dict[str, Any]]:
+        ...
+
+    def embed_texts(self, texts: list[str]) -> list[list[float]]:
         ...
 
 
@@ -46,6 +49,58 @@ class LocalHashingEmbeddingAdapter:
     def embed_chunks(self, chunks: list[dict[str, str]]) -> list[dict[str, Any]]:
         return embed_chunks(chunks, dimension=self.dimension, model_name=self.model_name)
 
+    def embed_texts(self, texts: list[str]) -> list[list[float]]:
+        return [local_embed_text(text, dimension=self.dimension) for text in texts]
+
+
+@dataclass
+class HuggingFaceEmbeddingAdapter:
+    """transformers AutoModel로 mean pooling embedding을 생성하는 구현체입니다."""
+
+    model_name: str
+    device: str = "auto"
+    normalize: bool = True
+
+    def embed_chunks(self, chunks: list[dict[str, str]]) -> list[dict[str, Any]]:
+        vectors = self.embed_texts([chunk["text"] for chunk in chunks])
+        return [
+            {
+                "chunk_id": chunk["chunk_id"],
+                "embedding_model": self.model_name,
+                "vector": vector,
+            }
+            for chunk, vector in zip(chunks, vectors)
+        ]
+
+    def embed_texts(self, texts: list[str]) -> list[list[float]]:
+        """문장 목록을 HuggingFace embedding vector로 변환합니다."""
+        try:
+            import torch
+            from transformers import AutoModel, AutoTokenizer
+        except ImportError as exc:
+            raise ImportError(
+                "HuggingFace embedding을 사용하려면 transformers와 torch가 필요합니다. "
+                "`pip install -r requirements.txt`를 먼저 실행하세요."
+            ) from exc
+
+        device = self._resolve_device(torch)
+        tokenizer = AutoTokenizer.from_pretrained(self.model_name)
+        model = AutoModel.from_pretrained(self.model_name).to(device)
+        model.eval()
+        encoded = tokenizer(texts, padding=True, truncation=True, return_tensors="pt")
+        encoded = {key: value.to(device) for key, value in encoded.items()}
+        with torch.no_grad():
+            outputs = model(**encoded)
+            pooled = _mean_pool(outputs.last_hidden_state, encoded["attention_mask"], torch)
+            if self.normalize:
+                pooled = torch.nn.functional.normalize(pooled, p=2, dim=1)
+        return pooled.detach().cpu().tolist()
+
+    def _resolve_device(self, torch: Any) -> Any:
+        if self.device == "auto":
+            return torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        return torch.device(self.device)
+
 
 @dataclass
 class KeywordRetrieverAdapter:
@@ -69,7 +124,7 @@ class MemorySemanticRetrieverAdapter:
 
     top_k: int = 3
     score_threshold: float = 0.0
-    dimension: int = 64
+    embedding_adapter: RagEmbeddingAdapter | None = None
 
     def retrieve(
         self,
@@ -77,14 +132,54 @@ class MemorySemanticRetrieverAdapter:
         chunks: list[dict[str, str]],
         embeddings: list[dict[str, Any]],
     ) -> list[dict[str, str | float | int]]:
-        return retrieve_chunks_by_vector(
+        if self.embedding_adapter is None:
+            raise ValueError("MemorySemanticRetrieverAdapter requires an embedding_adapter")
+        query_vector = self.embedding_adapter.embed_texts([question])[0]
+        return _retrieve_by_query_vector(
             question,
             chunks,
             embeddings,
             top_k=self.top_k,
             score_threshold=self.score_threshold,
-            dimension=self.dimension,
+            query_vector=query_vector,
         )
+
+
+@dataclass
+class HybridRetrieverAdapter:
+    """keyword 점수와 vector 점수를 합쳐 검색하는 local hybrid retriever 구현체입니다."""
+
+    top_k: int = 3
+    score_threshold: float = 0.0
+    embedding_adapter: RagEmbeddingAdapter | None = None
+    keyword_weight: float = 0.4
+    semantic_weight: float = 0.6
+
+    def retrieve(
+        self,
+        question: str,
+        chunks: list[dict[str, str]],
+        embeddings: list[dict[str, Any]],
+    ) -> list[dict[str, str | float | int]]:
+        if self.embedding_adapter is None:
+            raise ValueError("HybridRetrieverAdapter requires an embedding_adapter")
+        keyword_rows = retrieve_chunks(question, chunks, top_k=len(chunks), score_threshold=0.0)
+        semantic_rows = _retrieve_by_query_vector(
+            question,
+            chunks,
+            embeddings,
+            top_k=len(chunks),
+            score_threshold=0.0,
+            query_vector=self.embedding_adapter.embed_texts([question])[0],
+        )
+        merged = _merge_retrieval_scores(
+            keyword_rows,
+            semantic_rows,
+            keyword_weight=self.keyword_weight,
+            semantic_weight=self.semantic_weight,
+        )
+        filtered = [row for row in merged if float(row["score"]) > self.score_threshold]
+        return [_with_rank(row, rank) for rank, row in enumerate(filtered[: self.top_k], start=1)]
 
 
 @dataclass
@@ -105,6 +200,12 @@ def build_embedding_adapter(config: dict[str, Any]) -> RagEmbeddingAdapter:
             dimension=int(config.get("dimension", 64)),
             model_name=config.get("model_name", DEFAULT_EMBEDDING_MODEL),
         )
+    if provider == "huggingface":
+        return HuggingFaceEmbeddingAdapter(
+            model_name=str(config["model_name"]),
+            device=str(config.get("device", "auto")),
+            normalize=bool(config.get("normalize", True)),
+        )
     raise NotImplementedError(f"RAG embedding provider is not implemented yet: {provider}")
 
 
@@ -113,13 +214,22 @@ def build_retriever_adapter(config: dict[str, Any], embedding_config: dict[str, 
     method = config.get("method", "keyword")
     top_k = int(config.get("top_k", 3))
     score_threshold = float(config.get("score_threshold", 0.0))
+    embedding_adapter = build_embedding_adapter(embedding_config)
     if method == "keyword":
         return KeywordRetrieverAdapter(top_k=top_k, score_threshold=score_threshold)
     if method == "semantic":
         return MemorySemanticRetrieverAdapter(
             top_k=top_k,
             score_threshold=score_threshold,
-            dimension=int(embedding_config.get("dimension", 64)),
+            embedding_adapter=embedding_adapter,
+        )
+    if method == "hybrid":
+        return HybridRetrieverAdapter(
+            top_k=top_k,
+            score_threshold=score_threshold,
+            embedding_adapter=embedding_adapter,
+            keyword_weight=float(config.get("keyword_weight", 0.4)),
+            semantic_weight=float(config.get("semantic_weight", 0.6)),
         )
     raise NotImplementedError(f"RAG retriever method is not implemented yet: {method}")
 
@@ -140,17 +250,17 @@ def describe_rag_implementations() -> dict[str, list[dict[str, str]]]:
     return {
         "implemented": [
             {"type": "embedding", "key": "local", "description": "hashing-char-ngram smoke embedding"},
+            {"type": "embedding", "key": "huggingface", "description": "transformers mean-pooling embedding"},
             {"type": "vector_store", "key": "memory", "description": "embeddings.jsonl in-memory retrieval"},
             {"type": "retriever", "key": "keyword", "description": "token overlap keyword search"},
             {"type": "retriever", "key": "semantic", "description": "local hashing vector semantic search"},
+            {"type": "retriever", "key": "hybrid", "description": "weighted keyword + semantic search"},
             {"type": "answerer", "key": "extractive/local", "description": "chunk sentence extraction"},
         ],
         "contract_only": [
-            {"type": "embedding", "key": "huggingface", "description": "validated config contract only"},
             {"type": "vector_store", "key": "faiss", "description": "validated config contract only"},
             {"type": "vector_store", "key": "chroma", "description": "validated config contract only"},
             {"type": "vector_store", "key": "elasticsearch", "description": "validated config contract only"},
-            {"type": "retriever", "key": "hybrid", "description": "validated config contract only"},
             {"type": "reranker", "key": "enabled", "description": "validated config contract only"},
             {"type": "answerer", "key": "llm/openai", "description": "validated config contract only"},
             {"type": "answerer", "key": "llm/huggingface", "description": "validated config contract only"},
@@ -164,3 +274,91 @@ def resolve_vector_store_artifact_path(output_dir: str | Path, vector_store_conf
     if store_type != "memory":
         raise NotImplementedError(f"RAG vector_store type is not implemented yet: {store_type}")
     return Path(output_dir) / "embeddings.jsonl"
+
+
+def _mean_pool(last_hidden_state: Any, attention_mask: Any, torch: Any) -> Any:
+    """padding token을 제외하고 token embedding 평균을 계산합니다."""
+    mask = attention_mask.unsqueeze(-1).expand(last_hidden_state.size()).float()
+    summed = torch.sum(last_hidden_state * mask, dim=1)
+    counts = torch.clamp(mask.sum(dim=1), min=1e-9)
+    return summed / counts
+
+
+def _retrieve_by_query_vector(
+    question: str,
+    chunks: list[dict[str, str]],
+    embeddings: list[dict[str, Any]],
+    *,
+    top_k: int,
+    score_threshold: float,
+    query_vector: list[float],
+) -> list[dict[str, str | float | int]]:
+    chunk_by_id = {chunk["chunk_id"]: chunk for chunk in chunks}
+    scored: list[tuple[float, dict[str, str]]] = []
+    query_tokens = _tokenize(question)
+    for row in embeddings:
+        chunk = chunk_by_id.get(str(row["chunk_id"]))
+        if not chunk:
+            continue
+        score = _dot(query_vector, row["vector"]) + (_score(query_tokens, question, chunk["text"]) * 0.5)
+        if score > score_threshold:
+            scored.append((score, chunk))
+    scored.sort(key=lambda item: (-item[0], item[1]["chunk_id"]))
+    return [_to_retrieval_row(rank, score, chunk) for rank, (score, chunk) in enumerate(scored[:top_k], start=1)]
+
+
+def _dot(left: list[float], right: list[float]) -> float:
+    return sum(a * b for a, b in zip(left, right))
+
+
+def _to_retrieval_row(rank: int, score: float, chunk: dict[str, str]) -> dict[str, str | float | int]:
+    return {
+        "rank": rank,
+        "score": round(score, 4),
+        "chunk_id": chunk["chunk_id"],
+        "document_id": chunk["document_id"],
+        "source_path": chunk["source_path"],
+        "page": chunk["page_start"],
+        "section": chunk["section"],
+        "text": chunk["text"],
+    }
+
+
+def _merge_retrieval_scores(
+    keyword_rows: list[dict[str, str | float | int]],
+    semantic_rows: list[dict[str, str | float | int]],
+    *,
+    keyword_weight: float,
+    semantic_weight: float,
+) -> list[dict[str, str | float | int]]:
+    rows: dict[str, dict[str, str | float | int]] = {}
+    scores: dict[str, float] = {}
+    for row in keyword_rows:
+        chunk_id = str(row["chunk_id"])
+        rows[chunk_id] = row
+        scores[chunk_id] = scores.get(chunk_id, 0.0) + _normalize_score(row, keyword_rows) * keyword_weight
+    for row in semantic_rows:
+        chunk_id = str(row["chunk_id"])
+        rows[chunk_id] = row
+        scores[chunk_id] = scores.get(chunk_id, 0.0) + _normalize_score(row, semantic_rows) * semantic_weight
+
+    merged = []
+    for chunk_id, row in rows.items():
+        merged_row = dict(row)
+        merged_row["score"] = round(scores[chunk_id], 4)
+        merged.append(merged_row)
+    merged.sort(key=lambda row: (-float(row["score"]), str(row["chunk_id"])))
+    return merged
+
+
+def _normalize_score(row: dict[str, str | float | int], rows: list[dict[str, str | float | int]]) -> float:
+    max_score = max((float(item["score"]) for item in rows), default=0.0)
+    if max_score <= 0:
+        return 0.0
+    return float(row["score"]) / max_score
+
+
+def _with_rank(row: dict[str, str | float | int], rank: int) -> dict[str, str | float | int]:
+    ranked = dict(row)
+    ranked["rank"] = rank
+    return ranked
