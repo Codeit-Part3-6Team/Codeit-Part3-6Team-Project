@@ -222,6 +222,9 @@ experiments/rag_smoke_test/
 |-- retrieval_results.jsonl
 |-- answers.jsonl
 |-- evaluation_results.csv
+|-- bad_retrievals.csv
+|-- unsupported_answers.csv
+|-- failed_questions.csv
 `-- metrics.json
 ```
 

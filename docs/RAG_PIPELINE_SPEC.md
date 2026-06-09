@@ -113,6 +113,9 @@ experiments/rag_smoke_test/
 |-- retrieval_results.jsonl
 |-- answers.jsonl
 |-- evaluation_results.csv
+|-- bad_retrievals.csv
+|-- unsupported_answers.csv
+|-- failed_questions.csv
 |-- metrics.json
 |-- config.yaml
 `-- run_info.json
@@ -364,6 +367,8 @@ unsupported_answers.csv
 - `unsupported_answers.csv`: 답변은 했지만 citation 근거가 약한 질문
 
 RAG에서는 “답변이 그럴듯한가”보다 “문서 근거로 지지되는가”를 우선 봅니다.
+현재 smoke pipeline은 평가 실행 시 위 세 파일을 자동 생성합니다.
+실패가 없더라도 header만 있는 빈 CSV를 남겨, 다음 실험과 산출물 구조를 항상 같게 유지합니다.
 
 ## 9. Config 초안
 

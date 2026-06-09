@@ -26,6 +26,18 @@ CHUNK_COLUMNS = [
     "text",
     "token_count",
 ]
+EVALUATION_COLUMNS = [
+    "question",
+    "expected_answer",
+    "expected_chunk_ids",
+    "retrieved_chunk_ids",
+    "citation_chunk_ids",
+    "answer",
+    "retrieval_hit",
+    "answer_contains_expected",
+    "citation_correct",
+    "status",
+]
 
 
 def run_rag_ingest(config_path: str | Path, project_root: str | Path = ".") -> dict[str, int]:
@@ -132,6 +144,7 @@ def run_rag_evaluation(config_path: str | Path, project_root: str | Path = ".") 
     rows = _read_csv(questions_path)
     answer_cfg = config.get("rag", {}).get("answerer", {})
     result_rows: list[dict[str, str]] = []
+    analysis_rows: list[dict[str, str]] = []
     for row in rows:
         retrieval = run_rag_retrieve(config_path, root, row["question"])
         answer = build_answer(
@@ -143,12 +156,29 @@ def run_rag_evaluation(config_path: str | Path, project_root: str | Path = ".") 
         expected_chunk_ids = _split_expected_ids(row["expected_chunk_ids"])
         retrieved_ids = {str(item["chunk_id"]) for item in retrieval["retrieved_chunks"]}
         citation_ids = {str(item["chunk_id"]) for item in answer["citations"]}
+        retrieval_hit = bool(expected_chunk_ids & retrieved_ids)
+        answer_contains_expected = row["expected_answer"] in answer["answer"]
+        citation_correct = bool(expected_chunk_ids & citation_ids)
         result_rows.append(
             {
                 "question": row["question"],
-                "retrieval_hit": str(bool(expected_chunk_ids & retrieved_ids)).lower(),
-                "answer_contains_expected": str(row["expected_answer"] in answer["answer"]).lower(),
-                "citation_correct": str(bool(expected_chunk_ids & citation_ids)).lower(),
+                "retrieval_hit": str(retrieval_hit).lower(),
+                "answer_contains_expected": str(answer_contains_expected).lower(),
+                "citation_correct": str(citation_correct).lower(),
+                "status": answer["status"],
+            }
+        )
+        analysis_rows.append(
+            {
+                "question": row["question"],
+                "expected_answer": row["expected_answer"],
+                "expected_chunk_ids": _join_ids(expected_chunk_ids),
+                "retrieved_chunk_ids": _join_ids(retrieved_ids),
+                "citation_chunk_ids": _join_ids(citation_ids),
+                "answer": answer["answer"],
+                "retrieval_hit": str(retrieval_hit).lower(),
+                "answer_contains_expected": str(answer_contains_expected).lower(),
+                "citation_correct": str(citation_correct).lower(),
                 "status": answer["status"],
             }
         )
@@ -159,6 +189,7 @@ def run_rag_evaluation(config_path: str | Path, project_root: str | Path = ".") 
         result_rows,
         ["question", "retrieval_hit", "answer_contains_expected", "citation_correct", "status"],
     )
+    _write_error_analysis(output_dir, analysis_rows)
     write_json(output_dir / "metrics.json", metrics)
     return metrics
 
@@ -179,6 +210,27 @@ def _ratio(rows: list[dict[str, str]], column: str, total: int) -> float:
 
 def _split_expected_ids(value: str) -> set[str]:
     return {item.strip() for item in value.replace("|", ",").split(",") if item.strip()}
+
+
+def _join_ids(values: set[str]) -> str:
+    return "|".join(sorted(values))
+
+
+def _write_error_analysis(output_dir: Path, rows: list[dict[str, str]]) -> None:
+    """RAG 평가 결과를 실패 유형별 오답노트 CSV로 나눠 저장합니다."""
+    # 검색 실패와 답변 근거 실패를 분리해야 retriever를 고칠지 answerer를 고칠지 판단하기 쉽습니다.
+    bad_retrievals = [row for row in rows if row["retrieval_hit"] != "true"]
+    unsupported_answers = [
+        row
+        for row in rows
+        if row["status"] == "answered"
+        and (row["citation_correct"] != "true" or row["answer_contains_expected"] != "true")
+    ]
+    failed_questions = [row for row in rows if row["status"] != "answered"]
+
+    _write_csv(output_dir / "bad_retrievals.csv", bad_retrievals, EVALUATION_COLUMNS)
+    _write_csv(output_dir / "unsupported_answers.csv", unsupported_answers, EVALUATION_COLUMNS)
+    _write_csv(output_dir / "failed_questions.csv", failed_questions, EVALUATION_COLUMNS)
 
 
 def _read_csv(path: str | Path) -> list[dict[str, str]]:

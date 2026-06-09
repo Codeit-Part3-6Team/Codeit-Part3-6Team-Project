@@ -64,6 +64,7 @@ python scripts/run_rag_chat.py --config configs/rag_smoke_test.yaml --project-ro
 ```
 
 RAG smoke test는 외부 모델 없이 hashing embedding 기반 semantic retrieval과 추출형 답변으로 동작합니다.
+평가를 실행하면 `bad_retrievals.csv`, `unsupported_answers.csv`, `failed_questions.csv`도 함께 생성되어 실패 유형을 나눠 볼 수 있습니다.
 
 ## HuggingFace Fine-Tuning 예시
 

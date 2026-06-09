@@ -29,10 +29,14 @@ def test_rag_smoke_pipeline_writes_artifacts(isolated_project: Path):
     assert (output_dir / "chunks.csv").exists()
     assert (output_dir / "embeddings.jsonl").exists()
     assert (output_dir / "evaluation_results.csv").exists()
+    assert (output_dir / "bad_retrievals.csv").exists()
+    assert (output_dir / "unsupported_answers.csv").exists()
+    assert (output_dir / "failed_questions.csv").exists()
     assert (output_dir / "metrics.json").exists()
 
     saved_metrics = json.loads((output_dir / "metrics.json").read_text(encoding="utf-8"))
     assert saved_metrics["answer_contains_expected_rate"] == 1.0
+    assert "question,expected_answer" in (output_dir / "bad_retrievals.csv").read_text(encoding="utf-8")
 
 
 def test_run_rag_chat_script_supports_evaluation(isolated_project: Path, repo_root: Path):
