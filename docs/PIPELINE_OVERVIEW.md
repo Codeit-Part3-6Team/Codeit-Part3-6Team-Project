@@ -150,7 +150,7 @@ experiments/smoke_test_text/
 `-- train.log
 ```
 
-학습이 실패하면 같은 실험 폴더에 `failure.log`를 남깁니다.
+학습/예측이 실패하면 같은 실험 폴더에 `failure.log`를 남깁니다.
 
 HuggingFace 실험은 추가로 다음 폴더를 만듭니다.
 

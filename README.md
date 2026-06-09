@@ -118,6 +118,7 @@ experiments/smoke_test_text/
 
 HuggingFace 실험은 추가로 `hf_model/` 폴더에 tokenizer와 model weight를 저장합니다.
 학습 실행이 실패하면 같은 실험 폴더에 `failure.log`가 남습니다.
+예측 실행도 `run_status.json`을 갱신하고, 실패 시 `failure.log`를 남깁니다.
 
 여러 실험을 비교하려면 요약 스크립트를 실행합니다.
 
