@@ -4,14 +4,22 @@ import csv
 from pathlib import Path
 from typing import Any
 
-from src.artifacts import resolve_experiment_dir, write_failure_artifact, write_run_info, write_run_status
+from src.artifacts import (
+    prepare_experiment_dir,
+    resolve_experiment_dir,
+    write_failure_artifact,
+    write_run_info,
+    write_run_status,
+)
 from src.config import load_config, write_config_copy, write_json
-from src.rag.answerer import build_answer
+from src.rag.adapters import (
+    build_answerer_adapter,
+    build_embedding_adapter,
+    build_retriever_adapter,
+    resolve_vector_store_artifact_path,
+)
 from src.rag.chunker import chunk_documents
 from src.rag.document_loader import load_documents
-from src.rag.embedder import DEFAULT_EMBEDDING_MODEL, embed_chunks
-from src.rag.retriever import retrieve_chunks
-from src.rag.vector_store import retrieve_chunks_by_vector
 from src.utils.paths import ensure_dir
 
 
@@ -45,8 +53,7 @@ def run_rag_ingest(config_path: str | Path, project_root: str | Path = ".") -> d
     root = Path(project_root)
     config_path = _resolve_path(root, config_path)
     config = load_config(config_path)
-    output_dir = resolve_experiment_dir(root, config)
-    ensure_dir(output_dir)
+    output_dir = prepare_experiment_dir(root, config, check_existing=True)
 
     _write_run_status(output_dir, "rag_ingest", "running")
     try:
@@ -60,16 +67,13 @@ def run_rag_ingest(config_path: str | Path, project_root: str | Path = ".") -> d
             overlap=int(chunk_cfg.get("overlap", 80)),
         )
         embedding_cfg = config.get("rag", {}).get("embedding", {})
-        embeddings = embed_chunks(
-            chunks,
-            dimension=int(embedding_cfg.get("dimension", 64)),
-            model_name=embedding_cfg.get("model_name", DEFAULT_EMBEDDING_MODEL),
-        )
+        embeddings = build_embedding_adapter(embedding_cfg).embed_chunks(chunks)
 
         write_config_copy(config_path, output_dir)
         _write_csv(output_dir / "parsed_documents.csv", documents, DOCUMENT_COLUMNS)
         _write_csv(output_dir / "chunks.csv", chunks, CHUNK_COLUMNS)
-        _write_jsonl(output_dir / "embeddings.jsonl", embeddings)
+        vector_store_cfg = config.get("rag", {}).get("vector_store", {})
+        _write_jsonl(resolve_vector_store_artifact_path(output_dir, vector_store_cfg), embeddings)
         write_run_info(output_dir, config)
         result = {"documents": len(documents), "chunks": len(chunks), "embeddings": len(embeddings)}
         _write_run_status(output_dir, "rag_ingest", "success", result=result)
@@ -106,7 +110,8 @@ def _run_rag_retrieve_checked(
     question: str,
 ) -> dict[str, Any]:
     chunks_path = output_dir / "chunks.csv"
-    embeddings_path = output_dir / "embeddings.jsonl"
+    vector_store_cfg = config.get("rag", {}).get("vector_store", {})
+    embeddings_path = resolve_vector_store_artifact_path(output_dir, vector_store_cfg)
     if not chunks_path.exists() or not embeddings_path.exists():
         # 사용자가 retrieve부터 실행해도 최소 파이프라인은 자동으로 준비되게 합니다.
         run_rag_ingest(config_path, root)
@@ -115,24 +120,11 @@ def _run_rag_retrieve_checked(
     embedding_cfg = config.get("rag", {}).get("embedding", {})
     chunks = _read_csv(chunks_path)
     method = retriever_cfg.get("method", "keyword")
-    if method == "semantic":
-        retrieved = retrieve_chunks_by_vector(
-            question,
-            chunks,
-            _read_jsonl(embeddings_path),
-            top_k=int(retriever_cfg.get("top_k", 3)),
-            score_threshold=float(retriever_cfg.get("score_threshold", 0.0)),
-            dimension=int(embedding_cfg.get("dimension", 64)),
-        )
-    elif method == "keyword":
-        retrieved = retrieve_chunks(
-            question,
-            chunks,
-            top_k=int(retriever_cfg.get("top_k", 3)),
-            score_threshold=float(retriever_cfg.get("score_threshold", 0.0)),
-        )
-    else:
-        raise ValueError(f"Unsupported RAG retriever method: {method}")
+    retrieved = build_retriever_adapter(retriever_cfg, embedding_cfg).retrieve(
+        question,
+        chunks,
+        _read_jsonl(embeddings_path),
+    )
     payload = {
         "question": question,
         "top_k": int(retriever_cfg.get("top_k", 3)),
@@ -155,11 +147,7 @@ def run_rag_chat(config_path: str | Path, project_root: str | Path, question: st
     try:
         retrieval = run_rag_retrieve(config_path, root, question)
         answer_cfg = config.get("rag", {}).get("answerer", {})
-        answer = build_answer(
-            question,
-            retrieval["retrieved_chunks"],
-            fallback_message=answer_cfg.get("fallback_message", "문서에서 확인하지 못했습니다."),
-        )
+        answer = build_answerer_adapter(answer_cfg).answer(question, retrieval["retrieved_chunks"])
         _append_jsonl(output_dir / "answers.jsonl", answer)
         _write_run_status(output_dir, "rag_chat", "success", result={"status": answer["status"]})
         return answer
@@ -185,13 +173,10 @@ def run_rag_evaluation(config_path: str | Path, project_root: str | Path = ".") 
         answer_cfg = config.get("rag", {}).get("answerer", {})
         result_rows: list[dict[str, str]] = []
         analysis_rows: list[dict[str, str]] = []
+        answerer = build_answerer_adapter(answer_cfg)
         for row in rows:
             retrieval = run_rag_retrieve(config_path, root, row["question"])
-            answer = build_answer(
-                row["question"],
-                retrieval["retrieved_chunks"],
-                fallback_message=answer_cfg.get("fallback_message", "문서에서 확인하지 못했습니다."),
-            )
+            answer = answerer.answer(row["question"], retrieval["retrieved_chunks"])
             _append_jsonl(output_dir / "answers.jsonl", answer)
             expected_chunk_ids = _split_expected_ids(row["expected_chunk_ids"])
             retrieved_ids = {str(item["chunk_id"]) for item in retrieval["retrieved_chunks"]}

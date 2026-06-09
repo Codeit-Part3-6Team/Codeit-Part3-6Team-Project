@@ -129,6 +129,16 @@ python scripts/summarize_experiments.py --project-root .
 기본 산출물은 `reports/experiment_summary.csv`와 `reports/experiment_summary.json`입니다.
 분류 실험은 accuracy를, RAG 실험은 retrieval hit rate와 citation correctness를 중심으로 비교합니다.
 
+같은 config를 여러 번 실행해 결과를 나누고 싶으면 `artifact_policy.run_id`를 사용합니다.
+
+```yaml
+artifact_policy:
+  run_id: run_001
+  on_existing: overwrite
+```
+
+기존 산출물 덮어쓰기를 막고 싶으면 `on_existing: fail`로 바꿉니다.
+
 ## 운영 원칙
 
 - `data/raw`는 원본 데이터로 둡니다.
@@ -156,3 +166,47 @@ python scripts/summarize_experiments.py --project-root .
 - `docs/COLAB_GUIDE.md`: Colab/Drive 기반 실험 실행 가이드
 - `docs/GIT_WORKFLOW.md`: 브랜치, 커밋, PR 운영 규칙
 - `docs/TEAM_WORKFLOW.md`: Issue, Kanban, Daily Report 운영 가이드
+
+## 백업 정책 보강
+
+실험 백업도 config에서 조정합니다. Colab처럼 런타임이 끊길 수 있는 환경에서는
+`backup_dir`를 Drive 경로로 두고 `on_finish`와 `on_failure`를 켜두는 편이 안전합니다.
+
+```yaml
+backup:
+  enabled: true
+  on_finish: true
+  on_failure: true
+  include_logs: true
+  include_checkpoints: true
+```
+
+`include_logs: false`는 `*.log` 파일을 제외하고, `include_checkpoints: false`는
+`hf_model/`, `checkpoints/`, `*.pt`, `*.ckpt`처럼 용량이 큰 모델 산출물을 제외합니다.
+
+## 학습 제어 정책
+
+HuggingFace fine-tuning은 config에서 checkpoint, resume, early stopping, scheduler를 제어합니다.
+
+```yaml
+checkpoint:
+  enabled: true
+  dir: checkpoints
+  save_best: true
+  save_last: true
+  save_every_epoch: false
+  resume_from:
+
+early_stopping:
+  enabled: true
+  patience: 3
+  min_delta: 0.0
+
+scheduler:
+  enabled: true
+  name: linear
+  warmup_ratio: 0.1
+  warmup_steps:
+```
+
+`checkpoint.resume_from`에는 `experiments/.../checkpoints/last`처럼 이전 checkpoint 경로를 넣어 중단된 학습을 이어갈 수 있습니다.

@@ -9,6 +9,7 @@ if __package__ is None or __package__ == "":
 
 from src.artifacts import (
     maybe_backup,
+    prepare_experiment_dir,
     resolve_experiment_dir,
     write_failure_artifact,
     write_experiment_readme,
@@ -46,8 +47,7 @@ def run_training(config_path: str | Path, project_root: str | Path) -> dict[str,
     config_path = _resolve_path(root, config_path)
     config = load_config(config_path)
     data_dir = root / config["paths"]["data_dir"]
-    output_dir = resolve_experiment_dir(root, config)
-    ensure_dir(output_dir)
+    output_dir = prepare_experiment_dir(root, config, check_existing=True)
     logger = setup_logger("train", output_dir / "train.log")
     set_seed(config.get("experiment", {}).get("seed"))
 
@@ -81,6 +81,7 @@ def run_training(config_path: str | Path, project_root: str | Path) -> dict[str,
                 logger=logger,
             )
             write_run_status(output_dir, "train", "success", result=metrics)
+            _maybe_backup(root, output_dir, config, "on_finish", logger)
             return metrics
 
         model = build_model(model_name)
@@ -111,19 +112,47 @@ def run_training(config_path: str | Path, project_root: str | Path) -> dict[str,
         write_experiment_readme(output_dir, config, metrics, command)
         logger.info("Artifacts saved to %s", output_dir)
 
-        backup_cfg = config.get("backup", {})
-        if backup_cfg.get("enabled") and backup_cfg.get("on_finish"):
-            # Colab 런타임이 끊겨도 결과를 잃지 않도록 Drive 같은 외부 경로에 복사할 수 있습니다.
-            maybe_backup(output_dir, config["paths"].get("backup_dir"))
-            logger.info("Artifacts backed up to %s", config["paths"].get("backup_dir"))
-
         logger.info("Training finished: %s", metrics)
         write_run_status(output_dir, "train", "success", result=metrics)
+        _maybe_backup(root, output_dir, config, "on_finish", logger)
         return metrics
     except Exception as exc:
         logger.exception("Training failed")
         write_failure_artifact(output_dir, "train", exc)
+        _maybe_backup(root, output_dir, config, "on_failure", logger, suppress_errors=True)
         raise
+
+
+def _maybe_backup(
+    project_root: Path,
+    output_dir: Path,
+    config: dict[str, Any],
+    event_key: str,
+    logger,
+    *,
+    suppress_errors: bool = False,
+) -> None:
+    """config.backup 설정에 따라 성공/실패 시점의 산출물을 백업합니다."""
+    backup_cfg = config.get("backup", {})
+    if not backup_cfg.get("enabled") or not backup_cfg.get(event_key):
+        return
+    backup_dir = config["paths"].get("backup_dir")
+    if not backup_dir:
+        logger.info("Artifact backup skipped because paths.backup_dir is empty")
+        return
+    try:
+        maybe_backup(
+            output_dir,
+            _resolve_path(project_root, backup_dir),
+            include_logs=backup_cfg.get("include_logs", True),
+            include_checkpoints=backup_cfg.get("include_checkpoints", True),
+        )
+    except Exception:
+        if not suppress_errors:
+            raise
+        logger.exception("Artifact backup failed after %s", event_key)
+        return
+    logger.info("Artifacts backed up to %s", backup_dir)
 
 
 def _run_huggingface_training(
@@ -168,7 +197,7 @@ def _run_huggingface_training(
         train_rows=train_rows,
         valid_rows=valid_rows,
         output_dir=output_dir,
-        train_config=config.get("train", {}),
+        train_config=_huggingface_train_config(config, project_root),
         text_col=text_col,
         label_col=label_col,
     )
@@ -195,12 +224,6 @@ def _run_huggingface_training(
     write_experiment_readme(output_dir, config, metrics, command)
     logger.info("HuggingFace artifacts saved to %s", output_dir)
 
-    backup_cfg = config.get("backup", {})
-    if backup_cfg.get("enabled") and backup_cfg.get("on_finish"):
-        # HuggingFace weight는 폴더 artifact라서 maybe_backup이 디렉터리까지 복사합니다.
-        maybe_backup(output_dir, config["paths"].get("backup_dir"))
-        logger.info("Artifacts backed up to %s", config["paths"].get("backup_dir"))
-
     logger.info("Training finished: %s", metrics)
     return metrics
 
@@ -208,6 +231,20 @@ def _run_huggingface_training(
 def _resolve_path(root: Path, path: str | Path) -> Path:
     candidate = Path(path)
     return candidate if candidate.is_absolute() else root / candidate
+
+
+def _huggingface_train_config(config: dict[str, Any], project_root: Path) -> dict[str, Any]:
+    """HF trainer가 필요한 공통 실험 제어 config를 하나로 묶습니다."""
+    train_config = dict(config.get("train", {}))
+    train_config["metric"] = config.get("metric", {})
+    train_config["scheduler"] = config.get("scheduler", {})
+    train_config["early_stopping"] = config.get("early_stopping", {})
+    checkpoint_config = dict(config.get("checkpoint", {}))
+    resume_from = checkpoint_config.get("resume_from")
+    if resume_from:
+        checkpoint_config["resume_from"] = str(_resolve_path(project_root, resume_from))
+    train_config["checkpoint"] = checkpoint_config
+    return train_config
 
 
 def main() -> None:

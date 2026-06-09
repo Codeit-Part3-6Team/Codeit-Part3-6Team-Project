@@ -6,6 +6,8 @@ import subprocess
 import sys
 from pathlib import Path
 
+import pytest
+
 from src.artifacts import maybe_backup
 from src.experiments import collect_experiment_summaries, write_experiment_summary
 from src.rag.pipeline import run_rag_evaluation
@@ -57,6 +59,35 @@ def test_write_experiment_summary_accepts_absolute_paths(isolated_project: Path)
     assert output_path.with_suffix(".json").exists()
 
 
+def test_write_experiment_summary_collects_nested_run_id(isolated_project: Path):
+    config = isolated_project / "configs" / "summary_run_id.yaml"
+    config.write_text(
+        """
+experiment:
+  name: summary_run_id
+  seed: 42
+paths:
+  data_dir: data/text_processed
+  output_dir: experiments/summary_run_id
+data:
+  task: text_classification
+  train_csv: train.csv
+  valid_csv: valid.csv
+  test_csv: test.csv
+model:
+  name: keyword_text_classifier
+artifact_policy:
+  run_id: run_a
+""",
+        encoding="utf-8",
+    )
+    run_training(config, isolated_project)
+
+    rows = write_experiment_summary(isolated_project)
+
+    assert any(row["result_path"] == "experiments/summary_run_id/run_a" for row in rows)
+
+
 def test_write_experiment_summary_collects_rag_metrics(isolated_project: Path):
     run_rag_evaluation(isolated_project / "configs" / "rag_smoke_test.yaml", isolated_project)
 
@@ -97,3 +128,104 @@ def test_maybe_backup_copies_files_and_model_directories(tmp_path: Path):
 
     assert (tmp_path / "drive_backup" / "unit" / "metrics.json").exists()
     assert (tmp_path / "drive_backup" / "unit" / "hf_model" / "config.json").exists()
+
+
+def test_maybe_backup_can_exclude_logs_and_checkpoints(tmp_path: Path):
+    output_dir = tmp_path / "experiments" / "unit"
+    model_dir = output_dir / "hf_model"
+    checkpoint_dir = output_dir / "checkpoints"
+    model_dir.mkdir(parents=True)
+    checkpoint_dir.mkdir()
+    (output_dir / "metrics.json").write_text("{}", encoding="utf-8")
+    (output_dir / "best_model.json").write_text("{}", encoding="utf-8")
+    (output_dir / "train.log").write_text("log", encoding="utf-8")
+    (output_dir / "model.pt").write_text("weights", encoding="utf-8")
+    (model_dir / "config.json").write_text("{}", encoding="utf-8")
+    (checkpoint_dir / "epoch_1.ckpt").write_text("weights", encoding="utf-8")
+
+    maybe_backup(
+        output_dir,
+        tmp_path / "drive_backup" / "unit",
+        include_logs=False,
+        include_checkpoints=False,
+    )
+
+    backup_dir = tmp_path / "drive_backup" / "unit"
+    assert (backup_dir / "metrics.json").exists()
+    assert (backup_dir / "best_model.json").exists()
+    assert not (backup_dir / "train.log").exists()
+    assert not (backup_dir / "model.pt").exists()
+    assert not (backup_dir / "hf_model").exists()
+    assert not (backup_dir / "checkpoints").exists()
+
+
+def test_run_training_backs_up_success_artifacts_from_config(isolated_project: Path):
+    config = isolated_project / "configs" / "backup_success.yaml"
+    config.write_text(
+        """
+experiment:
+  name: backup_success
+  seed: 42
+paths:
+  data_dir: data/text_processed
+  output_dir: experiments/backup_success
+  backup_dir: backups/backup_success
+data:
+  task: text_classification
+  train_csv: train.csv
+  valid_csv: valid.csv
+  test_csv: test.csv
+model:
+  name: keyword_text_classifier
+backup:
+  enabled: true
+  on_finish: true
+  on_failure: false
+  include_logs: false
+  include_checkpoints: true
+""",
+        encoding="utf-8",
+    )
+
+    run_training(config, isolated_project)
+
+    backup_dir = isolated_project / "backups" / "backup_success"
+    assert (backup_dir / "metrics.json").exists()
+    assert (backup_dir / "run_status.json").exists()
+    assert not (backup_dir / "train.log").exists()
+
+
+def test_run_training_backs_up_failure_artifacts_from_config(isolated_project: Path):
+    config = isolated_project / "configs" / "backup_failure.yaml"
+    config.write_text(
+        """
+experiment:
+  name: backup_failure
+  seed: 42
+paths:
+  data_dir: data/missing
+  output_dir: experiments/backup_failure
+  backup_dir: backups/backup_failure
+data:
+  task: text_classification
+  train_csv: train.csv
+  valid_csv: valid.csv
+  test_csv: test.csv
+model:
+  name: keyword_text_classifier
+backup:
+  enabled: true
+  on_finish: false
+  on_failure: true
+  include_logs: true
+  include_checkpoints: true
+""",
+        encoding="utf-8",
+    )
+
+    with pytest.raises(RuntimeError):
+        run_training(config, isolated_project)
+
+    backup_dir = isolated_project / "backups" / "backup_failure"
+    assert (backup_dir / "failure.log").exists()
+    assert (backup_dir / "run_status.json").exists()

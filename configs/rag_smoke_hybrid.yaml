@@ -1,12 +1,12 @@
 experiment:
-  name: rag_smoke_keyword
+  name: rag_smoke_hybrid
   author: team
   seed: 42
   contract_version: rag-v0.1
 
 paths:
   raw_docs_dir: data/rag_smoke
-  output_dir: experiments/rag_smoke_keyword
+  output_dir: experiments/rag_smoke_hybrid
 
 artifact_policy:
   run_id:
@@ -28,11 +28,13 @@ rag:
   vector_store:
     type: memory
     path:
-    collection_name: rag_smoke_keyword
+    collection_name: rag_smoke_hybrid
   retriever:
-    method: keyword
+    method: hybrid
     top_k: 3
     score_threshold: 0.0
+    keyword_weight: 0.4
+    semantic_weight: 0.6
   reranker:
     enabled: false
     provider: huggingface

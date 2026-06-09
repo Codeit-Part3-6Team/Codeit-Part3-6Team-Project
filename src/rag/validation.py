@@ -9,8 +9,13 @@ from src.config import load_config
 from src.rag.document_loader import SUPPORTED_FILE_TYPES
 
 
-SUPPORTED_RETRIEVERS = {"keyword", "semantic"}
-SUPPORTED_ANSWERERS = {"extractive"}
+SUPPORTED_EMBEDDING_PROVIDERS = {"local", "huggingface"}
+SUPPORTED_VECTOR_STORES = {"memory", "faiss", "chroma", "elasticsearch"}
+SUPPORTED_RETRIEVERS = {"keyword", "semantic", "hybrid"}
+SUPPORTED_RUNTIME_RETRIEVERS = {"keyword", "semantic", "hybrid"}
+SUPPORTED_RERANKER_PROVIDERS = {"local", "huggingface"}
+SUPPORTED_ANSWERERS = {"extractive", "llm"}
+SUPPORTED_ANSWERER_PROVIDERS = {"local", "openai", "huggingface"}
 
 
 def check_rag_pipeline(config_path: str | Path, project_root: str | Path = ".") -> dict[str, Any]:
@@ -57,9 +62,12 @@ def _build_summary(
     loader = rag.get("loader", {})
     chunk = rag.get("chunk", {})
     embedding = rag.get("embedding", {})
+    vector_store = rag.get("vector_store", {})
     retriever = rag.get("retriever", {})
+    reranker = rag.get("reranker", {})
     answerer = rag.get("answerer", {})
     evaluation = config.get("evaluation", {})
+    artifact_policy = config.get("artifact_policy", {})
 
     raw_docs_dir = _resolve_path(root, paths.get("raw_docs_dir", ""))
     output_dir = resolve_experiment_dir(root, config) if config.get("experiment") else root / "experiments" / "unknown"
@@ -69,8 +77,11 @@ def _build_summary(
     document_counts = _count_documents(raw_docs_dir, file_types, errors, warnings)
     _validate_chunk_config(chunk, errors)
     _validate_embedding_config(embedding, errors)
+    _validate_vector_store_config(vector_store, errors, warnings)
     _validate_retriever_config(retriever, errors)
+    _validate_reranker_config(reranker, errors, warnings)
     _validate_answerer_config(answerer, errors)
+    _validate_artifact_policy(artifact_policy, errors)
     _validate_questions_path(root, questions_path, errors)
 
     if output_dir.exists():
@@ -89,6 +100,15 @@ def _build_summary(
         "chunk_overlap": chunk.get("overlap"),
         "embedding_provider": embedding.get("provider", ""),
         "embedding_model": embedding.get("model_name", ""),
+        "vector_store_type": vector_store.get("type", "memory"),
+        "vector_store_path": vector_store.get("path", ""),
+        "artifact_run_id": artifact_policy.get("run_id", "") if isinstance(artifact_policy, dict) else "",
+        "artifact_on_existing": artifact_policy.get("on_existing", "overwrite")
+        if isinstance(artifact_policy, dict)
+        else "overwrite",
+        "reranker_enabled": bool(reranker.get("enabled", False)) if isinstance(reranker, dict) else False,
+        "answerer_mode": answerer.get("mode", "extractive"),
+        "answerer_provider": answerer.get("provider", "local"),
     }
 
 
@@ -143,24 +163,110 @@ def _validate_chunk_config(chunk: dict[str, Any], errors: list[str]) -> None:
 
 
 def _validate_embedding_config(embedding: dict[str, Any], errors: list[str]) -> None:
+    provider = embedding.get("provider", "local")
+    if provider not in SUPPORTED_EMBEDDING_PROVIDERS:
+        errors.append(f"unsupported embedding provider: {provider}")
+    model_name = str(embedding.get("model_name", "") or "").strip()
+    if provider == "huggingface" and not model_name:
+        errors.append("rag.embedding.model_name is required when provider is huggingface")
     dimension = _as_int(embedding.get("dimension", 64), "rag.embedding.dimension", errors)
     if dimension is not None and dimension <= 0:
         errors.append("rag.embedding.dimension must be positive")
+    device = embedding.get("device", "auto")
+    if device not in {"auto", "cpu", "cuda"}:
+        errors.append(f"unsupported embedding device: {device}")
+
+
+def _validate_vector_store_config(
+    vector_store: dict[str, Any],
+    errors: list[str],
+    warnings: list[str],
+) -> None:
+    store_type = vector_store.get("type", "memory")
+    if store_type not in SUPPORTED_VECTOR_STORES:
+        errors.append(f"unsupported vector_store type: {store_type}")
+        return
+    path = str(vector_store.get("path", "") or "").strip()
+    if store_type in {"faiss", "chroma"} and not path:
+        errors.append(f"rag.vector_store.path is required when type is {store_type}")
+    if store_type == "elasticsearch":
+        url = str(vector_store.get("url", "") or "").strip()
+        index_name = str(vector_store.get("index_name", "") or vector_store.get("collection_name", "") or "").strip()
+        if not url:
+            errors.append("rag.vector_store.url is required when type is elasticsearch")
+        if not index_name:
+            errors.append("rag.vector_store.index_name is required when type is elasticsearch")
+    if store_type != "memory":
+        warnings.append(f"vector_store type '{store_type}' is config-ready but not implemented in smoke runtime")
 
 
 def _validate_retriever_config(retriever: dict[str, Any], errors: list[str]) -> None:
     method = retriever.get("method", "keyword")
     if method not in SUPPORTED_RETRIEVERS:
         errors.append(f"unsupported retriever method: {method}")
+    elif method not in SUPPORTED_RUNTIME_RETRIEVERS:
+        errors.append(f"retriever method is not implemented in smoke runtime yet: {method}")
     top_k = _as_int(retriever.get("top_k", 3), "rag.retriever.top_k", errors)
     if top_k is not None and top_k <= 0:
         errors.append("rag.retriever.top_k must be positive")
+    score_threshold = _as_float(retriever.get("score_threshold", 0.0), "rag.retriever.score_threshold", errors)
+    if score_threshold is not None and score_threshold < 0:
+        errors.append("rag.retriever.score_threshold must be zero or positive")
+    if method == "hybrid":
+        keyword_weight = _as_float(retriever.get("keyword_weight", 0.4), "rag.retriever.keyword_weight", errors)
+        semantic_weight = _as_float(retriever.get("semantic_weight", 0.6), "rag.retriever.semantic_weight", errors)
+        if keyword_weight is not None and keyword_weight < 0:
+            errors.append("rag.retriever.keyword_weight must be zero or positive")
+        if semantic_weight is not None and semantic_weight < 0:
+            errors.append("rag.retriever.semantic_weight must be zero or positive")
+
+
+def _validate_reranker_config(
+    reranker: dict[str, Any],
+    errors: list[str],
+    warnings: list[str],
+) -> None:
+    enabled = bool(reranker.get("enabled", False))
+    provider = reranker.get("provider", "huggingface")
+    if provider not in SUPPORTED_RERANKER_PROVIDERS:
+        errors.append(f"unsupported reranker provider: {provider}")
+    top_k = _as_int(reranker.get("top_k", 3), "rag.reranker.top_k", errors)
+    if top_k is not None and top_k <= 0:
+        errors.append("rag.reranker.top_k must be positive")
+    model_name = str(reranker.get("model_name", "") or "").strip()
+    if enabled and provider == "huggingface" and not model_name:
+        errors.append("rag.reranker.model_name is required when reranker is enabled with huggingface")
+    if enabled:
+        warnings.append("reranker is config-ready but not implemented in smoke runtime")
 
 
 def _validate_answerer_config(answerer: dict[str, Any], errors: list[str]) -> None:
     mode = answerer.get("mode", "extractive")
     if mode not in SUPPORTED_ANSWERERS:
         errors.append(f"unsupported answerer mode: {mode}")
+    provider = answerer.get("provider", "local")
+    if provider not in SUPPORTED_ANSWERER_PROVIDERS:
+        errors.append(f"unsupported answerer provider: {provider}")
+    model_name = str(answerer.get("model_name", "") or "").strip()
+    if mode == "llm":
+        if provider == "local":
+            errors.append("rag.answerer.provider must be openai or huggingface when mode is llm")
+        elif not model_name:
+            errors.append("rag.answerer.model_name is required when answerer mode is llm")
+
+
+def _validate_artifact_policy(policy: Any, errors: list[str]) -> None:
+    if policy in ({}, None):
+        return
+    if not isinstance(policy, dict):
+        errors.append("artifact_policy must be a mapping")
+        return
+    on_existing = policy.get("on_existing", "overwrite")
+    if on_existing not in {"overwrite", "fail"}:
+        errors.append(f"unsupported artifact_policy.on_existing: {on_existing}")
+    run_id = policy.get("run_id")
+    if run_id is not None and str(run_id).strip() in {"", ".", ".."}:
+        errors.append("artifact_policy.run_id must not be empty")
 
 
 def _validate_questions_path(root: Path, questions_path: Path, errors: list[str]) -> None:
@@ -173,6 +279,14 @@ def _as_int(value: Any, name: str, errors: list[str]) -> int | None:
         return int(value)
     except (TypeError, ValueError):
         errors.append(f"{name} must be an integer")
+        return None
+
+
+def _as_float(value: Any, name: str, errors: list[str]) -> float | None:
+    try:
+        return float(value)
+    except (TypeError, ValueError):
+        errors.append(f"{name} must be a number")
         return None
 
 

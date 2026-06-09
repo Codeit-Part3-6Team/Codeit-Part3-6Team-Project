@@ -40,10 +40,7 @@ def collect_experiment_summaries(
         return []
 
     rows: list[dict[str, Any]] = []
-    for experiment_dir in sorted(path for path in base_dir.iterdir() if path.is_dir()):
-        # .gitkeep 같은 숨김/관리용 항목은 실험 결과로 보지 않습니다.
-        if experiment_dir.name.startswith("."):
-            continue
+    for experiment_dir in _iter_experiment_dirs(base_dir):
         rows.append(_summarize_experiment(root, experiment_dir))
     return rows
 
@@ -107,6 +104,21 @@ def _summarize_experiment(project_root: Path, experiment_dir: Path) -> dict[str,
 def _normalize_row(row: dict[str, Any]) -> dict[str, Any]:
     """나중에 field가 추가되어도 CSV column 순서를 안정적으로 유지합니다."""
     return {column: row.get(column, "") for column in SUMMARY_COLUMNS}
+
+
+def _iter_experiment_dirs(base_dir: Path) -> list[Path]:
+    """config/metrics/status 산출물이 있는 폴더를 실험 단위로 봅니다."""
+    experiment_dirs: list[Path] = []
+    for path in sorted(item for item in base_dir.rglob("*") if item.is_dir()):
+        if any(part.startswith(".") for part in path.relative_to(base_dir).parts):
+            continue
+        if _looks_like_experiment_dir(path):
+            experiment_dirs.append(path)
+    return experiment_dirs
+
+
+def _looks_like_experiment_dir(path: Path) -> bool:
+    return any((path / filename).exists() for filename in ["config.yaml", "metrics.json", "run_status.json"])
 
 
 def _relative_path(root: Path, path: Path) -> str:

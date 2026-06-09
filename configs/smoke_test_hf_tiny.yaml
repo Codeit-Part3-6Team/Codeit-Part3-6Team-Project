@@ -9,6 +9,10 @@ paths:
   output_dir: experiments/smoke_test_hf_tiny
   backup_dir:
 
+artifact_policy:
+  run_id:
+  on_existing: overwrite
+
 data:
   task: text_classification
   train_csv: train.csv
@@ -38,6 +42,25 @@ metric:
   monitor: valid_accuracy
   mode: max
 
+checkpoint:
+  enabled: true
+  dir: checkpoints
+  save_best: true
+  save_last: true
+  save_every_epoch: false
+  resume_from:
+
+early_stopping:
+  enabled: false
+  patience: 3
+  min_delta: 0.0
+
+scheduler:
+  enabled: true
+  name: linear
+  warmup_ratio: 0.0
+  warmup_steps:
+
 report:
   - accuracy
 
@@ -45,3 +68,6 @@ backup:
   enabled: false
   on_best: true
   on_finish: true
+  on_failure: true
+  include_logs: true
+  include_checkpoints: true

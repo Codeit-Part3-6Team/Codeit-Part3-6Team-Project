@@ -83,6 +83,25 @@ exp004_hf_roberta_max256
 
 좋은 실험명은 이름만 봐도 무엇을 바꿨는지 대략 알 수 있어야 합니다.
 
+## Artifact 정책
+
+같은 실험명을 여러 번 실행해야 할 때는 config에서 `artifact_policy.run_id`를 지정합니다.
+
+```yaml
+artifact_policy:
+  run_id: run_001
+  on_existing: overwrite
+```
+
+이 경우 산출물은 아래처럼 저장됩니다.
+
+```text
+experiments/{experiment_name}/{run_id}/
+```
+
+기존 산출물을 실수로 덮어쓰고 싶지 않으면 `on_existing: fail`을 사용합니다.
+이미 파일이 있는 output directory에 다시 실행하면 실행 전에 실패합니다.
+
 ## 규칙
 
 - 학습 전에 data validation을 통과시킵니다.
@@ -92,3 +111,55 @@ exp004_hf_roberta_max256
 - validation/test/predict transform은 결정적으로 동작해야 합니다.
 - HuggingFace base model, max length, batch size, learning rate는 config에 남깁니다.
 - 실험 README의 결론, 다음 액션, 실패/주의 사항을 실험 직후에 적습니다.
+## 백업 정책
+
+실험 백업은 config의 `backup` 블록에서 조정합니다.
+
+```yaml
+backup:
+  enabled: true
+  on_finish: true
+  on_failure: true
+  include_logs: true
+  include_checkpoints: true
+```
+
+- `on_finish`: 학습이 성공한 뒤 `backup_dir`로 산출물을 복사합니다.
+- `on_failure`: 학습이 실패해도 `failure.log`, `run_status.json` 같은 원인 분석 파일을 복사합니다.
+- `include_logs`: `false`면 `*.log` 파일을 백업에서 제외합니다.
+- `include_checkpoints`: `false`면 `hf_model/`, `checkpoints/`, `*.pt`, `*.ckpt` 같은 큰 모델 산출물을 제외합니다.
+
+`backup.on_best`는 백업 시점 정책이고, 모델 저장 기준은 아래 `checkpoint.save_best`에서 제어합니다.
+현재 HuggingFace 학습 루프는 monitor metric이 개선될 때 `checkpoints/best`를 저장합니다.
+
+## 학습 제어 정책
+
+HuggingFace fine-tuning은 아래 config 블록을 실제 학습 루프에 반영합니다.
+일반 smoke 모델은 같은 config 계약을 갖지만, 현재는 빠른 파이프라인 검증용이라 checkpoint/scheduler를 적용하지 않습니다.
+
+```yaml
+checkpoint:
+  enabled: true
+  dir: checkpoints
+  save_best: true
+  save_last: true
+  save_every_epoch: false
+  resume_from:
+
+early_stopping:
+  enabled: true
+  patience: 3
+  min_delta: 0.0
+
+scheduler:
+  enabled: true
+  name: linear
+  warmup_ratio: 0.1
+  warmup_steps:
+```
+
+- `checkpoint.save_best`: monitor metric이 개선될 때 `checkpoints/best`를 저장합니다.
+- `checkpoint.save_last`: 매 epoch 후 `checkpoints/last`를 저장합니다.
+- `checkpoint.resume_from`: 이전 checkpoint 디렉터리를 지정해 optimizer/scheduler 상태까지 복원합니다.
+- `early_stopping`: monitor metric 개선이 `patience`만큼 멈추면 학습을 종료합니다.
+- `scheduler`: HuggingFace `get_scheduler`를 사용해 learning rate schedule을 적용합니다.

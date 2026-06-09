@@ -9,6 +9,10 @@ paths:
   output_dir: experiments/smoke_test
   backup_dir:
 
+artifact_policy:
+  run_id:
+  on_existing: overwrite
+
 data:
   task: image_classification
   train_csv: train.csv
@@ -30,6 +34,25 @@ metric:
   monitor: valid_accuracy
   mode: max
 
+checkpoint:
+  enabled: false
+  dir: checkpoints
+  save_best: true
+  save_last: true
+  save_every_epoch: false
+  resume_from:
+
+early_stopping:
+  enabled: false
+  patience: 3
+  min_delta: 0.0
+
+scheduler:
+  enabled: false
+  name: linear
+  warmup_ratio: 0.0
+  warmup_steps:
+
 report:
   - accuracy
 
@@ -37,3 +60,6 @@ backup:
   enabled: false
   on_best: false
   on_finish: false
+  on_failure: false
+  include_logs: true
+  include_checkpoints: true

@@ -98,3 +98,10 @@ python scripts/summarize_experiments.py \
 - smoke test는 `smoke_test_hf_tiny.yaml`로 먼저 확인합니다.
 - 실제 실험은 config를 복사해서 `experiment.name`, `output_dir`, `backup_dir`를 바꾼 뒤 실행합니다.
 - 팀 공유 전에는 `reports/experiment_summary.csv`와 각 실험 README의 결론/다음 액션을 확인합니다.
+## 백업 옵션
+
+`backup.on_failure: true`를 켜두면 학습이 실패해도 `failure.log`와 `run_status.json`을
+Drive에 남길 수 있어서 Colab 런타임이 끊기거나 에러가 났을 때 원인 확인이 쉽습니다.
+
+용량을 줄이고 싶으면 config에서 `include_checkpoints: false`로 두어 모델 weight 계열 산출물을
+백업에서 제외할 수 있습니다. 로그가 필요 없으면 `include_logs: false`도 사용할 수 있습니다.
