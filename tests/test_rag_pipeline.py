@@ -59,6 +59,30 @@ def test_run_rag_chat_script_supports_evaluation(isolated_project: Path, repo_ro
     assert "'retrieval_hit_rate': 1.0" in result.stdout
 
 
+def test_run_rag_chat_script_resolves_config_from_project_root(
+    isolated_project: Path,
+    repo_root: Path,
+    tmp_path: Path,
+):
+    result = subprocess.run(
+        [
+            sys.executable,
+            str(repo_root / "scripts" / "run_rag_chat.py"),
+            "--project-root",
+            str(isolated_project),
+            "--config",
+            "configs/rag_smoke_test.yaml",
+            "--evaluate",
+        ],
+        check=True,
+        capture_output=True,
+        text=True,
+        cwd=tmp_path,
+    )
+
+    assert "'retrieval_hit_rate': 1.0" in result.stdout
+
+
 def test_compare_rag_retrievers_writes_report(isolated_project: Path, repo_root: Path):
     rows = compare_rag_retrievers(
         [

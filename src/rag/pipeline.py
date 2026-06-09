@@ -43,6 +43,7 @@ EVALUATION_COLUMNS = [
 def run_rag_ingest(config_path: str | Path, project_root: str | Path = ".") -> dict[str, int]:
     """RAG 원본 문서를 읽고 document/chunk/embedding 산출물을 저장합니다."""
     root = Path(project_root)
+    config_path = _resolve_path(root, config_path)
     config = load_config(config_path)
     output_dir = resolve_experiment_dir(root, config)
     ensure_dir(output_dir)
@@ -77,6 +78,7 @@ def run_rag_retrieve(
 ) -> dict[str, Any]:
     """저장된 chunk를 읽어 질문에 대한 검색 결과를 JSON 호환 dict로 반환합니다."""
     root = Path(project_root)
+    config_path = _resolve_path(root, config_path)
     config = load_config(config_path)
     output_dir = resolve_experiment_dir(root, config)
     chunks_path = output_dir / "chunks.csv"
@@ -119,9 +121,11 @@ def run_rag_retrieve(
 
 def run_rag_chat(config_path: str | Path, project_root: str | Path, question: str) -> dict[str, Any]:
     """검색 결과를 바탕으로 추출형 답변과 citation을 생성합니다."""
+    root = Path(project_root)
+    config_path = _resolve_path(root, config_path)
     config = load_config(config_path)
-    output_dir = resolve_experiment_dir(project_root, config)
-    retrieval = run_rag_retrieve(config_path, project_root, question)
+    output_dir = resolve_experiment_dir(root, config)
+    retrieval = run_rag_retrieve(config_path, root, question)
     answer_cfg = config.get("rag", {}).get("answerer", {})
     answer = build_answer(
         question,
@@ -135,6 +139,7 @@ def run_rag_chat(config_path: str | Path, project_root: str | Path, question: st
 def run_rag_evaluation(config_path: str | Path, project_root: str | Path = ".") -> dict[str, float]:
     """작은 평가 질문 세트로 retrieval/answer/citation metric을 계산합니다."""
     root = Path(project_root)
+    config_path = _resolve_path(root, config_path)
     config = load_config(config_path)
     output_dir = resolve_experiment_dir(root, config)
     questions_path = _resolve_path(root, config.get("evaluation", {}).get("questions_path", ""))
