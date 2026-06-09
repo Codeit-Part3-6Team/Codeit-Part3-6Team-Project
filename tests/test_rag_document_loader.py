@@ -27,6 +27,18 @@ def test_load_documents_reads_txt_docx_and_hwpx(tmp_path: Path):
     assert any("HWPX 문서" in row["text"] for row in rows)
 
 
+def test_load_documents_reads_pdf(tmp_path: Path):
+    docs_dir = tmp_path / "docs"
+    docs_dir.mkdir()
+    _write_pdf(docs_dir / "sample.pdf", "PDF TEST BUDGET 123")
+
+    rows = load_documents(tmp_path, "docs", ["pdf"])
+
+    assert rows[0]["source_path"] == "docs/sample.pdf"
+    assert rows[0]["page"] == "1"
+    assert "PDF TEST BUDGET 123" in rows[0]["text"]
+
+
 def test_load_documents_respects_file_type_filter(tmp_path: Path):
     docs_dir = tmp_path / "docs"
     docs_dir.mkdir()
@@ -42,6 +54,43 @@ def test_load_documents_respects_file_type_filter(tmp_path: Path):
 def test_load_documents_rejects_unknown_file_type(tmp_path: Path):
     with pytest.raises(ValueError, match="Unsupported RAG file types"):
         load_documents(tmp_path, "docs", ["pptx"])
+
+
+def test_load_documents_reports_invalid_hwp(tmp_path: Path):
+    docs_dir = tmp_path / "docs"
+    docs_dir.mkdir()
+    (docs_dir / "invalid.hwp").write_bytes(b"not a real hwp file")
+
+    with pytest.raises(ValueError, match="not a valid HWP/OLE file"):
+        load_documents(tmp_path, "docs", ["hwp"])
+
+
+def _write_pdf(path: Path, text: str) -> None:
+    stream = f"BT /F1 24 Tf 72 720 Td ({text}) Tj ET".encode("latin-1")
+    objects = [
+        b"<< /Type /Catalog /Pages 2 0 R >>",
+        b"<< /Type /Pages /Kids [3 0 R] /Count 1 >>",
+        b"<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Resources << /Font << /F1 4 0 R >> >> /Contents 5 0 R >>",
+        b"<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>",
+        f"<< /Length {len(stream)} >>\nstream\n".encode("latin-1") + stream + b"\nendstream",
+    ]
+    content = bytearray(b"%PDF-1.4\n")
+    offsets = [0]
+    for index, obj in enumerate(objects, start=1):
+        offsets.append(len(content))
+        content.extend(f"{index} 0 obj\n".encode("latin-1"))
+        content.extend(obj)
+        content.extend(b"\nendobj\n")
+    xref_offset = len(content)
+    content.extend(f"xref\n0 {len(objects) + 1}\n0000000000 65535 f \n".encode("latin-1"))
+    for offset in offsets[1:]:
+        content.extend(f"{offset:010d} 00000 n \n".encode("latin-1"))
+    content.extend(
+        f"trailer << /Size {len(objects) + 1} /Root 1 0 R >>\nstartxref\n{xref_offset}\n%%EOF\n".encode(
+            "latin-1"
+        )
+    )
+    path.write_bytes(content)
 
 
 def _write_docx(path: Path, paragraphs: list[str]) -> None:

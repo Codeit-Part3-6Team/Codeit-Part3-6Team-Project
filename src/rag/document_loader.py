@@ -102,7 +102,12 @@ def _parse_hwp_document(project_root: Path, path: Path) -> list[dict[str, str]]:
         raise ImportError("HWP loading requires olefile. Install it with `pip install olefile`.") from exc
 
     rows: list[dict[str, str]] = []
-    with olefile.OleFileIO(str(path)) as ole:
+    try:
+        ole = olefile.OleFileIO(str(path))
+    except olefile.olefile.NotOleFileError as exc:
+        raise ValueError(f"{path} is not a valid HWP/OLE file.") from exc
+
+    with ole:
         section_names = sorted(
             "/".join(item)
             for item in ole.listdir()
