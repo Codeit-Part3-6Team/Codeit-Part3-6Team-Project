@@ -23,12 +23,25 @@ rag:
     provider: local
     model_name: hashing-char-ngram-v1
     dimension: 64
+    device: auto
+    normalize: true
+  vector_store:
+    type: memory
+    path:
+    collection_name: rag_smoke_test
   retriever:
     method: semantic
     top_k: 3
     score_threshold: 0.0
+  reranker:
+    enabled: false
+    provider: huggingface
+    model_name:
+    top_k: 3
   answerer:
     mode: extractive
+    provider: local
+    model_name:
     fallback_message: 문서에서 확인하지 못했습니다.
 
 evaluation:

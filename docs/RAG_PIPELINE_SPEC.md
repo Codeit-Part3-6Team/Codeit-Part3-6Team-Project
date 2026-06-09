@@ -483,3 +483,52 @@ metric:
 
 현재는 hashing embedding과 in-memory cosine retrieval까지 구현되어 있습니다.
 그 다음 단계에서 sentence-transformers, FAISS/Chroma 등을 붙이면 됩니다.
+## 실전형 RAG Config 계약
+
+현재 smoke runtime은 `local` embedding, `memory` vector store, `keyword/semantic` retriever,
+`extractive` answerer를 실제 실행합니다. 아래 값들은 실전 구현을 붙이기 위한 config 계약으로
+validation에서 먼저 검사합니다.
+
+```yaml
+rag:
+  embedding:
+    provider: huggingface
+    model_name: intfloat/multilingual-e5-base
+    dimension: 768
+    device: auto
+    normalize: true
+
+  vector_store:
+    type: faiss
+    path: indexes/rfp_faiss
+    collection_name: rfp_docs
+
+  retriever:
+    method: semantic
+    top_k: 5
+    score_threshold: 0.2
+
+  reranker:
+    enabled: true
+    provider: huggingface
+    model_name: BAAI/bge-reranker-base
+    top_k: 3
+
+  answerer:
+    mode: llm
+    provider: openai
+    model_name: gpt-4.1-mini
+    fallback_message: 문서에서 확인하지 못했습니다.
+```
+
+지원 후보:
+
+- `rag.embedding.provider`: `local`, `huggingface`
+- `rag.vector_store.type`: `memory`, `faiss`, `chroma`, `elasticsearch`
+- `rag.retriever.method`: `keyword`, `semantic`, `hybrid`
+- `rag.reranker.provider`: `local`, `huggingface`
+- `rag.answerer.mode`: `extractive`, `llm`
+- `rag.answerer.provider`: `local`, `openai`, `huggingface`
+
+주의: `hybrid`, `faiss`, `chroma`, `elasticsearch`, `reranker`, `llm answerer`는
+config 계약과 validation은 준비되어 있지만 smoke runtime의 실제 구현은 아직 붙이지 않았습니다.

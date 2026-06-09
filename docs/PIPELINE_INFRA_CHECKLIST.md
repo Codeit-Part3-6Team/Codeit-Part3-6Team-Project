@@ -24,6 +24,7 @@
 | RAG 오답 분석 | 있음 | `bad_retrievals.csv`, `unsupported_answers.csv`, `failed_questions.csv` |
 | RAG config validation | 있음 | `scripts/check_rag_pipeline.py` |
 | RAG dry-run/check 명령 | 있음 | 산출물 생성 전 경로/설정/문서 수 점검 |
+| RAG 실전 config 계약 | 있음 | embedding/vector_store/reranker/answerer provider validation |
 | RAG failure artifact | 있음 | `run_status.json`, 실패 시 `failure.log` |
 | artifact run_id | 있음 | `artifact_policy.run_id`로 실험 하위 run 폴더 분리 |
 | overwrite 방지 | 있음 | `artifact_policy.on_existing: fail` |
@@ -49,9 +50,9 @@
 |---|---|---|
 | step checkpoint | step 단위 checkpoint 저장 | 낮음 |
 | RAG checkpoint/resume | RAG index 생성 중단 시 이어서 실행 | 낮음 |
-| Elasticsearch | 키워드/하이브리드 검색 엔진 | 낮음 |
-| FAISS/Chroma | 실제 vector index 저장/로드 | 중간 |
-| LLM answerer | 검색 근거 기반 생성형 답변 | 중간 |
+| Elasticsearch | 키워드/하이브리드 검색 엔진 구현 | 낮음 |
+| FAISS/Chroma | 실제 vector index 저장/로드 구현 | 중간 |
+| LLM answerer | 검색 근거 기반 생성형 답변 구현 | 중간 |
 | 실제 샘플 문서 E2E | 실제 RFP PDF/HWPX/HWP로 전체 흐름 검증 | 높음 |
 
 ## 다음 보강 순서 추천

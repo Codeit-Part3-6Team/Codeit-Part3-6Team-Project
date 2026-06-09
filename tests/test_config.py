@@ -17,6 +17,10 @@ def test_load_config_reads_rag_file_types(repo_root):
     config = load_config(repo_root / "configs" / "rag_smoke_test.yaml")
 
     assert config["rag"]["loader"]["file_types"] == ["txt", "pdf", "docx", "hwpx", "hwp"]
+    assert config["rag"]["embedding"]["provider"] == "local"
+    assert config["rag"]["vector_store"]["type"] == "memory"
+    assert config["rag"]["reranker"]["enabled"] is False
+    assert config["rag"]["answerer"]["provider"] == "local"
 
 
 def test_load_config_reads_huggingface_text_config(repo_root):

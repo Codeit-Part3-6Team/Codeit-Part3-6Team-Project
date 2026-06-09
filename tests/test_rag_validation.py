@@ -15,6 +15,10 @@ def test_check_rag_pipeline_accepts_smoke_config(isolated_project: Path):
     assert result["summary"]["experiment"] == "rag_smoke_test"
     assert result["summary"]["document_counts"]["txt"] == 1
     assert result["summary"]["retriever_method"] == "semantic"
+    assert result["summary"]["embedding_provider"] == "local"
+    assert result["summary"]["vector_store_type"] == "memory"
+    assert result["summary"]["reranker_enabled"] is False
+    assert result["summary"]["answerer_mode"] == "extractive"
 
 
 def test_check_rag_pipeline_reports_bad_config_values(isolated_project: Path):
@@ -35,8 +39,20 @@ rag:
   retriever:
     method: unknown
     top_k: 0
+    score_threshold: -1
+  embedding:
+    provider: unknown
+    dimension: 0
+    device: tpu
+  vector_store:
+    type: faiss
+  reranker:
+    enabled: true
+    provider: huggingface
+    top_k: 0
   answerer:
-    mode: generative
+    mode: llm
+    provider: local
 artifact_policy:
   on_existing: invalid
 evaluation:
@@ -52,9 +68,60 @@ evaluation:
     assert any("overlap must be smaller" in error for error in result["errors"])
     assert any("unsupported retriever method" in error for error in result["errors"])
     assert any("top_k must be positive" in error for error in result["errors"])
-    assert any("unsupported answerer mode" in error for error in result["errors"])
+    assert any("score_threshold must be zero or positive" in error for error in result["errors"])
+    assert any("unsupported embedding provider" in error for error in result["errors"])
+    assert any("embedding.dimension must be positive" in error for error in result["errors"])
+    assert any("unsupported embedding device" in error for error in result["errors"])
+    assert any("vector_store.path is required" in error for error in result["errors"])
+    assert any("reranker.top_k must be positive" in error for error in result["errors"])
+    assert any("reranker.model_name is required" in error for error in result["errors"])
+    assert any("answerer.provider must be openai or huggingface" in error for error in result["errors"])
     assert any("unsupported artifact_policy.on_existing" in error for error in result["errors"])
     assert any("evaluation questions not found" in error for error in result["errors"])
+
+
+def test_check_rag_pipeline_validates_llm_answerer_contract(isolated_project: Path):
+    config_path = isolated_project / "configs" / "bad_llm_answerer.yaml"
+    config_path.write_text(
+        """
+experiment:
+  name: bad_llm_answerer
+paths:
+  raw_docs_dir: data/rag_smoke
+  output_dir: experiments/bad_llm_answerer
+rag:
+  loader:
+    file_types: [txt]
+  chunk:
+    size: 500
+    overlap: 80
+  embedding:
+    provider: huggingface
+    model_name:
+    dimension: 384
+  vector_store:
+    type: elasticsearch
+    collection_name:
+  retriever:
+    method: hybrid
+    top_k: 3
+  answerer:
+    mode: llm
+    provider: openai
+evaluation:
+  questions_path: data/rag_smoke/eval_questions.csv
+""",
+        encoding="utf-8",
+    )
+
+    result = check_rag_pipeline(config_path, isolated_project)
+
+    assert result["ok"] is False
+    assert any("embedding.model_name is required" in error for error in result["errors"])
+    assert any("vector_store.url is required" in error for error in result["errors"])
+    assert any("vector_store.index_name is required" in error for error in result["errors"])
+    assert any("retriever method is not implemented" in error for error in result["errors"])
+    assert any("answerer.model_name is required" in error for error in result["errors"])
 
 
 def test_check_rag_pipeline_script_uses_exit_code(isolated_project: Path, repo_root: Path):
