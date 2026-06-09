@@ -16,3 +16,5 @@ evaluate==0.4.6
 fastapi==0.136.3
 uvicorn==0.48.0
 pytest==9.0.3
+pypdf==6.5.0
+olefile==0.47

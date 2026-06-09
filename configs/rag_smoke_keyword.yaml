@@ -10,7 +10,7 @@ paths:
 
 rag:
   loader:
-    file_types: [txt]
+    file_types: [txt, pdf, docx, hwpx, hwp]
   chunk:
     size: 500
     overlap: 80

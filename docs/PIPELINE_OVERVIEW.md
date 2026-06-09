@@ -201,7 +201,8 @@ document -> chunk -> embedding -> retrieve -> answer + citations
 
 즉, 파이프라인의 앞단과 뒷단은 바뀌지만 “config로 실행하고, 실험 산출물을 남기고, 결과를 요약한다”는 운영 구조는 그대로 가져갈 수 있습니다.
 
-현재 RAG smoke pipeline은 외부 모델 없이 `txt` 문서와 hashing embedding 기반 semantic retrieval로 구현되어 있습니다.
+현재 RAG smoke pipeline은 외부 모델 없이 hashing embedding 기반 semantic retrieval로 구현되어 있습니다.
+loader는 `txt`, `pdf`, `docx`, `hwpx`, `hwp` 확장자를 대상으로 하며, 형식이 달라도 같은 document/chunk 계약으로 변환합니다.
 목표는 성능이 아니라 다음 항목을 빠르게 검증하는 것입니다.
 
 - txt 문서를 section 단위로 읽을 수 있는가

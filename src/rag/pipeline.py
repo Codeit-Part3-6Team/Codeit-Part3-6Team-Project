@@ -8,7 +8,7 @@ from src.artifacts import resolve_experiment_dir, write_run_info
 from src.config import load_config, write_config_copy, write_json
 from src.rag.answerer import build_answer
 from src.rag.chunker import chunk_documents
-from src.rag.document_loader import load_text_documents
+from src.rag.document_loader import load_documents
 from src.rag.embedder import DEFAULT_EMBEDDING_MODEL, embed_chunks
 from src.rag.retriever import retrieve_chunks
 from src.rag.vector_store import retrieve_chunks_by_vector
@@ -48,9 +48,10 @@ def run_rag_ingest(config_path: str | Path, project_root: str | Path = ".") -> d
     output_dir = resolve_experiment_dir(root, config)
     ensure_dir(output_dir)
 
+    loader_cfg = config.get("rag", {}).get("loader", {})
     raw_docs_dir = config["paths"]["raw_docs_dir"]
     chunk_cfg = config.get("rag", {}).get("chunk", {})
-    documents = load_text_documents(root, raw_docs_dir)
+    documents = load_documents(root, raw_docs_dir, loader_cfg.get("file_types", ["txt"]))
     chunks = chunk_documents(
         documents,
         chunk_size=int(chunk_cfg.get("size", 500)),

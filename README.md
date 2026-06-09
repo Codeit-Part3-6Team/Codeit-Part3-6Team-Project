@@ -67,6 +67,8 @@ python scripts/compare_rag_retrievers.py --project-root .
 RAG smoke test는 외부 모델 없이 hashing embedding 기반 semantic retrieval과 추출형 답변으로 동작합니다.
 평가를 실행하면 `bad_retrievals.csv`, `unsupported_answers.csv`, `failed_questions.csv`도 함께 생성되어 실패 유형을 나눠 볼 수 있습니다.
 검색 방식을 비교하려면 `compare_rag_retrievers.py`로 keyword/semantic 평가 결과를 한 번에 볼 수 있습니다.
+문서 loader는 `txt`, `pdf`, `docx`, `hwpx`, `hwp` 확장자를 대상으로 합니다.
+`docx`와 `hwpx`는 zip/xml 구조를 직접 읽고, `pdf`는 `pypdf`, `hwp`는 `olefile`을 사용합니다.
 
 ## HuggingFace Fine-Tuning 예시
 

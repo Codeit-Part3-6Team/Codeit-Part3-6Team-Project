@@ -35,6 +35,8 @@ python scripts/run_predict.py --config configs/exp002_hf_text_finetune.yaml --pr
 
 RFP 분석 챗봇 후보를 위한 최소 RAG 흐름입니다.
 처음에는 외부 모델 없이 txt 문서, hashing embedding 기반 semantic retrieval, 추출형 답변으로 파이프라인 연결만 확인합니다.
+loader는 `txt`, `pdf`, `docx`, `hwpx`, `hwp`를 대상으로 합니다.
+PDF/HWP는 각각 `pypdf`, `olefile` 패키지가 필요합니다.
 
 ```bash
 python scripts/run_rag_ingest.py --config configs/rag_smoke_test.yaml --project-root .

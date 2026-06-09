@@ -12,6 +12,12 @@ def test_load_config_reads_text_smoke_config(repo_root):
     assert config["backup"]["enabled"] is False
 
 
+def test_load_config_reads_rag_file_types(repo_root):
+    config = load_config(repo_root / "configs" / "rag_smoke_test.yaml")
+
+    assert config["rag"]["loader"]["file_types"] == ["txt", "pdf", "docx", "hwpx", "hwp"]
+
+
 def test_load_config_reads_huggingface_text_config(repo_root):
     config = load_config(repo_root / "configs" / "exp002_hf_text_finetune.yaml")
 
