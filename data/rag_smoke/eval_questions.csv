@@ -1,0 +1,4 @@
+question,expected_answer,expected_chunk_ids
+예산이 얼마야?,5천만 원,rfp_sample_chunk_0001
+마감일은 언제야?,2026년 7월 10일,rfp_sample_chunk_0002
+참가 자격은 뭐야?,최근 3년 이내 유사 사업 수행 경험,rfp_sample_chunk_0003

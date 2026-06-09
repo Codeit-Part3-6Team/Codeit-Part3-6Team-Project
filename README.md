@@ -54,6 +54,24 @@ python scripts/run_train.py --config configs/smoke_test_text.yaml --project-root
 python scripts/run_predict.py --config configs/smoke_test_text.yaml --project-root . --input data/text_processed/sample_positive.txt
 ```
 
+RAG 문서 검색/답변:
+
+```bash
+python scripts/run_rag_ingest.py --config configs/rag_smoke_test.yaml --project-root .
+python scripts/check_rag_pipeline.py --config configs/rag_smoke_test.yaml --project-root .
+python scripts/run_rag_retrieve.py --config configs/rag_smoke_test.yaml --project-root . --question "예산이 얼마야?"
+python scripts/run_rag_chat.py --config configs/rag_smoke_test.yaml --project-root . --question "예산이 얼마야?"
+python scripts/run_rag_chat.py --config configs/rag_smoke_test.yaml --project-root . --evaluate
+python scripts/compare_rag_retrievers.py --project-root .
+```
+
+RAG smoke test는 외부 모델 없이 hashing embedding 기반 semantic retrieval과 추출형 답변으로 동작합니다.
+평가를 실행하면 `bad_retrievals.csv`, `unsupported_answers.csv`, `failed_questions.csv`도 함께 생성되어 실패 유형을 나눠 볼 수 있습니다.
+RAG 실행이 성공하거나 실패하면 `run_status.json`이 갱신되고, 실패 시에는 `failure.log`도 남습니다.
+검색 방식을 비교하려면 `compare_rag_retrievers.py`로 keyword/semantic 평가 결과를 한 번에 볼 수 있습니다.
+문서 loader는 `txt`, `pdf`, `docx`, `hwpx`, `hwp` 확장자를 대상으로 합니다.
+`docx`와 `hwpx`는 zip/xml 구조를 직접 읽고, `pdf`는 `pypdf`, `hwp`는 `olefile`을 사용합니다.
+
 ## HuggingFace Fine-Tuning 예시
 
 HuggingFace 실험은 처음 실행할 때 base model을 내려받기 때문에 인터넷 연결이 필요합니다. 실제 프로젝트 데이터에서는 Colab/GPU 환경 사용을 권장합니다.
@@ -94,10 +112,13 @@ experiments/smoke_test_text/
 |-- metrics.json
 |-- predictions.csv
 |-- README.md
+|-- run_status.json
 `-- run_info.json
 ```
 
 HuggingFace 실험은 추가로 `hf_model/` 폴더에 tokenizer와 model weight를 저장합니다.
+학습 실행이 실패하면 같은 실험 폴더에 `failure.log`가 남습니다.
+예측 실행도 `run_status.json`을 갱신하고, 실패 시 `failure.log`를 남깁니다.
 
 여러 실험을 비교하려면 요약 스크립트를 실행합니다.
 
@@ -106,6 +127,7 @@ python scripts/summarize_experiments.py --project-root .
 ```
 
 기본 산출물은 `reports/experiment_summary.csv`와 `reports/experiment_summary.json`입니다.
+분류 실험은 accuracy를, RAG 실험은 retrieval hit rate와 citation correctness를 중심으로 비교합니다.
 
 ## 운영 원칙
 
@@ -127,6 +149,8 @@ python scripts/summarize_experiments.py --project-root .
 ## 킥오프 문서
 
 - `docs/PIPELINE_OVERVIEW.md`: 전체 파이프라인 설명 문서
+- `docs/PIPELINE_INFRA_CHECKLIST.md`: 파이프라인 운영 기능 점검표
+- `docs/RAG_PIPELINE_SPEC.md`: RAG 전환을 위한 document/chunk/retrieval/answer 계약
 - `docs/KICKOFF_GUIDE.md`: 수정하기 쉬운 Markdown 원본
 - `docs/kickoff.html`: 팀원 공유/브리핑용 HTML 문서
 - `docs/COLAB_GUIDE.md`: Colab/Drive 기반 실험 실행 가이드

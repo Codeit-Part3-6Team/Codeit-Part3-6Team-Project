@@ -10,9 +10,11 @@ if __package__ is None or __package__ == "":
 from src.artifacts import (
     maybe_backup,
     resolve_experiment_dir,
+    write_failure_artifact,
     write_experiment_readme,
     write_history,
     write_run_info,
+    write_run_status,
 )
 from src.config import load_config, write_config_copy, write_json
 from src.data import load_dataset, read_json, read_ppm_mean_rgb
@@ -41,6 +43,7 @@ def _features(rows: list[dict[str, str]], task: str) -> list[tuple[float, float,
 def run_training(config_path: str | Path, project_root: str | Path) -> dict[str, float]:
     """config 하나를 기준으로 학습을 실행하고 표준 실험 산출물을 저장합니다."""
     root = Path(project_root)
+    config_path = _resolve_path(root, config_path)
     config = load_config(config_path)
     data_dir = root / config["paths"]["data_dir"]
     output_dir = resolve_experiment_dir(root, config)
@@ -48,70 +51,79 @@ def run_training(config_path: str | Path, project_root: str | Path) -> dict[str,
     logger = setup_logger("train", output_dir / "train.log")
     set_seed(config.get("experiment", {}).get("seed"))
 
-    logger.info("Start training: %s", config.get("experiment", {}).get("name"))
+    write_run_status(output_dir, "train", "running")
+    try:
+        logger.info("Start training: %s", config.get("experiment", {}).get("name"))
 
-    validation = validate_data(data_dir)
-    if not validation["ok"]:
-        raise RuntimeError(f"Data validation failed: {validation['errors']}")
-    logger.info("Data validation passed")
+        validation = validate_data(data_dir)
+        if not validation["ok"]:
+            raise RuntimeError(f"Data validation failed: {validation['errors']}")
+        logger.info("Data validation passed")
 
-    # train/valid/test를 같은 loader로 읽어야 split 간 입력 계약 차이를 빨리 발견할 수 있습니다.
-    train_rows = load_dataset(data_dir, config["data"]["train_csv"])
-    valid_rows = load_dataset(data_dir, config["data"]["valid_csv"])
-    test_rows = load_dataset(data_dir, config["data"]["test_csv"])
-    task = config["data"]["task"]
-    model_name = config["model"]["name"]
+        # train/valid/test를 같은 loader로 읽어야 split 간 입력 계약 차이를 빨리 발견할 수 있습니다.
+        train_rows = load_dataset(data_dir, config["data"]["train_csv"])
+        valid_rows = load_dataset(data_dir, config["data"]["valid_csv"])
+        test_rows = load_dataset(data_dir, config["data"]["test_csv"])
+        task = config["data"]["task"]
+        model_name = config["model"]["name"]
 
-    # HuggingFace 모델은 base model, label map 같은 config 값이 더 필요하므로
-    # 가벼운 smoke model registry를 거치지 않고 전용 학습 경로로 보냅니다.
-    if is_huggingface_model(model_name):
-        return _run_huggingface_training(
-            config_path=config_path,
-            project_root=root,
-            config=config,
-            output_dir=output_dir,
-            train_rows=train_rows,
-            valid_rows=valid_rows,
-            test_rows=test_rows,
-            logger=logger,
-        )
+        # HuggingFace 모델은 base model, label map 같은 config 값이 더 필요하므로
+        # 가벼운 smoke model registry를 거치지 않고 전용 학습 경로로 보냅니다.
+        if is_huggingface_model(model_name):
+            metrics = _run_huggingface_training(
+                config_path=config_path,
+                project_root=root,
+                config=config,
+                output_dir=output_dir,
+                train_rows=train_rows,
+                valid_rows=valid_rows,
+                test_rows=test_rows,
+                logger=logger,
+            )
+            write_run_status(output_dir, "train", "success", result=metrics)
+            return metrics
 
-    model = build_model(model_name)
-    logger.info("Model built: %s", model_name)
-    train_features = _features(train_rows, task)
-    train_labels = [row["label"] for row in train_rows]
-    model.fit(list(zip(train_features, train_labels)))
+        model = build_model(model_name)
+        logger.info("Model built: %s", model_name)
+        train_features = _features(train_rows, task)
+        train_labels = [row["label"] for row in train_rows]
+        model.fit(list(zip(train_features, train_labels)))
 
-    valid_pred = model.predict(_features(valid_rows, task))
-    valid_true = [row["label"] for row in valid_rows]
-    test_pred = model.predict(_features(test_rows, task))
-    test_true = [row["label"] for row in test_rows]
+        valid_pred = model.predict(_features(valid_rows, task))
+        valid_true = [row["label"] for row in valid_rows]
+        test_pred = model.predict(_features(test_rows, task))
+        test_true = [row["label"] for row in test_rows]
 
-    # 현재 scaffold는 accuracy만 계산하지만, 이 지점이 macro f1/confusion matrix 확장 위치입니다.
-    metrics = {
-        "valid_accuracy": accuracy(valid_true, valid_pred),
-        "test_accuracy": accuracy(test_true, test_pred),
-    }
-    history = [{"epoch": 1, **metrics}]
+        # 현재 scaffold는 accuracy만 계산하지만, 이 지점이 macro f1/confusion matrix 확장 위치입니다.
+        metrics = {
+            "valid_accuracy": accuracy(valid_true, valid_pred),
+            "test_accuracy": accuracy(test_true, test_pred),
+        }
+        history = [{"epoch": 1, **metrics}]
 
-    command = f"python scripts/run_train.py --config {Path(config_path).as_posix()} --project-root {root.as_posix()}"
-    # 아래 파일들이 실험 재현과 팀원 간 결과 공유의 최소 단위입니다.
-    write_config_copy(config_path, output_dir)
-    write_json(output_dir / "best_model.json", model.to_dict())
-    write_json(output_dir / "metrics.json", metrics)
-    write_history(output_dir / "history.csv", history)
-    write_run_info(output_dir, config)
-    write_experiment_readme(output_dir, config, metrics, command)
-    logger.info("Artifacts saved to %s", output_dir)
+        command = f"python scripts/run_train.py --config {Path(config_path).as_posix()} --project-root {root.as_posix()}"
+        # 아래 파일들이 실험 재현과 팀원 간 결과 공유의 최소 단위입니다.
+        write_config_copy(config_path, output_dir)
+        write_json(output_dir / "best_model.json", model.to_dict())
+        write_json(output_dir / "metrics.json", metrics)
+        write_history(output_dir / "history.csv", history)
+        write_run_info(output_dir, config)
+        write_experiment_readme(output_dir, config, metrics, command)
+        logger.info("Artifacts saved to %s", output_dir)
 
-    backup_cfg = config.get("backup", {})
-    if backup_cfg.get("enabled") and backup_cfg.get("on_finish"):
-        # Colab 런타임이 끊겨도 결과를 잃지 않도록 Drive 같은 외부 경로에 복사할 수 있습니다.
-        maybe_backup(output_dir, config["paths"].get("backup_dir"))
-        logger.info("Artifacts backed up to %s", config["paths"].get("backup_dir"))
+        backup_cfg = config.get("backup", {})
+        if backup_cfg.get("enabled") and backup_cfg.get("on_finish"):
+            # Colab 런타임이 끊겨도 결과를 잃지 않도록 Drive 같은 외부 경로에 복사할 수 있습니다.
+            maybe_backup(output_dir, config["paths"].get("backup_dir"))
+            logger.info("Artifacts backed up to %s", config["paths"].get("backup_dir"))
 
-    logger.info("Training finished: %s", metrics)
-    return metrics
+        logger.info("Training finished: %s", metrics)
+        write_run_status(output_dir, "train", "success", result=metrics)
+        return metrics
+    except Exception as exc:
+        logger.exception("Training failed")
+        write_failure_artifact(output_dir, "train", exc)
+        raise
 
 
 def _run_huggingface_training(
@@ -191,6 +203,11 @@ def _run_huggingface_training(
 
     logger.info("Training finished: %s", metrics)
     return metrics
+
+
+def _resolve_path(root: Path, path: str | Path) -> Path:
+    candidate = Path(path)
+    return candidate if candidate.is_absolute() else root / candidate
 
 
 def main() -> None:

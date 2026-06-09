@@ -18,3 +18,5 @@ python scripts/run_validate.py --data-dir data/text_processed
 python scripts/run_train.py --config configs/smoke_test_text.yaml --project-root .
 python scripts/run_predict.py --config configs/smoke_test_text.yaml --project-root . --input data/text_processed/sample_positive.txt
 ```
+
+RAG 문서 loader 테스트는 외부 파일 없이 zip/xml 기반 DOCX/HWPX 샘플을 즉석에서 만들어 검증합니다.
