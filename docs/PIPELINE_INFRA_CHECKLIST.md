@@ -22,6 +22,8 @@
 | RAG 검색 비교 | 있음 | `scripts/compare_rag_retrievers.py` |
 | RAG 평가 metric | 있음 | `retrieval_hit_rate`, `citation_correct_rate` 등 |
 | RAG 오답 분석 | 있음 | `bad_retrievals.csv`, `unsupported_answers.csv`, `failed_questions.csv` |
+| RAG config validation | 있음 | `scripts/check_rag_pipeline.py` |
+| RAG dry-run/check 명령 | 있음 | 산출물 생성 전 경로/설정/문서 수 점검 |
 | 실험 산출물 저장 | 있음 | `experiments/{experiment.name}/` |
 | 실험 요약 리포트 | 있음 | `scripts/summarize_experiments.py` |
 | Colab/Drive 실행 가이드 | 있음 | `docs/COLAB_GUIDE.md` |
@@ -42,8 +44,6 @@
 
 | 항목 | 의미 | 우선순위 |
 |---|---|---|
-| config validation | 실행 전 config 키/값/경로 오류를 잡는 기능 | 높음 |
-| dry-run/check 명령 | 실제 학습/ingest 전에 경로와 설정만 점검 | 높음 |
 | checkpoint resume | 중단된 학습을 이어서 실행 | 중간 |
 | epoch/step checkpoint | best 외에 중간/last checkpoint 저장 | 중간 |
 | early stopping | metric 개선이 멈추면 학습 종료 | 중간 |
@@ -57,10 +57,7 @@
 
 ## 다음 보강 순서 추천
 
-1. **Config validation**
-   실행하기 전에 필수 config 키, 지원 file type, retriever method, chunk size, 경로 존재 여부를 확인합니다.
-
-2. **Dry-run 명령**
+1. **RAG check 명령을 실제 샘플 문서에 적용**
    예시:
 
    ```bash
@@ -69,13 +66,13 @@
 
    실제 산출물을 만들기 전에 어떤 문서를 읽고, 어떤 output dir을 쓰고, 어떤 retriever를 사용할지 점검합니다.
 
-3. **Failure artifact**
+2. **Failure artifact**
    실패 시 `failure.log` 또는 `run_status.json`을 남겨, 팀원이 “어디서 왜 실패했는지” 바로 볼 수 있게 합니다.
 
-4. **실제 샘플 문서 E2E**
+3. **실제 샘플 문서 E2E**
    실제 RFP 문서 하나를 기준으로 loader, chunk, retrieval, answer, evaluation 산출물 품질을 확인합니다.
 
-5. **Checkpoint/Resume**
+4. **Checkpoint/Resume**
    HuggingFace fine-tuning을 실제로 돌릴 가능성이 커졌을 때 별도 브랜치에서 보강합니다.
 
 ## 판단 기준

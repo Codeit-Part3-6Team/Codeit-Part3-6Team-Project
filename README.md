@@ -58,6 +58,7 @@ RAG 문서 검색/답변:
 
 ```bash
 python scripts/run_rag_ingest.py --config configs/rag_smoke_test.yaml --project-root .
+python scripts/check_rag_pipeline.py --config configs/rag_smoke_test.yaml --project-root .
 python scripts/run_rag_retrieve.py --config configs/rag_smoke_test.yaml --project-root . --question "예산이 얼마야?"
 python scripts/run_rag_chat.py --config configs/rag_smoke_test.yaml --project-root . --question "예산이 얼마야?"
 python scripts/run_rag_chat.py --config configs/rag_smoke_test.yaml --project-root . --evaluate
