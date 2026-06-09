@@ -61,6 +61,8 @@ experiments/rag_smoke_test/
 |-- bad_retrievals.csv
 |-- unsupported_answers.csv
 |-- failed_questions.csv
+|-- run_status.json
+|-- failure.log
 `-- metrics.json
 ```
 

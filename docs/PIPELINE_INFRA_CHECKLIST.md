@@ -5,7 +5,7 @@
 
 ## 한 줄 요약
 
-현재 파이프라인은 **실험을 config로 실행하고 산출물을 남기는 기본 구조는 갖췄지만, 중간 checkpoint, resume, failure artifact, config validation 같은 운영 안정성 기능은 아직 보강 여지가 있습니다.**
+현재 파이프라인은 **실험을 config로 실행하고 산출물을 남기는 기본 구조와 RAG용 validation/failure artifact는 갖췄지만, 중간 checkpoint, resume, 학습 파이프라인 failure artifact 같은 운영 안정성 기능은 아직 보강 여지가 있습니다.**
 
 ## 현재 갖춘 것
 
@@ -24,6 +24,7 @@
 | RAG 오답 분석 | 있음 | `bad_retrievals.csv`, `unsupported_answers.csv`, `failed_questions.csv` |
 | RAG config validation | 있음 | `scripts/check_rag_pipeline.py` |
 | RAG dry-run/check 명령 | 있음 | 산출물 생성 전 경로/설정/문서 수 점검 |
+| RAG failure artifact | 있음 | `run_status.json`, 실패 시 `failure.log` |
 | 실험 산출물 저장 | 있음 | `experiments/{experiment.name}/` |
 | 실험 요약 리포트 | 있음 | `scripts/summarize_experiments.py` |
 | Colab/Drive 실행 가이드 | 있음 | `docs/COLAB_GUIDE.md` |
@@ -35,7 +36,7 @@
 |---|---|---|
 | 백업 | `on_finish` 중심 | 중간 백업, 실패 시 백업, RAG 산출물 백업 정책 추가 |
 | best model 저장 | 분류/HF 중심 | RAG에서는 best retriever/index 기준을 별도 정의 |
-| 로그 | `train.log`, 일부 산출물 중심 | 실패 전용 `failure.log`, `run_status.json` 추가 |
+| 로그 | RAG 실패 artifact는 있음 | 학습 파이프라인에도 `failure.log`, `run_status.json` 적용 |
 | metric | accuracy/RAG 기본 metric 중심 | macro f1, confusion matrix, retrieval@k, answer faithfulness 후보 추가 |
 | 문서 loader 품질 | 입구는 있음 | 실제 PDF/HWP/HWPX 샘플 기반 보정 필요 |
 | HuggingFace trainer 기능 | 기본 학습 가능 | early stopping, scheduler, checkpoint save/resume 명시화 필요 |
@@ -48,7 +49,6 @@
 | epoch/step checkpoint | best 외에 중간/last checkpoint 저장 | 중간 |
 | early stopping | metric 개선이 멈추면 학습 종료 | 중간 |
 | scheduler 표준화 | learning rate scheduler를 config로 통제 | 중간 |
-| failure artifact | 실패 원인과 실행 상태를 파일로 남김 | 높음 |
 | artifact versioning | 같은 실험명 재실행 시 충돌/덮어쓰기 방지 | 중간 |
 | Elasticsearch | 키워드/하이브리드 검색 엔진 | 낮음 |
 | FAISS/Chroma | 실제 vector index 저장/로드 | 중간 |
@@ -66,11 +66,11 @@
 
    실제 산출물을 만들기 전에 어떤 문서를 읽고, 어떤 output dir을 쓰고, 어떤 retriever를 사용할지 점검합니다.
 
-2. **Failure artifact**
-   실패 시 `failure.log` 또는 `run_status.json`을 남겨, 팀원이 “어디서 왜 실패했는지” 바로 볼 수 있게 합니다.
-
-3. **실제 샘플 문서 E2E**
+2. **실제 샘플 문서 E2E**
    실제 RFP 문서 하나를 기준으로 loader, chunk, retrieval, answer, evaluation 산출물 품질을 확인합니다.
+
+3. **학습 파이프라인 failure artifact**
+   RAG에 적용한 `run_status.json`/`failure.log` 패턴을 train/predict에도 적용합니다.
 
 4. **Checkpoint/Resume**
    HuggingFace fine-tuning을 실제로 돌릴 가능성이 커졌을 때 별도 브랜치에서 보강합니다.

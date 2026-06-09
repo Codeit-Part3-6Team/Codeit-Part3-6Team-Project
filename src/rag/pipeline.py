@@ -1,6 +1,8 @@
 from __future__ import annotations
 
 import csv
+import traceback
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
@@ -48,28 +50,35 @@ def run_rag_ingest(config_path: str | Path, project_root: str | Path = ".") -> d
     output_dir = resolve_experiment_dir(root, config)
     ensure_dir(output_dir)
 
-    loader_cfg = config.get("rag", {}).get("loader", {})
-    raw_docs_dir = config["paths"]["raw_docs_dir"]
-    chunk_cfg = config.get("rag", {}).get("chunk", {})
-    documents = load_documents(root, raw_docs_dir, loader_cfg.get("file_types", ["txt"]))
-    chunks = chunk_documents(
-        documents,
-        chunk_size=int(chunk_cfg.get("size", 500)),
-        overlap=int(chunk_cfg.get("overlap", 80)),
-    )
-    embedding_cfg = config.get("rag", {}).get("embedding", {})
-    embeddings = embed_chunks(
-        chunks,
-        dimension=int(embedding_cfg.get("dimension", 64)),
-        model_name=embedding_cfg.get("model_name", DEFAULT_EMBEDDING_MODEL),
-    )
+    _write_run_status(output_dir, "rag_ingest", "running")
+    try:
+        loader_cfg = config.get("rag", {}).get("loader", {})
+        raw_docs_dir = config["paths"]["raw_docs_dir"]
+        chunk_cfg = config.get("rag", {}).get("chunk", {})
+        documents = load_documents(root, raw_docs_dir, loader_cfg.get("file_types", ["txt"]))
+        chunks = chunk_documents(
+            documents,
+            chunk_size=int(chunk_cfg.get("size", 500)),
+            overlap=int(chunk_cfg.get("overlap", 80)),
+        )
+        embedding_cfg = config.get("rag", {}).get("embedding", {})
+        embeddings = embed_chunks(
+            chunks,
+            dimension=int(embedding_cfg.get("dimension", 64)),
+            model_name=embedding_cfg.get("model_name", DEFAULT_EMBEDDING_MODEL),
+        )
 
-    write_config_copy(config_path, output_dir)
-    _write_csv(output_dir / "parsed_documents.csv", documents, DOCUMENT_COLUMNS)
-    _write_csv(output_dir / "chunks.csv", chunks, CHUNK_COLUMNS)
-    _write_jsonl(output_dir / "embeddings.jsonl", embeddings)
-    write_run_info(output_dir, config)
-    return {"documents": len(documents), "chunks": len(chunks), "embeddings": len(embeddings)}
+        write_config_copy(config_path, output_dir)
+        _write_csv(output_dir / "parsed_documents.csv", documents, DOCUMENT_COLUMNS)
+        _write_csv(output_dir / "chunks.csv", chunks, CHUNK_COLUMNS)
+        _write_jsonl(output_dir / "embeddings.jsonl", embeddings)
+        write_run_info(output_dir, config)
+        result = {"documents": len(documents), "chunks": len(chunks), "embeddings": len(embeddings)}
+        _write_run_status(output_dir, "rag_ingest", "success", result=result)
+        return result
+    except Exception as exc:
+        _write_failure_artifact(output_dir, "rag_ingest", exc)
+        raise
 
 
 def run_rag_retrieve(
@@ -82,6 +91,22 @@ def run_rag_retrieve(
     config_path = _resolve_path(root, config_path)
     config = load_config(config_path)
     output_dir = resolve_experiment_dir(root, config)
+    ensure_dir(output_dir)
+    _write_run_status(output_dir, "rag_retrieve", "running")
+    try:
+        return _run_rag_retrieve_checked(config_path, root, config, output_dir, question)
+    except Exception as exc:
+        _write_failure_artifact(output_dir, "rag_retrieve", exc)
+        raise
+
+
+def _run_rag_retrieve_checked(
+    config_path: Path,
+    root: Path,
+    config: dict[str, Any],
+    output_dir: Path,
+    question: str,
+) -> dict[str, Any]:
     chunks_path = output_dir / "chunks.csv"
     embeddings_path = output_dir / "embeddings.jsonl"
     if not chunks_path.exists() or not embeddings_path.exists():
@@ -117,6 +142,7 @@ def run_rag_retrieve(
         "retrieved_chunks": retrieved,
     }
     _append_jsonl(output_dir / "retrieval_results.jsonl", payload)
+    _write_run_status(output_dir, "rag_retrieve", "success", result={"retrieved": len(retrieved)})
     return payload
 
 
@@ -126,15 +152,22 @@ def run_rag_chat(config_path: str | Path, project_root: str | Path, question: st
     config_path = _resolve_path(root, config_path)
     config = load_config(config_path)
     output_dir = resolve_experiment_dir(root, config)
-    retrieval = run_rag_retrieve(config_path, root, question)
-    answer_cfg = config.get("rag", {}).get("answerer", {})
-    answer = build_answer(
-        question,
-        retrieval["retrieved_chunks"],
-        fallback_message=answer_cfg.get("fallback_message", "문서에서 확인하지 못했습니다."),
-    )
-    _append_jsonl(output_dir / "answers.jsonl", answer)
-    return answer
+    ensure_dir(output_dir)
+    _write_run_status(output_dir, "rag_chat", "running")
+    try:
+        retrieval = run_rag_retrieve(config_path, root, question)
+        answer_cfg = config.get("rag", {}).get("answerer", {})
+        answer = build_answer(
+            question,
+            retrieval["retrieved_chunks"],
+            fallback_message=answer_cfg.get("fallback_message", "문서에서 확인하지 못했습니다."),
+        )
+        _append_jsonl(output_dir / "answers.jsonl", answer)
+        _write_run_status(output_dir, "rag_chat", "success", result={"status": answer["status"]})
+        return answer
+    except Exception as exc:
+        _write_failure_artifact(output_dir, "rag_chat", exc)
+        raise
 
 
 def run_rag_evaluation(config_path: str | Path, project_root: str | Path = ".") -> dict[str, float]:
@@ -143,61 +176,68 @@ def run_rag_evaluation(config_path: str | Path, project_root: str | Path = ".") 
     config_path = _resolve_path(root, config_path)
     config = load_config(config_path)
     output_dir = resolve_experiment_dir(root, config)
-    questions_path = _resolve_path(root, config.get("evaluation", {}).get("questions_path", ""))
-    if not questions_path.exists():
-        raise FileNotFoundError(f"RAG evaluation questions not found: {questions_path}")
+    ensure_dir(output_dir)
+    _write_run_status(output_dir, "rag_evaluation", "running")
+    try:
+        questions_path = _resolve_path(root, config.get("evaluation", {}).get("questions_path", ""))
+        if not questions_path.exists():
+            raise FileNotFoundError(f"RAG evaluation questions not found: {questions_path}")
 
-    rows = _read_csv(questions_path)
-    answer_cfg = config.get("rag", {}).get("answerer", {})
-    result_rows: list[dict[str, str]] = []
-    analysis_rows: list[dict[str, str]] = []
-    for row in rows:
-        retrieval = run_rag_retrieve(config_path, root, row["question"])
-        answer = build_answer(
-            row["question"],
-            retrieval["retrieved_chunks"],
-            fallback_message=answer_cfg.get("fallback_message", "문서에서 확인하지 못했습니다."),
-        )
-        _append_jsonl(output_dir / "answers.jsonl", answer)
-        expected_chunk_ids = _split_expected_ids(row["expected_chunk_ids"])
-        retrieved_ids = {str(item["chunk_id"]) for item in retrieval["retrieved_chunks"]}
-        citation_ids = {str(item["chunk_id"]) for item in answer["citations"]}
-        retrieval_hit = bool(expected_chunk_ids & retrieved_ids)
-        answer_contains_expected = row["expected_answer"] in answer["answer"]
-        citation_correct = bool(expected_chunk_ids & citation_ids)
-        result_rows.append(
-            {
-                "question": row["question"],
-                "retrieval_hit": str(retrieval_hit).lower(),
-                "answer_contains_expected": str(answer_contains_expected).lower(),
-                "citation_correct": str(citation_correct).lower(),
-                "status": answer["status"],
-            }
-        )
-        analysis_rows.append(
-            {
-                "question": row["question"],
-                "expected_answer": row["expected_answer"],
-                "expected_chunk_ids": _join_ids(expected_chunk_ids),
-                "retrieved_chunk_ids": _join_ids(retrieved_ids),
-                "citation_chunk_ids": _join_ids(citation_ids),
-                "answer": answer["answer"],
-                "retrieval_hit": str(retrieval_hit).lower(),
-                "answer_contains_expected": str(answer_contains_expected).lower(),
-                "citation_correct": str(citation_correct).lower(),
-                "status": answer["status"],
-            }
-        )
+        rows = _read_csv(questions_path)
+        answer_cfg = config.get("rag", {}).get("answerer", {})
+        result_rows: list[dict[str, str]] = []
+        analysis_rows: list[dict[str, str]] = []
+        for row in rows:
+            retrieval = run_rag_retrieve(config_path, root, row["question"])
+            answer = build_answer(
+                row["question"],
+                retrieval["retrieved_chunks"],
+                fallback_message=answer_cfg.get("fallback_message", "문서에서 확인하지 못했습니다."),
+            )
+            _append_jsonl(output_dir / "answers.jsonl", answer)
+            expected_chunk_ids = _split_expected_ids(row["expected_chunk_ids"])
+            retrieved_ids = {str(item["chunk_id"]) for item in retrieval["retrieved_chunks"]}
+            citation_ids = {str(item["chunk_id"]) for item in answer["citations"]}
+            retrieval_hit = bool(expected_chunk_ids & retrieved_ids)
+            answer_contains_expected = row["expected_answer"] in answer["answer"]
+            citation_correct = bool(expected_chunk_ids & citation_ids)
+            result_rows.append(
+                {
+                    "question": row["question"],
+                    "retrieval_hit": str(retrieval_hit).lower(),
+                    "answer_contains_expected": str(answer_contains_expected).lower(),
+                    "citation_correct": str(citation_correct).lower(),
+                    "status": answer["status"],
+                }
+            )
+            analysis_rows.append(
+                {
+                    "question": row["question"],
+                    "expected_answer": row["expected_answer"],
+                    "expected_chunk_ids": _join_ids(expected_chunk_ids),
+                    "retrieved_chunk_ids": _join_ids(retrieved_ids),
+                    "citation_chunk_ids": _join_ids(citation_ids),
+                    "answer": answer["answer"],
+                    "retrieval_hit": str(retrieval_hit).lower(),
+                    "answer_contains_expected": str(answer_contains_expected).lower(),
+                    "citation_correct": str(citation_correct).lower(),
+                    "status": answer["status"],
+                }
+            )
 
-    metrics = _calculate_metrics(result_rows)
-    _write_csv(
-        output_dir / "evaluation_results.csv",
-        result_rows,
-        ["question", "retrieval_hit", "answer_contains_expected", "citation_correct", "status"],
-    )
-    _write_error_analysis(output_dir, analysis_rows)
-    write_json(output_dir / "metrics.json", metrics)
-    return metrics
+        metrics = _calculate_metrics(result_rows)
+        _write_csv(
+            output_dir / "evaluation_results.csv",
+            result_rows,
+            ["question", "retrieval_hit", "answer_contains_expected", "citation_correct", "status"],
+        )
+        _write_error_analysis(output_dir, analysis_rows)
+        write_json(output_dir / "metrics.json", metrics)
+        _write_run_status(output_dir, "rag_evaluation", "success", result=metrics)
+        return metrics
+    except Exception as exc:
+        _write_failure_artifact(output_dir, "rag_evaluation", exc)
+        raise
 
 
 def _calculate_metrics(rows: list[dict[str, str]]) -> dict[str, float]:
@@ -237,6 +277,43 @@ def _write_error_analysis(output_dir: Path, rows: list[dict[str, str]]) -> None:
     _write_csv(output_dir / "bad_retrievals.csv", bad_retrievals, EVALUATION_COLUMNS)
     _write_csv(output_dir / "unsupported_answers.csv", unsupported_answers, EVALUATION_COLUMNS)
     _write_csv(output_dir / "failed_questions.csv", failed_questions, EVALUATION_COLUMNS)
+
+
+def _write_run_status(
+    output_dir: str | Path,
+    operation: str,
+    status: str,
+    result: dict[str, Any] | None = None,
+    error: dict[str, str] | None = None,
+) -> None:
+    payload: dict[str, Any] = {
+        "operation": operation,
+        "status": status,
+        "updated_at": _utc_now(),
+    }
+    if result is not None:
+        payload["result"] = result
+    if error is not None:
+        payload["error"] = error
+    write_json(Path(output_dir) / "run_status.json", payload)
+
+
+def _write_failure_artifact(output_dir: str | Path, operation: str, exc: Exception) -> None:
+    """실패 원인과 traceback을 파일로 남긴 뒤 호출부가 예외를 다시 올리게 합니다."""
+    error = {"type": type(exc).__name__, "message": str(exc)}
+    _write_run_status(output_dir, operation, "failed", error=error)
+    failure_text = (
+        f"operation: {operation}\n"
+        f"failed_at: {_utc_now()}\n"
+        f"error_type: {type(exc).__name__}\n"
+        f"message: {exc}\n\n"
+        f"{traceback.format_exc()}"
+    )
+    Path(output_dir, "failure.log").write_text(failure_text, encoding="utf-8")
+
+
+def _utc_now() -> str:
+    return datetime.now(timezone.utc).isoformat()
 
 
 def _read_csv(path: str | Path) -> list[dict[str, str]]:

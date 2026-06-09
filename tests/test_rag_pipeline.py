@@ -34,9 +34,13 @@ def test_rag_smoke_pipeline_writes_artifacts(isolated_project: Path):
     assert (output_dir / "unsupported_answers.csv").exists()
     assert (output_dir / "failed_questions.csv").exists()
     assert (output_dir / "metrics.json").exists()
+    assert (output_dir / "run_status.json").exists()
 
     saved_metrics = json.loads((output_dir / "metrics.json").read_text(encoding="utf-8"))
+    run_status = json.loads((output_dir / "run_status.json").read_text(encoding="utf-8"))
     assert saved_metrics["answer_contains_expected_rate"] == 1.0
+    assert run_status["operation"] == "rag_evaluation"
+    assert run_status["status"] == "success"
     assert "question,expected_answer" in (output_dir / "bad_retrievals.csv").read_text(encoding="utf-8")
 
 
@@ -109,3 +113,46 @@ def test_compare_rag_retrievers_writes_report(isolated_project: Path, repo_root:
     )
 
     assert "wrote reports/rag_retriever_comparison.csv (2 retrievers)" in result.stdout
+
+
+def test_rag_evaluation_writes_failure_artifacts(isolated_project: Path):
+    config_path = isolated_project / "configs" / "rag_failure.yaml"
+    config_path.write_text(
+        """
+experiment:
+  name: rag_failure
+paths:
+  raw_docs_dir: data/rag_smoke
+  output_dir: experiments/rag_failure
+rag:
+  loader:
+    file_types: [txt]
+  chunk:
+    size: 500
+    overlap: 80
+  retriever:
+    method: semantic
+    top_k: 3
+  answerer:
+    mode: extractive
+evaluation:
+  questions_path: data/rag_smoke/missing_questions.csv
+""",
+        encoding="utf-8",
+    )
+
+    try:
+        run_rag_evaluation(config_path, isolated_project)
+    except FileNotFoundError:
+        pass
+    else:
+        raise AssertionError("run_rag_evaluation should fail for missing questions file")
+
+    output_dir = isolated_project / "experiments" / "rag_failure"
+    run_status = json.loads((output_dir / "run_status.json").read_text(encoding="utf-8"))
+    failure_log = (output_dir / "failure.log").read_text(encoding="utf-8")
+
+    assert run_status["operation"] == "rag_evaluation"
+    assert run_status["status"] == "failed"
+    assert run_status["error"]["type"] == "FileNotFoundError"
+    assert "missing_questions.csv" in failure_log

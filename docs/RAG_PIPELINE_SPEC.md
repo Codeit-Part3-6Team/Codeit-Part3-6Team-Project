@@ -118,6 +118,8 @@ experiments/rag_smoke_test/
 |-- failed_questions.csv
 |-- metrics.json
 |-- config.yaml
+|-- run_status.json
+|-- failure.log         # 실패한 경우
 `-- run_info.json
 ```
 
@@ -138,6 +140,7 @@ python scripts/compare_rag_retrievers.py --project-root .
 비교 결과는 `reports/rag_retriever_comparison.csv`와 `reports/rag_retriever_comparison.json`에 저장됩니다.
 
 이 구현의 목적은 성능이 아니라, RAG 프로젝트에서도 config 기반 실행, embedding 산출물 저장, citation 추적, 평가 산출물 저장, 실험 요약이 끝까지 이어지는지 확인하는 것입니다.
+실행 상태는 `run_status.json`에 남기고, 실패한 경우 `failure.log`에 traceback과 에러 메시지를 남깁니다.
 
 ## 1. Document Input
 
