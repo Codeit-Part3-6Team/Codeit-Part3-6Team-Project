@@ -9,6 +9,10 @@ paths:
   output_dir: experiments/smoke_test
   backup_dir:
 
+artifact_policy:
+  run_id:
+  on_existing: overwrite
+
 data:
   task: image_classification
   train_csv: train.csv

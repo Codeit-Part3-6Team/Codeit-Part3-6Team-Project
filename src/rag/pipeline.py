@@ -4,7 +4,13 @@ import csv
 from pathlib import Path
 from typing import Any
 
-from src.artifacts import resolve_experiment_dir, write_failure_artifact, write_run_info, write_run_status
+from src.artifacts import (
+    prepare_experiment_dir,
+    resolve_experiment_dir,
+    write_failure_artifact,
+    write_run_info,
+    write_run_status,
+)
 from src.config import load_config, write_config_copy, write_json
 from src.rag.answerer import build_answer
 from src.rag.chunker import chunk_documents
@@ -45,8 +51,7 @@ def run_rag_ingest(config_path: str | Path, project_root: str | Path = ".") -> d
     root = Path(project_root)
     config_path = _resolve_path(root, config_path)
     config = load_config(config_path)
-    output_dir = resolve_experiment_dir(root, config)
-    ensure_dir(output_dir)
+    output_dir = prepare_experiment_dir(root, config, check_existing=True)
 
     _write_run_status(output_dir, "rag_ingest", "running")
     try:

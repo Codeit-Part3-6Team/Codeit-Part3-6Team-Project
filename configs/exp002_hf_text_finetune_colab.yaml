@@ -9,6 +9,10 @@ paths:
   output_dir: /content/drive/MyDrive/codeit_ml_project/experiments/exp002_hf_text_finetune_colab
   backup_dir: /content/drive/MyDrive/codeit_ml_project/backups/exp002_hf_text_finetune_colab
 
+artifact_policy:
+  run_id:
+  on_existing: overwrite
+
 data:
   task: text_classification
   train_csv: train.csv

@@ -37,6 +37,8 @@ rag:
     top_k: 0
   answerer:
     mode: generative
+artifact_policy:
+  on_existing: invalid
 evaluation:
   questions_path: data/rag_smoke/missing.csv
 """,
@@ -51,6 +53,7 @@ evaluation:
     assert any("unsupported retriever method" in error for error in result["errors"])
     assert any("top_k must be positive" in error for error in result["errors"])
     assert any("unsupported answerer mode" in error for error in result["errors"])
+    assert any("unsupported artifact_policy.on_existing" in error for error in result["errors"])
     assert any("evaluation questions not found" in error for error in result["errors"])
 
 

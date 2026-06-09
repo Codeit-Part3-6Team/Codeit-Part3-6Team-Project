@@ -129,6 +129,16 @@ python scripts/summarize_experiments.py --project-root .
 기본 산출물은 `reports/experiment_summary.csv`와 `reports/experiment_summary.json`입니다.
 분류 실험은 accuracy를, RAG 실험은 retrieval hit rate와 citation correctness를 중심으로 비교합니다.
 
+같은 config를 여러 번 실행해 결과를 나누고 싶으면 `artifact_policy.run_id`를 사용합니다.
+
+```yaml
+artifact_policy:
+  run_id: run_001
+  on_existing: overwrite
+```
+
+기존 산출물 덮어쓰기를 막고 싶으면 `on_existing: fail`로 바꿉니다.
+
 ## 운영 원칙
 
 - `data/raw`는 원본 데이터로 둡니다.

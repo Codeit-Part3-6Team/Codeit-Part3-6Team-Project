@@ -57,6 +57,35 @@ def test_write_experiment_summary_accepts_absolute_paths(isolated_project: Path)
     assert output_path.with_suffix(".json").exists()
 
 
+def test_write_experiment_summary_collects_nested_run_id(isolated_project: Path):
+    config = isolated_project / "configs" / "summary_run_id.yaml"
+    config.write_text(
+        """
+experiment:
+  name: summary_run_id
+  seed: 42
+paths:
+  data_dir: data/text_processed
+  output_dir: experiments/summary_run_id
+data:
+  task: text_classification
+  train_csv: train.csv
+  valid_csv: valid.csv
+  test_csv: test.csv
+model:
+  name: keyword_text_classifier
+artifact_policy:
+  run_id: run_a
+""",
+        encoding="utf-8",
+    )
+    run_training(config, isolated_project)
+
+    rows = write_experiment_summary(isolated_project)
+
+    assert any(row["result_path"] == "experiments/summary_run_id/run_a" for row in rows)
+
+
 def test_write_experiment_summary_collects_rag_metrics(isolated_project: Path):
     run_rag_evaluation(isolated_project / "configs" / "rag_smoke_test.yaml", isolated_project)
 

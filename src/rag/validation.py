@@ -60,6 +60,7 @@ def _build_summary(
     retriever = rag.get("retriever", {})
     answerer = rag.get("answerer", {})
     evaluation = config.get("evaluation", {})
+    artifact_policy = config.get("artifact_policy", {})
 
     raw_docs_dir = _resolve_path(root, paths.get("raw_docs_dir", ""))
     output_dir = resolve_experiment_dir(root, config) if config.get("experiment") else root / "experiments" / "unknown"
@@ -71,6 +72,7 @@ def _build_summary(
     _validate_embedding_config(embedding, errors)
     _validate_retriever_config(retriever, errors)
     _validate_answerer_config(answerer, errors)
+    _validate_artifact_policy(artifact_policy, errors)
     _validate_questions_path(root, questions_path, errors)
 
     if output_dir.exists():
@@ -89,6 +91,10 @@ def _build_summary(
         "chunk_overlap": chunk.get("overlap"),
         "embedding_provider": embedding.get("provider", ""),
         "embedding_model": embedding.get("model_name", ""),
+        "artifact_run_id": artifact_policy.get("run_id", "") if isinstance(artifact_policy, dict) else "",
+        "artifact_on_existing": artifact_policy.get("on_existing", "overwrite")
+        if isinstance(artifact_policy, dict)
+        else "overwrite",
     }
 
 
@@ -161,6 +167,20 @@ def _validate_answerer_config(answerer: dict[str, Any], errors: list[str]) -> No
     mode = answerer.get("mode", "extractive")
     if mode not in SUPPORTED_ANSWERERS:
         errors.append(f"unsupported answerer mode: {mode}")
+
+
+def _validate_artifact_policy(policy: Any, errors: list[str]) -> None:
+    if policy in ({}, None):
+        return
+    if not isinstance(policy, dict):
+        errors.append("artifact_policy must be a mapping")
+        return
+    on_existing = policy.get("on_existing", "overwrite")
+    if on_existing not in {"overwrite", "fail"}:
+        errors.append(f"unsupported artifact_policy.on_existing: {on_existing}")
+    run_id = policy.get("run_id")
+    if run_id is not None and str(run_id).strip() in {"", ".", ".."}:
+        errors.append("artifact_policy.run_id must not be empty")
 
 
 def _validate_questions_path(root: Path, questions_path: Path, errors: list[str]) -> None:

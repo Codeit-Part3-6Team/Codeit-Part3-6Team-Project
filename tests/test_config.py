@@ -10,6 +10,7 @@ def test_load_config_reads_text_smoke_config(repo_root):
     assert config["data"]["task"] == "text_classification"
     assert config["model"]["name"] == "keyword_text_classifier"
     assert config["backup"]["enabled"] is False
+    assert config["artifact_policy"]["on_existing"] == "overwrite"
 
 
 def test_load_config_reads_rag_file_types(repo_root):

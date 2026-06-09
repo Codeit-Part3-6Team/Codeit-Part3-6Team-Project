@@ -8,6 +8,10 @@ paths:
   raw_docs_dir: data/rag_smoke
   output_dir: experiments/rag_smoke_test
 
+artifact_policy:
+  run_id:
+  on_existing: overwrite
+
 rag:
   loader:
     file_types: [txt, pdf, docx, hwpx, hwp]

@@ -9,6 +9,7 @@ if __package__ is None or __package__ == "":
 
 from src.artifacts import (
     maybe_backup,
+    prepare_experiment_dir,
     resolve_experiment_dir,
     write_failure_artifact,
     write_experiment_readme,
@@ -46,8 +47,7 @@ def run_training(config_path: str | Path, project_root: str | Path) -> dict[str,
     config_path = _resolve_path(root, config_path)
     config = load_config(config_path)
     data_dir = root / config["paths"]["data_dir"]
-    output_dir = resolve_experiment_dir(root, config)
-    ensure_dir(output_dir)
+    output_dir = prepare_experiment_dir(root, config, check_existing=True)
     logger = setup_logger("train", output_dir / "train.log")
     set_seed(config.get("experiment", {}).get("seed"))
 

@@ -25,6 +25,8 @@
 | RAG config validation | 있음 | `scripts/check_rag_pipeline.py` |
 | RAG dry-run/check 명령 | 있음 | 산출물 생성 전 경로/설정/문서 수 점검 |
 | RAG failure artifact | 있음 | `run_status.json`, 실패 시 `failure.log` |
+| artifact run_id | 있음 | `artifact_policy.run_id`로 실험 하위 run 폴더 분리 |
+| overwrite 방지 | 있음 | `artifact_policy.on_existing: fail` |
 | 실험 산출물 저장 | 있음 | `experiments/{experiment.name}/` |
 | 실험 요약 리포트 | 있음 | `scripts/summarize_experiments.py` |
 | Colab/Drive 실행 가이드 | 있음 | `docs/COLAB_GUIDE.md` |
@@ -49,7 +51,6 @@
 | epoch/step checkpoint | best 외에 중간/last checkpoint 저장 | 중간 |
 | early stopping | metric 개선이 멈추면 학습 종료 | 중간 |
 | scheduler 표준화 | learning rate scheduler를 config로 통제 | 중간 |
-| artifact versioning | 같은 실험명 재실행 시 충돌/덮어쓰기 방지 | 중간 |
 | Elasticsearch | 키워드/하이브리드 검색 엔진 | 낮음 |
 | FAISS/Chroma | 실제 vector index 저장/로드 | 중간 |
 | LLM answerer | 검색 근거 기반 생성형 답변 | 중간 |

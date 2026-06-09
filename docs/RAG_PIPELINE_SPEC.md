@@ -407,6 +407,10 @@ paths:
   output_dir: experiments/rag_smoke_test
   index_dir: experiments/rag_smoke_test/vector_index
 
+artifact_policy:
+  run_id:
+  on_existing: overwrite
+
 rag:
   loader:
     file_types: [txt, pdf, docx, hwpx, hwp]

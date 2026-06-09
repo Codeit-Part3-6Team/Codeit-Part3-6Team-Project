@@ -83,6 +83,25 @@ exp004_hf_roberta_max256
 
 좋은 실험명은 이름만 봐도 무엇을 바꿨는지 대략 알 수 있어야 합니다.
 
+## Artifact 정책
+
+같은 실험명을 여러 번 실행해야 할 때는 config에서 `artifact_policy.run_id`를 지정합니다.
+
+```yaml
+artifact_policy:
+  run_id: run_001
+  on_existing: overwrite
+```
+
+이 경우 산출물은 아래처럼 저장됩니다.
+
+```text
+experiments/{experiment_name}/{run_id}/
+```
+
+기존 산출물을 실수로 덮어쓰고 싶지 않으면 `on_existing: fail`을 사용합니다.
+이미 파일이 있는 output directory에 다시 실행하면 실행 전에 실패합니다.
+
 ## 규칙
 
 - 학습 전에 data validation을 통과시킵니다.

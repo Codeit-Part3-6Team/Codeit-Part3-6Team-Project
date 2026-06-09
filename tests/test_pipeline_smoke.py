@@ -3,6 +3,8 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
+import pytest
+
 from src.predict import predict_one
 from src.train import run_training
 
@@ -82,3 +84,67 @@ model:
     assert run_status["status"] == "failed"
     assert run_status["error"]["type"] == "RuntimeError"
     assert "Data validation failed" in failure_log
+
+
+def test_training_accepts_configured_run_id(isolated_project: Path):
+    config = isolated_project / "configs" / "smoke_test_text_run_id.yaml"
+    config.write_text(
+        """
+experiment:
+  name: smoke_test_text_run_id
+  seed: 42
+paths:
+  data_dir: data/text_processed
+  output_dir: experiments/smoke_test_text_run_id
+data:
+  task: text_classification
+  train_csv: train.csv
+  valid_csv: valid.csv
+  test_csv: test.csv
+model:
+  name: keyword_text_classifier
+artifact_policy:
+  run_id: unit_run_001
+  on_existing: overwrite
+""",
+        encoding="utf-8",
+    )
+
+    metrics = run_training(config, isolated_project)
+    prediction = predict_one(config, isolated_project, "data/text_processed/sample_positive.txt")
+    output_dir = isolated_project / "experiments" / "smoke_test_text_run_id" / "unit_run_001"
+
+    assert metrics["valid_accuracy"] == 1.0
+    assert prediction == "positive"
+    assert (output_dir / "best_model.json").exists()
+    assert (output_dir / "run_status.json").exists()
+
+
+def test_training_can_reject_existing_output_dir(isolated_project: Path):
+    config = isolated_project / "configs" / "smoke_test_text_fail_existing.yaml"
+    config.write_text(
+        """
+experiment:
+  name: smoke_test_text_fail_existing
+  seed: 42
+paths:
+  data_dir: data/text_processed
+  output_dir: experiments/smoke_test_text_fail_existing
+data:
+  task: text_classification
+  train_csv: train.csv
+  valid_csv: valid.csv
+  test_csv: test.csv
+model:
+  name: keyword_text_classifier
+artifact_policy:
+  on_existing: fail
+""",
+        encoding="utf-8",
+    )
+    output_dir = isolated_project / "experiments" / "smoke_test_text_fail_existing"
+    output_dir.mkdir(parents=True)
+    (output_dir / "existing.txt").write_text("keep me", encoding="utf-8")
+
+    with pytest.raises(FileExistsError):
+        run_training(config, isolated_project)

@@ -9,6 +9,10 @@ paths:
   output_dir: experiments/exp001_text_baseline
   backup_dir:
 
+artifact_policy:
+  run_id:
+  on_existing: overwrite
+
 data:
   task: text_classification
   train_csv: train.csv

@@ -21,9 +21,46 @@ def resolve_experiment_dir(project_root: str | Path, config: dict[str, Any]) -> 
     output_dir = config.get("paths", {}).get("output_dir")
     if output_dir:
         # Colab/Drive처럼 절대경로나 명시 경로가 필요할 때는 config의 output_dir를 우선합니다.
-        return root / output_dir
-    # output_dir가 없으면 실험 이름을 기준으로 표준 experiments 폴더를 사용합니다.
-    return root / "experiments" / str(experiment_name)
+        base_dir = root / output_dir
+    else:
+        # output_dir가 없으면 실험 이름을 기준으로 표준 experiments 폴더를 사용합니다.
+        base_dir = root / "experiments" / str(experiment_name)
+    run_id = _artifact_policy(config).get("run_id") or config.get("experiment", {}).get("run_id")
+    return base_dir / _sanitize_run_id(run_id) if run_id else base_dir
+
+
+def prepare_experiment_dir(
+    project_root: str | Path,
+    config: dict[str, Any],
+    check_existing: bool = False,
+) -> Path:
+    """artifact policy를 적용한 뒤 실험 산출물 폴더를 준비합니다."""
+    output_dir = resolve_experiment_dir(project_root, config)
+    if check_existing:
+        _check_existing_policy(output_dir, config)
+    output_dir.mkdir(parents=True, exist_ok=True)
+    return output_dir
+
+
+def _check_existing_policy(output_dir: Path, config: dict[str, Any]) -> None:
+    policy = _artifact_policy(config)
+    on_existing = policy.get("on_existing", "overwrite")
+    if on_existing not in {"overwrite", "fail"}:
+        raise ValueError(f"Unsupported artifact_policy.on_existing: {on_existing}")
+    if on_existing == "fail" and output_dir.exists() and any(output_dir.iterdir()):
+        raise FileExistsError(f"Experiment output_dir already exists: {output_dir}")
+
+
+def _artifact_policy(config: dict[str, Any]) -> dict[str, Any]:
+    policy = config.get("artifact_policy", {})
+    return policy if isinstance(policy, dict) else {}
+
+
+def _sanitize_run_id(run_id: Any) -> str:
+    text = str(run_id).strip().replace("\\", "_").replace("/", "_")
+    if not text or text in {".", ".."}:
+        raise ValueError("artifact_policy.run_id must not be empty")
+    return text
 
 
 def get_git_commit() -> str | None:
