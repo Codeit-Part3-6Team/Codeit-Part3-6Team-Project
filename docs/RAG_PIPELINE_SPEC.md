@@ -532,3 +532,29 @@ rag:
 
 주의: `hybrid`, `faiss`, `chroma`, `elasticsearch`, `reranker`, `llm answerer`는
 config 계약과 validation은 준비되어 있지만 smoke runtime의 실제 구현은 아직 붙이지 않았습니다.
+
+## RAG Adapter 구현 상태
+
+RAG runtime은 adapter registry를 통해 config에 맞는 구현체를 선택합니다.
+
+실제 구현된 adapter:
+
+- `embedding.provider: local`: hashing-char-ngram smoke embedding
+- `vector_store.type: memory`: `embeddings.jsonl`을 읽어 in-memory retrieval 수행
+- `retriever.method: keyword`: token overlap 기반 검색
+- `retriever.method: semantic`: local hashing vector 기반 의미 검색
+- `answerer.mode: extractive`, `answerer.provider: local`: 검색 chunk에서 문장 추출
+
+계약만 있고 아직 runtime 구현은 없는 adapter:
+
+- `embedding.provider: huggingface`
+- `vector_store.type: faiss`
+- `vector_store.type: chroma`
+- `vector_store.type: elasticsearch`
+- `retriever.method: hybrid`
+- `reranker.enabled: true`
+- `answerer.mode: llm`, `answerer.provider: openai`
+- `answerer.mode: llm`, `answerer.provider: huggingface`
+
+새 구현체를 붙일 때는 `src/rag/adapters.py`의 builder에 adapter를 추가하고,
+`scripts/check_rag_pipeline.py` validation 계약을 함께 갱신합니다.
