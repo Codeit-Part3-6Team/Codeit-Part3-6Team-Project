@@ -61,10 +61,12 @@ python scripts/run_rag_ingest.py --config configs/rag_smoke_test.yaml --project-
 python scripts/run_rag_retrieve.py --config configs/rag_smoke_test.yaml --project-root . --question "예산이 얼마야?"
 python scripts/run_rag_chat.py --config configs/rag_smoke_test.yaml --project-root . --question "예산이 얼마야?"
 python scripts/run_rag_chat.py --config configs/rag_smoke_test.yaml --project-root . --evaluate
+python scripts/compare_rag_retrievers.py --project-root .
 ```
 
 RAG smoke test는 외부 모델 없이 hashing embedding 기반 semantic retrieval과 추출형 답변으로 동작합니다.
 평가를 실행하면 `bad_retrievals.csv`, `unsupported_answers.csv`, `failed_questions.csv`도 함께 생성되어 실패 유형을 나눠 볼 수 있습니다.
+검색 방식을 비교하려면 `compare_rag_retrievers.py`로 keyword/semantic 평가 결과를 한 번에 볼 수 있습니다.
 
 ## HuggingFace Fine-Tuning 예시
 

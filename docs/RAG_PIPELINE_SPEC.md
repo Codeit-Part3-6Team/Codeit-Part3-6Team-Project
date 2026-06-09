@@ -128,6 +128,15 @@ experiments/rag_smoke_test/
 - `citation_correct_rate`
 - `not_found_rate`
 
+검색 방식 비교:
+
+```bash
+python scripts/compare_rag_retrievers.py --project-root .
+```
+
+기본 비교 대상은 `configs/rag_smoke_keyword.yaml`와 `configs/rag_smoke_test.yaml`입니다.
+비교 결과는 `reports/rag_retriever_comparison.csv`와 `reports/rag_retriever_comparison.json`에 저장됩니다.
+
 이 구현의 목적은 성능이 아니라, RAG 프로젝트에서도 config 기반 실행, embedding 산출물 저장, citation 추적, 평가 산출물 저장, 실험 요약이 끝까지 이어지는지 확인하는 것입니다.
 
 ## 1. Document Input

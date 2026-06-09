@@ -41,6 +41,7 @@ python scripts/run_rag_ingest.py --config configs/rag_smoke_test.yaml --project-
 python scripts/run_rag_retrieve.py --config configs/rag_smoke_test.yaml --project-root . --question "예산이 얼마야?"
 python scripts/run_rag_chat.py --config configs/rag_smoke_test.yaml --project-root . --question "예산이 얼마야?"
 python scripts/run_rag_chat.py --config configs/rag_smoke_test.yaml --project-root . --evaluate
+python scripts/compare_rag_retrievers.py --project-root .
 ```
 
 기본 산출물:
@@ -57,6 +58,13 @@ experiments/rag_smoke_test/
 |-- unsupported_answers.csv
 |-- failed_questions.csv
 `-- metrics.json
+```
+
+검색 방식 비교 산출물:
+
+```text
+reports/rag_retriever_comparison.csv
+reports/rag_retriever_comparison.json
 ```
 
 ## 실험 결과 요약

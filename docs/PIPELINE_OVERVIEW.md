@@ -229,6 +229,7 @@ experiments/rag_smoke_test/
 ```
 
 다음 확장 후보는 `sentence-transformers embedding -> vector index -> semantic retrieval 고도화`입니다.
+현재는 `scripts/compare_rag_retrievers.py`로 keyword와 semantic retriever 결과를 비교할 수 있습니다.
 
 ## 아직 보강하면 좋은 부분
 

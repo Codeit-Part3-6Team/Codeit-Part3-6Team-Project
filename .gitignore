@@ -32,6 +32,8 @@ mlruns/
 lightning_logs/
 reports/experiment_summary.csv
 reports/experiment_summary.json
+reports/rag_retriever_comparison.csv
+reports/rag_retriever_comparison.json
 *.pt
 *.pth
 *.ckpt

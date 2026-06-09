@@ -5,6 +5,7 @@ import subprocess
 import sys
 from pathlib import Path
 
+from src.rag.comparison import compare_rag_retrievers
 from src.rag.pipeline import run_rag_chat, run_rag_evaluation, run_rag_ingest, run_rag_retrieve
 
 
@@ -56,3 +57,31 @@ def test_run_rag_chat_script_supports_evaluation(isolated_project: Path, repo_ro
     )
 
     assert "'retrieval_hit_rate': 1.0" in result.stdout
+
+
+def test_compare_rag_retrievers_writes_report(isolated_project: Path, repo_root: Path):
+    rows = compare_rag_retrievers(
+        [
+            isolated_project / "configs" / "rag_smoke_keyword.yaml",
+            isolated_project / "configs" / "rag_smoke_test.yaml",
+        ],
+        isolated_project,
+    )
+
+    assert [row["retriever_method"] for row in rows] == ["keyword", "semantic"]
+    assert rows[0]["retrieval_hit_rate"] == 1.0
+    assert (isolated_project / "reports" / "rag_retriever_comparison.csv").exists()
+
+    result = subprocess.run(
+        [
+            sys.executable,
+            str(repo_root / "scripts" / "compare_rag_retrievers.py"),
+            "--project-root",
+            str(isolated_project),
+        ],
+        check=True,
+        capture_output=True,
+        text=True,
+    )
+
+    assert "wrote reports/rag_retriever_comparison.csv (2 retrievers)" in result.stdout
