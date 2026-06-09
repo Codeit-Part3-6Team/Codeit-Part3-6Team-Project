@@ -166,3 +166,20 @@ artifact_policy:
 - `docs/COLAB_GUIDE.md`: Colab/Drive 기반 실험 실행 가이드
 - `docs/GIT_WORKFLOW.md`: 브랜치, 커밋, PR 운영 규칙
 - `docs/TEAM_WORKFLOW.md`: Issue, Kanban, Daily Report 운영 가이드
+
+## 백업 정책 보강
+
+실험 백업도 config에서 조정합니다. Colab처럼 런타임이 끊길 수 있는 환경에서는
+`backup_dir`를 Drive 경로로 두고 `on_finish`와 `on_failure`를 켜두는 편이 안전합니다.
+
+```yaml
+backup:
+  enabled: true
+  on_finish: true
+  on_failure: true
+  include_logs: true
+  include_checkpoints: true
+```
+
+`include_logs: false`는 `*.log` 파일을 제외하고, `include_checkpoints: false`는
+`hf_model/`, `checkpoints/`, `*.pt`, `*.ckpt`처럼 용량이 큰 모델 산출물을 제외합니다.

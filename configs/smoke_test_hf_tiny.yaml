@@ -49,3 +49,6 @@ backup:
   enabled: false
   on_best: true
   on_finish: true
+  on_failure: true
+  include_logs: true
+  include_checkpoints: true

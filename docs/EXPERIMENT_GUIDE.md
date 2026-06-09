@@ -111,3 +111,23 @@ experiments/{experiment_name}/{run_id}/
 - validation/test/predict transform은 결정적으로 동작해야 합니다.
 - HuggingFace base model, max length, batch size, learning rate는 config에 남깁니다.
 - 실험 README의 결론, 다음 액션, 실패/주의 사항을 실험 직후에 적습니다.
+## 백업 정책
+
+실험 백업은 config의 `backup` 블록에서 조정합니다.
+
+```yaml
+backup:
+  enabled: true
+  on_finish: true
+  on_failure: true
+  include_logs: true
+  include_checkpoints: true
+```
+
+- `on_finish`: 학습이 성공한 뒤 `backup_dir`로 산출물을 복사합니다.
+- `on_failure`: 학습이 실패해도 `failure.log`, `run_status.json` 같은 원인 분석 파일을 복사합니다.
+- `include_logs`: `false`면 `*.log` 파일을 백업에서 제외합니다.
+- `include_checkpoints`: `false`면 `hf_model/`, `checkpoints/`, `*.pt`, `*.ckpt` 같은 큰 모델 산출물을 제외합니다.
+
+`on_best`는 config에 남겨두었지만, 현재 기본 smoke/HuggingFace 학습 루프에서는
+별도 best checkpoint 이벤트로 동작하지 않습니다. best 기준 산출물은 `best_model.json`에 기록합니다.

@@ -84,3 +84,10 @@
 - 실제 프로젝트 데이터가 들어와도 같은 계약을 유지하는가?
 
 이 질문에 직접 답하는 기능부터 우선 보강합니다.
+## 백업 정책 현재 상태
+
+- 학습 성공 후 백업: `backup.enabled: true`와 `backup.on_finish: true`로 제어합니다.
+- 학습 실패 후 백업: `backup.on_failure: true`로 `failure.log`, `run_status.json` 같은 원인 분석 파일을 남깁니다.
+- 로그 포함 여부: `backup.include_logs`로 `*.log` 백업 여부를 조정합니다.
+- 체크포인트 포함 여부: `backup.include_checkpoints`로 `hf_model/`, `checkpoints/`, `*.pt`, `*.ckpt` 같은 큰 모델 산출물 백업 여부를 조정합니다.
+- 아직 남은 영역: epoch/step 단위 중간 checkpoint 저장, resume, RAG 산출물 백업 정책은 별도 보강 대상입니다.
