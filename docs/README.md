@@ -1,26 +1,66 @@
-# Docs 디렉터리
+# Docs Mind Map
 
-`docs/`는 프로젝트 설명과 팀 운영 문서를 관리하는 곳입니다.
+`docs/`는 프로젝트를 설명하고 팀원이 같은 방식으로 일하기 위한 문서 허브입니다.
 
-## 구조
+처음 보는 사람은 **Overview -> RAG -> Experiments -> Workflow -> Kickoff** 순서로 보면 됩니다. HTML 문서는 공유와 설명용, Markdown 문서는 수정과 리뷰용 원본입니다.
+
+## 문서 지도
 
 ```text
 docs/
-|-- md/      # 원본/관리용 Markdown 문서
-`-- html/    # 공유/설명용 HTML 문서
+|-- overview/        프로젝트 큰 그림
+|   |-- Pipeline Overview
+|   |-- Module Architecture
+|   `-- Infra Checklist
+|-- rag/             RAG 입력/출력 계약
+|   `-- RAG Pipeline Spec
+|-- experiments/     실험 실행과 Colab 운영
+|   |-- Experiment Guide
+|   `-- Colab Guide
+|-- data/            데이터 계약
+|   `-- Data Contract
+|-- workflow/        협업 규칙
+|   |-- Git Workflow
+|   |-- Role Guide
+|   `-- Team Workflow
+`-- kickoff/         팀 설명 자료
+    `-- Kickoff Guide
 ```
 
-Markdown 문서는 수정과 리뷰가 쉬운 원본입니다.
-HTML 문서는 팀원에게 공유하거나 발표/킥오프에서 보여주기 위한 문서입니다.
+## 빠른 링크
 
-## 원칙
+| 목적 | Markdown 원본 | HTML 문서 |
+| --- | --- | --- |
+| 프로젝트 전체 흐름 보기 | [PIPELINE_OVERVIEW.md](md/overview/PIPELINE_OVERVIEW.md) | [PIPELINE_OVERVIEW.html](html/overview/PIPELINE_OVERVIEW.html) |
+| 모듈 관계와 구조 보기 | [MODULE_ARCHITECTURE.md](md/overview/MODULE_ARCHITECTURE.md) | [module_architecture.html](html/overview/module_architecture.html) |
+| 구현된 인프라 확인 | [PIPELINE_INFRA_CHECKLIST.md](md/overview/PIPELINE_INFRA_CHECKLIST.md) | [PIPELINE_INFRA_CHECKLIST.html](html/overview/PIPELINE_INFRA_CHECKLIST.html) |
+| RAG 계약 확인 | [RAG_PIPELINE_SPEC.md](md/rag/RAG_PIPELINE_SPEC.md) | [RAG_PIPELINE_SPEC.html](html/rag/RAG_PIPELINE_SPEC.html) |
+| 데이터 형식 확인 | [DATA_CONTRACT.md](md/data/DATA_CONTRACT.md) | [DATA_CONTRACT.html](html/data/DATA_CONTRACT.html) |
+| 실험 실행 방법 확인 | [EXPERIMENT_GUIDE.md](md/experiments/EXPERIMENT_GUIDE.md) | [EXPERIMENT_GUIDE.html](html/experiments/EXPERIMENT_GUIDE.html) |
+| Colab/Drive 실행 확인 | [COLAB_GUIDE.md](md/experiments/COLAB_GUIDE.md) | [COLAB_GUIDE.html](html/experiments/COLAB_GUIDE.html) |
+| Git/PR 규칙 확인 | [GIT_WORKFLOW.md](md/workflow/GIT_WORKFLOW.md) | [GIT_WORKFLOW.html](html/workflow/GIT_WORKFLOW.html) |
+| 역할 분배 확인 | [ROLE_GUIDE.md](md/workflow/ROLE_GUIDE.md) | [ROLE_GUIDE.html](html/workflow/ROLE_GUIDE.html) |
+| 팀 운영 규칙 확인 | [TEAM_WORKFLOW.md](md/workflow/TEAM_WORKFLOW.md) | [TEAM_WORKFLOW.html](html/workflow/TEAM_WORKFLOW.html) |
+| 킥오프 설명 원본 확인 | [KICKOFF_GUIDE.md](md/kickoff/KICKOFF_GUIDE.md) | [KICKOFF_GUIDE.html](html/kickoff/KICKOFF_GUIDE.html) |
 
-- 새 문서를 만들 때는 가능하면 `docs/md/`에 Markdown 원본을 먼저 둡니다.
-- 팀 공유용 문서는 `docs/html/`에 같은 주제의 HTML을 둡니다.
-- README의 링크가 깨지지 않도록 파일 이동 시 함께 수정합니다.
+## 설명용 HTML
 
-## 대표 HTML 문서
+아래 문서는 Markdown 변환본이 아니라, 팀원 설명을 위해 직접 구성한 HTML입니다.
 
-- `html/pipeline_explainer.html`: 처음 보는 팀원을 위한 쉬운 파이프라인 설명
-- `html/module_architecture.html`: 모듈 관계와 RAG 구조 다이어그램
-- `html/kickoff.html`: 킥오프 설명용 문서
+- [pipeline_explainer.html](html/overview/pipeline_explainer.html): 비전공자도 이해하기 쉬운 파이프라인 설명
+- [module_architecture.html](html/overview/module_architecture.html): 모듈 관계와 RAG 구조 다이어그램
+- [kickoff.html](html/kickoff/kickoff.html): 킥오프 발표/공유용 문서
+
+## 읽는 순서
+
+1. 프로젝트의 전체 구조를 파악하려면 [Pipeline Overview](html/overview/PIPELINE_OVERVIEW.html)를 봅니다.
+2. 코드와 폴더 관계를 설명해야 하면 [Module Architecture](html/overview/module_architecture.html)를 봅니다.
+3. RAG 실험을 설계할 때는 [RAG Pipeline Spec](html/rag/RAG_PIPELINE_SPEC.html)을 봅니다.
+4. 실제 실행 전에는 [Experiment Guide](html/experiments/EXPERIMENT_GUIDE.html)와 [Config Guide](../configs/README.md)를 봅니다.
+5. 팀원에게 처음 설명할 때는 [Pipeline Explainer](html/overview/pipeline_explainer.html)와 [Kickoff](html/kickoff/kickoff.html)를 사용합니다.
+
+## 관리 원칙
+
+- 문서를 수정할 때는 가능하면 `docs/md/`의 Markdown 원본을 먼저 수정합니다.
+- 팀 공유용 문서는 같은 주제의 `docs/html/` 문서도 함께 갱신합니다.
+- 파일을 이동하면 README 링크와 테스트 기대 경로를 함께 수정합니다.

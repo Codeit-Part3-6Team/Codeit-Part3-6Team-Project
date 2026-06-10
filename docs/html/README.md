@@ -1,37 +1,33 @@
-# HTML 문서
+# HTML Docs Mind Map
 
-`docs/html/`은 팀원 공유와 설명을 위한 HTML 문서를 두는 곳입니다.
+`docs/html/`은 팀원 설명, 킥오프, 발표, 브라우저 공유에 쓰는 HTML 문서 모음입니다.
 
-## 문서 종류
+## 한눈에 보기
 
-- Markdown 원본에서 변환한 HTML 문서
-- 직접 디자인한 설명용 HTML 문서
+```text
+HTML Docs
+|-- overview/      큰 그림과 모듈 구조
+|-- rag/           RAG 파이프라인 계약
+|-- experiments/   실험 실행과 Colab
+|-- data/          데이터 계약
+|-- workflow/      Git, 역할, 팀 운영
+`-- kickoff/       킥오프 설명 자료
+```
 
-## 대응 규칙
+## 추천 진입점
 
-`docs/md/*.md` 파일은 같은 이름의 HTML을 가집니다.
+- `overview/pipeline_explainer.html`: 처음 보는 팀원에게 설명할 때
+- `overview/module_architecture.html`: 모듈과 RAG 흐름을 다이어그램으로 설명할 때
+- `overview/PIPELINE_OVERVIEW.html`: 전체 실행 구조를 설명할 때
+- `rag/RAG_PIPELINE_SPEC.html`: RAG 입력/출력 계약을 확인할 때
+- `experiments/EXPERIMENT_GUIDE.html`: 실험 실행 방법을 확인할 때
+- `kickoff/kickoff.html`: 킥오프 발표 자료로 사용할 때
+
+## Markdown 대응 규칙
+
+`docs/md/`의 Markdown 문서는 같은 상대 경로의 HTML 문서를 가집니다.
 
 ```text
 docs/md/overview/PIPELINE_OVERVIEW.md
 -> docs/html/overview/PIPELINE_OVERVIEW.html
 ```
-
-## Markdown 대응 HTML
-
-- `overview/PIPELINE_OVERVIEW.html`
-- `overview/PIPELINE_INFRA_CHECKLIST.html`
-- `overview/MODULE_ARCHITECTURE.html`
-- `rag/RAG_PIPELINE_SPEC.html`
-- `data/DATA_CONTRACT.html`
-- `experiments/EXPERIMENT_GUIDE.html`
-- `experiments/COLAB_GUIDE.html`
-- `workflow/GIT_WORKFLOW.html`
-- `workflow/ROLE_GUIDE.html`
-- `workflow/TEAM_WORKFLOW.html`
-- `kickoff/KICKOFF_GUIDE.html`
-
-추가로 아래 HTML은 설명용으로 직접 작성한 문서입니다.
-
-- `overview/pipeline_explainer.html`
-- `overview/module_architecture.html`
-- `kickoff/kickoff.html`
