@@ -6,6 +6,31 @@
 
 ## 문서 지도
 
+```mermaid
+mindmap
+  root((docs))
+    overview
+      Pipeline Overview
+      Module Architecture
+      Infra Checklist
+    rag
+      RAG Pipeline Spec
+    experiments
+      Experiment Guide
+      Colab Guide
+    data
+      Data Contract
+    workflow
+      Git Workflow
+      Role Guide
+      Team Workflow
+    kickoff
+      Kickoff Guide
+    formats
+      Markdown 원본
+      HTML 공유 문서
+```
+
 ```text
 docs/
 |-- overview/        프로젝트 큰 그림
