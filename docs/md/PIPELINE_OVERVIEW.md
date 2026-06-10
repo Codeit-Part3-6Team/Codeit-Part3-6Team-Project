@@ -1,8 +1,8 @@
 # 파이프라인 설명서
 
 이 문서는 팀원에게 현재 프로젝트 파이프라인을 설명하기 위한 개요 문서입니다.
-세부 명령어는 `README.md`, 실험 규칙은 `docs/EXPERIMENT_GUIDE.md`, Colab 실행은 `docs/COLAB_GUIDE.md`를 참고합니다.
-운영 기능의 현재 상태와 남은 보강 항목은 `docs/PIPELINE_INFRA_CHECKLIST.md`에서 관리합니다.
+세부 명령어는 `README.md`, 실험 규칙은 `EXPERIMENT_GUIDE.md`, Colab 실행은 `COLAB_GUIDE.md`를 참고합니다.
+운영 기능의 현재 상태와 남은 보강 항목은 `PIPELINE_INFRA_CHECKLIST.md`에서 관리합니다.
 
 ## 한 줄 요약
 
@@ -36,7 +36,8 @@ scripts/      사람이 직접 실행하는 명령어 진입점
 src/          재사용 가능한 파이프라인 코드
 experiments/  실험 결과 자동 저장 위치
 reports/      실험 요약과 Daily Report
-docs/         팀 운영 및 파이프라인 문서
+docs/md/      원본/관리용 Markdown 문서
+docs/html/    공유/설명용 HTML 문서
 tests/        파이프라인이 깨졌는지 확인하는 테스트
 ```
 
@@ -180,7 +181,7 @@ real experiment: 실제 모델 성능을 확인하는 실험
 ## RAG 프로젝트로 바뀌면 무엇이 달라지는가
 
 RAG 프로젝트로 방향이 바뀌어도 가운데 운영 구조는 유지할 수 있습니다.
-구체적인 RAG 입력/출력 계약은 `docs/RAG_PIPELINE_SPEC.md`에서 관리합니다.
+구체적인 RAG 입력/출력 계약은 `RAG_PIPELINE_SPEC.md`에서 관리합니다.
 
 그대로 쓰는 것:
 
@@ -188,7 +189,8 @@ RAG 프로젝트로 방향이 바뀌어도 가운데 운영 구조는 유지할 
 - `scripts/`
 - `experiments/`
 - `reports/`
-- `docs/`
+- `docs/md/`
+- `docs/html/`
 - `tests/`
 - 실험 요약 방식
 - Colab/Drive 실행 방식

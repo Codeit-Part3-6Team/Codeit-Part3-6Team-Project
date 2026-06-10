@@ -1,0 +1,431 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>모듈 구조 설명</title>
+  <style>
+:root {
+  --bg: #f6f7f9;
+  --paper: #ffffff;
+  --ink: #1f2937;
+  --muted: #667085;
+  --line: #d8dee8;
+  --blue: #2563eb;
+  --code-bg: #111827;
+  --code: #e5e7eb;
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans KR", Arial, sans-serif;
+  line-height: 1.7;
+  word-break: keep-all;
+}
+header {
+  background: #182235;
+  color: #fff;
+  padding: 34px 24px 26px;
+}
+main, header .wrap {
+  width: min(1040px, calc(100% - 36px));
+  margin: 0 auto;
+}
+main {
+  background: var(--paper);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  margin-top: 24px;
+  margin-bottom: 48px;
+  padding: 30px;
+}
+h1, h2, h3, h4 {
+  letter-spacing: 0;
+  line-height: 1.28;
+}
+h1 { margin: 0; font-size: 34px; }
+h2 { margin-top: 34px; padding-top: 10px; border-top: 1px solid #e8ebf1; font-size: 25px; }
+h3 { margin-top: 24px; font-size: 20px; }
+h4 { margin-top: 20px; font-size: 17px; }
+p { margin: 10px 0; }
+a { color: var(--blue); text-decoration: none; }
+a:hover { text-decoration: underline; }
+code {
+  font-family: Consolas, "SFMono-Regular", monospace;
+  background: #eef2ff;
+  color: #27306f;
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+pre {
+  margin: 14px 0;
+  padding: 16px;
+  overflow-x: auto;
+  border-radius: 8px;
+  background: var(--code-bg);
+  color: var(--code);
+}
+pre code {
+  background: transparent;
+  color: inherit;
+  padding: 0;
+}
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 14px 0;
+  min-width: 720px;
+}
+.table-wrap {
+  overflow-x: auto;
+}
+th, td {
+  border: 1px solid var(--line);
+  padding: 10px 12px;
+  text-align: left;
+  vertical-align: top;
+}
+th { background: #f2f5fa; }
+blockquote {
+  border-left: 4px solid var(--blue);
+  margin: 16px 0;
+  padding: 8px 16px;
+  background: #eef4ff;
+  color: #31415f;
+}
+ul, ol { padding-left: 24px; }
+li { margin: 4px 0; }
+.meta {
+  margin-top: 8px;
+  color: #d8e1ef;
+  font-size: 14px;
+}
+</style>
+</head>
+<body>
+  <header>
+    <div class="wrap">
+      <h1>모듈 구조 설명</h1>
+      <div class="meta">Markdown 원본: ../md/MODULE_ARCHITECTURE.md</div>
+    </div>
+  </header>
+  <main>
+<h1>모듈 구조 설명</h1>
+<p>이 문서는 팀원이 저장소를 처음 봤을 때 “어디를 실행하고, 어디를 수정하고, 결과가 어디에 남는지” 빠르게 이해하도록 만든 구조 설명서입니다.</p>
+<h2>한 줄 요약</h2>
+<p><code>configs/</code>가 실험 조건을 정하고, <code>scripts/</code>가 실행 진입점이 되며, <code>src/</code>가 실제 구현을 담당하고, <code>experiments/</code>와 <code>reports/</code>가 결과를 기록합니다.</p>
+<pre><code class="language-text">
+configs/*.yaml
+    |
+    v
+scripts/*.py
+    |
+    v
+src/
+    |
+    v
+experiments/ + reports/
+</code></pre>
+<h2>디렉터리 역할</h2>
+<div class="table-wrap"><table>
+<thead><tr>
+<th>경로</th>
+<th>역할</th>
+<th>팀원이 주로 보는 시점</th>
+</tr></thead><tbody>
+<tr>
+<td><code>configs/</code></td>
+<td>실험 조건, 경로, 모델, RAG 옵션, 백업 정책</td>
+<td>실험을 바꿀 때</td>
+</tr>
+<tr>
+<td><code>scripts/</code></td>
+<td>공식 실행 명령</td>
+<td>학습, 예측, RAG 실행할 때</td>
+</tr>
+<tr>
+<td><code>src/</code></td>
+<td>실제 파이프라인 구현</td>
+<td>기능을 추가하거나 버그를 고칠 때</td>
+</tr>
+<tr>
+<td><code>data/</code></td>
+<td>원본/중간/처리 데이터</td>
+<td>데이터 계약을 맞출 때</td>
+</tr>
+<tr>
+<td><code>experiments/</code></td>
+<td>실험별 산출물</td>
+<td>결과를 비교하고 재현할 때</td>
+</tr>
+<tr>
+<td><code>reports/</code></td>
+<td>실험 요약과 팀 보고 자료</td>
+<td>공유용 결과를 만들 때</td>
+</tr>
+<tr>
+<td><code>docs/md/</code></td>
+<td>원본/관리용 Markdown 문서</td>
+<td>문서를 수정하고 버전 관리할 때</td>
+</tr>
+<tr>
+<td><code>docs/html/</code></td>
+<td>공유/설명용 HTML 문서</td>
+<td>킥오프, 온보딩, 발표 때</td>
+</tr>
+<tr>
+<td><code>tests/</code></td>
+<td>회귀 방지 테스트</td>
+<td>수정 후 안전 확인할 때</td>
+</tr>
+</tbody></table></div>
+<h2>핵심 모듈</h2>
+<div class="table-wrap"><table>
+<thead><tr>
+<th>모듈</th>
+<th>책임</th>
+</tr></thead><tbody>
+<tr>
+<td><code>src/config.py</code></td>
+<td>YAML config 로딩, JSON 저장</td>
+</tr>
+<tr>
+<td><code>src/artifacts.py</code></td>
+<td>실험 폴더, run status, failure log, backup 관리</td>
+</tr>
+<tr>
+<td><code>src/data.py</code></td>
+<td>분류 모델용 데이터 로딩</td>
+</tr>
+<tr>
+<td><code>src/train.py</code></td>
+<td>분류 모델 학습, checkpoint, scheduler, early stopping</td>
+</tr>
+<tr>
+<td><code>src/predict.py</code></td>
+<td>저장된 모델로 단건 예측</td>
+</tr>
+<tr>
+<td><code>src/metrics.py</code></td>
+<td>평가 지표 계산</td>
+</tr>
+<tr>
+<td><code>src/experiments.py</code></td>
+<td>여러 실험 결과 요약</td>
+</tr>
+<tr>
+<td><code>src/models/</code></td>
+<td>분류 모델 registry와 구현체</td>
+</tr>
+<tr>
+<td><code>src/rag/</code></td>
+<td>RAG 문서 처리, 검색, 답변, 평가</td>
+</tr>
+<tr>
+<td><code>src/utils/</code></td>
+<td>path, seed, logging 같은 공통 유틸</td>
+</tr>
+</tbody></table></div>
+<h2>분류 모델 흐름</h2>
+<pre><code class="language-text">
+run_validate.py
+    -&gt; validate_data.py
+    -&gt; data contract 확인
+
+run_train.py
+    -&gt; config.py
+    -&gt; data.py
+    -&gt; models/registry.py
+    -&gt; train.py
+    -&gt; artifacts.py
+    -&gt; experiments/{name}/
+
+run_predict.py
+    -&gt; config.py
+    -&gt; predict.py
+    -&gt; experiments/{name}/predictions.csv
+</code></pre>
+<p>분류 모델은 현재 이미지 smoke model, 텍스트 keyword model, HuggingFace sequence classifier를 지원합니다.</p>
+<h2>RAG 흐름</h2>
+<pre><code class="language-text">
+run_rag_ingest.py
+    -&gt; document_loader.py
+    -&gt; chunker.py
+    -&gt; adapters.py
+    -&gt; embeddings.jsonl
+    -&gt; rag_ingest_checkpoint.json
+
+run_rag_retrieve.py
+    -&gt; adapters.py
+    -&gt; retriever.py
+    -&gt; retrieval_results.jsonl
+
+run_rag_chat.py
+    -&gt; retrieve
+    -&gt; answerer.py
+    -&gt; answers.jsonl
+
+run_rag_chat.py --evaluate
+    -&gt; evaluation_results.csv
+    -&gt; bad_retrievals.csv
+    -&gt; unsupported_answers.csv
+    -&gt; failed_questions.csv
+</code></pre>
+<p>RAG는 “문서 읽기 -&gt; chunk 나누기 -&gt; embedding 만들기 -&gt; 검색하기 -&gt; 답변하기 -&gt; 평가하기” 순서로 나뉩니다.</p>
+<h2>모듈 관계 다이어그램</h2>
+<pre><code class="language-mermaid">
+flowchart LR
+  subgraph entry[&quot;실행 진입점&quot;]
+    scripts[&quot;scripts/*.py&lt;br/&gt;run_train / run_predict / run_rag_*&quot;]
+    configs[&quot;configs/*.yaml&lt;br/&gt;실험 조건 / 경로 / 모델 / 백업&quot;]
+  end
+
+  subgraph infra[&quot;공통 인프라&quot;]
+    config[&quot;src/config.py&lt;br/&gt;config 로딩&quot;]
+    artifacts[&quot;src/artifacts.py&lt;br/&gt;실험 폴더 / 상태 / 실패 로그 / 백업&quot;]
+    utils[&quot;src/utils/&lt;br/&gt;path / seed / logging&quot;]
+  end
+
+  subgraph domain[&quot;도메인 구현&quot;]
+    models[&quot;src/models/&lt;br/&gt;분류 모델 구현체 / registry&quot;]
+    train[&quot;src/train.py&lt;br/&gt;학습 / checkpoint / scheduler&quot;]
+    rag[&quot;src/rag/&lt;br/&gt;문서 처리 / 검색 / 답변 / 평가&quot;]
+  end
+
+  subgraph output[&quot;결과 산출물&quot;]
+    experiments[&quot;experiments/&lt;br/&gt;config / metric / history / checkpoint / RAG 결과&quot;]
+    reports[&quot;reports/&lt;br/&gt;실험 요약 / 공유용 리포트&quot;]
+    checkpoints[&quot;checkpoints/&lt;br/&gt;공유 checkpoint 예비 위치&quot;]
+  end
+
+  configs --&gt; config
+  scripts --&gt; config
+  scripts --&gt; artifacts
+  config --&gt; models
+  config --&gt; train
+  config --&gt; rag
+  artifacts --&gt; train
+  artifacts --&gt; rag
+  utils --&gt; train
+  utils --&gt; rag
+  models --&gt; train
+  train --&gt; experiments
+  rag --&gt; experiments
+  experiments --&gt; reports
+  checkpoints --&gt; train
+</code></pre>
+<p>핵심은 <code>scripts/</code>가 직접 모든 일을 하지 않는다는 점입니다. script는 config를 읽고, 공통 artifact 정책을 적용한 뒤, ML 또는 RAG 구현체에 일을 위임합니다.</p>
+<h2>RAG 내부 관계 다이어그램</h2>
+<pre><code class="language-mermaid">
+flowchart LR
+  docs[&quot;raw docs&lt;br/&gt;txt / pdf / docx / hwpx / hwp&quot;]
+  loader[&quot;document_loader&lt;br/&gt;표준 document row&quot;]
+  chunker[&quot;chunker&lt;br/&gt;검색 단위 chunk 생성&quot;]
+  embedding[&quot;embedding adapter&lt;br/&gt;local / huggingface&quot;]
+  vectors[&quot;embeddings.jsonl&quot;]
+  retriever[&quot;retriever adapter&lt;br/&gt;keyword / semantic / hybrid&quot;]
+  answerer[&quot;answerer adapter&lt;br/&gt;extractive/local&quot;]
+  eval[&quot;evaluation&lt;br/&gt;hit rate / citation / 실패 분석&quot;]
+  answer[&quot;answers + citations&quot;]
+
+  docs --&gt; loader
+  loader --&gt; chunker
+  chunker --&gt; embedding
+  embedding --&gt; vectors
+  vectors --&gt; retriever
+  chunker --&gt; retriever
+  retriever --&gt; answerer
+  answerer --&gt; answer
+  answer --&gt; eval
+</code></pre>
+<p>RAG에서 새 구현체를 붙일 때는 pipeline 전체를 바꾸기보다 adapter factory와 필요한 하위 모듈만 확장하는 것이 기본 방향입니다.</p>
+<h2>RAG Adapter 구조</h2>
+<p>RAG 쪽은 실제 구현체를 config로 갈아 끼우기 쉽도록 adapter registry 형태로 둡니다.</p>
+<div class="table-wrap"><table>
+<thead><tr>
+<th>영역</th>
+<th>현재 실제 구현</th>
+<th>계약만 있는 확장 후보</th>
+</tr></thead><tbody>
+<tr>
+<td>embedding</td>
+<td><code>local</code>, <code>huggingface</code></td>
+<td>OpenAI embedding 등</td>
+</tr>
+<tr>
+<td>vector store</td>
+<td><code>memory</code></td>
+<td><code>faiss</code>, <code>chroma</code>, <code>elasticsearch</code></td>
+</tr>
+<tr>
+<td>retriever</td>
+<td><code>keyword</code>, <code>semantic</code>, <code>hybrid</code></td>
+<td>reranker 결합 검색</td>
+</tr>
+<tr>
+<td>answerer</td>
+<td><code>extractive/local</code></td>
+<td><code>openai</code>, <code>huggingface</code> LLM 답변</td>
+</tr>
+</tbody></table></div>
+<p>따라서 지금 구조는 “인터페이스만 있는 상태”가 아니라, smoke test와 기본 RAG 실험은 실제로 돌 수 있고, 더 무거운 외부 도구는 나중에 adapter를 붙이는 형태입니다.</p>
+<h2>Checkpoint와 Resume</h2>
+<p>분류 모델:</p>
+<ul>
+<li>best checkpoint 저장</li>
+<li>last checkpoint 저장</li>
+<li>HuggingFace trainer state 기반 resume</li>
+<li>scheduler와 early stopping config 제어</li>
+</ul>
+<p>RAG:</p>
+<ul>
+<li><code>parsed_documents.csv</code>가 있으면 문서 파싱 단계를 재사용합니다.</li>
+<li><code>chunks.csv</code>가 있으면 chunking 단계를 재사용합니다.</li>
+<li><code>embeddings.jsonl</code>이 있으면 embedding 단계를 재사용합니다.</li>
+<li><code>rag_ingest_checkpoint.json</code>에 마지막 완료 stage와 count를 기록합니다.</li>
+</ul>
+<p>현재 RAG resume은 단계 단위 resume입니다. 문서 100개 중 57번째 문서부터 이어 가는 수준의 offset resume은 아직 구현하지 않았습니다.</p>
+<h2>어디를 수정하면 되나</h2>
+<div class="table-wrap"><table>
+<thead><tr>
+<th>하고 싶은 일</th>
+<th>주로 수정할 위치</th>
+</tr></thead><tbody>
+<tr>
+<td>실험 조건 변경</td>
+<td><code>configs/*.yaml</code></td>
+</tr>
+<tr>
+<td>새 분류 모델 추가</td>
+<td><code>src/models/</code>, <code>src/models/registry.py</code></td>
+</tr>
+<tr>
+<td>새 RAG embedding 추가</td>
+<td><code>src/rag/adapters.py</code></td>
+</tr>
+<tr>
+<td>새 vector store 추가</td>
+<td><code>src/rag/adapters.py</code>, 필요시 <code>src/rag/vector_store.py</code></td>
+</tr>
+<tr>
+<td>새 문서 포맷 추가</td>
+<td><code>src/rag/document_loader.py</code></td>
+</tr>
+<tr>
+<td>평가 지표 추가</td>
+<td><code>src/metrics.py</code> 또는 <code>src/rag/pipeline.py</code></td>
+</tr>
+<tr>
+<td>실행 명령 추가</td>
+<td><code>scripts/</code></td>
+</tr>
+<tr>
+<td>팀 설명 자료 추가</td>
+<td><code>docs/md/</code> 또는 <code>docs/html/</code></td>
+</tr>
+</tbody></table></div>
+  </main>
+</body>
+</html>

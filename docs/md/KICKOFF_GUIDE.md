@@ -204,7 +204,8 @@ data/       데이터
 configs/    실험 설정
 src/        실제 코드
 app/        데모 앱
-docs/       설명 문서
+docs/md/    원본/관리용 Markdown 문서
+docs/html/  공유/설명용 HTML 문서
 reports/    실험 기록과 보고서 자료
 tests/      자동 확인 코드
 ```
@@ -215,7 +216,8 @@ tests/      자동 확인 코드
 - `configs/`: 실험 조건을 적어두는 곳
 - `src/`: 학습, 예측, 검증 코드가 있는 곳
 - `app/`: 사용자에게 보여줄 데모를 만드는 곳
-- `docs/`: 규칙과 설명을 정리하는 곳
+- `docs/md/`: 규칙과 설명을 Markdown으로 정리하는 곳
+- `docs/html/`: 팀원에게 공유하기 쉬운 HTML 설명 문서를 두는 곳
 - `reports/`: 실험 결과와 발표 자료를 모으는 곳
 - `tests/`: 기본 기능이 깨지지 않았는지 확인하는 곳
 

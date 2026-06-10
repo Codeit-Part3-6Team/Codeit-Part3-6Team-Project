@@ -1,0 +1,570 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>프로젝트 파이프라인 쉬운 설명</title>
+  <style>
+    :root {
+      --bg: #f6f7f9;
+      --paper: #ffffff;
+      --ink: #1f2937;
+      --muted: #667085;
+      --line: #d8dee8;
+      --blue: #2563eb;
+      --blue-soft: #eef4ff;
+      --green: #147b5f;
+      --green-soft: #ebf8f3;
+      --amber: #a15c07;
+      --amber-soft: #fff7e8;
+      --red: #b42318;
+      --red-soft: #fff1f3;
+      --violet: #6d28d9;
+      --violet-soft: #f5f3ff;
+      --code-bg: #111827;
+      --code: #e5e7eb;
+      --shadow: 0 10px 26px rgba(31, 41, 55, 0.08);
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--ink);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans KR", Arial, sans-serif;
+      line-height: 1.65;
+      word-break: keep-all;
+    }
+
+    header {
+      background: #182235;
+      color: #fff;
+      padding: 46px 24px 34px;
+      border-bottom: 1px solid #27344d;
+    }
+
+    .wrap {
+      width: min(1120px, calc(100% - 36px));
+      margin: 0 auto;
+    }
+
+    h1 {
+      margin: 0 0 12px;
+      font-size: clamp(32px, 5vw, 52px);
+      line-height: 1.12;
+      letter-spacing: 0;
+    }
+
+    h2 {
+      margin: 0 0 14px;
+      font-size: 26px;
+      line-height: 1.3;
+      letter-spacing: 0;
+    }
+
+    h3 {
+      margin: 0 0 8px;
+      font-size: 18px;
+      letter-spacing: 0;
+    }
+
+    p { margin: 8px 0; }
+
+    code {
+      font-family: Consolas, "SFMono-Regular", monospace;
+      background: #eef2ff;
+      color: #27306f;
+      padding: 2px 6px;
+      border-radius: 4px;
+      white-space: nowrap;
+    }
+
+    pre {
+      margin: 12px 0 0;
+      padding: 16px;
+      overflow-x: auto;
+      border-radius: 8px;
+      background: var(--code-bg);
+      color: var(--code);
+      font-size: 14px;
+    }
+
+    pre code {
+      background: transparent;
+      color: inherit;
+      padding: 0;
+      white-space: pre;
+    }
+
+    header p {
+      max-width: 860px;
+      color: #d8e1ef;
+      font-size: 18px;
+    }
+
+    main { padding: 28px 0 60px; }
+
+    section {
+      background: var(--paper);
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      padding: 26px;
+      margin-bottom: 16px;
+      box-shadow: var(--shadow);
+    }
+
+    .meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 18px;
+    }
+
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      border-radius: 999px;
+      padding: 6px 11px;
+      background: rgba(255, 255, 255, 0.12);
+      color: #eef4ff;
+      font-size: 13px;
+      font-weight: 700;
+    }
+
+    .summary {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    .summary-item {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 16px;
+      background: #fbfcfe;
+      min-height: 148px;
+    }
+
+    .summary-item strong {
+      display: block;
+      margin-bottom: 8px;
+      color: var(--blue);
+      font-size: 18px;
+    }
+
+    .summary-item span {
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    .diagram-wrap {
+      width: 100%;
+      overflow-x: auto;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fbfcff;
+      padding: 12px;
+    }
+
+    .diagram {
+      display: block;
+      width: 100%;
+      min-width: 920px;
+      height: auto;
+    }
+
+    .diagram text {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans KR", sans-serif;
+      fill: var(--ink);
+      letter-spacing: 0;
+    }
+
+    .diagram .node-title {
+      font-size: 16px;
+      font-weight: 700;
+    }
+
+    .diagram .node-desc {
+      font-size: 12px;
+      fill: var(--muted);
+    }
+
+    .diagram .label {
+      font-size: 12px;
+      fill: #64748b;
+      text-anchor: middle;
+      dominant-baseline: middle;
+    }
+
+    .diagram .label-bg {
+      fill: #fff;
+      stroke: #d8dee8;
+    }
+
+    .two-col {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 14px;
+    }
+
+    .panel {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 16px;
+      background: #fbfcfe;
+    }
+
+    .panel.blue { background: var(--blue-soft); border-color: #bfdbfe; }
+    .panel.green { background: var(--green-soft); border-color: #b7eadb; }
+    .panel.amber { background: var(--amber-soft); border-color: #f5d596; }
+    .panel.violet { background: var(--violet-soft); border-color: #d8b4fe; }
+    .panel.red { background: var(--red-soft); border-color: #fecdd3; }
+
+    .panel strong {
+      display: block;
+      margin-bottom: 8px;
+    }
+
+    .timeline {
+      display: grid;
+      gap: 12px;
+      counter-reset: step;
+    }
+
+    .step {
+      position: relative;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 16px 16px 16px 58px;
+      background: #fbfcfe;
+    }
+
+    .step::before {
+      counter-increment: step;
+      content: counter(step);
+      position: absolute;
+      left: 16px;
+      top: 16px;
+      width: 28px;
+      height: 28px;
+      display: grid;
+      place-items: center;
+      border-radius: 50%;
+      background: #182235;
+      color: #fff;
+      font-weight: 800;
+      font-size: 14px;
+    }
+
+    .table-wrap { overflow-x: auto; }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      min-width: 720px;
+    }
+
+    th,
+    td {
+      border-bottom: 1px solid #e4e8f0;
+      padding: 12px 10px;
+      text-align: left;
+      vertical-align: top;
+    }
+
+    th {
+      background: #f2f5fa;
+      font-size: 14px;
+    }
+
+    .note {
+      border-left: 4px solid var(--green);
+      background: #f1fbf7;
+      padding: 14px 16px;
+      border-radius: 0 8px 8px 0;
+    }
+
+    @media (max-width: 860px) {
+      .summary,
+      .two-col {
+        grid-template-columns: 1fr;
+      }
+
+      section {
+        padding: 20px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="wrap">
+      <h1>프로젝트 파이프라인 쉬운 설명</h1>
+      <p>이 문서는 코드를 처음 보는 팀원도 “왜 이런 구조를 만들었고, 실험 하나가 어떤 순서로 돌아가며, 결과가 어디에 남는지” 이해할 수 있도록 만든 설명 자료입니다.</p>
+      <div class="meta" aria-label="문서 키워드">
+        <span class="pill">실험 흐름</span>
+        <span class="pill">Config 중심 구조</span>
+        <span class="pill">RAG 이해</span>
+        <span class="pill">산출물과 재현성</span>
+      </div>
+    </div>
+  </header>
+
+  <main class="wrap">
+    <section>
+      <h2>먼저 큰 그림</h2>
+      <div class="summary">
+        <div class="summary-item">
+          <strong>Config</strong>
+          <span>실험 주문서입니다. 어떤 데이터와 모델을 쓰고, 결과를 어디에 저장할지 적습니다.</span>
+        </div>
+        <div class="summary-item">
+          <strong>Scripts</strong>
+          <span>실행 버튼입니다. 팀원은 복잡한 내부 코드를 몰라도 같은 명령으로 실행합니다.</span>
+        </div>
+        <div class="summary-item">
+          <strong>src</strong>
+          <span>실제 작업자입니다. 데이터 검증, 학습, 검색, 답변, 평가를 수행합니다.</span>
+        </div>
+        <div class="summary-item">
+          <strong>Experiments</strong>
+          <span>실험 영수증입니다. 설정, 결과, 로그, 실패 원인을 나중에 다시 확인할 수 있게 남깁니다.</span>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <h2>실험 하나가 지나가는 길</h2>
+      <div class="diagram-wrap">
+        <svg class="diagram" viewBox="0 0 1080 360" role="img" aria-labelledby="experiment-flow-title experiment-flow-desc">
+          <title id="experiment-flow-title">실험 실행 흐름</title>
+          <desc id="experiment-flow-desc">config에서 시작한 실험이 scripts와 src를 거쳐 experiments 산출물로 저장되는 흐름</desc>
+          <defs>
+            <marker id="flow-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+              <path d="M 0 0 L 10 5 L 0 10 z" fill="#2563eb"></path>
+            </marker>
+            <filter id="flow-shadow" x="-10%" y="-10%" width="120%" height="130%">
+              <feDropShadow dx="0" dy="5" stdDeviation="5" flood-color="#1f2937" flood-opacity="0.12"></feDropShadow>
+            </filter>
+          </defs>
+
+          <rect x="24" y="28" width="1032" height="292" rx="14" fill="#fff" stroke="#e4e8f0"></rect>
+
+          <rect x="70" y="118" width="160" height="96" rx="10" fill="#eef4ff" stroke="#bfdbfe" filter="url(#flow-shadow)"></rect>
+          <text class="node-title" x="94" y="148">1. Config</text>
+          <text class="node-desc" x="94" y="172">실험 조건</text>
+          <text class="node-desc" x="94" y="190">데이터, 모델, 경로</text>
+
+          <rect x="290" y="118" width="160" height="96" rx="10" fill="#f5f3ff" stroke="#d8b4fe" filter="url(#flow-shadow)"></rect>
+          <text class="node-title" x="314" y="148">2. Script</text>
+          <text class="node-desc" x="314" y="172">공식 실행 명령</text>
+          <text class="node-desc" x="314" y="190">run_train.py 등</text>
+
+          <rect x="510" y="82" width="180" height="76" rx="10" fill="#ecfdf5" stroke="#a7f3d0" filter="url(#flow-shadow)"></rect>
+          <text class="node-title" x="534" y="112">3-A. ML</text>
+          <text class="node-desc" x="534" y="136">학습, 예측, metric</text>
+
+          <rect x="510" y="190" width="180" height="76" rx="10" fill="#ecfdf5" stroke="#a7f3d0" filter="url(#flow-shadow)"></rect>
+          <text class="node-title" x="534" y="220">3-B. RAG</text>
+          <text class="node-desc" x="534" y="244">문서 검색, 답변, 평가</text>
+
+          <rect x="760" y="118" width="210" height="96" rx="10" fill="#fff7e8" stroke="#f5d596" filter="url(#flow-shadow)"></rect>
+          <text class="node-title" x="784" y="148">4. Experiments</text>
+          <text class="node-desc" x="784" y="172">config, metrics, log</text>
+          <text class="node-desc" x="784" y="190">checkpoint, 실패 기록</text>
+
+          <path d="M230 166 C250 166 270 166 290 166" fill="none" stroke="#2563eb" stroke-width="2.6" marker-end="url(#flow-arrow)"></path>
+          <path d="M450 166 C480 166 480 120 510 120" fill="none" stroke="#2563eb" stroke-width="2.6" marker-end="url(#flow-arrow)"></path>
+          <path d="M450 166 C480 166 480 228 510 228" fill="none" stroke="#2563eb" stroke-width="2.6" marker-end="url(#flow-arrow)"></path>
+          <path d="M690 120 C720 120 730 166 760 166" fill="none" stroke="#2563eb" stroke-width="2.6" marker-end="url(#flow-arrow)"></path>
+          <path d="M690 228 C720 228 730 166 760 166" fill="none" stroke="#2563eb" stroke-width="2.6" marker-end="url(#flow-arrow)"></path>
+
+          <rect class="label-bg" x="238" y="146" width="48" height="24" rx="12"></rect>
+          <text class="label" x="262" y="158">읽기</text>
+          <rect class="label-bg" x="456" y="114" width="50" height="24" rx="12"></rect>
+          <text class="label" x="481" y="126">분류</text>
+          <rect class="label-bg" x="456" y="220" width="50" height="24" rx="12"></rect>
+          <text class="label" x="481" y="232">RAG</text>
+          <rect class="label-bg" x="704" y="146" width="50" height="24" rx="12"></rect>
+          <text class="label" x="729" y="158">저장</text>
+        </svg>
+      </div>
+      <p class="note">핵심은 실험의 기준이 코드가 아니라 config라는 점입니다. 코드를 매번 고치는 대신 config를 바꿔서 조건을 비교하면, 팀원끼리 결과를 훨씬 쉽게 재현할 수 있습니다.</p>
+    </section>
+
+    <section>
+      <h2>왜 이렇게 나눴나</h2>
+      <div class="two-col">
+        <div class="panel red">
+          <strong>나누지 않으면 생기는 문제</strong>
+          <p>사람마다 실행 방식이 달라지고, 결과 파일 위치가 흩어지고, 어떤 데이터와 모델로 나온 결과인지 나중에 찾기 어려워집니다.</p>
+        </div>
+        <div class="panel green">
+          <strong>나누면 좋아지는 점</strong>
+          <p>같은 config와 같은 script로 실행하므로 재현이 쉬워지고, 실험 결과가 일정한 폴더 구조로 남아 발표와 회고에 쓰기 좋아집니다.</p>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <h2>Config는 무엇을 정하나</h2>
+      <div class="two-col">
+        <div class="panel">
+          <h3>사람 말로 풀면</h3>
+          <p>“이번 실험은 이 데이터를 쓰고, 이 모델을 쓰고, 결과는 이 폴더에 저장하고, 실패하면 로그를 남겨줘”라고 적는 주문서입니다.</p>
+        </div>
+        <div class="panel">
+          <h3>파일로 보면</h3>
+          <pre><code>experiment:
+  name: rag_smoke_test
+
+paths:
+  output_dir: experiments/rag_smoke_test
+
+rag:
+  retriever:
+    method: hybrid
+    top_k: 3</code></pre>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <h2>분류 모델과 RAG의 차이</h2>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>구분</th>
+              <th>분류 모델</th>
+              <th>RAG</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>목표</td>
+              <td>입력 하나를 보고 정해진 label 중 하나를 예측합니다.</td>
+              <td>문서에서 근거를 찾아 질문에 답하고 출처를 남깁니다.</td>
+            </tr>
+            <tr>
+              <td>예시</td>
+              <td>문장이 긍정인지 부정인지 분류합니다.</td>
+              <td>RFP 문서에서 예산, 자격 요건, 일정 등을 찾아 답합니다.</td>
+            </tr>
+            <tr>
+              <td>중요한 산출물</td>
+              <td>metric, best model, prediction</td>
+              <td>chunks, retrieved chunks, answer, citations, 실패 분석</td>
+            </tr>
+            <tr>
+              <td>평가 포인트</td>
+              <td>accuracy 같은 예측 성능</td>
+              <td>관련 근거를 찾았는지, 답변에 근거가 있는지</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section>
+      <h2>RAG는 무엇을 하는가</h2>
+      <div class="timeline">
+        <div class="step">
+          <h3>문서를 읽습니다</h3>
+          <p>PDF, HWP, DOCX, TXT 같은 원본 문서를 읽고 표준 형태의 document row로 바꿉니다.</p>
+        </div>
+        <div class="step">
+          <h3>작은 근거 단위로 나눕니다</h3>
+          <p>긴 문서를 한 번에 다루기 어렵기 때문에 검색 가능한 chunk로 나눕니다.</p>
+        </div>
+        <div class="step">
+          <h3>검색 가능한 형태로 바꿉니다</h3>
+          <p>각 chunk를 embedding으로 바꾸거나 keyword 검색에 쓸 수 있게 준비합니다.</p>
+        </div>
+        <div class="step">
+          <h3>질문과 관련 있는 근거를 찾습니다</h3>
+          <p>질문이 들어오면 keyword, semantic, hybrid 방식으로 관련 chunk를 고릅니다.</p>
+        </div>
+        <div class="step">
+          <h3>근거를 바탕으로 답합니다</h3>
+          <p>답변과 함께 어떤 chunk를 근거로 삼았는지 citation을 남깁니다.</p>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <h2>실험 결과 폴더를 보면 알 수 있는 것</h2>
+      <div class="two-col">
+        <div class="panel amber">
+          <strong>성공했을 때</strong>
+          <p><code>metrics.json</code>, <code>history.csv</code>, <code>config.yaml</code>, <code>run_info.json</code>을 보면 어떤 조건으로 어떤 결과가 나왔는지 확인할 수 있습니다.</p>
+        </div>
+        <div class="panel violet">
+          <strong>실패했을 때</strong>
+          <p><code>run_status.json</code>와 <code>failure.log</code>를 보면 어느 단계에서 왜 실패했는지 추적할 수 있습니다.</p>
+        </div>
+      </div>
+      <pre><code>experiments/rag_smoke_test/
+|-- config.yaml
+|-- metrics.json
+|-- run_status.json
+|-- parsed_documents.csv
+|-- chunks.csv
+|-- embeddings.jsonl
+|-- answers.jsonl
+`-- failure.log</code></pre>
+    </section>
+
+    <section>
+      <h2>현재 구현된 것과 나중에 붙일 것</h2>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>영역</th>
+              <th>현재 가능한 것</th>
+              <th>나중에 붙일 수 있는 것</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>분류 모델</td>
+              <td>이미지 smoke, 텍스트 keyword, HuggingFace tiny/fine-tuning 흐름</td>
+              <td>실제 프로젝트 데이터에 맞춘 base model 교체</td>
+            </tr>
+            <tr>
+              <td>RAG 문서 처리</td>
+              <td>txt, pdf, docx, hwpx, hwp 로딩과 chunking</td>
+              <td>문서 품질에 맞춘 전처리와 section 추출 고도화</td>
+            </tr>
+            <tr>
+              <td>RAG 검색</td>
+              <td>keyword, semantic, hybrid 비교</td>
+              <td>FAISS, Chroma, Elasticsearch, reranker</td>
+            </tr>
+            <tr>
+              <td>RAG 답변</td>
+              <td>local extractive answer</td>
+              <td>OpenAI 또는 HuggingFace LLM answer adapter</td>
+            </tr>
+            <tr>
+              <td>운영 기능</td>
+              <td>checkpoint, resume, scheduler, early stopping, backup 정책</td>
+              <td>대용량 문서용 세밀한 offset resume</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section>
+      <h2>팀원에게 설명할 때의 핵심 문장</h2>
+      <div class="panel blue">
+        <p>이 저장소는 모델 하나를 정답처럼 고정하는 저장소가 아니라, 여러 실험을 같은 방식으로 실행하고 비교하기 위한 기본 장치입니다.</p>
+        <p>팀원은 config를 바꾸고 script를 실행하면 되고, 결과는 experiments에 자동으로 남습니다. RAG 프로젝트가 되면 문서에서 근거를 찾고 답변과 citation을 남기는 흐름으로 확장됩니다.</p>
+      </div>
+    </section>
+  </main>
+</body>
+</html>

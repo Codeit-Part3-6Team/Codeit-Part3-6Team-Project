@@ -2,6 +2,8 @@
 
 이 문서는 팀원이 로컬 환경 세팅에 막혔을 때 Colab에서 같은 파이프라인을 실행하기 위한 가이드입니다.
 
+실제 노트북 템플릿은 `notebooks/colab_experiment_template.ipynb`를 사용합니다.
+
 ## 권장 Drive 구조
 
 ```text

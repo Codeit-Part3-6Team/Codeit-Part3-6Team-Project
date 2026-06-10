@@ -1,0 +1,323 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>파이프라인 설명서</title>
+  <style>
+:root {
+  --bg: #f6f7f9;
+  --paper: #ffffff;
+  --ink: #1f2937;
+  --muted: #667085;
+  --line: #d8dee8;
+  --blue: #2563eb;
+  --code-bg: #111827;
+  --code: #e5e7eb;
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans KR", Arial, sans-serif;
+  line-height: 1.7;
+  word-break: keep-all;
+}
+header {
+  background: #182235;
+  color: #fff;
+  padding: 34px 24px 26px;
+}
+main, header .wrap {
+  width: min(1040px, calc(100% - 36px));
+  margin: 0 auto;
+}
+main {
+  background: var(--paper);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  margin-top: 24px;
+  margin-bottom: 48px;
+  padding: 30px;
+}
+h1, h2, h3, h4 {
+  letter-spacing: 0;
+  line-height: 1.28;
+}
+h1 { margin: 0; font-size: 34px; }
+h2 { margin-top: 34px; padding-top: 10px; border-top: 1px solid #e8ebf1; font-size: 25px; }
+h3 { margin-top: 24px; font-size: 20px; }
+h4 { margin-top: 20px; font-size: 17px; }
+p { margin: 10px 0; }
+a { color: var(--blue); text-decoration: none; }
+a:hover { text-decoration: underline; }
+code {
+  font-family: Consolas, "SFMono-Regular", monospace;
+  background: #eef2ff;
+  color: #27306f;
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+pre {
+  margin: 14px 0;
+  padding: 16px;
+  overflow-x: auto;
+  border-radius: 8px;
+  background: var(--code-bg);
+  color: var(--code);
+}
+pre code {
+  background: transparent;
+  color: inherit;
+  padding: 0;
+}
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 14px 0;
+  min-width: 720px;
+}
+.table-wrap {
+  overflow-x: auto;
+}
+th, td {
+  border: 1px solid var(--line);
+  padding: 10px 12px;
+  text-align: left;
+  vertical-align: top;
+}
+th { background: #f2f5fa; }
+blockquote {
+  border-left: 4px solid var(--blue);
+  margin: 16px 0;
+  padding: 8px 16px;
+  background: #eef4ff;
+  color: #31415f;
+}
+ul, ol { padding-left: 24px; }
+li { margin: 4px 0; }
+.meta {
+  margin-top: 8px;
+  color: #d8e1ef;
+  font-size: 14px;
+}
+</style>
+</head>
+<body>
+  <header>
+    <div class="wrap">
+      <h1>파이프라인 설명서</h1>
+      <div class="meta">Markdown 원본: ../md/PIPELINE_OVERVIEW.md</div>
+    </div>
+  </header>
+  <main>
+<h1>파이프라인 설명서</h1>
+<p>이 문서는 팀원에게 현재 프로젝트 파이프라인을 설명하기 위한 개요 문서입니다. 세부 명령어는 <code>README.md</code>, 실험 규칙은 <code>EXPERIMENT_GUIDE.md</code>, Colab 실행은 <code>COLAB_GUIDE.md</code>를 참고합니다. 운영 기능의 현재 상태와 남은 보강 항목은 <code>PIPELINE_INFRA_CHECKLIST.md</code>에서 관리합니다.</p>
+<h2>한 줄 요약</h2>
+<p>현재 파이프라인은 <strong>config 하나를 기준으로 데이터 검증, 학습, 예측, 실험 산출물 저장, 실험 요약까지 재현 가능하게 실행하는 구조</strong>입니다.</p>
+<pre><code class="language-text">
+config
+  -&gt; data validation
+  -&gt; train
+  -&gt; predict
+  -&gt; experiment artifacts
+  -&gt; experiment summary
+</code></pre>
+<h2>왜 이렇게 나누는가</h2>
+<p>팀 프로젝트에서는 “내 컴퓨터에서는 됐는데 다른 사람은 안 됨”이 자주 생깁니다. 그래서 실행 방식과 산출물 위치를 고정해두면 다음 장점이 있습니다.</p>
+<ul>
+<li>팀원이 같은 명령어로 같은 흐름을 실행할 수 있습니다.</li>
+<li>실험 결과가 흩어지지 않고 <code>experiments/</code> 아래에 모입니다.</li>
+<li>모델, 데이터, metric, 실행 환경을 나중에 다시 확인할 수 있습니다.</li>
+<li>발표 자료를 만들 때 실험 근거를 찾기 쉬워집니다.</li>
+</ul>
+<h2>주요 폴더 역할</h2>
+<pre><code class="language-text">
+configs/      실험 설정 파일
+data/         원본/중간/처리 데이터
+scripts/      사람이 직접 실행하는 명령어 진입점
+src/          재사용 가능한 파이프라인 코드
+experiments/  실험 결과 자동 저장 위치
+reports/      실험 요약과 Daily Report
+docs/md/      원본/관리용 Markdown 문서
+docs/html/    공유/설명용 HTML 문서
+tests/        파이프라인이 깨졌는지 확인하는 테스트
+</code></pre>
+<h2>Config 중심 실행</h2>
+<p>실험은 config에서 시작합니다.</p>
+<p>예시:</p>
+<pre><code class="language-yaml">
+experiment:
+  name: smoke_test_text
+  seed: 42
+
+paths:
+  data_dir: data/text_processed
+  output_dir: experiments/smoke_test_text
+
+data:
+  task: text_classification
+  train_csv: train.csv
+  valid_csv: valid.csv
+  test_csv: test.csv
+
+model:
+  name: keyword_text_classifier
+</code></pre>
+<p>config에는 다음 정보가 들어갑니다.</p>
+<ul>
+<li>어떤 데이터를 쓸지</li>
+<li>어떤 모델을 쓸지</li>
+<li>결과를 어디에 저장할지</li>
+<li>어떤 metric을 기준으로 볼지</li>
+<li>seed, batch size, learning rate 같은 실험 조건</li>
+</ul>
+<h2>실행 단계</h2>
+<h3>1. 데이터 검증</h3>
+<pre><code class="language-bash">
+python scripts/run_validate.py --data-dir data/text_processed --project-root .
+</code></pre>
+<p>확인하는 것:</p>
+<ul>
+<li><code>train.csv</code>, <code>valid.csv</code>, <code>test.csv</code>가 있는지</li>
+<li>필수 컬럼이 있는지</li>
+<li>label이 <code>class_map.json</code>에 정의되어 있는지</li>
+<li>split 간 중복이나 누락이 없는지</li>
+</ul>
+<h3>2. 학습</h3>
+<pre><code class="language-bash">
+python scripts/run_train.py --config configs/smoke_test_text.yaml --project-root .
+</code></pre>
+<p>학습 단계에서 하는 일:</p>
+<ul>
+<li>config 로드</li>
+<li>데이터 검증</li>
+<li>데이터 로드</li>
+<li>모델 생성</li>
+<li>학습 실행</li>
+<li>valid/test metric 계산</li>
+<li>산출물 저장</li>
+</ul>
+<h3>3. 예측</h3>
+<pre><code class="language-bash">
+python scripts/run_predict.py \
+  --config configs/smoke_test_text.yaml \
+  --project-root . \
+  --input data/text_processed/sample_positive.txt
+</code></pre>
+<p>예측 단계에서 하는 일:</p>
+<ul>
+<li>실험 폴더의 <code>best_model.json</code> 또는 모델 artifact 로드</li>
+<li>입력 데이터 전처리</li>
+<li>prediction 생성</li>
+<li><code>predictions.csv</code> 저장</li>
+</ul>
+<h3>4. 실험 요약</h3>
+<pre><code class="language-bash">
+python scripts/summarize_experiments.py --project-root .
+</code></pre>
+<p>여러 실험의 <code>metrics.json</code>, <code>config.yaml</code>, <code>run_info.json</code>을 모아 다음 파일을 만듭니다.</p>
+<pre><code class="language-text">
+reports/experiment_summary.csv
+reports/experiment_summary.json
+</code></pre>
+<h2>실험 산출물</h2>
+<p>각 실험은 <code>experiments/{experiment.name}/</code> 아래에 저장됩니다.</p>
+<pre><code class="language-text">
+experiments/smoke_test_text/
+|-- best_model.json
+|-- config.yaml
+|-- history.csv
+|-- metrics.json
+|-- predictions.csv
+|-- README.md
+|-- run_status.json
+|-- run_info.json
+`-- train.log
+</code></pre>
+<p>학습/예측이 실패하면 같은 실험 폴더에 <code>failure.log</code>를 남깁니다.</p>
+<p>HuggingFace 실험은 추가로 다음 폴더를 만듭니다.</p>
+<pre><code class="language-text">
+experiments/{experiment.name}/hf_model/
+</code></pre>
+<h2>Smoke Test와 실제 실험</h2>
+<p>현재 파이프라인에는 두 종류의 실험이 있습니다.</p>
+<pre><code class="language-text">
+smoke test: 파이프라인이 정상 동작하는지 빠르게 확인
+real experiment: 실제 모델 성능을 확인하는 실험
+</code></pre>
+<p>예시:</p>
+<ul>
+<li><code>configs/smoke_test_text.yaml</code>: 빠른 텍스트 smoke test</li>
+<li><code>configs/smoke_test_hf_tiny.yaml</code>: HuggingFace 환경 smoke test</li>
+<li><code>configs/exp002_hf_text_finetune.yaml</code>: 실제 HuggingFace 실험 후보</li>
+<li><code>configs/rag_smoke_test.yaml</code>: RAG 문서 검색/답변 smoke test</li>
+</ul>
+<p><code>smoke_test_hf_tiny.yaml</code>은 성능을 보기 위한 config가 아닙니다. 다운로드, 학습, 저장, 예측 흐름이 실제로 도는지 확인하기 위한 config입니다.</p>
+<h2>RAG 프로젝트로 바뀌면 무엇이 달라지는가</h2>
+<p>RAG 프로젝트로 방향이 바뀌어도 가운데 운영 구조는 유지할 수 있습니다. 구체적인 RAG 입력/출력 계약은 <code>RAG_PIPELINE_SPEC.md</code>에서 관리합니다.</p>
+<p>그대로 쓰는 것:</p>
+<ul>
+<li><code>configs/</code></li>
+<li><code>scripts/</code></li>
+<li><code>experiments/</code></li>
+<li><code>reports/</code></li>
+<li><code>docs/md/</code></li>
+<li><code>docs/html/</code></li>
+<li><code>tests/</code></li>
+<li>실험 요약 방식</li>
+<li>Colab/Drive 실행 방식</li>
+</ul>
+<p>바뀌는 것:</p>
+<pre><code class="language-text">
+분류 프로젝트:
+text -&gt; model -&gt; predicted_label
+
+RAG 프로젝트:
+document -&gt; chunk -&gt; embedding -&gt; retrieve -&gt; answer + citations
+</code></pre>
+<p>즉, 파이프라인의 앞단과 뒷단은 바뀌지만 “config로 실행하고, 실험 산출물을 남기고, 결과를 요약한다”는 운영 구조는 그대로 가져갈 수 있습니다.</p>
+<p>현재 RAG smoke pipeline은 외부 모델 없이 hashing embedding 기반 semantic retrieval로 구현되어 있습니다. loader는 <code>txt</code>, <code>pdf</code>, <code>docx</code>, <code>hwpx</code>, <code>hwp</code> 확장자를 대상으로 하며, 형식이 달라도 같은 document/chunk 계약으로 변환합니다. 목표는 성능이 아니라 다음 항목을 빠르게 검증하는 것입니다.</p>
+<ul>
+<li>txt 문서를 section 단위로 읽을 수 있는가</li>
+<li>chunk metadata가 유지되는가</li>
+<li>embedding 산출물이 저장되는가</li>
+<li>질문에 맞는 chunk를 top-k로 찾을 수 있는가</li>
+<li>답변에 citation을 붙일 수 있는가</li>
+<li><code>metrics.json</code>과 <code>evaluation_results.csv</code>를 남길 수 있는가</li>
+<li>실험 요약에서 RAG metric을 볼 수 있는가</li>
+</ul>
+<p>RAG smoke 산출물:</p>
+<pre><code class="language-text">
+experiments/rag_smoke_test/
+|-- parsed_documents.csv
+|-- chunks.csv
+|-- embeddings.jsonl
+|-- retrieval_results.jsonl
+|-- answers.jsonl
+|-- evaluation_results.csv
+|-- bad_retrievals.csv
+|-- unsupported_answers.csv
+|-- failed_questions.csv
+`-- metrics.json
+</code></pre>
+<p>다음 확장 후보는 <code>sentence-transformers embedding -&gt; vector index -&gt; semantic retrieval 고도화</code>입니다. 현재는 <code>scripts/compare_rag_retrievers.py</code>로 keyword와 semantic retriever 결과를 비교할 수 있습니다.</p>
+<h2>아직 보강하면 좋은 부분</h2>
+<p>현재 파이프라인은 기본 실행과 실험 기록 중심입니다. 실제 프로젝트에서 더 단단하게 만들려면 다음 항목을 추가할 수 있습니다.</p>
+<ul>
+<li>macro f1, class별 precision/recall/f1</li>
+<li>confusion matrix</li>
+<li><code>eval_predictions.csv</code></li>
+<li><code>wrong_predictions.csv</code></li>
+<li>best model과 last model 구분</li>
+<li>config validation</li>
+<li>실패한 실험의 <code>failure.log</code></li>
+<li>RAG embedding/vector store</li>
+<li>RAG PDF parser</li>
+<li>RAG unsupported answer 분석 리포트</li>
+</ul>
+<p>이 항목들은 프로젝트 주제가 확정된 뒤 우선순위를 정해 추가하는 것이 좋습니다.</p>
+  </main>
+</body>
+</html>

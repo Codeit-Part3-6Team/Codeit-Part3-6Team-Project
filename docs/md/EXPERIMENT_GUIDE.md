@@ -1,7 +1,7 @@
 # 실험 가이드
 
 모든 실험은 config 기반으로 실행하고, 재현 가능한 산출물을 남깁니다.
-전체 파이프라인의 큰 그림은 `docs/PIPELINE_OVERVIEW.md`를 먼저 참고합니다.
+전체 파이프라인의 큰 그림은 `PIPELINE_OVERVIEW.md`를 먼저 참고합니다.
 
 ## 기본 실행 흐름
 
@@ -25,7 +25,7 @@ python scripts/run_train.py --config configs/exp002_hf_text_finetune.yaml --proj
 ```
 
 처음 실행할 때는 base model 다운로드가 필요합니다. 로컬 CPU에서도 동작은 가능하지만, 실제 데이터셋에서는 Colab/GPU 환경을 권장합니다.
-Colab에서 Drive 경로를 사용하려면 `docs/COLAB_GUIDE.md`와 `configs/exp002_hf_text_finetune_colab.yaml`을 참고합니다.
+Colab에서 Drive 경로를 사용하려면 `COLAB_GUIDE.md`와 `configs/exp002_hf_text_finetune_colab.yaml`을 참고합니다.
 
 ## 실험 결과 요약
 

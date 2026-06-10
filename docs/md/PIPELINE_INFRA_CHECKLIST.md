@@ -32,7 +32,7 @@
 | overwrite 방지 | 있음 | `artifact_policy.on_existing: fail` |
 | 실험 산출물 저장 | 있음 | `experiments/{experiment.name}/` |
 | 실험 요약 리포트 | 있음 | `scripts/summarize_experiments.py` |
-| Colab/Drive 실행 가이드 | 있음 | `docs/COLAB_GUIDE.md` |
+| Colab/Drive 실행 가이드 | 있음 | `COLAB_GUIDE.md` |
 | 기본 테스트 | 있음 | `pytest` 기반 smoke/unit tests |
 
 ## 일부만 갖춘 것
