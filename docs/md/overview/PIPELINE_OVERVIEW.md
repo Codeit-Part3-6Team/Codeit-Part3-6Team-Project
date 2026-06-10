@@ -1,7 +1,7 @@
 # 파이프라인 설명서
 
 이 문서는 팀원에게 현재 프로젝트 파이프라인을 설명하기 위한 개요 문서입니다.
-세부 명령어는 `README.md`, 실험 규칙은 `EXPERIMENT_GUIDE.md`, Colab 실행은 `COLAB_GUIDE.md`를 참고합니다.
+세부 명령어는 `README.md`, 실험 규칙은 `experiments/EXPERIMENT_GUIDE.md`, Colab 실행은 `experiments/COLAB_GUIDE.md`를 참고합니다.
 운영 기능의 현재 상태와 남은 보강 항목은 `PIPELINE_INFRA_CHECKLIST.md`에서 관리합니다.
 
 ## 한 줄 요약
@@ -92,7 +92,7 @@ python scripts/run_validate.py --data-dir data/text_processed --project-root .
 ### 2. 학습
 
 ```bash
-python scripts/run_train.py --config configs/smoke_test_text.yaml --project-root .
+python scripts/run_train.py --config configs/smoke/smoke_test_text.yaml --project-root .
 ```
 
 학습 단계에서 하는 일:
@@ -109,7 +109,7 @@ python scripts/run_train.py --config configs/smoke_test_text.yaml --project-root
 
 ```bash
 python scripts/run_predict.py \
-  --config configs/smoke_test_text.yaml \
+  --config configs/smoke/smoke_test_text.yaml \
   --project-root . \
   --input data/text_processed/sample_positive.txt
 ```
@@ -170,10 +170,10 @@ real experiment: 실제 모델 성능을 확인하는 실험
 
 예시:
 
-- `configs/smoke_test_text.yaml`: 빠른 텍스트 smoke test
-- `configs/smoke_test_hf_tiny.yaml`: HuggingFace 환경 smoke test
-- `configs/exp002_hf_text_finetune.yaml`: 실제 HuggingFace 실험 후보
-- `configs/rag_smoke_test.yaml`: RAG 문서 검색/답변 smoke test
+- `configs/smoke/smoke_test_text.yaml`: 빠른 텍스트 smoke test
+- `configs/smoke/smoke_test_hf_tiny.yaml`: HuggingFace 환경 smoke test
+- `configs/experiments/exp002_hf_text_finetune.yaml`: 실제 HuggingFace 실험 후보
+- `configs/rag/rag_smoke_test.yaml`: RAG 문서 검색/답변 smoke test
 
 `smoke_test_hf_tiny.yaml`은 성능을 보기 위한 config가 아닙니다.
 다운로드, 학습, 저장, 예측 흐름이 실제로 도는지 확인하기 위한 config입니다.
@@ -181,7 +181,7 @@ real experiment: 실제 모델 성능을 확인하는 실험
 ## RAG 프로젝트로 바뀌면 무엇이 달라지는가
 
 RAG 프로젝트로 방향이 바뀌어도 가운데 운영 구조는 유지할 수 있습니다.
-구체적인 RAG 입력/출력 계약은 `RAG_PIPELINE_SPEC.md`에서 관리합니다.
+구체적인 RAG 입력/출력 계약은 `rag/RAG_PIPELINE_SPEC.md`에서 관리합니다.
 
 그대로 쓰는 것:
 

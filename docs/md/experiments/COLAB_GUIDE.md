@@ -47,8 +47,8 @@ print(torch.cuda.get_device_name(0) if torch.cuda.is_available() else "CPU")
 HuggingFace까지 실제로 실행 가능한지 확인합니다.
 
 ```bash
-python scripts/run_train.py --config configs/smoke_test_hf_tiny.yaml --project-root .
-python scripts/run_predict.py --config configs/smoke_test_hf_tiny.yaml --project-root . --input data/text_processed/sample_positive.txt
+python scripts/run_train.py --config configs/smoke/smoke_test_hf_tiny.yaml --project-root .
+python scripts/run_predict.py --config configs/smoke/smoke_test_hf_tiny.yaml --project-root . --input data/text_processed/sample_positive.txt
 ```
 
 ## Drive 데이터로 학습하기
@@ -62,7 +62,7 @@ python scripts/run_validate.py \
 
 python scripts/run_train.py \
   --project-root . \
-  --config configs/exp002_hf_text_finetune_colab.yaml
+  --config configs/experiments/exp002_hf_text_finetune_colab.yaml
 ```
 
 이 config는 결과를 Drive에 바로 저장합니다.

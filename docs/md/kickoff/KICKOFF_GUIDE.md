@@ -253,8 +253,8 @@ python scripts/run_validate.py --data-dir data/text_processed
 텍스트 smoke test 예시:
 
 ```bash
-python scripts/run_train.py --config configs/smoke_test_text.yaml --project-root .
-python scripts/run_predict.py --config configs/smoke_test_text.yaml --project-root . --input data/text_processed/sample_positive.txt
+python scripts/run_train.py --config configs/smoke/smoke_test_text.yaml --project-root .
+python scripts/run_predict.py --config configs/smoke/smoke_test_text.yaml --project-root . --input data/text_processed/sample_positive.txt
 ```
 
 ## 10. Daily Report는 짧게 씁니다

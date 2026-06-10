@@ -7,7 +7,7 @@ from src.predict import predict_one
 
 def infer_image(
     image_path: str,
-    config_path: str = "configs/smoke_test.yaml",
+    config_path: str = "configs/smoke/smoke_test.yaml",
     project_root: str = ".",
 ) -> dict[str, str]:
     """향후 FastAPI 데모에서 재사용할 작은 추론 연결 지점."""

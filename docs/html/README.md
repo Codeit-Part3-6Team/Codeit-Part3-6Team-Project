@@ -12,26 +12,26 @@
 `docs/md/*.md` 파일은 같은 이름의 HTML을 가집니다.
 
 ```text
-docs/md/PIPELINE_OVERVIEW.md
--> docs/html/PIPELINE_OVERVIEW.html
+docs/md/overview/PIPELINE_OVERVIEW.md
+-> docs/html/overview/PIPELINE_OVERVIEW.html
 ```
 
 ## Markdown 대응 HTML
 
-- `COLAB_GUIDE.html`
-- `DATA_CONTRACT.html`
-- `EXPERIMENT_GUIDE.html`
-- `GIT_WORKFLOW.html`
-- `KICKOFF_GUIDE.html`
-- `MODULE_ARCHITECTURE.html`
-- `PIPELINE_INFRA_CHECKLIST.html`
-- `PIPELINE_OVERVIEW.html`
-- `RAG_PIPELINE_SPEC.html`
-- `ROLE_GUIDE.html`
-- `TEAM_WORKFLOW.html`
+- `overview/PIPELINE_OVERVIEW.html`
+- `overview/PIPELINE_INFRA_CHECKLIST.html`
+- `overview/MODULE_ARCHITECTURE.html`
+- `rag/RAG_PIPELINE_SPEC.html`
+- `data/DATA_CONTRACT.html`
+- `experiments/EXPERIMENT_GUIDE.html`
+- `experiments/COLAB_GUIDE.html`
+- `workflow/GIT_WORKFLOW.html`
+- `workflow/ROLE_GUIDE.html`
+- `workflow/TEAM_WORKFLOW.html`
+- `kickoff/KICKOFF_GUIDE.html`
 
 추가로 아래 HTML은 설명용으로 직접 작성한 문서입니다.
 
-- `pipeline_explainer.html`
-- `module_architecture.html`
-- `kickoff.html`
+- `overview/pipeline_explainer.html`
+- `overview/module_architecture.html`
+- `kickoff/kickoff.html`

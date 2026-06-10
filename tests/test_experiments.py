@@ -15,7 +15,7 @@ from src.train import run_training
 
 
 def test_write_experiment_summary_collects_metrics(isolated_project: Path):
-    run_training(isolated_project / "configs" / "smoke_test_text.yaml", isolated_project)
+    run_training(isolated_project / "configs" / "smoke" / "smoke_test_text.yaml", isolated_project)
 
     rows = write_experiment_summary(isolated_project)
     summary_csv = isolated_project / "reports" / "experiment_summary.csv"
@@ -45,7 +45,7 @@ def test_collect_experiment_summaries_handles_empty_experiments_dir(isolated_pro
 
 
 def test_write_experiment_summary_accepts_absolute_paths(isolated_project: Path):
-    run_training(isolated_project / "configs" / "smoke_test_text.yaml", isolated_project)
+    run_training(isolated_project / "configs" / "smoke" / "smoke_test_text.yaml", isolated_project)
     output_path = isolated_project / "reports" / "absolute_summary.csv"
 
     rows = write_experiment_summary(
@@ -89,7 +89,7 @@ artifact_policy:
 
 
 def test_write_experiment_summary_collects_rag_metrics(isolated_project: Path):
-    run_rag_evaluation(isolated_project / "configs" / "rag_smoke_test.yaml", isolated_project)
+    run_rag_evaluation(isolated_project / "configs" / "rag" / "rag_smoke_test.yaml", isolated_project)
 
     rows = write_experiment_summary(isolated_project)
 
@@ -99,7 +99,7 @@ def test_write_experiment_summary_collects_rag_metrics(isolated_project: Path):
 
 
 def test_summarize_experiments_script_writes_report(isolated_project: Path, repo_root: Path):
-    run_training(isolated_project / "configs" / "smoke_test_text.yaml", isolated_project)
+    run_training(isolated_project / "configs" / "smoke" / "smoke_test_text.yaml", isolated_project)
 
     result = subprocess.run(
         [

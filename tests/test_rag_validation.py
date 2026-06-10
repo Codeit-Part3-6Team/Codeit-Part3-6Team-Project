@@ -8,7 +8,7 @@ from src.rag.validation import check_rag_pipeline
 
 
 def test_check_rag_pipeline_accepts_smoke_config(isolated_project: Path):
-    result = check_rag_pipeline("configs/rag_smoke_test.yaml", isolated_project)
+    result = check_rag_pipeline("configs/rag/rag_smoke_test.yaml", isolated_project)
 
     assert result["ok"] is True
     assert result["errors"] == []
@@ -138,7 +138,7 @@ def test_check_rag_pipeline_script_uses_exit_code(isolated_project: Path, repo_r
             "--project-root",
             str(isolated_project),
             "--config",
-            "configs/rag_smoke_test.yaml",
+            "configs/rag/rag_smoke_test.yaml",
         ],
         capture_output=True,
         text=True,

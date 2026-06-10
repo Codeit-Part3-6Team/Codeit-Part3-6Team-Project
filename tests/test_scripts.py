@@ -28,7 +28,7 @@ def test_run_train_and_predict_scripts_write_experiment_artifacts(
     isolated_project: Path,
     repo_root: Path,
 ):
-    config = isolated_project / "configs" / "smoke_test_text.yaml"
+    config = isolated_project / "configs" / "smoke" / "smoke_test_text.yaml"
 
     subprocess.run(
         [
@@ -81,7 +81,7 @@ def test_run_train_script_resolves_config_from_project_root(
             "--project-root",
             str(isolated_project),
             "--config",
-            "configs/smoke_test_text.yaml",
+            "configs/smoke/smoke_test_text.yaml",
         ],
         check=True,
         capture_output=True,
@@ -105,7 +105,7 @@ def test_run_predict_script_resolves_config_from_project_root(
             "--project-root",
             str(isolated_project),
             "--config",
-            "configs/smoke_test_text.yaml",
+            "configs/smoke/smoke_test_text.yaml",
         ],
         check=True,
         capture_output=True,
@@ -120,7 +120,7 @@ def test_run_predict_script_resolves_config_from_project_root(
             "--project-root",
             str(isolated_project),
             "--config",
-            "configs/smoke_test_text.yaml",
+            "configs/smoke/smoke_test_text.yaml",
             "--input",
             "data/text_processed/sample_positive.txt",
         ],
@@ -134,7 +134,7 @@ def test_run_predict_script_resolves_config_from_project_root(
 
 
 def test_run_predict_script_writes_failure_artifacts(isolated_project: Path, repo_root: Path):
-    config = isolated_project / "configs" / "smoke_test_text.yaml"
+    config = isolated_project / "configs" / "smoke" / "smoke_test_text.yaml"
     subprocess.run(
         [
             sys.executable,

@@ -11,7 +11,7 @@ from src.train import _huggingface_train_config, run_training
 
 def test_image_smoke_training_writes_artifacts(isolated_project: Path):
     metrics = run_training(
-        isolated_project / "configs" / "smoke_test.yaml",
+        isolated_project / "configs" / "smoke" / "smoke_test.yaml",
         isolated_project,
     )
     output_dir = isolated_project / "experiments" / "smoke_test"
@@ -34,7 +34,7 @@ def test_image_smoke_training_writes_artifacts(isolated_project: Path):
 
 
 def test_text_smoke_training_and_prediction(isolated_project: Path):
-    config = isolated_project / "configs" / "smoke_test_text.yaml"
+    config = isolated_project / "configs" / "smoke" / "smoke_test_text.yaml"
     metrics = run_training(config, isolated_project)
 
     prediction = predict_one(

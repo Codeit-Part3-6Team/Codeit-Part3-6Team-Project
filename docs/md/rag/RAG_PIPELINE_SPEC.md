@@ -73,7 +73,7 @@ embedding은 문자 n-gram 기반 hashing vector를 사용하고, 검색은 cosi
 실행 config:
 
 ```text
-configs/rag_smoke_test.yaml
+configs/rag/rag_smoke_test.yaml
 ```
 
 샘플 데이터:
@@ -87,10 +87,10 @@ data/rag_smoke/
 실행 명령:
 
 ```bash
-python scripts/run_rag_ingest.py --config configs/rag_smoke_test.yaml --project-root .
-python scripts/run_rag_retrieve.py --config configs/rag_smoke_test.yaml --project-root . --question "예산이 얼마야?"
-python scripts/run_rag_chat.py --config configs/rag_smoke_test.yaml --project-root . --question "예산이 얼마야?"
-python scripts/run_rag_chat.py --config configs/rag_smoke_test.yaml --project-root . --evaluate
+python scripts/run_rag_ingest.py --config configs/rag/rag_smoke_test.yaml --project-root .
+python scripts/run_rag_retrieve.py --config configs/rag/rag_smoke_test.yaml --project-root . --question "예산이 얼마야?"
+python scripts/run_rag_chat.py --config configs/rag/rag_smoke_test.yaml --project-root . --question "예산이 얼마야?"
+python scripts/run_rag_chat.py --config configs/rag/rag_smoke_test.yaml --project-root . --evaluate
 ```
 
 현재 구현된 단계:
@@ -136,7 +136,7 @@ experiments/rag_smoke_test/
 python scripts/compare_rag_retrievers.py --project-root .
 ```
 
-기본 비교 대상은 `configs/rag_smoke_keyword.yaml`와 `configs/rag_smoke_test.yaml`입니다.
+기본 비교 대상은 `configs/rag/rag_smoke_keyword.yaml`와 `configs/rag/rag_smoke_test.yaml`입니다.
 비교 결과는 `reports/rag_retriever_comparison.csv`와 `reports/rag_retriever_comparison.json`에 저장됩니다.
 
 이 구현의 목적은 성능이 아니라, RAG 프로젝트에서도 config 기반 실행, embedding 산출물 저장, citation 추적, 평가 산출물 저장, 실험 요약이 끝까지 이어지는지 확인하는 것입니다.
@@ -468,7 +468,7 @@ metric:
 
 ## 11. 구현 순서
 
-1. `configs/rag_smoke_test.yaml` 작성
+1. `configs/rag/rag_smoke_test.yaml` 작성
 2. `data/rag_smoke/rfp_sample.txt` 작성
 3. `src/rag/document_loader.py` 작성
 4. `src/rag/chunker.py` 작성

@@ -4,7 +4,7 @@ from src.config import _parse_simple_yaml, load_config
 
 
 def test_load_config_reads_text_smoke_config(repo_root):
-    config = load_config(repo_root / "configs" / "smoke_test_text.yaml")
+    config = load_config(repo_root / "configs" / "smoke" / "smoke_test_text.yaml")
 
     assert config["experiment"]["name"] == "smoke_test_text"
     assert config["data"]["task"] == "text_classification"
@@ -14,7 +14,7 @@ def test_load_config_reads_text_smoke_config(repo_root):
 
 
 def test_load_config_reads_rag_file_types(repo_root):
-    config = load_config(repo_root / "configs" / "rag_smoke_test.yaml")
+    config = load_config(repo_root / "configs" / "rag" / "rag_smoke_test.yaml")
 
     assert config["rag"]["loader"]["file_types"] == ["txt", "pdf", "docx", "hwpx", "hwp"]
     assert config["rag"]["embedding"]["provider"] == "local"
@@ -24,7 +24,7 @@ def test_load_config_reads_rag_file_types(repo_root):
 
 
 def test_load_config_reads_rag_hybrid_config(repo_root):
-    config = load_config(repo_root / "configs" / "rag_smoke_hybrid.yaml")
+    config = load_config(repo_root / "configs" / "rag" / "rag_smoke_hybrid.yaml")
 
     assert config["experiment"]["name"] == "rag_smoke_hybrid"
     assert config["rag"]["retriever"]["method"] == "hybrid"
@@ -33,7 +33,7 @@ def test_load_config_reads_rag_hybrid_config(repo_root):
 
 
 def test_load_config_reads_huggingface_text_config(repo_root):
-    config = load_config(repo_root / "configs" / "exp002_hf_text_finetune.yaml")
+    config = load_config(repo_root / "configs" / "experiments" / "exp002_hf_text_finetune.yaml")
 
     assert config["experiment"]["name"] == "exp002_hf_text_finetune"
     assert config["data"]["task"] == "text_classification"
@@ -48,7 +48,7 @@ def test_load_config_reads_huggingface_text_config(repo_root):
 
 
 def test_load_config_reads_tiny_huggingface_smoke_config(repo_root):
-    config = load_config(repo_root / "configs" / "smoke_test_hf_tiny.yaml")
+    config = load_config(repo_root / "configs" / "smoke" / "smoke_test_hf_tiny.yaml")
 
     assert config["experiment"]["name"] == "smoke_test_hf_tiny"
     assert config["model"]["name"] == "huggingface_sequence_classifier"
@@ -59,7 +59,7 @@ def test_load_config_reads_tiny_huggingface_smoke_config(repo_root):
 
 
 def test_load_config_reads_colab_huggingface_config(repo_root):
-    config = load_config(repo_root / "configs" / "exp002_hf_text_finetune_colab.yaml")
+    config = load_config(repo_root / "configs" / "experiments" / "exp002_hf_text_finetune_colab.yaml")
 
     assert config["experiment"]["name"] == "exp002_hf_text_finetune_colab"
     assert config["paths"]["data_dir"].startswith("/content/drive/MyDrive/")

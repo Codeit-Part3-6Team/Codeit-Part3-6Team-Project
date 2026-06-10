@@ -7,8 +7,8 @@
 
 ```bash
 python scripts/run_validate.py --data-dir data/text_processed
-python scripts/run_train.py --config configs/smoke_test_text.yaml --project-root .
-python scripts/run_predict.py --config configs/smoke_test_text.yaml --project-root . --input data/text_processed/sample_positive.txt
+python scripts/run_train.py --config configs/smoke/smoke_test_text.yaml --project-root .
+python scripts/run_predict.py --config configs/smoke/smoke_test_text.yaml --project-root . --input data/text_processed/sample_positive.txt
 ```
 
 ## HuggingFace fine-tuning 예시
@@ -18,15 +18,15 @@ python scripts/run_predict.py --config configs/smoke_test_text.yaml --project-ro
 환경 확인용 tiny model:
 
 ```bash
-python scripts/run_train.py --config configs/smoke_test_hf_tiny.yaml --project-root .
-python scripts/run_predict.py --config configs/smoke_test_hf_tiny.yaml --project-root . --input data/text_processed/sample_positive.txt
+python scripts/run_train.py --config configs/smoke/smoke_test_hf_tiny.yaml --project-root .
+python scripts/run_predict.py --config configs/smoke/smoke_test_hf_tiny.yaml --project-root . --input data/text_processed/sample_positive.txt
 ```
 
 실제 실험 후보:
 
 ```bash
-python scripts/run_train.py --config configs/exp002_hf_text_finetune.yaml --project-root .
-python scripts/run_predict.py --config configs/exp002_hf_text_finetune.yaml --project-root . --input data/text_processed/sample_positive.txt
+python scripts/run_train.py --config configs/experiments/exp002_hf_text_finetune.yaml --project-root .
+python scripts/run_predict.py --config configs/experiments/exp002_hf_text_finetune.yaml --project-root . --input data/text_processed/sample_positive.txt
 ```
 
 실험 결과는 config의 `paths.output_dir`에 따라 `experiments/{experiment_name}/` 아래에 저장됩니다.
@@ -40,11 +40,11 @@ PDF/HWP는 각각 `pypdf`, `olefile` 패키지가 필요합니다.
 `check_rag_pipeline.py`는 실제 산출물을 만들기 전에 config, 입력 문서, 평가 질문 경로를 점검합니다.
 
 ```bash
-python scripts/check_rag_pipeline.py --config configs/rag_smoke_test.yaml --project-root .
-python scripts/run_rag_ingest.py --config configs/rag_smoke_test.yaml --project-root .
-python scripts/run_rag_retrieve.py --config configs/rag_smoke_test.yaml --project-root . --question "예산이 얼마야?"
-python scripts/run_rag_chat.py --config configs/rag_smoke_test.yaml --project-root . --question "예산이 얼마야?"
-python scripts/run_rag_chat.py --config configs/rag_smoke_test.yaml --project-root . --evaluate
+python scripts/check_rag_pipeline.py --config configs/rag/rag_smoke_test.yaml --project-root .
+python scripts/run_rag_ingest.py --config configs/rag/rag_smoke_test.yaml --project-root .
+python scripts/run_rag_retrieve.py --config configs/rag/rag_smoke_test.yaml --project-root . --question "예산이 얼마야?"
+python scripts/run_rag_chat.py --config configs/rag/rag_smoke_test.yaml --project-root . --question "예산이 얼마야?"
+python scripts/run_rag_chat.py --config configs/rag/rag_smoke_test.yaml --project-root . --evaluate
 python scripts/compare_rag_retrievers.py --project-root .
 ```
 

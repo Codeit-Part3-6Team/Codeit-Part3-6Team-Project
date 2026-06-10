@@ -14,9 +14,9 @@
 | config 기반 실행 | 있음 | `configs/*.yaml`, `scripts/run_*.py` |
 | 프로젝트 루트 기준 경로 처리 | RAG는 있음 | RAG config path와 내부 경로를 `project_root` 기준으로 처리 |
 | 데이터 검증 | 있음 | `scripts/run_validate.py`, `src/validate_data.py` |
-| 이미지/text smoke test | 있음 | `configs/smoke_test.yaml`, `configs/smoke_test_text.yaml` |
-| HuggingFace smoke test | 있음 | `configs/smoke_test_hf_tiny.yaml` |
-| RAG smoke test | 있음 | `configs/rag_smoke_test.yaml`, `scripts/run_rag_*.py` |
+| 이미지/text smoke test | 있음 | `configs/smoke/smoke_test.yaml`, `configs/smoke/smoke_test_text.yaml` |
+| HuggingFace smoke test | 있음 | `configs/smoke/smoke_test_hf_tiny.yaml` |
+| RAG smoke test | 있음 | `configs/rag/rag_smoke_test.yaml`, `scripts/run_rag_*.py` |
 | 다중 문서 loader | 있음 | txt/pdf/docx/hwpx/hwp 대상 loader |
 | RAG embedding 산출물 | 있음 | `embeddings.jsonl` |
 | RAG 검색 비교 | 있음 | `scripts/compare_rag_retrievers.py` |
@@ -32,7 +32,7 @@
 | overwrite 방지 | 있음 | `artifact_policy.on_existing: fail` |
 | 실험 산출물 저장 | 있음 | `experiments/{experiment.name}/` |
 | 실험 요약 리포트 | 있음 | `scripts/summarize_experiments.py` |
-| Colab/Drive 실행 가이드 | 있음 | `COLAB_GUIDE.md` |
+| Colab/Drive 실행 가이드 | 있음 | `experiments/COLAB_GUIDE.md` |
 | 기본 테스트 | 있음 | `pytest` 기반 smoke/unit tests |
 
 ## 일부만 갖춘 것
@@ -63,7 +63,7 @@
    예시:
 
    ```bash
-   python scripts/check_rag_pipeline.py --config configs/rag_smoke_test.yaml --project-root .
+   python scripts/check_rag_pipeline.py --config configs/rag/rag_smoke_test.yaml --project-root .
    ```
 
    실제 산출물을 만들기 전에 어떤 문서를 읽고, 어떤 output dir을 쓰고, 어떤 retriever를 사용할지 점검합니다.

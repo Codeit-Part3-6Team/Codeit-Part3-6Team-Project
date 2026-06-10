@@ -141,17 +141,17 @@ li { margin: 4px 0; }
 <tr>
 <td>이미지/text smoke test</td>
 <td>있음</td>
-<td><code>configs/smoke_test.yaml</code>, <code>configs/smoke_test_text.yaml</code></td>
+<td><code>configs/smoke/smoke_test.yaml</code>, <code>configs/smoke/smoke_test_text.yaml</code></td>
 </tr>
 <tr>
 <td>HuggingFace smoke test</td>
 <td>있음</td>
-<td><code>configs/smoke_test_hf_tiny.yaml</code></td>
+<td><code>configs/smoke/smoke_test_hf_tiny.yaml</code></td>
 </tr>
 <tr>
 <td>RAG smoke test</td>
 <td>있음</td>
-<td><code>configs/rag_smoke_test.yaml</code>, <code>scripts/run_rag_*.py</code></td>
+<td><code>configs/rag/rag_smoke_test.yaml</code>, <code>scripts/run_rag_*.py</code></td>
 </tr>
 <tr>
 <td>다중 문서 loader</td>
@@ -231,7 +231,7 @@ li { margin: 4px 0; }
 <tr>
 <td>Colab/Drive 실행 가이드</td>
 <td>있음</td>
-<td><code>COLAB_GUIDE.md</code></td>
+<td><code>experiments/COLAB_GUIDE.md</code></td>
 </tr>
 <tr>
 <td>기본 테스트</td>
@@ -321,7 +321,7 @@ li { margin: 4px 0; }
 </ol>
 <p>예시:</p>
 <pre><code class="language-bash">
-   python scripts/check_rag_pipeline.py --config configs/rag_smoke_test.yaml --project-root .
+   python scripts/check_rag_pipeline.py --config configs/rag/rag_smoke_test.yaml --project-root .
 </code></pre>
 <p>실제 산출물을 만들기 전에 어떤 문서를 읽고, 어떤 output dir을 쓰고, 어떤 retriever를 사용할지 점검합니다.</p>
 <ol>

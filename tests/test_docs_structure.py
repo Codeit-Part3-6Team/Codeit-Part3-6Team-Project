@@ -8,13 +8,13 @@ def test_docs_markdown_files_have_html_counterparts() -> None:
     md_dir = ROOT / "docs" / "md"
     html_dir = ROOT / "docs" / "html"
 
-    md_files = sorted(path for path in md_dir.glob("*.md"))
+    md_files = sorted(path for path in md_dir.rglob("*.md"))
     assert md_files, "docs/md에는 최소 하나 이상의 Markdown 문서가 있어야 합니다."
 
     missing = [
-        path.name
+        str(path.relative_to(md_dir))
         for path in md_files
-        if not (html_dir / f"{path.stem}.html").exists()
+        if not (html_dir / path.relative_to(md_dir).with_suffix(".html")).exists()
     ]
     assert not missing, f"HTML 대응 문서가 없습니다: {missing}"
 
@@ -25,10 +25,26 @@ def test_key_directories_have_readme() -> None:
         "artifacts",
         "checkpoints",
         "configs",
+        "configs/experiments",
+        "configs/preprocess",
+        "configs/rag",
+        "configs/smoke",
         "data",
         "docs",
         "docs/html",
+        "docs/html/data",
+        "docs/html/experiments",
+        "docs/html/kickoff",
+        "docs/html/overview",
+        "docs/html/rag",
+        "docs/html/workflow",
         "docs/md",
+        "docs/md/data",
+        "docs/md/experiments",
+        "docs/md/kickoff",
+        "docs/md/overview",
+        "docs/md/rag",
+        "docs/md/workflow",
         "experiments",
         "models",
         "notebooks",

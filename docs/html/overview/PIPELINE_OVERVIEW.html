@@ -113,7 +113,7 @@ li { margin: 4px 0; }
   </header>
   <main>
 <h1>파이프라인 설명서</h1>
-<p>이 문서는 팀원에게 현재 프로젝트 파이프라인을 설명하기 위한 개요 문서입니다. 세부 명령어는 <code>README.md</code>, 실험 규칙은 <code>EXPERIMENT_GUIDE.md</code>, Colab 실행은 <code>COLAB_GUIDE.md</code>를 참고합니다. 운영 기능의 현재 상태와 남은 보강 항목은 <code>PIPELINE_INFRA_CHECKLIST.md</code>에서 관리합니다.</p>
+<p>이 문서는 팀원에게 현재 프로젝트 파이프라인을 설명하기 위한 개요 문서입니다. 세부 명령어는 <code>README.md</code>, 실험 규칙은 <code>experiments/EXPERIMENT_GUIDE.md</code>, Colab 실행은 <code>experiments/COLAB_GUIDE.md</code>를 참고합니다. 운영 기능의 현재 상태와 남은 보강 항목은 <code>PIPELINE_INFRA_CHECKLIST.md</code>에서 관리합니다.</p>
 <h2>한 줄 요약</h2>
 <p>현재 파이프라인은 <strong>config 하나를 기준으로 데이터 검증, 학습, 예측, 실험 산출물 저장, 실험 요약까지 재현 가능하게 실행하는 구조</strong>입니다.</p>
 <pre><code class="language-text">
@@ -187,7 +187,7 @@ python scripts/run_validate.py --data-dir data/text_processed --project-root .
 </ul>
 <h3>2. 학습</h3>
 <pre><code class="language-bash">
-python scripts/run_train.py --config configs/smoke_test_text.yaml --project-root .
+python scripts/run_train.py --config configs/smoke/smoke_test_text.yaml --project-root .
 </code></pre>
 <p>학습 단계에서 하는 일:</p>
 <ul>
@@ -202,7 +202,7 @@ python scripts/run_train.py --config configs/smoke_test_text.yaml --project-root
 <h3>3. 예측</h3>
 <pre><code class="language-bash">
 python scripts/run_predict.py \
-  --config configs/smoke_test_text.yaml \
+  --config configs/smoke/smoke_test_text.yaml \
   --project-root . \
   --input data/text_processed/sample_positive.txt
 </code></pre>
@@ -249,14 +249,14 @@ real experiment: 실제 모델 성능을 확인하는 실험
 </code></pre>
 <p>예시:</p>
 <ul>
-<li><code>configs/smoke_test_text.yaml</code>: 빠른 텍스트 smoke test</li>
-<li><code>configs/smoke_test_hf_tiny.yaml</code>: HuggingFace 환경 smoke test</li>
-<li><code>configs/exp002_hf_text_finetune.yaml</code>: 실제 HuggingFace 실험 후보</li>
-<li><code>configs/rag_smoke_test.yaml</code>: RAG 문서 검색/답변 smoke test</li>
+<li><code>configs/smoke/smoke_test_text.yaml</code>: 빠른 텍스트 smoke test</li>
+<li><code>configs/smoke/smoke_test_hf_tiny.yaml</code>: HuggingFace 환경 smoke test</li>
+<li><code>configs/experiments/exp002_hf_text_finetune.yaml</code>: 실제 HuggingFace 실험 후보</li>
+<li><code>configs/rag/rag_smoke_test.yaml</code>: RAG 문서 검색/답변 smoke test</li>
 </ul>
 <p><code>smoke_test_hf_tiny.yaml</code>은 성능을 보기 위한 config가 아닙니다. 다운로드, 학습, 저장, 예측 흐름이 실제로 도는지 확인하기 위한 config입니다.</p>
 <h2>RAG 프로젝트로 바뀌면 무엇이 달라지는가</h2>
-<p>RAG 프로젝트로 방향이 바뀌어도 가운데 운영 구조는 유지할 수 있습니다. 구체적인 RAG 입력/출력 계약은 <code>RAG_PIPELINE_SPEC.md</code>에서 관리합니다.</p>
+<p>RAG 프로젝트로 방향이 바뀌어도 가운데 운영 구조는 유지할 수 있습니다. 구체적인 RAG 입력/출력 계약은 <code>rag/RAG_PIPELINE_SPEC.md</code>에서 관리합니다.</p>
 <p>그대로 쓰는 것:</p>
 <ul>
 <li><code>configs/</code></li>

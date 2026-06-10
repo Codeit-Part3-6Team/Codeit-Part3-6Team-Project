@@ -7,16 +7,16 @@
 ## 기본 사용법
 
 ```bash
-python scripts/run_train.py --config configs/smoke_test_text.yaml --project-root .
-python scripts/run_rag_ingest.py --config configs/rag_smoke_test.yaml --project-root .
-python scripts/run_rag_chat.py --config configs/rag_smoke_test.yaml --project-root . --evaluate
+python scripts/run_train.py --config configs/smoke/smoke_test_text.yaml --project-root .
+python scripts/run_rag_ingest.py --config configs/rag/rag_smoke_test.yaml --project-root .
+python scripts/run_rag_chat.py --config configs/rag/rag_smoke_test.yaml --project-root . --evaluate
 ```
 
 새 실험을 만들 때는 기존 config를 복사해서 시작합니다.
 
 ```text
-configs/rag_smoke_test.yaml
--> configs/rag_hybrid_top5.yaml
+configs/rag/rag_smoke_test.yaml
+-> configs/rag/rag_hybrid_top5.yaml
 ```
 
 복사한 뒤에는 최소한 `experiment.name` 또는 `artifact_policy.run_id`를 바꿔 결과가 덮어써지지 않게 합니다.

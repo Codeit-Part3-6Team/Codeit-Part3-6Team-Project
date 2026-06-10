@@ -14,7 +14,7 @@
 
 ```text
 예: pytest
-예: python scripts/run_train.py --config configs/smoke_test_text.yaml --project-root .
+예: python scripts/run_train.py --config configs/smoke/smoke_test_text.yaml --project-root .
 ```
 
 ## 리뷰어가 봐줬으면 하는 부분

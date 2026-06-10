@@ -1,7 +1,7 @@
 # Colab 실험 템플릿
 
 실제 `.ipynb` 노트북을 만들 때 아래 순서를 셀 단위로 옮겨 사용합니다.
-자세한 설명은 `docs/md/COLAB_GUIDE.md`를 기준으로 합니다.
+자세한 설명은 `docs/md/experiments/experiments/COLAB_GUIDE.md`를 기준으로 합니다.
 
 ## 1. Drive 연결
 
@@ -32,8 +32,8 @@ print(torch.cuda.get_device_name(0) if torch.cuda.is_available() else "CPU")
 
 ```bash
 python scripts/run_validate.py --data-dir data/text_processed --project-root .
-python scripts/run_train.py --config configs/smoke_test_text.yaml --project-root .
-python scripts/run_train.py --config configs/smoke_test_hf_tiny.yaml --project-root .
+python scripts/run_train.py --config configs/smoke/smoke_test_text.yaml --project-root .
+python scripts/run_train.py --config configs/smoke/smoke_test_hf_tiny.yaml --project-root .
 ```
 
 ## 5. Drive 데이터 학습
@@ -45,7 +45,7 @@ python scripts/run_validate.py \
 
 python scripts/run_train.py \
   --project-root . \
-  --config configs/exp002_hf_text_finetune_colab.yaml
+  --config configs/experiments/exp002_hf_text_finetune_colab.yaml
 ```
 
 ## 6. 예측 확인
@@ -53,7 +53,7 @@ python scripts/run_train.py \
 ```bash
 python scripts/run_predict.py \
   --project-root . \
-  --config configs/exp002_hf_text_finetune_colab.yaml \
+  --config configs/experiments/exp002_hf_text_finetune_colab.yaml \
   --input /content/drive/MyDrive/codeit_ml_project/data/text_processed/sample_positive.txt
 ```
 
