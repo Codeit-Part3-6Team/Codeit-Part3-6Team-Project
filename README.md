@@ -153,6 +153,7 @@ backup:
 | [Experiment Guide](docs/md/experiments/EXPERIMENT_GUIDE.md) | 실험 실행과 결과 확인 방법 |
 | [Colab Guide](docs/md/experiments/COLAB_GUIDE.md) | Colab/Drive 기반 실행 가이드 |
 | [Kickoff HTML](docs/html/kickoff/kickoff.html) | 킥오프 설명용 HTML |
+| [LLM 작업 문서](docs/llm/README.md) | LLM 기반 작업자가 먼저 읽을 압축 문맥과 체크리스트 |
 
 ## 노트북
 

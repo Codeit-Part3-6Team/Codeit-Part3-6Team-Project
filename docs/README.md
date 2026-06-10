@@ -2,7 +2,7 @@
 
 `docs/`는 프로젝트를 설명하고 팀원이 같은 방식으로 일하기 위한 문서 허브입니다.
 
-처음 보는 사람은 **Overview -> RAG -> Experiments -> Workflow -> Kickoff** 순서로 보면 됩니다. HTML 문서는 공유와 설명용, Markdown 문서는 수정과 리뷰용 원본입니다.
+처음 보는 사람은 **Overview -> RAG -> Experiments -> Workflow -> Kickoff** 순서로 보면 됩니다. HTML 문서는 공유와 설명용, Markdown 문서는 수정과 리뷰용 원본입니다. LLM 기반 작업자는 `llm/` 문서를 먼저 읽으면 됩니다.
 
 ## 문서 지도
 
@@ -26,6 +26,12 @@ mindmap
       Team Workflow
     kickoff
       Kickoff Guide
+    llm
+      AGENTS
+      Project Context
+      Architecture Map
+      Workflow Checklist
+      Task Prompts
     formats
       Markdown 원본
       HTML 공유 문서
@@ -48,8 +54,13 @@ docs/
 |   |-- Git Workflow
 |   |-- Role Guide
 |   `-- Team Workflow
-`-- kickoff/         팀 설명 자료
-    `-- Kickoff Guide
+|-- kickoff/         팀 설명 자료
+|   `-- Kickoff Guide
+`-- llm/             LLM 작업자용 압축 문맥
+    |-- PROJECT_CONTEXT
+    |-- ARCHITECTURE_MAP
+    |-- WORKFLOW_CHECKLIST
+    `-- TASK_PROMPTS
 ```
 
 ## 빠른 링크
@@ -67,6 +78,7 @@ docs/
 | 역할 분배 확인 | [ROLE_GUIDE.md](md/workflow/ROLE_GUIDE.md) | [ROLE_GUIDE.html](html/workflow/ROLE_GUIDE.html) |
 | 팀 운영 규칙 확인 | [TEAM_WORKFLOW.md](md/workflow/TEAM_WORKFLOW.md) | [TEAM_WORKFLOW.html](html/workflow/TEAM_WORKFLOW.html) |
 | 킥오프 설명 원본 확인 | [KICKOFF_GUIDE.md](md/kickoff/KICKOFF_GUIDE.md) | [KICKOFF_GUIDE.html](html/kickoff/KICKOFF_GUIDE.html) |
+| LLM 작업 문맥 확인 | [docs/llm README](llm/README.md) | 별도 HTML 없음 |
 
 ## 설명용 HTML
 
@@ -83,9 +95,11 @@ docs/
 3. RAG 실험을 설계할 때는 [RAG Pipeline Spec](html/rag/RAG_PIPELINE_SPEC.html)을 봅니다.
 4. 실제 실행 전에는 [Experiment Guide](html/experiments/EXPERIMENT_GUIDE.html)와 [Config Guide](../configs/README.md)를 봅니다.
 5. 팀원에게 처음 설명할 때는 [Pipeline Explainer](html/overview/pipeline_explainer.html)와 [Kickoff](html/kickoff/kickoff.html)를 사용합니다.
+6. LLM에게 작업을 맡길 때는 [LLM 작업 문서](llm/README.md)와 루트 [AGENTS.md](../AGENTS.md)를 함께 읽힙니다.
 
 ## 관리 원칙
 
 - 문서를 수정할 때는 가능하면 `docs/md/`의 Markdown 원본을 먼저 수정합니다.
 - 팀 공유용 문서는 같은 주제의 `docs/html/` 문서도 함께 갱신합니다.
+- LLM 작업 규칙이나 프로젝트 구조가 바뀌면 `docs/llm/`과 루트 `AGENTS.md`도 확인합니다.
 - 파일을 이동하면 README 링크와 테스트 기대 경로를 함께 수정합니다.

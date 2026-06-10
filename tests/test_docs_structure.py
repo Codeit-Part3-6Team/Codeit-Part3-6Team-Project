@@ -40,6 +40,7 @@ def test_key_directories_have_readme() -> None:
         "docs/html/overview",
         "docs/html/rag",
         "docs/html/workflow",
+        "docs/llm",
         "docs/md",
         "docs/md/data",
         "docs/md/experiments",
