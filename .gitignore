@@ -53,6 +53,11 @@ reports/rag_retriever_comparison.json
 !models/.gitkeep
 !checkpoints/.gitkeep
 !artifacts/.gitkeep
+!outputs/README.md
+!experiments/README.md
+!models/README.md
+!checkpoints/README.md
+!artifacts/README.md
 
 # Notebook / Colab
 .ipynb_checkpoints/
