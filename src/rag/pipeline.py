@@ -57,23 +57,49 @@ def run_rag_ingest(config_path: str | Path, project_root: str | Path = ".") -> d
 
     _write_run_status(output_dir, "rag_ingest", "running")
     try:
+        rag_cfg = config.get("rag", {})
+        checkpoint_cfg = rag_cfg.get("checkpoint", {})
+        resume_enabled = bool(checkpoint_cfg.get("enabled", True) and checkpoint_cfg.get("resume", True))
         loader_cfg = config.get("rag", {}).get("loader", {})
         raw_docs_dir = config["paths"]["raw_docs_dir"]
         chunk_cfg = config.get("rag", {}).get("chunk", {})
-        documents = load_documents(root, raw_docs_dir, loader_cfg.get("file_types", ["txt"]))
-        chunks = chunk_documents(
-            documents,
-            chunk_size=int(chunk_cfg.get("size", 500)),
-            overlap=int(chunk_cfg.get("overlap", 80)),
-        )
+        documents_path = output_dir / "parsed_documents.csv"
+        chunks_path = output_dir / "chunks.csv"
         embedding_cfg = config.get("rag", {}).get("embedding", {})
-        embeddings = build_embedding_adapter(embedding_cfg).embed_chunks(chunks)
+        vector_store_cfg = config.get("rag", {}).get("vector_store", {})
+        embeddings_path = resolve_vector_store_artifact_path(output_dir, vector_store_cfg)
 
         write_config_copy(config_path, output_dir)
-        _write_csv(output_dir / "parsed_documents.csv", documents, DOCUMENT_COLUMNS)
-        _write_csv(output_dir / "chunks.csv", chunks, CHUNK_COLUMNS)
-        vector_store_cfg = config.get("rag", {}).get("vector_store", {})
-        _write_jsonl(resolve_vector_store_artifact_path(output_dir, vector_store_cfg), embeddings)
+        if resume_enabled and documents_path.exists():
+            documents = _read_csv(documents_path)
+        else:
+            documents = load_documents(root, raw_docs_dir, loader_cfg.get("file_types", ["txt"]))
+            _write_csv(documents_path, documents, DOCUMENT_COLUMNS)
+        _write_rag_ingest_checkpoint(output_dir, "documents", documents=len(documents))
+
+        if resume_enabled and chunks_path.exists():
+            chunks = _read_csv(chunks_path)
+        else:
+            chunks = chunk_documents(
+                documents,
+                chunk_size=int(chunk_cfg.get("size", 500)),
+                overlap=int(chunk_cfg.get("overlap", 80)),
+            )
+            _write_csv(chunks_path, chunks, CHUNK_COLUMNS)
+        _write_rag_ingest_checkpoint(output_dir, "chunks", documents=len(documents), chunks=len(chunks))
+
+        if resume_enabled and embeddings_path.exists():
+            embeddings = _read_jsonl(embeddings_path)
+        else:
+            embeddings = build_embedding_adapter(embedding_cfg).embed_chunks(chunks)
+            _write_jsonl(embeddings_path, embeddings)
+        _write_rag_ingest_checkpoint(
+            output_dir,
+            "embeddings",
+            documents=len(documents),
+            chunks=len(chunks),
+            embeddings=len(embeddings),
+        )
         write_run_info(output_dir, config)
         result = {"documents": len(documents), "chunks": len(chunks), "embeddings": len(embeddings)}
         _write_run_status(output_dir, "rag_ingest", "success", result=result)
@@ -275,6 +301,21 @@ def _write_run_status(
 def _write_failure_artifact(output_dir: str | Path, operation: str, exc: Exception) -> None:
     """실패 원인과 traceback을 파일로 남긴 뒤 호출부가 예외를 다시 올리게 합니다."""
     write_failure_artifact(output_dir, operation, exc)
+
+
+def _write_rag_ingest_checkpoint(output_dir: str | Path, stage: str, **counts: int) -> None:
+    """RAG ingest 단계별 완료 상태를 남겨 다음 실행에서 산출물을 재사용할 수 있게 합니다."""
+    payload = {
+        "operation": "rag_ingest",
+        "stage": stage,
+        "counts": counts,
+        "artifacts": {
+            "documents": "parsed_documents.csv",
+            "chunks": "chunks.csv",
+            "embeddings": "embeddings.jsonl",
+        },
+    }
+    write_json(Path(output_dir) / "rag_ingest_checkpoint.json", payload)
 
 
 def _read_csv(path: str | Path) -> list[dict[str, str]]:

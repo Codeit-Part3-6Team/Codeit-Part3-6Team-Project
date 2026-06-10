@@ -61,6 +61,7 @@ def _build_summary(
     rag = config.get("rag", {})
     loader = rag.get("loader", {})
     chunk = rag.get("chunk", {})
+    checkpoint = rag.get("checkpoint", {})
     embedding = rag.get("embedding", {})
     vector_store = rag.get("vector_store", {})
     retriever = rag.get("retriever", {})
@@ -76,6 +77,7 @@ def _build_summary(
     file_types = _normalize_file_types(loader.get("file_types", ["txt"]), errors)
     document_counts = _count_documents(raw_docs_dir, file_types, errors, warnings)
     _validate_chunk_config(chunk, errors)
+    _validate_checkpoint_config(checkpoint, errors)
     _validate_embedding_config(embedding, errors)
     _validate_vector_store_config(vector_store, errors, warnings)
     _validate_retriever_config(retriever, errors)
@@ -98,6 +100,8 @@ def _build_summary(
         "retriever_method": retriever.get("method", "keyword"),
         "chunk_size": chunk.get("size"),
         "chunk_overlap": chunk.get("overlap"),
+        "checkpoint_enabled": checkpoint.get("enabled", True) if isinstance(checkpoint, dict) else True,
+        "checkpoint_resume": checkpoint.get("resume", True) if isinstance(checkpoint, dict) else True,
         "embedding_provider": embedding.get("provider", ""),
         "embedding_model": embedding.get("model_name", ""),
         "vector_store_type": vector_store.get("type", "memory"),
@@ -160,6 +164,12 @@ def _validate_chunk_config(chunk: dict[str, Any], errors: list[str]) -> None:
         errors.append("rag.chunk.overlap must be zero or positive")
     if size is not None and overlap is not None and overlap >= size:
         errors.append("rag.chunk.overlap must be smaller than rag.chunk.size")
+
+
+def _validate_checkpoint_config(checkpoint: dict[str, Any], errors: list[str]) -> None:
+    for key in ["enabled", "resume"]:
+        if key in checkpoint and not isinstance(checkpoint[key], bool):
+            errors.append(f"rag.checkpoint.{key} must be a boolean")
 
 
 def _validate_embedding_config(embedding: dict[str, Any], errors: list[str]) -> None:

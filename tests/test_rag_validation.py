@@ -19,6 +19,8 @@ def test_check_rag_pipeline_accepts_smoke_config(isolated_project: Path):
     assert result["summary"]["vector_store_type"] == "memory"
     assert result["summary"]["reranker_enabled"] is False
     assert result["summary"]["answerer_mode"] == "extractive"
+    assert result["summary"]["checkpoint_enabled"] is True
+    assert result["summary"]["checkpoint_resume"] is True
 
 
 def test_check_rag_pipeline_reports_bad_config_values(isolated_project: Path):
@@ -36,6 +38,9 @@ rag:
   chunk:
     size: 10
     overlap: 10
+  checkpoint:
+    enabled: maybe
+    resume: maybe
   retriever:
     method: unknown
     top_k: 0
@@ -66,6 +71,8 @@ evaluation:
     assert result["ok"] is False
     assert any("unsupported file types" in error for error in result["errors"])
     assert any("overlap must be smaller" in error for error in result["errors"])
+    assert any("checkpoint.enabled must be a boolean" in error for error in result["errors"])
+    assert any("checkpoint.resume must be a boolean" in error for error in result["errors"])
     assert any("unsupported retriever method" in error for error in result["errors"])
     assert any("top_k must be positive" in error for error in result["errors"])
     assert any("score_threshold must be zero or positive" in error for error in result["errors"])

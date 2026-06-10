@@ -19,6 +19,9 @@ rag:
     size: 500
     overlap: 80
     unit: char
+  checkpoint:
+    enabled: true
+    resume: true
   embedding:
     provider: local
     model_name: hashing-char-ngram-v1

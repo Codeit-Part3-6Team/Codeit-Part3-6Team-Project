@@ -35,13 +35,33 @@ def test_rag_smoke_pipeline_writes_artifacts(isolated_project: Path):
     assert (output_dir / "failed_questions.csv").exists()
     assert (output_dir / "metrics.json").exists()
     assert (output_dir / "run_status.json").exists()
+    assert (output_dir / "rag_ingest_checkpoint.json").exists()
 
     saved_metrics = json.loads((output_dir / "metrics.json").read_text(encoding="utf-8"))
     run_status = json.loads((output_dir / "run_status.json").read_text(encoding="utf-8"))
+    ingest_checkpoint = json.loads((output_dir / "rag_ingest_checkpoint.json").read_text(encoding="utf-8"))
     assert saved_metrics["answer_contains_expected_rate"] == 1.0
     assert run_status["operation"] == "rag_evaluation"
     assert run_status["status"] == "success"
+    assert ingest_checkpoint["stage"] == "embeddings"
+    assert ingest_checkpoint["counts"] == {"documents": 3, "chunks": 3, "embeddings": 3}
     assert "question,expected_answer" in (output_dir / "bad_retrievals.csv").read_text(encoding="utf-8")
+
+
+def test_rag_ingest_resumes_from_existing_document_and_chunk_artifacts(isolated_project: Path):
+    config = isolated_project / "configs" / "rag_smoke_test.yaml"
+    output_dir = isolated_project / "experiments" / "rag_smoke_test"
+
+    first_summary = run_rag_ingest(config, isolated_project)
+    (output_dir / "embeddings.jsonl").unlink()
+    second_summary = run_rag_ingest(config, isolated_project)
+
+    checkpoint = json.loads((output_dir / "rag_ingest_checkpoint.json").read_text(encoding="utf-8"))
+    assert first_summary == second_summary
+    assert (output_dir / "parsed_documents.csv").exists()
+    assert (output_dir / "chunks.csv").exists()
+    assert (output_dir / "embeddings.jsonl").exists()
+    assert checkpoint["stage"] == "embeddings"
 
 
 def test_run_rag_chat_script_supports_evaluation(isolated_project: Path, repo_root: Path):
