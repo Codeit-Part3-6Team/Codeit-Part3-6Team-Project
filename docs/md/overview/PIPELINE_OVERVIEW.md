@@ -8,6 +8,39 @@
 
 현재 파이프라인은 **config 하나를 기준으로 RAG 문서 처리, 검색, 답변, 평가, 실험 산출물 저장, 실험 요약까지 재현 가능하게 실행하는 구조**입니다.
 
+## 전체 구조 마인드맵
+
+```mermaid
+mindmap
+  root((RAG 실험 파이프라인))
+    Config
+      실험 이름
+      데이터 경로
+      chunk 설정
+      retriever 설정
+      checkpoint/resume
+    Data
+      원본 문서
+      파싱 결과
+      chunk
+      embedding
+    Execution
+      ingest
+      retrieve
+      chat
+      evaluate
+    Artifacts
+      config snapshot
+      metrics
+      run status
+      answer log
+      failure analysis
+    Documentation
+      Markdown 원본
+      HTML 공유 문서
+      실험 요약
+```
+
 ```text
 config
   -> document loading

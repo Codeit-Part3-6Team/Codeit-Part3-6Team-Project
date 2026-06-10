@@ -7,6 +7,42 @@
 
 RAG 파이프라인은 **문서를 작은 근거 단위로 쪼개고, 질문과 관련 있는 근거를 검색한 뒤, 그 근거를 바탕으로 답변과 출처를 함께 반환하는 구조**입니다.
 
+## RAG 계약 마인드맵
+
+```mermaid
+mindmap
+  root((RAG Contract))
+    Document Input
+      raw_docs
+      txt/pdf/docx/hwpx/hwp
+      source metadata
+    Chunk Output
+      chunk_id
+      document_id
+      page
+      text
+    Embedding Output
+      embedding_id
+      vector
+      model_name
+    Retrieval Output
+      question
+      top_k chunks
+      score
+    Answer Output
+      answer
+      citations
+      context ids
+    Evaluation
+      expected answer
+      retrieval hit
+      answer quality
+    Error Analysis
+      no context
+      weak retrieval
+      unsupported answer
+```
+
 ```text
 raw document
   -> parsed document

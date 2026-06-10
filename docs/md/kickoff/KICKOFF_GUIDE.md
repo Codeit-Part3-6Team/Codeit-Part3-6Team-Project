@@ -3,6 +3,39 @@
 이 문서는 팀원이 프로젝트 첫날에 전체 흐름을 이해하고, 각자 무엇을 준비해야 하는지 알 수 있도록 만든 안내 문서입니다.
 개발 경험이 많지 않아도 이해할 수 있게 설명하되, 실제 작업에 필요한 기준과 산출물도 함께 정리합니다.
 
+## 킥오프 마인드맵
+
+```mermaid
+mindmap
+  root((Kickoff))
+    목표 맞추기
+      데이터
+      산출물
+      실험 기록
+      GitHub 흐름
+    작업 흐름
+      데이터 준비
+      모델 실험
+      데모 연결
+      발표 정리
+    역할
+      PM
+      Data Engineer
+      Experiment Lead
+      Application Engineer
+      Presentation Lead
+    운영 기준
+      Data Contract
+      전처리와 증강
+      실험 기록
+      Daily Report
+    첫날 액션
+      저장소 확인
+      역할 확인
+      첫 Issue 등록
+      smoke test
+```
+
 ## 1. 우리가 먼저 맞추려는 것
 
 팀 프로젝트에서 가장 힘든 순간은 보통 마지막입니다.

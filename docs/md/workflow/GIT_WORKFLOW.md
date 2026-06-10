@@ -2,6 +2,39 @@
 
 팀 프로젝트에서 충돌을 줄이고 작업 흐름을 보이게 만들기 위한 기본 규칙입니다.
 
+## Git 운영 마인드맵
+
+```mermaid
+mindmap
+  root((Git Workflow))
+    Branch
+      main
+      dev
+      feature
+      fix
+      docs
+      experiment
+    Commit
+      feat
+      fix
+      docs
+      test
+      chore
+    PR
+      issue 연결
+      변경 요약
+      실행 결과
+      산출물 경로
+    Merge
+      smoke test
+      reviewer 확인
+      PM 최종 확인
+    Caution
+      raw data 보호
+      대용량 artifact 제외
+      실패 기록 보존
+```
+
 ## 브랜치
 
 ```text

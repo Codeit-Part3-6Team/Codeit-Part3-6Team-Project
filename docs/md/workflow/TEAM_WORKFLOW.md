@@ -2,6 +2,37 @@
 
 이 문서는 킥오프 이후 팀원이 실제로 어떻게 일하면 되는지 설명하기 위한 운영 가이드입니다.
 
+## 팀 운영 마인드맵
+
+```mermaid
+mindmap
+  root((Team Workflow))
+    Issue
+      작업 정의
+      담당자
+      완료 기준
+    Kanban
+      Backlog
+      Ready
+      In Progress
+      Review
+      Done
+    Daily Report
+      어제 작업
+      오늘 작업
+      막힌 점
+      링크
+    Review
+      PR
+      실험 결과
+      데모 확인
+      문서 반영
+    Meeting
+      결정사항
+      리스크
+      다음 액션
+```
+
 ## 기본 원칙
 
 - 모든 작업은 Issue에서 시작합니다.

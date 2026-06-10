@@ -2,6 +2,35 @@
 
 processed dataset은 공통 학습/예측 파이프라인이 바로 읽을 수 있어야 합니다.
 
+## 데이터 계약 마인드맵
+
+```mermaid
+mindmap
+  root((Data Contract))
+    Required Files
+      train.csv
+      valid.csv
+      test.csv
+      class_map.json
+      dataset_info.json
+    Columns
+      text,label
+      image_path,label
+    Validation
+      split 존재
+      label 일관성
+      파일 경로 확인
+      중복 split 방지
+    Metadata
+      dataset version
+      contract version
+      label mapping
+    Change Rule
+      원본 보존
+      변경 기록
+      영향 범위 확인
+```
+
 ## 필수 구조
 
 ```text

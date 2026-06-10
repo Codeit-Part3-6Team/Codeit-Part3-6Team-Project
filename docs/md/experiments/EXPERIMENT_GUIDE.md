@@ -3,6 +3,39 @@
 모든 실험은 config 기반으로 실행하고, 재현 가능한 산출물을 남깁니다.
 전체 파이프라인의 큰 그림은 `PIPELINE_OVERVIEW.md`를 먼저 참고합니다.
 
+## 실험 운영 마인드맵
+
+```mermaid
+mindmap
+  root((Experiment))
+    Before Run
+      data contract 확인
+      config 선택
+      seed 고정
+      smoke test
+    Run
+      train
+      predict
+      evaluate
+      summarize
+    Control
+      early stopping
+      scheduler
+      checkpoint
+      resume
+    Artifacts
+      metrics
+      history
+      best model
+      run status
+      README
+    Review
+      성능 비교
+      실패 원인
+      다음 실험
+      발표 근거
+```
+
 ## 기본 실행 흐름
 
 1. 데이터가 Data Contract를 만족하는지 확인합니다.

@@ -4,6 +4,36 @@
 
 실제 노트북 템플릿은 `notebooks/colab_experiment_template.ipynb`를 사용합니다.
 
+## Colab 실행 마인드맵
+
+```mermaid
+mindmap
+  root((Colab Experiment))
+    Drive
+      data
+      experiments
+      backups
+    Notebook
+      repo clone
+      requirements 설치
+      GPU 확인
+      config 수정
+    Pipeline
+      validate
+      train
+      predict
+      summarize
+    Backup
+      best model
+      metrics
+      run status
+      experiment summary
+    Handoff
+      결과 경로
+      실행 명령
+      다음 실험 메모
+```
+
 ## 권장 Drive 구조
 
 ```text

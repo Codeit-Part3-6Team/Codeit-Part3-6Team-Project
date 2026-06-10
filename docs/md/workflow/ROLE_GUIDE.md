@@ -4,6 +4,40 @@
 각 역할은 직책이라기보다 “주 책임 구역”입니다.
 필요하면 서로 도와도 되지만, 아래 산출물은 해당 역할이 책임지고 정리합니다.
 
+## 역할 구조 마인드맵
+
+```mermaid
+mindmap
+  root((Team Roles))
+    PM
+      일정
+      기준
+      통합
+      리스크
+    Data Engineer
+      데이터 정리
+      품질 확인
+      contract
+      dataset info
+    Experiment Lead
+      모델 후보
+      config 실험
+      metric 비교
+      artifact 관리
+    Application Engineer
+      데모
+      입출력 연결
+      사용자 흐름
+    Presentation Lead
+      보고서
+      발표 흐름
+      근거 정리
+    Alternative
+      Model Engineer
+      앱 범위 축소
+      실험 역할 분리
+```
+
 ## 5명 팀 역할 선택
 
 처음에는 웹앱/데모 담당을 지원받아 봅니다.
@@ -126,4 +160,3 @@ demo flow, screenshots, usage guide
 PM -> 전체:
 schedule, GitHub rules, integration criteria, blockers
 ```
-
