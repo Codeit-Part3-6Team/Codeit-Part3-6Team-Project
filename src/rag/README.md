@@ -40,6 +40,22 @@ mindmap
       metrics
 ```
 
+## 텍스트 구조
+
+```text
+src/rag/
+|-- document_loader.py  # txt/pdf/docx/hwpx/hwp 문서 로딩
+|-- chunker.py          # document row를 chunk row로 분리
+|-- embedder.py         # local hashing embedding 구현
+|-- vector_store.py     # vector store 기본 도구
+|-- retriever.py        # keyword/semantic/hybrid 검색
+|-- answerer.py         # 답변과 citation 생성
+|-- adapters.py         # config 기반 구현체 선택
+|-- pipeline.py         # ingest/retrieve/chat/evaluate 실행
+|-- validation.py       # RAG config 계약 검증
+`-- comparison.py       # retriever 비교 실행
+```
+
 ## 흐름
 
 ```text

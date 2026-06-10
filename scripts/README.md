@@ -28,6 +28,21 @@ mindmap
       question
 ```
 
+## 텍스트 구조
+
+```text
+scripts/
+|-- run_validate.py            # 데이터 계약 검증
+|-- run_train.py               # 분류/HF 학습 실행
+|-- run_predict.py             # 단건 예측 실행
+|-- check_rag_pipeline.py      # RAG config와 입력 경로 점검
+|-- run_rag_ingest.py          # 문서 파싱, chunking, embedding 생성
+|-- run_rag_retrieve.py        # 질문에 대한 검색 결과 확인
+|-- run_rag_chat.py            # 답변 생성 또는 평가 실행
+|-- compare_rag_retrievers.py  # RAG 검색 방식 비교
+`-- summarize_experiments.py   # 실험 결과 요약 생성
+```
+
 ## 가벼운 텍스트 smoke test
 
 ```bash

@@ -40,6 +40,23 @@ mindmap
       checkpoint
 ```
 
+## 텍스트 구조
+
+```text
+configs/
+|-- experiments/
+|   `-- rag/
+|       |-- rag_smoke_test.yaml      # 기본 semantic RAG 실험
+|       |-- rag_smoke_keyword.yaml   # keyword retriever 비교 실험
+|       |-- rag_smoke_hybrid.yaml    # hybrid retriever 비교 실험
+|       `-- README.md
+|-- examples/
+|   `-- classification/              # 분류/HuggingFace 참고 예제
+|-- smoke/                           # 빠른 환경 검증용 config
+|-- preprocess/                      # 전처리 버전 config
+`-- README.md
+```
+
 ## 기본 사용법
 
 ```bash

@@ -25,6 +25,14 @@ mindmap
       출처 기록
 ```
 
+## 텍스트 구조
+
+```text
+models/
+|-- .gitkeep    # 빈 디렉터리 유지
+`-- README.md   # 루트 모델 artifact 사용 기준
+```
+
 코드 구현체는 `src/models/`에 있습니다.
 여기에는 실제 모델 weight나 외부에서 받은 모델 파일을 둘 수 있지만, 큰 파일은 Git에 올리지 않습니다.
 

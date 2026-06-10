@@ -27,6 +27,14 @@ mindmap
       Colab demo
 ```
 
+## 텍스트 구조
+
+```text
+app/
+|-- main.py     # 데모 앱 진입점 후보
+`-- README.md   # 앱 입출력 계약과 확장 방향
+```
+
 초기 목표:
 
 ```text

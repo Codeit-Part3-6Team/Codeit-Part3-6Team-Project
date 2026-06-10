@@ -32,6 +32,24 @@ mindmap
       HuggingFace smoke
 ```
 
+## 텍스트 구조
+
+```text
+tests/
+|-- test_config.py               # config 로딩과 경로 규칙
+|-- test_docs_structure.py       # Markdown/HTML 문서 구조
+|-- test_notebooks.py            # 노트북 템플릿 구조
+|-- test_scripts.py              # 실행 스크립트 진입점
+|-- test_validate_data.py        # 데이터 계약 검증
+|-- test_pipeline_smoke.py       # 이미지/텍스트 smoke pipeline
+|-- test_models.py               # 모델 registry와 기본 모델
+|-- test_experiments.py          # 실험 요약과 artifact
+|-- test_rag_document_loader.py  # RAG 문서 loader
+|-- test_rag_adapters.py         # RAG adapter 선택
+|-- test_rag_pipeline.py         # RAG ingest/retrieve/chat
+`-- test_rag_validation.py       # RAG config validation
+```
+
 ```bash
 conda activate codeit-ml-pipeline
 pytest

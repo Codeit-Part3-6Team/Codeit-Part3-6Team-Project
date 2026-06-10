@@ -32,6 +32,22 @@ mindmap
       summary
 ```
 
+## 텍스트 구조
+
+```text
+src/
+|-- config.py       # YAML config 로딩과 JSON 저장
+|-- artifacts.py    # 실험 산출물, 상태, 실패 로그, 백업
+|-- data.py         # 분류 모델 데이터 로딩
+|-- train.py        # 학습 루프와 checkpoint/scheduler/early stopping
+|-- predict.py      # 단건 예측
+|-- metrics.py      # metric 계산
+|-- experiments.py  # 여러 실험 결과 요약
+|-- models/         # 분류 모델 구현체와 registry
+|-- rag/            # RAG 문서 처리, 검색, 답변, 평가
+`-- utils/          # logging, path, seed 같은 공통 유틸
+```
+
 ## 주요 모듈
 
 - `config.py`: config 로딩과 JSON 저장

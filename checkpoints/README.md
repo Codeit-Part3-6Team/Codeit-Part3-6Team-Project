@@ -20,6 +20,14 @@ mindmap
       경로 기록
 ```
 
+## 텍스트 구조
+
+```text
+checkpoints/
+|-- .gitkeep    # 빈 디렉터리 유지
+`-- README.md   # 공유 checkpoint 사용 기준
+```
+
 일반 학습 checkpoint는 보통 `experiments/{experiment.name}/` 아래에 저장됩니다.
 팀 공통으로 참조할 checkpoint가 있을 때만 이 폴더 사용을 고려합니다.
 

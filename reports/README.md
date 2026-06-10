@@ -27,6 +27,18 @@ mindmap
       대용량 artifact 제외
 ```
 
+## 텍스트 구조
+
+```text
+reports/
+|-- daily_report_template.md        # Daily Report 작성 템플릿
+|-- experiment_log.csv              # 수동 실험 기록 CSV
+|-- experiment_summary.csv          # 실험 요약 생성 결과
+|-- experiment_summary.json         # 실험 요약 JSON
+|-- rag_retriever_comparison.csv    # RAG retriever 비교 결과
+`-- rag_retriever_comparison.json   # RAG retriever 비교 JSON
+```
+
 ## 주요 파일
 
 - `daily_report_template.md`: Daily Report 템플릿

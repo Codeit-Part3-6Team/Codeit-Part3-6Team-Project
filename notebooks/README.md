@@ -26,6 +26,15 @@ mindmap
       backup_dir
 ```
 
+## 텍스트 구조
+
+```text
+notebooks/
+|-- local_experiment_template.ipynb  # 로컬 Jupyter 실험 템플릿
+|-- colab_experiment_template.ipynb  # Colab/Drive 실험 템플릿
+`-- template_colab_experiment.md     # Colab 실행 순서 참고 문서
+```
+
 ## 파일
 
 - `local_experiment_template.ipynb`: 로컬 Jupyter에서 프로젝트 루트 기준으로 실행하는 실험 템플릿
