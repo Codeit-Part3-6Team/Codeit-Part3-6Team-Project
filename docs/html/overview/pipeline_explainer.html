@@ -202,6 +202,60 @@
       stroke: #d8dee8;
     }
 
+    .mini-map {
+      display: block;
+      width: 100%;
+      min-width: 820px;
+      height: auto;
+    }
+
+    .mini-map text {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans KR", sans-serif;
+      letter-spacing: 0;
+    }
+
+    .mini-map .box {
+      fill: #fff;
+      stroke: #cfd7e6;
+      stroke-width: 1.4;
+      rx: 8;
+    }
+
+    .mini-map .root {
+      fill: #182235;
+      stroke: #182235;
+    }
+
+    .mini-map .artifact {
+      fill: #ebf8f3;
+    }
+
+    .mini-map .label {
+      fill: var(--ink);
+      font-size: 14px;
+      font-weight: 700;
+      text-anchor: middle;
+    }
+
+    .mini-map .root-label {
+      fill: #fff;
+      font-size: 15px;
+      font-weight: 800;
+      text-anchor: middle;
+    }
+
+    .mini-map .desc {
+      fill: var(--muted);
+      font-size: 12px;
+      text-anchor: middle;
+    }
+
+    .mini-map .line {
+      fill: none;
+      stroke: #94a3b8;
+      stroke-width: 2;
+    }
+
     .two-col {
       display: grid;
       grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -504,6 +558,34 @@ rag:
           <strong>실패했을 때</strong>
           <p><code>run_status.json</code>와 <code>failure.log</code>를 보면 어느 단계에서 왜 실패했는지 추적할 수 있습니다.</p>
         </div>
+      </div>
+      <div class="diagram-wrap">
+        <svg class="mini-map" viewBox="0 0 900 280" role="img" aria-label="RAG 실험 결과 폴더 구조">
+          <path class="line" d="M 450 76 V 118"></path>
+          <path class="line" d="M 180 118 H 720"></path>
+          <path class="line" d="M 180 118 V 158"></path>
+          <path class="line" d="M 315 118 V 158"></path>
+          <path class="line" d="M 450 118 V 158"></path>
+          <path class="line" d="M 585 118 V 158"></path>
+          <path class="line" d="M 720 118 V 158"></path>
+          <rect class="box root" x="310" y="28" width="280" height="58"></rect>
+          <text class="root-label" x="450" y="62">experiments/rag_smoke_test/</text>
+          <rect class="box" x="112" y="158" width="136" height="62"></rect>
+          <text class="label" x="180" y="188">config.yaml</text>
+          <text class="desc" x="180" y="208">실행 조건</text>
+          <rect class="box artifact" x="247" y="158" width="136" height="62"></rect>
+          <text class="label" x="315" y="188">metrics.json</text>
+          <text class="desc" x="315" y="208">평가 지표</text>
+          <rect class="box artifact" x="382" y="158" width="136" height="62"></rect>
+          <text class="label" x="450" y="188">chunks.csv</text>
+          <text class="desc" x="450" y="208">검색 근거</text>
+          <rect class="box artifact" x="517" y="158" width="136" height="62"></rect>
+          <text class="label" x="585" y="188">answers.jsonl</text>
+          <text class="desc" x="585" y="208">답변 기록</text>
+          <rect class="box" x="652" y="158" width="136" height="62"></rect>
+          <text class="label" x="720" y="188">failure.log</text>
+          <text class="desc" x="720" y="208">실패 원인</text>
+        </svg>
       </div>
       <pre><code>experiments/rag_smoke_test/
 |-- config.yaml

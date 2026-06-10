@@ -95,6 +95,59 @@ blockquote {
   background: #eef4ff;
   color: #31415f;
 }
+.diagram-wrap {
+  overflow-x: auto;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #fbfcff;
+  padding: 14px;
+  margin: 14px 0;
+}
+.diagram {
+  display: block;
+  min-width: 820px;
+  width: 100%;
+  height: auto;
+}
+.diagram text {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans KR", Arial, sans-serif;
+  letter-spacing: 0;
+}
+.diagram .box {
+  fill: #fff;
+  stroke: #cfd7e6;
+  stroke-width: 1.4;
+  rx: 8;
+}
+.diagram .root {
+  fill: #182235;
+  stroke: #182235;
+}
+.diagram .data { fill: #eef4ff; }
+.diagram .result { fill: #ecfdf3; }
+.diagram .backup { fill: #fff7e8; }
+.diagram .label {
+  fill: var(--ink);
+  font-size: 14px;
+  font-weight: 700;
+  text-anchor: middle;
+}
+.diagram .root-label {
+  fill: #fff;
+  font-size: 15px;
+  font-weight: 800;
+  text-anchor: middle;
+}
+.diagram .desc {
+  fill: var(--muted);
+  font-size: 12px;
+  text-anchor: middle;
+}
+.diagram .line {
+  fill: none;
+  stroke: #94a3b8;
+  stroke-width: 2;
+}
 ul, ol { padding-left: 24px; }
 li { margin: 4px 0; }
 .meta {
@@ -116,6 +169,26 @@ li { margin: 4px 0; }
 <p>이 문서는 팀원이 로컬 환경 세팅에 막혔을 때 Colab에서 같은 파이프라인을 실행하기 위한 가이드입니다.</p>
 <p>실제 노트북 템플릿은 <code>notebooks/colab_experiment_template.ipynb</code>를 사용합니다.</p>
 <h2>권장 Drive 구조</h2>
+<div class="diagram-wrap">
+<svg class="diagram" viewBox="0 0 900 300" role="img" aria-label="Colab Google Drive 권장 구조">
+  <path class="line" d="M 450 84 V 132"></path>
+  <path class="line" d="M 220 132 H 680"></path>
+  <path class="line" d="M 220 132 V 172"></path>
+  <path class="line" d="M 450 132 V 172"></path>
+  <path class="line" d="M 680 132 V 172"></path>
+  <rect class="box root" x="298" y="34" width="304" height="58"></rect>
+  <text class="root-label" x="450" y="68">MyDrive/codeit_ml_project</text>
+  <rect class="box data" x="126" y="172" width="188" height="72"></rect>
+  <text class="label" x="220" y="202">data/</text>
+  <text class="desc" x="220" y="224">Drive에 올린 입력 데이터</text>
+  <rect class="box result" x="356" y="172" width="188" height="72"></rect>
+  <text class="label" x="450" y="202">experiments/</text>
+  <text class="desc" x="450" y="224">실험 산출물 저장</text>
+  <rect class="box backup" x="586" y="172" width="188" height="72"></rect>
+  <text class="label" x="680" y="202">backups/</text>
+  <text class="desc" x="680" y="224">중요 결과 백업</text>
+</svg>
+</div>
 <pre><code class="language-text">
 MyDrive/codeit_ml_project/
 |-- data/
@@ -161,7 +234,7 @@ python scripts/run_validate.py \
 
 python scripts/run_train.py \
   --project-root . \
-  --config configs/experiments/exp002_hf_text_finetune_colab.yaml
+  --config configs/examples/classification/exp002_hf_text_finetune_colab.yaml
 </code></pre>
 <p>이 config는 결과를 Drive에 바로 저장합니다.</p>
 <pre><code class="language-text">

@@ -95,6 +95,62 @@ blockquote {
   background: #eef4ff;
   color: #31415f;
 }
+.diagram-wrap {
+  overflow-x: auto;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #fbfcff;
+  padding: 14px;
+  margin: 14px 0;
+}
+.diagram {
+  display: block;
+  min-width: 820px;
+  width: 100%;
+  height: auto;
+}
+.diagram text {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans KR", Arial, sans-serif;
+  letter-spacing: 0;
+}
+.diagram .box {
+  fill: #fff;
+  stroke: #cfd7e6;
+  stroke-width: 1.4;
+  rx: 8;
+}
+.diagram .root {
+  fill: #182235;
+  stroke: #182235;
+}
+.diagram .required {
+  fill: #eef4ff;
+}
+.diagram .optional {
+  fill: #ecfdf3;
+}
+.diagram .label {
+  fill: var(--ink);
+  font-size: 14px;
+  font-weight: 700;
+  text-anchor: middle;
+}
+.diagram .root-label {
+  fill: #fff;
+  font-size: 15px;
+  font-weight: 800;
+  text-anchor: middle;
+}
+.diagram .desc {
+  fill: var(--muted);
+  font-size: 12px;
+  text-anchor: middle;
+}
+.diagram .line {
+  fill: none;
+  stroke: #94a3b8;
+  stroke-width: 2;
+}
 ul, ol { padding-left: 24px; }
 li { margin: 4px 0; }
 .meta {
@@ -115,6 +171,38 @@ li { margin: 4px 0; }
 <h1>Data Contract v1.0</h1>
 <p>processed dataset은 공통 학습/예측 파이프라인이 바로 읽을 수 있어야 합니다.</p>
 <h2>필수 구조</h2>
+<div class="diagram-wrap">
+<svg class="diagram" viewBox="0 0 920 300" role="img" aria-label="processed 데이터셋 필수 구조">
+  <path class="line" d="M 460 84 V 132"></path>
+  <path class="line" d="M 170 132 H 750"></path>
+  <path class="line" d="M 170 132 V 170"></path>
+  <path class="line" d="M 286 132 V 170"></path>
+  <path class="line" d="M 402 132 V 170"></path>
+  <path class="line" d="M 518 132 V 170"></path>
+  <path class="line" d="M 634 132 V 170"></path>
+  <path class="line" d="M 750 132 V 170"></path>
+  <rect class="box root" x="340" y="34" width="240" height="58"></rect>
+  <text class="root-label" x="460" y="68">data/processed/</text>
+  <rect class="box required" x="104" y="170" width="132" height="64"></rect>
+  <text class="label" x="170" y="200">train.csv</text>
+  <text class="desc" x="170" y="220">학습 split</text>
+  <rect class="box required" x="220" y="170" width="132" height="64"></rect>
+  <text class="label" x="286" y="200">valid.csv</text>
+  <text class="desc" x="286" y="220">검증 split</text>
+  <rect class="box required" x="336" y="170" width="132" height="64"></rect>
+  <text class="label" x="402" y="200">test.csv</text>
+  <text class="desc" x="402" y="220">최종 확인</text>
+  <rect class="box required" x="452" y="170" width="132" height="64"></rect>
+  <text class="label" x="518" y="200">class_map.json</text>
+  <text class="desc" x="518" y="220">label 기준</text>
+  <rect class="box required" x="568" y="170" width="132" height="64"></rect>
+  <text class="label" x="634" y="200">dataset_info</text>
+  <text class="desc" x="634" y="220">버전/주의사항</text>
+  <rect class="box optional" x="684" y="170" width="132" height="64"></rect>
+  <text class="label" x="750" y="200">images/</text>
+  <text class="desc" x="750" y="220">이미지 분류용</text>
+</svg>
+</div>
 <pre><code class="language-text">
 data/processed/
 |-- train.csv

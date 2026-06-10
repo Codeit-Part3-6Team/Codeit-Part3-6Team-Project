@@ -95,6 +95,58 @@ blockquote {
   background: #eef4ff;
   color: #31415f;
 }
+.diagram-wrap {
+  overflow-x: auto;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #fbfcff;
+  padding: 14px;
+  margin: 14px 0;
+}
+.diagram {
+  display: block;
+  min-width: 900px;
+  width: 100%;
+  height: auto;
+}
+.diagram text {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans KR", Arial, sans-serif;
+  letter-spacing: 0;
+}
+.diagram .box {
+  fill: #fff;
+  stroke: #cfd7e6;
+  stroke-width: 1.4;
+  rx: 8;
+}
+.diagram .accent {
+  fill: #eef4ff;
+}
+.diagram .artifact {
+  fill: #ecfdf3;
+}
+.diagram .title {
+  fill: var(--ink);
+  font-size: 14px;
+  font-weight: 700;
+  text-anchor: middle;
+}
+.diagram .desc {
+  fill: var(--muted);
+  font-size: 12px;
+  text-anchor: middle;
+}
+.diagram .arrow {
+  fill: none;
+  stroke: #64748b;
+  stroke-width: 2;
+  marker-end: url(#arrow);
+}
+.diagram .line {
+  fill: none;
+  stroke: #94a3b8;
+  stroke-width: 2;
+}
 ul, ol { padding-left: 24px; }
 li { margin: 4px 0; }
 .meta {
@@ -115,6 +167,34 @@ li { margin: 4px 0; }
 <h1>실험 가이드</h1>
 <p>모든 실험은 config 기반으로 실행하고, 재현 가능한 산출물을 남깁니다. 전체 파이프라인의 큰 그림은 <code>PIPELINE_OVERVIEW.md</code>를 먼저 참고합니다.</p>
 <h2>기본 실행 흐름</h2>
+<div class="diagram-wrap">
+<svg class="diagram" viewBox="0 0 980 190" role="img" aria-label="실험 기본 실행 흐름">
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#64748b"></path>
+    </marker>
+  </defs>
+  <rect class="box accent" x="28" y="58" width="130" height="68"></rect>
+  <text class="title" x="93" y="88">Data Check</text>
+  <text class="desc" x="93" y="110">계약 검증</text>
+  <path class="arrow" d="M 158 92 H 206"></path>
+  <rect class="box" x="206" y="58" width="130" height="68"></rect>
+  <text class="title" x="271" y="88">Smoke Test</text>
+  <text class="desc" x="271" y="110">빠른 동작 확인</text>
+  <path class="arrow" d="M 336 92 H 384"></path>
+  <rect class="box" x="384" y="58" width="130" height="68"></rect>
+  <text class="title" x="449" y="88">Experiment</text>
+  <text class="desc" x="449" y="110">config 실행</text>
+  <path class="arrow" d="M 514 92 H 562"></path>
+  <rect class="box artifact" x="562" y="58" width="130" height="68"></rect>
+  <text class="title" x="627" y="88">Artifacts</text>
+  <text class="desc" x="627" y="110">metric/history</text>
+  <path class="arrow" d="M 692 92 H 740"></path>
+  <rect class="box artifact" x="740" y="58" width="160" height="68"></rect>
+  <text class="title" x="820" y="88">Next Action</text>
+  <text class="desc" x="820" y="110">기록 후 다음 실험</text>
+</svg>
+</div>
 <ol>
 <li>데이터가 Data Contract를 만족하는지 확인합니다.</li>
 <li>smoke test config로 파이프라인이 정상 동작하는지 확인합니다.</li>
@@ -127,11 +207,11 @@ python scripts/run_train.py --config configs/smoke/smoke_test_text.yaml --projec
 python scripts/run_predict.py --config configs/smoke/smoke_test_text.yaml --project-root . --input data/text_processed/sample_positive.txt
 </code></pre>
 <h2>HuggingFace 실험</h2>
-<p>HuggingFace 모델은 <code>configs/experiments/exp002_hf_text_finetune.yaml</code>을 시작점으로 사용합니다.</p>
+<p>HuggingFace 모델은 <code>configs/examples/classification/exp002_hf_text_finetune.yaml</code>을 시작점으로 사용합니다.</p>
 <pre><code class="language-bash">
-python scripts/run_train.py --config configs/experiments/exp002_hf_text_finetune.yaml --project-root .
+python scripts/run_train.py --config configs/examples/classification/exp002_hf_text_finetune.yaml --project-root .
 </code></pre>
-<p>처음 실행할 때는 base model 다운로드가 필요합니다. 로컬 CPU에서도 동작은 가능하지만, 실제 데이터셋에서는 Colab/GPU 환경을 권장합니다. Colab에서 Drive 경로를 사용하려면 <code>COLAB_GUIDE.md</code>와 <code>configs/experiments/exp002_hf_text_finetune_colab.yaml</code>을 참고합니다.</p>
+<p>처음 실행할 때는 base model 다운로드가 필요합니다. 로컬 CPU에서도 동작은 가능하지만, 실제 데이터셋에서는 Colab/GPU 환경을 권장합니다. Colab에서 Drive 경로를 사용하려면 <code>COLAB_GUIDE.md</code>와 <code>configs/examples/classification/exp002_hf_text_finetune_colab.yaml</code>을 참고합니다.</p>
 <h2>실험 결과 요약</h2>
 <p>여러 실험 결과를 한 번에 비교하려면 요약 스크립트를 실행합니다.</p>
 <pre><code class="language-bash">
@@ -143,6 +223,38 @@ reports/experiment_summary.csv
 reports/experiment_summary.json
 </code></pre>
 <h2>필수 산출물</h2>
+<div class="diagram-wrap">
+<svg class="diagram" viewBox="0 0 980 300" role="img" aria-label="실험 산출물 구조">
+  <path class="line" d="M 490 80 V 124"></path>
+  <path class="line" d="M 170 124 H 810"></path>
+  <path class="line" d="M 170 124 V 164"></path>
+  <path class="line" d="M 298 124 V 164"></path>
+  <path class="line" d="M 426 124 V 164"></path>
+  <path class="line" d="M 554 124 V 164"></path>
+  <path class="line" d="M 682 124 V 164"></path>
+  <path class="line" d="M 810 124 V 164"></path>
+  <rect class="box accent" x="350" y="32" width="280" height="58"></rect>
+  <text class="title" x="490" y="66">experiments/{experiment_name}/</text>
+  <rect class="box" x="104" y="164" width="132" height="62"></rect>
+  <text class="title" x="170" y="194">config.yaml</text>
+  <text class="desc" x="170" y="214">재현 조건</text>
+  <rect class="box artifact" x="232" y="164" width="132" height="62"></rect>
+  <text class="title" x="298" y="194">metrics.json</text>
+  <text class="desc" x="298" y="214">대표 지표</text>
+  <rect class="box artifact" x="360" y="164" width="132" height="62"></rect>
+  <text class="title" x="426" y="194">history.csv</text>
+  <text class="desc" x="426" y="214">학습 곡선</text>
+  <rect class="box" x="488" y="164" width="132" height="62"></rect>
+  <text class="title" x="554" y="194">run_info</text>
+  <text class="desc" x="554" y="214">환경 정보</text>
+  <rect class="box" x="616" y="164" width="132" height="62"></rect>
+  <text class="title" x="682" y="194">run_status</text>
+  <text class="desc" x="682" y="214">성공/실패</text>
+  <rect class="box artifact" x="744" y="164" width="132" height="62"></rect>
+  <text class="title" x="810" y="194">best_model</text>
+  <text class="desc" x="810" y="214">선택 모델</text>
+</svg>
+</div>
 <pre><code class="language-text">
 experiments/{experiment_name}/
 |-- config.yaml

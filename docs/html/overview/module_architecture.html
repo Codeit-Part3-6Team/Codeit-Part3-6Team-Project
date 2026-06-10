@@ -95,6 +95,56 @@ blockquote {
   background: #eef4ff;
   color: #31415f;
 }
+.diagram-wrap {
+  overflow-x: auto;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #fbfcff;
+  padding: 14px;
+  margin: 14px 0;
+}
+.diagram {
+  display: block;
+  min-width: 900px;
+  width: 100%;
+  height: auto;
+}
+.diagram text {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans KR", Arial, sans-serif;
+  letter-spacing: 0;
+}
+.diagram .box {
+  fill: #ffffff;
+  stroke: #cfd7e6;
+  stroke-width: 1.4;
+  rx: 8;
+}
+.diagram .group {
+  fill: #f6f8fc;
+  stroke: #d8dee8;
+  stroke-width: 1.2;
+  rx: 10;
+}
+.diagram .title {
+  fill: var(--ink);
+  font-size: 15px;
+  font-weight: 700;
+}
+.diagram .desc {
+  fill: var(--muted);
+  font-size: 12px;
+}
+.diagram .group-title {
+  fill: #334155;
+  font-size: 14px;
+  font-weight: 700;
+}
+.diagram .arrow {
+  fill: none;
+  stroke: #64748b;
+  stroke-width: 2;
+  marker-end: url(#arrow);
+}
 ul, ol { padding-left: 24px; }
 li { margin: 4px 0; }
 .meta {
@@ -275,71 +325,99 @@ run_rag_chat.py --evaluate
 </code></pre>
 <p>RAG는 “문서 읽기 -&gt; chunk 나누기 -&gt; embedding 만들기 -&gt; 검색하기 -&gt; 답변하기 -&gt; 평가하기” 순서로 나뉩니다.</p>
 <h2>모듈 관계 다이어그램</h2>
-<pre><code class="language-mermaid">
-flowchart LR
-  subgraph entry[&quot;실행 진입점&quot;]
-    scripts[&quot;scripts/*.py&lt;br/&gt;run_train / run_predict / run_rag_*&quot;]
-    configs[&quot;configs/*.yaml&lt;br/&gt;실험 조건 / 경로 / 모델 / 백업&quot;]
-  end
+<div class="diagram-wrap">
+<svg class="diagram" viewBox="0 0 980 360" role="img" aria-label="config, scripts, src, experiments, reports 관계 다이어그램">
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#64748b"></path>
+    </marker>
+  </defs>
+  <rect class="group" x="24" y="38" width="185" height="260"></rect>
+  <text class="group-title" x="44" y="68">실행 진입점</text>
+  <rect class="box" x="44" y="92" width="145" height="72"></rect>
+  <text class="title" x="62" y="122">configs/*.yaml</text>
+  <text class="desc" x="62" y="145">실험 조건과 경로</text>
+  <rect class="box" x="44" y="190" width="145" height="72"></rect>
+  <text class="title" x="62" y="220">scripts/*.py</text>
+  <text class="desc" x="62" y="243">공식 실행 명령</text>
 
-  subgraph infra[&quot;공통 인프라&quot;]
-    config[&quot;src/config.py&lt;br/&gt;config 로딩&quot;]
-    artifacts[&quot;src/artifacts.py&lt;br/&gt;실험 폴더 / 상태 / 실패 로그 / 백업&quot;]
-    utils[&quot;src/utils/&lt;br/&gt;path / seed / logging&quot;]
-  end
+  <rect class="group" x="260" y="38" width="225" height="260"></rect>
+  <text class="group-title" x="280" y="68">공통 인프라</text>
+  <rect class="box" x="282" y="92" width="180" height="58"></rect>
+  <text class="title" x="302" y="123">src/config.py</text>
+  <text class="desc" x="302" y="140">config 로딩</text>
+  <rect class="box" x="282" y="166" width="180" height="58"></rect>
+  <text class="title" x="302" y="197">src/artifacts.py</text>
+  <text class="desc" x="302" y="214">상태, 실패 로그, 백업</text>
+  <rect class="box" x="282" y="240" width="180" height="58"></rect>
+  <text class="title" x="302" y="271">src/utils/</text>
+  <text class="desc" x="302" y="288">path, seed, logging</text>
 
-  subgraph domain[&quot;도메인 구현&quot;]
-    models[&quot;src/models/&lt;br/&gt;분류 모델 구현체 / registry&quot;]
-    train[&quot;src/train.py&lt;br/&gt;학습 / checkpoint / scheduler&quot;]
-    rag[&quot;src/rag/&lt;br/&gt;문서 처리 / 검색 / 답변 / 평가&quot;]
-  end
+  <rect class="group" x="540" y="38" width="190" height="260"></rect>
+  <text class="group-title" x="560" y="68">도메인 구현</text>
+  <rect class="box" x="562" y="92" width="146" height="58"></rect>
+  <text class="title" x="582" y="123">src/rag/</text>
+  <text class="desc" x="582" y="140">검색, 답변, 평가</text>
+  <rect class="box" x="562" y="166" width="146" height="58"></rect>
+  <text class="title" x="582" y="197">src/train.py</text>
+  <text class="desc" x="582" y="214">참고 학습 흐름</text>
+  <rect class="box" x="562" y="240" width="146" height="58"></rect>
+  <text class="title" x="582" y="271">src/models/</text>
+  <text class="desc" x="582" y="288">분류 예제 모델</text>
 
-  subgraph output[&quot;결과 산출물&quot;]
-    experiments[&quot;experiments/&lt;br/&gt;config / metric / history / checkpoint / RAG 결과&quot;]
-    reports[&quot;reports/&lt;br/&gt;실험 요약 / 공유용 리포트&quot;]
-    checkpoints[&quot;checkpoints/&lt;br/&gt;공유 checkpoint 예비 위치&quot;]
-  end
+  <rect class="group" x="785" y="38" width="170" height="260"></rect>
+  <text class="group-title" x="805" y="68">결과 산출물</text>
+  <rect class="box" x="807" y="92" width="126" height="58"></rect>
+  <text class="title" x="824" y="123">experiments/</text>
+  <text class="desc" x="824" y="140">config, metric</text>
+  <rect class="box" x="807" y="190" width="126" height="58"></rect>
+  <text class="title" x="824" y="221">reports/</text>
+  <text class="desc" x="824" y="238">요약 리포트</text>
 
-  configs --&gt; config
-  scripts --&gt; config
-  scripts --&gt; artifacts
-  config --&gt; models
-  config --&gt; train
-  config --&gt; rag
-  artifacts --&gt; train
-  artifacts --&gt; rag
-  utils --&gt; train
-  utils --&gt; rag
-  models --&gt; train
-  train --&gt; experiments
-  rag --&gt; experiments
-  experiments --&gt; reports
-  checkpoints --&gt; train
-</code></pre>
+  <path class="arrow" d="M 189 128 H 282"></path>
+  <path class="arrow" d="M 189 226 H 282"></path>
+  <path class="arrow" d="M 462 121 H 562"></path>
+  <path class="arrow" d="M 462 195 H 562"></path>
+  <path class="arrow" d="M 462 269 H 562"></path>
+  <path class="arrow" d="M 708 121 H 807"></path>
+  <path class="arrow" d="M 870 150 V 190"></path>
+</svg>
+</div>
 <p>핵심은 <code>scripts/</code>가 직접 모든 일을 하지 않는다는 점입니다. script는 config를 읽고, 공통 artifact 정책을 적용한 뒤, ML 또는 RAG 구현체에 일을 위임합니다.</p>
 <h2>RAG 내부 관계 다이어그램</h2>
-<pre><code class="language-mermaid">
-flowchart LR
-  docs[&quot;raw docs&lt;br/&gt;txt / pdf / docx / hwpx / hwp&quot;]
-  loader[&quot;document_loader&lt;br/&gt;표준 document row&quot;]
-  chunker[&quot;chunker&lt;br/&gt;검색 단위 chunk 생성&quot;]
-  embedding[&quot;embedding adapter&lt;br/&gt;local / huggingface&quot;]
-  vectors[&quot;embeddings.jsonl&quot;]
-  retriever[&quot;retriever adapter&lt;br/&gt;keyword / semantic / hybrid&quot;]
-  answerer[&quot;answerer adapter&lt;br/&gt;extractive/local&quot;]
-  eval[&quot;evaluation&lt;br/&gt;hit rate / citation / 실패 분석&quot;]
-  answer[&quot;answers + citations&quot;]
-
-  docs --&gt; loader
-  loader --&gt; chunker
-  chunker --&gt; embedding
-  embedding --&gt; vectors
-  vectors --&gt; retriever
-  chunker --&gt; retriever
-  retriever --&gt; answerer
-  answerer --&gt; answer
-  answer --&gt; eval
-</code></pre>
+<div class="diagram-wrap">
+<svg class="diagram" viewBox="0 0 980 250" role="img" aria-label="RAG 내부 처리 흐름 다이어그램">
+  <defs>
+    <marker id="arrow-rag" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#64748b"></path>
+    </marker>
+  </defs>
+  <path class="arrow" marker-end="url(#arrow-rag)" d="M 130 108 H 208"></path>
+  <path class="arrow" marker-end="url(#arrow-rag)" d="M 320 108 H 398"></path>
+  <path class="arrow" marker-end="url(#arrow-rag)" d="M 510 108 H 588"></path>
+  <path class="arrow" marker-end="url(#arrow-rag)" d="M 700 108 H 778"></path>
+  <path class="arrow" marker-end="url(#arrow-rag)" d="M 510 156 C 585 216 682 216 778 156"></path>
+  <rect class="box" x="24" y="70" width="106" height="76"></rect>
+  <text class="title" x="44" y="101">Raw Docs</text>
+  <text class="desc" x="44" y="122">txt, pdf, hwp</text>
+  <rect class="box" x="208" y="70" width="112" height="76"></rect>
+  <text class="title" x="228" y="101">Loader</text>
+  <text class="desc" x="228" y="122">document row</text>
+  <rect class="box" x="398" y="70" width="112" height="76"></rect>
+  <text class="title" x="418" y="101">Chunker</text>
+  <text class="desc" x="418" y="122">근거 단위</text>
+  <rect class="box" x="588" y="70" width="112" height="76"></rect>
+  <text class="title" x="608" y="101">Embedding</text>
+  <text class="desc" x="608" y="122">vector 생성</text>
+  <rect class="box" x="778" y="70" width="128" height="76"></rect>
+  <text class="title" x="798" y="101">Retriever</text>
+  <text class="desc" x="798" y="122">top-k 검색</text>
+  <rect class="box" x="778" y="166" width="128" height="58"></rect>
+  <text class="title" x="798" y="198">Answer</text>
+  <text class="desc" x="798" y="215">답변 + citation</text>
+  <path class="arrow" marker-end="url(#arrow-rag)" d="M 842 146 V 166"></path>
+</svg>
+</div>
 <p>RAG에서 새 구현체를 붙일 때는 pipeline 전체를 바꾸기보다 adapter factory와 필요한 하위 모듈만 확장하는 것이 기본 방향입니다.</p>
 <h2>RAG Adapter 구조</h2>
 <p>RAG 쪽은 실제 구현체를 config로 갈아 끼우기 쉽도록 adapter registry 형태로 둡니다.</p>

@@ -95,6 +95,25 @@ blockquote {
   background: #eef4ff;
   color: #31415f;
 }
+.diagram-wrap {
+  overflow-x: auto;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #fbfcff;
+  padding: 14px;
+  margin: 14px 0;
+}
+.diagram { display: block; min-width: 900px; width: 100%; height: auto; }
+.diagram text { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans KR", Arial, sans-serif; letter-spacing: 0; }
+.diagram .box { fill: #fff; stroke: #cfd7e6; stroke-width: 1.4; rx: 8; }
+.diagram .pm { fill: #eef4ff; }
+.diagram .data { fill: #ecfdf3; }
+.diagram .exp { fill: #fff7e8; }
+.diagram .app { fill: #f5f3ff; }
+.diagram .pres { fill: #fff1f3; }
+.diagram .label { fill: var(--ink); font-size: 14px; font-weight: 700; text-anchor: middle; }
+.diagram .desc { fill: var(--muted); font-size: 12px; text-anchor: middle; }
+.diagram .arrow { fill: none; stroke: #64748b; stroke-width: 2; marker-end: url(#arrow); }
 ul, ol { padding-left: 24px; }
 li { margin: 4px 0; }
 .meta {
@@ -213,6 +232,34 @@ PM / Data Engineer / Model Engineer / Experiment Lead / Presentation Lead
 <li>파트별 누락 자료 요청 목록</li>
 </ul>
 <h2>역할 간 연결 지점</h2>
+<div class="diagram-wrap">
+<svg class="diagram" viewBox="0 0 980 320" role="img" aria-label="역할 간 산출물 인계 관계">
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#64748b"></path>
+    </marker>
+  </defs>
+  <rect class="box pm" x="410" y="28" width="160" height="62"></rect>
+  <text class="label" x="490" y="56">PM</text>
+  <text class="desc" x="490" y="76">기준, 일정, 통합</text>
+  <rect class="box data" x="70" y="138" width="170" height="72"></rect>
+  <text class="label" x="155" y="169">Data Engineer</text>
+  <text class="desc" x="155" y="190">데이터와 이슈</text>
+  <rect class="box exp" x="405" y="138" width="170" height="72"></rect>
+  <text class="label" x="490" y="169">Experiment Lead</text>
+  <text class="desc" x="490" y="190">실험, metric, 모델</text>
+  <rect class="box app" x="740" y="138" width="170" height="72"></rect>
+  <text class="label" x="825" y="169">Application</text>
+  <text class="desc" x="825" y="190">데모와 사용 흐름</text>
+  <rect class="box pres" x="405" y="250" width="170" height="52"></rect>
+  <text class="label" x="490" y="280">Presentation</text>
+  <path class="arrow" d="M 240 174 H 405"></path>
+  <path class="arrow" d="M 575 174 H 740"></path>
+  <path class="arrow" d="M 490 210 V 250"></path>
+  <path class="arrow" d="M 825 210 C 790 256 690 276 575 276"></path>
+  <path class="arrow" d="M 490 90 V 138"></path>
+</svg>
+</div>
 <pre><code class="language-text">
 Data Engineer -&gt; Experiment Lead:
 processed data, dataset_info, class_map, known issues
