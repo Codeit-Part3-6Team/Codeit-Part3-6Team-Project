@@ -23,9 +23,9 @@ HTML Docs
 - `experiments/EXPERIMENT_GUIDE.html`: 실험 실행 방법을 확인할 때
 - `kickoff/kickoff.html`: 킥오프 발표 자료로 사용할 때
 
-## Markdown 대응 규칙
+## Markdown과의 관계
 
-`docs/md/`의 Markdown 문서는 같은 상대 경로의 HTML 문서를 가집니다.
+`docs/html/`은 설명과 공유가 필요한 주제를 보기 좋게 정리한 HTML 문서 모음입니다. 모든 Markdown 문서가 반드시 HTML과 1:1로 대응해야 하는 것은 아닙니다.
 
 ```text
 docs/md/overview/PIPELINE_OVERVIEW.md

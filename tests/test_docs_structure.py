@@ -4,19 +4,16 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 
 
-def test_docs_markdown_files_have_html_counterparts() -> None:
-    md_dir = ROOT / "docs" / "md"
-    html_dir = ROOT / "docs" / "html"
-
-    md_files = sorted(path for path in md_dir.rglob("*.md"))
-    assert md_files, "docs/md에는 최소 하나 이상의 Markdown 문서가 있어야 합니다."
-
-    missing = [
-        str(path.relative_to(md_dir))
-        for path in md_files
-        if not (html_dir / path.relative_to(md_dir).with_suffix(".html")).exists()
+def test_docs_core_directories_exist() -> None:
+    """Markdown 원본, HTML 설명 자료, LLM 문맥 폴더가 구분되어 있는지 확인합니다."""
+    required_dirs = [
+        ROOT / "docs" / "md",
+        ROOT / "docs" / "html",
+        ROOT / "docs" / "llm",
     ]
-    assert not missing, f"HTML 대응 문서가 없습니다: {missing}"
+
+    missing = [str(path.relative_to(ROOT)) for path in required_dirs if not path.is_dir()]
+    assert not missing, f"필수 문서 디렉터리가 없습니다: {missing}"
 
 
 def test_key_directories_have_readme() -> None:

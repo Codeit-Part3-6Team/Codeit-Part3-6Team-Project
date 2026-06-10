@@ -2,7 +2,7 @@
 
 `docs/md/`는 수정과 리뷰가 쉬운 원본 Markdown 문서를 두는 곳입니다.
 
-HTML로 공유할 문서는 같은 상대 경로의 `docs/html/` 문서와 함께 관리합니다.
+HTML로 공유할 문서는 `docs/html/`에서 따로 관리합니다. 모든 Markdown 문서가 반드시 HTML과 1:1로 대응할 필요는 없습니다.
 
 ## 문서 지도
 
@@ -26,9 +26,9 @@ mindmap
       TEAM_WORKFLOW.md
     kickoff
       KICKOFF_GUIDE.md
-    html 대응
-      같은 상대 경로
-      공유용 문서
+    html 문서
+      공유용 설명
+      선택적 대응
 ```
 
 ```text
@@ -61,16 +61,16 @@ docs/md/
 5. [workflow/TEAM_WORKFLOW.md](workflow/TEAM_WORKFLOW.md): 팀 운영 규칙
 6. [kickoff/KICKOFF_GUIDE.md](kickoff/KICKOFF_GUIDE.md): 킥오프 설명 원본
 
-## HTML 대응
+## HTML 문서
 
-각 Markdown 문서는 `docs/html/`에 같은 상대 경로의 HTML 파일을 가집니다.
+일부 Markdown 문서는 설명과 공유를 위해 `docs/html/`에 HTML 버전을 함께 둡니다.
 
 ```text
 docs/md/overview/PIPELINE_OVERVIEW.md
 -> docs/html/overview/PIPELINE_OVERVIEW.html
 ```
 
-직접 디자인한 설명용 HTML은 Markdown 원본과 1:1 대응하지 않을 수 있습니다.
+HTML은 설명용 산출물입니다. 모든 Markdown 문서를 HTML로 만들 필요는 없고, 직접 디자인한 설명용 HTML은 Markdown 원본과 1:1 대응하지 않을 수 있습니다.
 
 - `docs/html/overview/pipeline_explainer.html`
 - `docs/html/overview/module_architecture.html`

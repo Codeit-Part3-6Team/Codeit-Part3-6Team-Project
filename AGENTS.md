@@ -17,7 +17,7 @@
 - 공유용 요약과 리포트는 `reports/`에 남깁니다.
 - 원본 데이터는 직접 수정하지 않습니다.
 - 대용량 모델 weight, checkpoint, 원본 데이터, 임시 산출물은 Git에 올리지 않습니다.
-- 문서를 수정할 때는 관련 README와 `docs/md/`, 필요하면 `docs/html/` 대응 문서를 함께 확인합니다.
+- 문서를 수정할 때는 관련 README와 `docs/md/`를 확인하고, 설명용 HTML이 따로 있는 주제라면 `docs/html/`도 함께 확인합니다.
 - public 함수와 클래스의 docstring은 한국어로 작성합니다.
 - 주석은 처음 보는 팀원이 흐름을 이해하는 데 도움이 되는 위치에 짧게 남깁니다.
 
@@ -73,4 +73,3 @@ python -m pytest tests/test_rag_pipeline.py tests/test_rag_validation.py tests/t
 - `src/` 구현을 바꾸고 테스트나 README를 갱신하지 않는 것
 - 실험 산출물을 Git에 추가하는 것
 - RAG 답변만 보고 citation, retrieval 결과, failure artifact를 놓치는 것
-
