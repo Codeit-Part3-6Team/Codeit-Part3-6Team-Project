@@ -2,6 +2,44 @@
 
 `src/rag/`는 문서 기반 검색과 답변 파이프라인을 구현합니다.
 
+## RAG 모듈 마인드맵
+
+```mermaid
+mindmap
+  root((src/rag))
+    Input
+      document_loader.py
+      txt
+      pdf
+      docx
+      hwpx
+      hwp
+    Processing
+      chunker.py
+      embedder.py
+      vector_store.py
+    Retrieval
+      retriever.py
+      keyword
+      semantic
+      hybrid
+    Answer
+      answerer.py
+      citation
+      extractive answer
+    Orchestration
+      adapters.py
+      pipeline.py
+      validation.py
+      comparison.py
+    Artifacts
+      parsed_documents
+      chunks
+      embeddings
+      answers
+      metrics
+```
+
 ## 흐름
 
 ```text

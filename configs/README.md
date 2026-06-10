@@ -4,6 +4,42 @@
 
 이 프로젝트에서는 가능하면 코드를 직접 고치기보다 config를 복사하고 수정해서 실험을 바꿉니다. 이렇게 하면 누가 어떤 조건으로 실험했는지 `experiments/` 산출물에 함께 남길 수 있습니다.
 
+## Config 구조 마인드맵
+
+```mermaid
+mindmap
+  root((configs))
+    experiments
+      rag
+        smoke test
+        keyword 비교
+        hybrid 비교
+    examples
+      classification
+        baseline
+        HuggingFace
+        Colab
+    smoke
+      이미지 smoke
+      텍스트 smoke
+      HF tiny smoke
+    preprocess
+      전처리 버전
+    공통 옵션
+      experiment
+      paths
+      artifact_policy
+      backup
+    RAG 옵션
+      loader
+      chunk
+      embedding
+      vector_store
+      retriever
+      answerer
+      checkpoint
+```
+
 ## 기본 사용법
 
 ```bash

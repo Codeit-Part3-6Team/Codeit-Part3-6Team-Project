@@ -2,6 +2,30 @@
 
 이 폴더는 Jupyter/Colab 기반 실험을 위한 노트북 템플릿을 둡니다.
 
+## 노트북 사용 마인드맵
+
+```mermaid
+mindmap
+  root((notebooks))
+    Local
+      local_experiment_template.ipynb
+      환경 확인
+      config 선택
+      결과 시각화
+    Colab
+      colab_experiment_template.ipynb
+      Drive mount
+      GPU 확인
+      backup
+    Reference
+      template_colab_experiment.md
+    실험 시 변경
+      experiment.name
+      paths.output_dir
+      artifact_policy.run_id
+      backup_dir
+```
+
 ## 파일
 
 - `local_experiment_template.ipynb`: 로컬 Jupyter에서 프로젝트 루트 기준으로 실행하는 실험 템플릿

@@ -2,6 +2,36 @@
 
 초기 테스트는 `pytest` 기반으로 진행합니다.
 
+## 테스트 범위 마인드맵
+
+```mermaid
+mindmap
+  root((tests))
+    Config
+      config path
+      validation
+      examples
+    Data
+      processed contract
+      loader
+    Pipeline
+      smoke train
+      predict
+      scripts
+    RAG
+      document loader
+      adapters
+      retrieval
+      validation
+    Docs
+      docs structure
+      notebook structure
+    Models
+      registry
+      baseline
+      HuggingFace smoke
+```
+
 ```bash
 conda activate codeit-ml-pipeline
 pytest

@@ -2,6 +2,36 @@
 
 `src/`는 파이프라인의 실제 구현 코드가 들어가는 곳입니다.
 
+## Source 구조 마인드맵
+
+```mermaid
+mindmap
+  root((src))
+    공통 기반
+      config.py
+      artifacts.py
+      utils
+    분류 파이프라인
+      data.py
+      train.py
+      predict.py
+      metrics.py
+      models
+    RAG 파이프라인
+      rag.document_loader
+      rag.chunker
+      rag.embedder
+      rag.retriever
+      rag.answerer
+      rag.pipeline
+      rag.validation
+    실험 관리
+      experiments.py
+      run status
+      backup
+      summary
+```
+
 ## 주요 모듈
 
 - `config.py`: config 로딩과 JSON 저장

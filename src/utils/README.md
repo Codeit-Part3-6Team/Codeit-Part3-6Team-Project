@@ -4,6 +4,27 @@
 
 처음부터 너무 많은 것을 넣기보다는 여러 모듈에서 반복해서 쓰는 기능만 둡니다.
 
+## Utils 마인드맵
+
+```mermaid
+mindmap
+  root((src/utils))
+    logger.py
+      콘솔 로그
+      파일 로그
+    paths.py
+      project_root
+      상대 경로
+    seed.py
+      재현성
+      random seed
+    추가 후보
+      config diff
+      실행 시간
+      환경 정보
+      예외 포맷
+```
+
 ```text
 src/utils/
 |-- logger.py    # 콘솔/파일 로깅 설정
@@ -18,4 +39,3 @@ src/utils/
 - artifact 경로 생성
 - 환경 정보 수집
 - 예외 메시지 포맷팅
-

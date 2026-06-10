@@ -2,6 +2,35 @@
 
 `experiments/`는 실험 실행 결과가 저장되는 기본 위치입니다.
 
+## 실험 산출물 마인드맵
+
+```mermaid
+mindmap
+  root((experiments))
+    Config Snapshot
+      config.yaml
+      run_info.json
+    Status
+      run_status.json
+      failure.log
+    Metrics
+      metrics.json
+      history.csv
+    Model Artifacts
+      best_model.json
+      checkpoints
+      hf_model
+    RAG Artifacts
+      parsed_documents.csv
+      chunks.csv
+      embeddings.jsonl
+      answers.jsonl
+      evaluation_results.csv
+    Sharing
+      reports 요약
+      문서 링크
+```
+
 ## 예시
 
 ```text

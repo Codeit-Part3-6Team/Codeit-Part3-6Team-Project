@@ -3,6 +3,31 @@
 팀원이 직접 실행하는 공식 진입점입니다.
 `src/`는 재사용 가능한 파이프라인 로직이고, `scripts/`는 사람이 실행하는 명령이라고 보면 됩니다.
 
+## 실행 스크립트 마인드맵
+
+```mermaid
+mindmap
+  root((scripts))
+    데이터 확인
+      run_validate.py
+    분류 실험
+      run_train.py
+      run_predict.py
+    RAG 실행
+      check_rag_pipeline.py
+      run_rag_ingest.py
+      run_rag_retrieve.py
+      run_rag_chat.py
+    RAG 비교
+      compare_rag_retrievers.py
+    결과 요약
+      summarize_experiments.py
+    공통 입력
+      config
+      project-root
+      question
+```
+
 ## 가벼운 텍스트 smoke test
 
 ```bash

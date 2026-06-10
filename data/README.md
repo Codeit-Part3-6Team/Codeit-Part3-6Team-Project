@@ -2,6 +2,33 @@
 
 `data/`는 원본 데이터와 처리된 데이터를 나누어 보관하는 곳입니다.
 
+## Data 구조 마인드맵
+
+```mermaid
+mindmap
+  root((data))
+    raw
+      원본 보존
+      직접 수정 금지
+    interim
+      중간 변환
+      검증 전 결과
+    processed
+      이미지 smoke
+      train valid test
+      class_map
+    text_processed
+      텍스트 smoke
+      CSV
+      sample input
+    rag_smoke
+      RFP 샘플
+      평가 질문
+    external
+      외부 참고 데이터
+      라이선스 확인
+```
+
 ## 구조
 
 ```text

@@ -2,6 +2,32 @@
 
 이 폴더는 모델 코드와 registry를 관리합니다.
 
+## 모델 구조 마인드맵
+
+```mermaid
+mindmap
+  root((src/models))
+    Registry
+      registry.py
+      model.name 연결
+    Smoke Models
+      centroid.py
+      text_keyword.py
+    HuggingFace
+      huggingface_text.py
+      sequence classifier
+      hf_model artifact
+    Config Contract
+      model.name
+      model_name
+      label mapping
+      max length
+    Validation
+      train
+      predict
+      smoke test
+```
+
 ```text
 src/models/
 |-- registry.py          # config의 model.name을 실제 모델로 연결

@@ -2,6 +2,31 @@
 
 `reports/`는 실험 요약과 팀 공유용 보고 자료를 두는 곳입니다.
 
+## Reports 마인드맵
+
+```mermaid
+mindmap
+  root((reports))
+    Daily
+      daily_report_template.md
+      진행 상황
+      막힌 점
+    Experiment Log
+      experiment_log.csv
+      담당자
+      config
+      result_path
+    Summary
+      experiment_summary.csv
+      experiment_summary.json
+    RAG Compare
+      rag_retriever_comparison.csv
+      rag_retriever_comparison.json
+    공유 기준
+      필요한 결과만 커밋
+      대용량 artifact 제외
+```
+
 ## 주요 파일
 
 - `daily_report_template.md`: Daily Report 템플릿
