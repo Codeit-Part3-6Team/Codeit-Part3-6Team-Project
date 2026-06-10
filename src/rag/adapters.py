@@ -195,6 +195,7 @@ class ExtractiveAnswererAdapter:
 def build_embedding_adapter(config: dict[str, Any]) -> RagEmbeddingAdapter:
     """rag.embedding config에 맞는 embedding adapter를 반환합니다."""
     provider = config.get("provider", "local")
+    # 외부 embedding provider를 붙일 때도 이 factory만 확장하면 pipeline 호출부는 그대로 유지됩니다.
     if provider == "local":
         return LocalHashingEmbeddingAdapter(
             dimension=int(config.get("dimension", 64)),
@@ -214,6 +215,7 @@ def build_retriever_adapter(config: dict[str, Any], embedding_config: dict[str, 
     method = config.get("method", "keyword")
     top_k = int(config.get("top_k", 3))
     score_threshold = float(config.get("score_threshold", 0.0))
+    # semantic/hybrid 검색은 질문도 같은 embedding adapter로 벡터화해야 검색 기준이 맞습니다.
     embedding_adapter = build_embedding_adapter(embedding_config)
     if method == "keyword":
         return KeywordRetrieverAdapter(top_k=top_k, score_threshold=score_threshold)

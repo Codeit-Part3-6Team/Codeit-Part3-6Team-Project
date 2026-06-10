@@ -70,6 +70,8 @@ def run_rag_ingest(config_path: str | Path, project_root: str | Path = ".") -> d
         embeddings_path = resolve_vector_store_artifact_path(output_dir, vector_store_cfg)
 
         write_config_copy(config_path, output_dir)
+        # RAG resume은 현재 stage 단위입니다.
+        # 이미 저장된 artifact가 있으면 해당 stage를 다시 계산하지 않고 재사용합니다.
         if resume_enabled and documents_path.exists():
             documents = _read_csv(documents_path)
         else:
