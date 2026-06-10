@@ -1,7 +1,7 @@
 # Colab 실험 템플릿
 
 실제 `.ipynb` 노트북을 만들 때 아래 순서를 셀 단위로 옮겨 사용합니다.
-자세한 설명은 `docs/COLAB_GUIDE.md`를 기준으로 합니다.
+자세한 설명은 `docs/md/COLAB_GUIDE.md`를 기준으로 합니다.
 
 ## 1. Drive 연결
 

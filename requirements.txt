@@ -3,6 +3,7 @@
 # 기준 환경: Python 3.11.15, conda env codeit-ml-pipeline
 numpy==2.4.6
 pandas==3.0.3
+matplotlib==3.10.9
 Pillow==9.4.0
 PyYAML==6.0.3
 scikit-learn==1.8.0
