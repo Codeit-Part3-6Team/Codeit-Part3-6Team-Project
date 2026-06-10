@@ -18,14 +18,14 @@ python scripts/run_predict.py --config configs/smoke/smoke_test_text.yaml --proj
 
 ## HuggingFace 실험
 
-HuggingFace 모델은 `configs/experiments/exp002_hf_text_finetune.yaml`을 시작점으로 사용합니다.
+HuggingFace 모델은 `configs/examples/classification/exp002_hf_text_finetune.yaml`을 시작점으로 사용합니다.
 
 ```bash
-python scripts/run_train.py --config configs/experiments/exp002_hf_text_finetune.yaml --project-root .
+python scripts/run_train.py --config configs/examples/classification/exp002_hf_text_finetune.yaml --project-root .
 ```
 
 처음 실행할 때는 base model 다운로드가 필요합니다. 로컬 CPU에서도 동작은 가능하지만, 실제 데이터셋에서는 Colab/GPU 환경을 권장합니다.
-Colab에서 Drive 경로를 사용하려면 `COLAB_GUIDE.md`와 `configs/experiments/exp002_hf_text_finetune_colab.yaml`을 참고합니다.
+Colab에서 Drive 경로를 사용하려면 `COLAB_GUIDE.md`와 `configs/examples/classification/exp002_hf_text_finetune_colab.yaml`을 참고합니다.
 
 ## 실험 결과 요약
 

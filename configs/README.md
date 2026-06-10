@@ -7,16 +7,15 @@
 ## 기본 사용법
 
 ```bash
-python scripts/run_train.py --config configs/smoke/smoke_test_text.yaml --project-root .
-python scripts/run_rag_ingest.py --config configs/rag/rag_smoke_test.yaml --project-root .
-python scripts/run_rag_chat.py --config configs/rag/rag_smoke_test.yaml --project-root . --evaluate
+python scripts/run_rag_ingest.py --config configs/experiments/rag/rag_smoke_test.yaml --project-root .
+python scripts/run_rag_chat.py --config configs/experiments/rag/rag_smoke_test.yaml --project-root . --evaluate
 ```
 
 새 실험을 만들 때는 기존 config를 복사해서 시작합니다.
 
 ```text
-configs/rag/rag_smoke_test.yaml
--> configs/rag/rag_hybrid_top5.yaml
+configs/experiments/rag/rag_smoke_test.yaml
+-> configs/experiments/rag/rag_hybrid_top5.yaml
 ```
 
 복사한 뒤에는 최소한 `experiment.name` 또는 `artifact_policy.run_id`를 바꿔 결과가 덮어써지지 않게 합니다.
@@ -27,7 +26,7 @@ configs/rag/rag_smoke_test.yaml
 
 ```yaml
 experiment:
-  name: smoke_test_text
+  name: rag_smoke_test
   author: team
   seed: 42
   contract_version: v1.0
@@ -42,12 +41,10 @@ experiment:
 
 ```yaml
 paths:
-  data_dir: data/text_processed
   raw_docs_dir: data/rag_smoke
-  output_dir: experiments/smoke_test_text
+  output_dir: experiments/rag_smoke_test
 ```
 
-- `data_dir`: 분류 모델이 사용할 processed 데이터 폴더입니다.
 - `raw_docs_dir`: RAG가 읽을 원본 문서 폴더입니다.
 - `output_dir`: 실험 산출물을 저장할 폴더입니다.
 
@@ -68,7 +65,103 @@ artifact_policy:
 
 반복 비교 실험을 할 때는 `run_id`를 적극적으로 사용하는 것이 안전합니다.
 
-## 분류 모델 옵션
+## RAG 옵션
+
+RAG 프로젝트에서 가장 자주 바꾸는 영역입니다.
+
+### `rag.loader`
+
+```yaml
+rag:
+  loader:
+    file_types: [txt, pdf, docx, hwpx, hwp]
+```
+
+읽을 문서 확장자를 지정합니다.
+
+### `rag.chunk`
+
+```yaml
+rag:
+  chunk:
+    size: 500
+    overlap: 80
+    unit: char
+```
+
+- `size`: chunk 하나의 크기입니다.
+- `overlap`: 앞뒤 chunk가 겹치는 길이입니다.
+- `unit`: 현재는 `char` 기준입니다.
+
+chunk가 너무 작으면 맥락이 사라지고, 너무 크면 검색 정확도가 떨어질 수 있습니다.
+
+### `rag.embedding`
+
+```yaml
+rag:
+  embedding:
+    provider: local
+    model_name: hashing-char-ngram-v1
+    dimension: 64
+```
+
+지원 구현:
+
+- `local`: 빠른 smoke test용 hashing embedding
+- `huggingface`: transformers 기반 mean pooling embedding
+
+### `rag.vector_store`
+
+```yaml
+rag:
+  vector_store:
+    type: memory
+    path:
+    collection_name: rag_smoke_test
+```
+
+현재 실제 구현은 `memory`입니다. FAISS, Chroma, Elasticsearch는 확장 계약만 열어둔 상태입니다.
+
+### `rag.retriever`
+
+```yaml
+rag:
+  retriever:
+    method: hybrid
+    top_k: 3
+    score_threshold: 0.0
+```
+
+- `method`: `keyword`, `semantic`, `hybrid`
+- `top_k`: 검색 결과 개수입니다.
+- `score_threshold`: 너무 낮은 점수의 검색 결과를 버릴 때 사용합니다.
+
+### `rag.answerer`
+
+```yaml
+rag:
+  answerer:
+    mode: extractive
+    provider: local
+    fallback_message: 문서에서 확인하지 못했습니다.
+```
+
+현재 실제 구현은 `extractive/local`입니다. 검색된 chunk에서 답변 문장을 추출합니다.
+
+### `rag.checkpoint`
+
+```yaml
+rag:
+  checkpoint:
+    enabled: true
+    resume: true
+```
+
+RAG ingest 산출물인 `parsed_documents.csv`, `chunks.csv`, `embeddings.jsonl`을 재사용합니다.
+
+현재는 stage 단위 resume입니다. 문서별 offset resume은 아직 구현하지 않았습니다.
+
+## 분류 모델 참고 옵션
 
 ### `data`
 
@@ -152,100 +245,6 @@ scheduler:
 ```
 
 learning rate schedule을 조정합니다.
-
-## RAG 옵션
-
-### `rag.loader`
-
-```yaml
-rag:
-  loader:
-    file_types: [txt, pdf, docx, hwpx, hwp]
-```
-
-읽을 문서 확장자를 지정합니다.
-
-### `rag.chunk`
-
-```yaml
-rag:
-  chunk:
-    size: 500
-    overlap: 80
-    unit: char
-```
-
-- `size`: chunk 하나의 크기입니다.
-- `overlap`: 앞뒤 chunk가 겹치는 길이입니다.
-- `unit`: 현재는 `char` 기준입니다.
-
-chunk가 너무 작으면 맥락이 사라지고, 너무 크면 검색 정확도가 떨어질 수 있습니다.
-
-### `rag.embedding`
-
-```yaml
-rag:
-  embedding:
-    provider: local
-    model_name: hashing-char-ngram-v1
-    dimension: 64
-```
-
-지원 구현:
-
-- `local`: 빠른 smoke test용 hashing embedding
-- `huggingface`: transformers 기반 mean pooling embedding
-
-### `rag.vector_store`
-
-```yaml
-rag:
-  vector_store:
-    type: memory
-    path:
-    collection_name: rag_smoke_test
-```
-
-현재 실제 구현은 `memory`입니다. FAISS, Chroma, Elasticsearch는 확장 계약만 잡혀 있습니다.
-
-### `rag.retriever`
-
-```yaml
-rag:
-  retriever:
-    method: hybrid
-    top_k: 3
-    score_threshold: 0.0
-```
-
-- `method`: `keyword`, `semantic`, `hybrid`
-- `top_k`: 검색 결과 개수입니다.
-- `score_threshold`: 너무 낮은 점수의 검색 결과를 버릴 때 사용합니다.
-
-### `rag.answerer`
-
-```yaml
-rag:
-  answerer:
-    mode: extractive
-    provider: local
-    fallback_message: 문서에서 확인하지 못했습니다.
-```
-
-현재 실제 구현은 `extractive/local`입니다. 검색된 chunk에서 답변 문장을 추출합니다.
-
-### `rag.checkpoint`
-
-```yaml
-rag:
-  checkpoint:
-    enabled: true
-    resume: true
-```
-
-RAG ingest 산출물인 `parsed_documents.csv`, `chunks.csv`, `embeddings.jsonl`을 재사용합니다.
-
-현재는 stage 단위 resume입니다. 문서별 offset resume은 아직 구현하지 않았습니다.
 
 ## 평가 옵션
 

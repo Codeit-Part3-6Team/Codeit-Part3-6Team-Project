@@ -6,13 +6,16 @@
 
 ## 한 줄 요약
 
-현재 파이프라인은 **config 하나를 기준으로 데이터 검증, 학습, 예측, 실험 산출물 저장, 실험 요약까지 재현 가능하게 실행하는 구조**입니다.
+현재 파이프라인은 **config 하나를 기준으로 RAG 문서 처리, 검색, 답변, 평가, 실험 산출물 저장, 실험 요약까지 재현 가능하게 실행하는 구조**입니다.
 
 ```text
 config
-  -> data validation
-  -> train
-  -> predict
+  -> document loading
+  -> chunking
+  -> embedding
+  -> retrieval
+  -> answer + citations
+  -> evaluation
   -> experiment artifacts
   -> experiment summary
 ```
@@ -49,85 +52,85 @@ tests/        파이프라인이 깨졌는지 확인하는 테스트
 
 ```yaml
 experiment:
-  name: smoke_test_text
+  name: rag_smoke_test
   seed: 42
 
 paths:
-  data_dir: data/text_processed
-  output_dir: experiments/smoke_test_text
+  raw_docs_dir: data/rag_smoke
+  output_dir: experiments/rag_smoke_test
 
-data:
-  task: text_classification
-  train_csv: train.csv
-  valid_csv: valid.csv
-  test_csv: test.csv
-
-model:
-  name: keyword_text_classifier
+rag:
+  chunk:
+    size: 500
+    overlap: 80
+  retriever:
+    method: semantic
+    top_k: 3
 ```
 
 config에는 다음 정보가 들어갑니다.
 
-- 어떤 데이터를 쓸지
-- 어떤 모델을 쓸지
+- 어떤 문서 폴더를 읽을지
+- 문서를 어떻게 chunk로 나눌지
+- 어떤 embedding과 retriever를 쓸지
 - 결과를 어디에 저장할지
 - 어떤 metric을 기준으로 볼지
-- seed, batch size, learning rate 같은 실험 조건
+- checkpoint/resume, backup 같은 실행 정책
 
 ## 실행 단계
 
-### 1. 데이터 검증
+### 1. RAG 실행 전 점검
 
 ```bash
-python scripts/run_validate.py --data-dir data/text_processed --project-root .
+python scripts/check_rag_pipeline.py --config configs/experiments/rag/rag_smoke_test.yaml --project-root .
 ```
 
 확인하는 것:
 
-- `train.csv`, `valid.csv`, `test.csv`가 있는지
-- 필수 컬럼이 있는지
-- label이 `class_map.json`에 정의되어 있는지
-- split 간 중복이나 누락이 없는지
+- raw document 폴더가 있는지
+- 지원하는 문서 확장자인지
+- 평가 질문 CSV가 있는지
+- chunk, retriever, answerer config 값이 유효한지
 
-### 2. 학습
+### 2. 문서 ingest
 
 ```bash
-python scripts/run_train.py --config configs/smoke/smoke_test_text.yaml --project-root .
+python scripts/run_rag_ingest.py --config configs/experiments/rag/rag_smoke_test.yaml --project-root .
 ```
 
-학습 단계에서 하는 일:
+ingest 단계에서 하는 일:
 
 - config 로드
-- 데이터 검증
-- 데이터 로드
-- 모델 생성
-- 학습 실행
-- valid/test metric 계산
-- 산출물 저장
+- 문서 로드
+- chunk 생성
+- embedding 생성
+- `parsed_documents.csv`, `chunks.csv`, `embeddings.jsonl` 저장
+- `rag_ingest_checkpoint.json` 저장
 
-### 3. 예측
+### 3. 질문 검색과 답변
 
 ```bash
-python scripts/run_predict.py \
-  --config configs/smoke/smoke_test_text.yaml \
+python scripts/run_rag_chat.py \
+  --config configs/experiments/rag/rag_smoke_test.yaml \
   --project-root . \
-  --input data/text_processed/sample_positive.txt
+  --question "예산은 얼마야?"
 ```
 
-예측 단계에서 하는 일:
+답변 단계에서 하는 일:
 
-- 실험 폴더의 `best_model.json` 또는 모델 artifact 로드
-- 입력 데이터 전처리
-- prediction 생성
-- `predictions.csv` 저장
+- 질문과 관련된 chunk 검색
+- 답변 생성
+- citation 연결
+- `retrieval_results.jsonl`, `answers.jsonl` 저장
 
-### 4. 실험 요약
+### 4. RAG 평가와 실험 요약
 
 ```bash
+python scripts/run_rag_chat.py --config configs/experiments/rag/rag_smoke_test.yaml --project-root . --evaluate
 python scripts/summarize_experiments.py --project-root .
 ```
 
-여러 실험의 `metrics.json`, `config.yaml`, `run_info.json`을 모아 다음 파일을 만듭니다.
+평가 질문 세트를 실행한 뒤 여러 실험의 `metrics.json`, `config.yaml`, `run_info.json`을 모아 다음 파일을 만듭니다.
 
 ```text
 reports/experiment_summary.csv
@@ -139,25 +142,22 @@ reports/experiment_summary.json
 각 실험은 `experiments/{experiment.name}/` 아래에 저장됩니다.
 
 ```text
-experiments/smoke_test_text/
-|-- best_model.json
+experiments/rag_smoke_test/
 |-- config.yaml
-|-- history.csv
+|-- parsed_documents.csv
+|-- chunks.csv
+|-- embeddings.jsonl
+|-- retrieval_results.jsonl
+|-- answers.jsonl
+|-- evaluation_results.csv
 |-- metrics.json
-|-- predictions.csv
 |-- README.md
 |-- run_status.json
 |-- run_info.json
-`-- train.log
+`-- rag_ingest_checkpoint.json
 ```
 
-학습/예측이 실패하면 같은 실험 폴더에 `failure.log`를 남깁니다.
-
-HuggingFace 실험은 추가로 다음 폴더를 만듭니다.
-
-```text
-experiments/{experiment.name}/hf_model/
-```
+실행이 실패하면 같은 실험 폴더에 `failure.log`를 남깁니다.
 
 ## Smoke Test와 실제 실험
 
@@ -168,44 +168,21 @@ smoke test: 파이프라인이 정상 동작하는지 빠르게 확인
 real experiment: 실제 모델 성능을 확인하는 실험
 ```
 
-예시:
+RAG 예시:
 
-- `configs/smoke/smoke_test_text.yaml`: 빠른 텍스트 smoke test
-- `configs/smoke/smoke_test_hf_tiny.yaml`: HuggingFace 환경 smoke test
-- `configs/experiments/exp002_hf_text_finetune.yaml`: 실제 HuggingFace 실험 후보
-- `configs/rag/rag_smoke_test.yaml`: RAG 문서 검색/답변 smoke test
+- `configs/experiments/rag/rag_smoke_test.yaml`: semantic retriever 기본 실험
+- `configs/experiments/rag/rag_smoke_keyword.yaml`: keyword retriever 비교 실험
+- `configs/experiments/rag/rag_smoke_hybrid.yaml`: hybrid retriever 비교 실험
 
-`smoke_test_hf_tiny.yaml`은 성능을 보기 위한 config가 아닙니다.
-다운로드, 학습, 저장, 예측 흐름이 실제로 도는지 확인하기 위한 config입니다.
+분류 모델과 HuggingFace fine-tuning config는 현재 RAG 프로젝트의 본 실험이 아니라 `configs/examples/classification/`에 참고용으로 보관합니다.
 
-## RAG 프로젝트로 바뀌면 무엇이 달라지는가
+## RAG 프로젝트 기준으로 무엇을 본다
 
-RAG 프로젝트로 방향이 바뀌어도 가운데 운영 구조는 유지할 수 있습니다.
 구체적인 RAG 입력/출력 계약은 `rag/RAG_PIPELINE_SPEC.md`에서 관리합니다.
 
-그대로 쓰는 것:
-
-- `configs/`
-- `scripts/`
-- `experiments/`
-- `reports/`
-- `docs/md/`
-- `docs/html/`
-- `tests/`
-- 실험 요약 방식
-- Colab/Drive 실행 방식
-
-바뀌는 것:
-
 ```text
-분류 프로젝트:
-text -> model -> predicted_label
-
-RAG 프로젝트:
 document -> chunk -> embedding -> retrieve -> answer + citations
 ```
-
-즉, 파이프라인의 앞단과 뒷단은 바뀌지만 “config로 실행하고, 실험 산출물을 남기고, 결과를 요약한다”는 운영 구조는 그대로 가져갈 수 있습니다.
 
 현재 RAG smoke pipeline은 외부 모델 없이 hashing embedding 기반 semantic retrieval로 구현되어 있습니다.
 loader는 `txt`, `pdf`, `docx`, `hwpx`, `hwp` 확장자를 대상으로 하며, 형식이 달라도 같은 document/chunk 계약으로 변환합니다.

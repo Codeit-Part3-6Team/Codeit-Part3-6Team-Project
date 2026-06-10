@@ -62,7 +62,7 @@ python scripts/run_validate.py \
 
 python scripts/run_train.py \
   --project-root . \
-  --config configs/experiments/exp002_hf_text_finetune_colab.yaml
+  --config configs/examples/classification/exp002_hf_text_finetune_colab.yaml
 ```
 
 이 config는 결과를 Drive에 바로 저장합니다.

@@ -89,7 +89,10 @@ artifact_policy:
 
 
 def test_write_experiment_summary_collects_rag_metrics(isolated_project: Path):
-    run_rag_evaluation(isolated_project / "configs" / "rag" / "rag_smoke_test.yaml", isolated_project)
+    run_rag_evaluation(
+        isolated_project / "configs" / "experiments" / "rag" / "rag_smoke_test.yaml",
+        isolated_project,
+    )
 
     rows = write_experiment_summary(isolated_project)
 

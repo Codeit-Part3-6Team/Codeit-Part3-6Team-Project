@@ -10,7 +10,7 @@ from src.rag.pipeline import run_rag_chat, run_rag_evaluation, run_rag_ingest, r
 
 
 def test_rag_smoke_pipeline_writes_artifacts(isolated_project: Path):
-    config = isolated_project / "configs" / "rag" / "rag_smoke_test.yaml"
+    config = isolated_project / "configs" / "experiments" / "rag" / "rag_smoke_test.yaml"
 
     ingest_summary = run_rag_ingest(config, isolated_project)
     retrieval = run_rag_retrieve(config, isolated_project, "예산이 얼마야?")
@@ -49,7 +49,7 @@ def test_rag_smoke_pipeline_writes_artifacts(isolated_project: Path):
 
 
 def test_rag_ingest_resumes_from_existing_document_and_chunk_artifacts(isolated_project: Path):
-    config = isolated_project / "configs" / "rag" / "rag_smoke_test.yaml"
+    config = isolated_project / "configs" / "experiments" / "rag" / "rag_smoke_test.yaml"
     output_dir = isolated_project / "experiments" / "rag_smoke_test"
 
     first_summary = run_rag_ingest(config, isolated_project)
@@ -72,7 +72,7 @@ def test_run_rag_chat_script_supports_evaluation(isolated_project: Path, repo_ro
             "--project-root",
             str(isolated_project),
             "--config",
-            str(isolated_project / "configs" / "rag" / "rag_smoke_test.yaml"),
+            str(isolated_project / "configs" / "experiments" / "rag" / "rag_smoke_test.yaml"),
             "--evaluate",
         ],
         check=True,
@@ -95,7 +95,7 @@ def test_run_rag_chat_script_resolves_config_from_project_root(
             "--project-root",
             str(isolated_project),
             "--config",
-            "configs/rag/rag_smoke_test.yaml",
+            "configs/experiments/rag/rag_smoke_test.yaml",
             "--evaluate",
         ],
         check=True,
@@ -110,9 +110,9 @@ def test_run_rag_chat_script_resolves_config_from_project_root(
 def test_compare_rag_retrievers_writes_report(isolated_project: Path, repo_root: Path):
     rows = compare_rag_retrievers(
         [
-            isolated_project / "configs" / "rag" / "rag_smoke_keyword.yaml",
-            isolated_project / "configs" / "rag" / "rag_smoke_test.yaml",
-            isolated_project / "configs" / "rag" / "rag_smoke_hybrid.yaml",
+            isolated_project / "configs" / "experiments" / "rag" / "rag_smoke_keyword.yaml",
+            isolated_project / "configs" / "experiments" / "rag" / "rag_smoke_test.yaml",
+            isolated_project / "configs" / "experiments" / "rag" / "rag_smoke_hybrid.yaml",
         ],
         isolated_project,
     )
@@ -137,7 +137,7 @@ def test_compare_rag_retrievers_writes_report(isolated_project: Path, repo_root:
 
 
 def test_rag_hybrid_retriever_config_runs_pipeline(isolated_project: Path):
-    config = isolated_project / "configs" / "rag" / "rag_smoke_hybrid.yaml"
+    config = isolated_project / "configs" / "experiments" / "rag" / "rag_smoke_hybrid.yaml"
 
     metrics = run_rag_evaluation(config, isolated_project)
 

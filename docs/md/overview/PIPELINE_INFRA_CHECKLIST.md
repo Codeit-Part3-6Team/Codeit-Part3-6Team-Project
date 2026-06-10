@@ -16,7 +16,7 @@
 | 데이터 검증 | 있음 | `scripts/run_validate.py`, `src/validate_data.py` |
 | 이미지/text smoke test | 있음 | `configs/smoke/smoke_test.yaml`, `configs/smoke/smoke_test_text.yaml` |
 | HuggingFace smoke test | 있음 | `configs/smoke/smoke_test_hf_tiny.yaml` |
-| RAG smoke test | 있음 | `configs/rag/rag_smoke_test.yaml`, `scripts/run_rag_*.py` |
+| RAG smoke test | 있음 | `configs/experiments/rag/rag_smoke_test.yaml`, `scripts/run_rag_*.py` |
 | 다중 문서 loader | 있음 | txt/pdf/docx/hwpx/hwp 대상 loader |
 | RAG embedding 산출물 | 있음 | `embeddings.jsonl` |
 | RAG 검색 비교 | 있음 | `scripts/compare_rag_retrievers.py` |
@@ -63,7 +63,7 @@
    예시:
 
    ```bash
-   python scripts/check_rag_pipeline.py --config configs/rag/rag_smoke_test.yaml --project-root .
+   python scripts/check_rag_pipeline.py --config configs/experiments/rag/rag_smoke_test.yaml --project-root .
    ```
 
    실제 산출물을 만들기 전에 어떤 문서를 읽고, 어떤 output dir을 쓰고, 어떤 retriever를 사용할지 점검합니다.

@@ -33,7 +33,7 @@ def test_local_experiment_notebook_structure() -> None:
         "scripts/run_rag_chat.py",
         "scripts/summarize_experiments.py",
         "configs/smoke/smoke_test_text.yaml",
-        "configs/rag/rag_smoke_test.yaml",
+        "configs/experiments/rag/rag_smoke_test.yaml",
         "data/text_processed/sample_positive.txt",
     ]
     for ref in expected_refs:
@@ -55,7 +55,7 @@ def test_colab_experiment_notebook_structure() -> None:
         "git clone",
         "pip install -r requirements.txt",
         "/content/drive/MyDrive/codeit_ml_project",
-        "configs/experiments/exp002_hf_text_finetune_colab.yaml",
+        "configs/examples/classification/exp002_hf_text_finetune_colab.yaml",
     ]
     for text in expected_texts:
         assert text in source
