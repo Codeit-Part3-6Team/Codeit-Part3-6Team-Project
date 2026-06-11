@@ -1,4 +1,10 @@
-# Daily Report
+---
+name: Daily Report
+about: 매일 진행 상황, 막힌 점, 다음 액션 공유
+title: "[daily] YYYY-MM-DD "
+labels: daily
+assignees: ""
+---
 
 ## 기본 정보
 

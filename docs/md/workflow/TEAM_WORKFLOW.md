@@ -100,10 +100,10 @@ Presentation Lead:
 
 매일 짧게 작성합니다. 목적은 감시가 아니라 막힌 일을 빨리 발견하는 것입니다.
 
-작성 위치:
+템플릿 위치:
 
 ```text
-reports/daily_report_template.md
+.github/ISSUE_TEMPLATE/daily_report.md
 ```
 
 작성 기준:

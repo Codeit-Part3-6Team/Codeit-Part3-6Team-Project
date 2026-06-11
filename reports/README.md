@@ -1,16 +1,13 @@
 # Reports 디렉터리
 
 `reports/`는 실험 요약과 팀 공유용 보고 자료를 두는 곳입니다.
+GitHub에서 직접 쓰는 Issue, PR, Daily Report 템플릿은 `.github/`에서 관리합니다.
 
 ## Reports 마인드맵
 
 ```mermaid
 mindmap
   root((reports))
-    Daily
-      daily_report_template.md
-      진행 상황
-      막힌 점
     Experiment Log
       experiment_log.csv
       config
@@ -30,7 +27,6 @@ mindmap
 
 ```text
 reports/
-|-- daily_report_template.md        # Daily Report 작성 템플릿
 |-- experiment_log.csv              # 수동 실험 기록 CSV
 |-- experiment_summary.csv          # 실험 요약 생성 결과
 |-- experiment_summary.json         # 실험 요약 JSON
@@ -40,7 +36,6 @@ reports/
 
 ## 주요 파일
 
-- `daily_report_template.md`: 매일 진행 상황, 막힌 점, 다음 액션을 정리하는 템플릿
 - `experiment_log.csv`: 사람이 직접 남기는 실험 로그
 - `experiment_summary.csv`: `scripts/summarize_experiments.py`가 생성하는 실험 요약
 - `rag_retriever_comparison.csv`: RAG retriever 비교 결과

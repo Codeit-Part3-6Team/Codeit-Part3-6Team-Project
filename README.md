@@ -52,7 +52,7 @@ FAISS, Chroma, Elasticsearch, reranker, OpenAI/HuggingFace LLM 답변은 config 
 |   `-- html/                     # 공유/설명용 HTML 문서
 |-- experiments/                  # 실험 실행 결과 저장 위치
 |-- notebooks/                    # 로컬/Colab 실험 노트북 템플릿
-|-- reports/                      # 실험 요약, Daily Report 템플릿
+|-- reports/                      # 실험 요약, 팀 공유용 리포트
 |-- scripts/                      # 팀원이 직접 실행하는 공식 진입점
 |-- src/                          # 파이프라인 실제 구현
 `-- tests/                        # 단위 테스트와 smoke test
