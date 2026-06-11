@@ -50,7 +50,7 @@ flowchart LR
 
 ### 먼저 볼 문서
 
-- `docs/md/workflow/PROJECT_WORKFLOW_GUIDE.md`
+- `docs/team/workflow.md`
 - `docs/md/data/DATA_CONTRACT.md`
 - `docs/md/rag/RAG_PIPELINE_SPEC.md`
 
@@ -90,7 +90,7 @@ flowchart LR
 
 ### 먼저 볼 문서
 
-- `docs/md/workflow/PROJECT_WORKFLOW_GUIDE.md`
+- `docs/team/workflow.md`
 - `docs/md/experiments/EXPERIMENT_GUIDE.md`
 - `docs/md/overview/RAG_QUALITY_CHECKLIST.md`
 
@@ -122,7 +122,7 @@ flowchart LR
 
 - `docs/md/rag/RAG_PIPELINE_SPEC.md`
 - `docs/md/overview/MODULE_ARCHITECTURE.md`
-- `docs/md/workflow/PROJECT_WORKFLOW_GUIDE.md`
+- `docs/team/workflow.md`
 
 ## Presentation Lead
 
@@ -150,7 +150,7 @@ flowchart LR
 
 ### 먼저 볼 문서
 
-- `docs/md/kickoff/TEAM_BRIEFING_FLOW.md`
+- `docs/team/kickoff.md`
 - `docs/html/overview/pipeline_explainer.html`
 - `docs/html/overview/module_architecture.html`
 
@@ -166,7 +166,7 @@ flowchart LR
 ### 첫 작업
 
 1. 역할을 확정합니다.
-2. `FIRST_WEEK_KANBAN.md`의 첫 주 카드를 보드로 옮깁니다.
+2. `first-week.md`의 첫 주 카드를 보드로 옮깁니다.
 3. 각 카드의 담당자와 완료 기준을 확인합니다.
 4. Daily Report 작성 위치를 공지합니다.
 5. 막힌 점과 의사결정 사항을 별도로 기록합니다.
@@ -180,9 +180,9 @@ flowchart LR
 
 ### 먼저 볼 문서
 
-- `docs/TEAM_DOCS_ENTRY.md`
-- `docs/md/workflow/GITHUB_OPERATIONS.md`
-- `docs/md/workflow/FIRST_WEEK_KANBAN.md`
+- `docs/team/README.md`
+- `docs/team/operations.md`
+- `docs/team/first-week.md`
 - `.github/ISSUE_TEMPLATE/daily_report.md`
 
 ## 설명할 때의 원칙

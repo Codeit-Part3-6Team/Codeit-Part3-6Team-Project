@@ -1,33 +1,20 @@
-# HTML Docs Mind Map
+# HTML Docs
 
-`docs/html/`은 팀원 설명, 킥오프, 발표, 브라우저 공유에 쓰는 HTML 문서 모음입니다.
+`docs/html/`은 발표와 설명에 직접 쓰기 좋은 HTML 문서만 둡니다.
 
-## 한눈에 보기
-
-```text
-HTML Docs
-|-- overview/      큰 그림과 모듈 구조
-|-- rag/           RAG 파이프라인 계약
-|-- experiments/   실험 실행과 Colab
-|-- data/          데이터 계약
-|-- workflow/      Git, 역할, 팀 운영
-`-- kickoff/       킥오프 설명 자료
-```
+모든 Markdown 문서를 HTML로 만들 필요는 없습니다. 세부 참고 문서는 `docs/md/`를 보고, 팀원이 처음 볼 문서는 `docs/team/`을 봅니다.
 
 ## 추천 진입점
 
-- `overview/pipeline_explainer.html`: 처음 보는 팀원에게 설명할 때
+- `overview/pipeline_explainer.html`: 처음 보는 팀원에게 파이프라인을 쉽게 설명할 때
 - `overview/module_architecture.html`: 모듈과 RAG 흐름을 다이어그램으로 설명할 때
 - `overview/PIPELINE_OVERVIEW.html`: 전체 실행 구조를 설명할 때
-- `rag/RAG_PIPELINE_SPEC.html`: RAG 입력/출력 계약을 확인할 때
-- `experiments/EXPERIMENT_GUIDE.html`: 실험 실행 방법을 확인할 때
-- `kickoff/kickoff.html`: 킥오프 발표 자료로 사용할 때
+- `rag/RAG_PIPELINE_SPEC.html`: RAG 입력/출력 계약을 화면으로 보여줄 때
+- `experiments/EXPERIMENT_GUIDE.html`: 실험 실행 방법을 설명할 때
+- `kickoff/kickoff.html`: 킥오프 공유 자료로 사용할 때
 
-## Markdown과의 관계
+## 남기지 않는 것
 
-`docs/html/`은 설명과 공유가 필요한 주제를 보기 좋게 정리한 HTML 문서 모음입니다. 모든 Markdown 문서가 반드시 HTML과 1:1로 대응해야 하는 것은 아닙니다.
-
-```text
-docs/md/overview/PIPELINE_OVERVIEW.md
--> docs/html/overview/PIPELINE_OVERVIEW.html
-```
+- 오래된 Git workflow, role guide, team workflow HTML 변환본
+- Markdown과 내용이 거의 같은 단순 변환본
+- 팀원이 처음 읽어야 할지 헷갈리는 보조 문서

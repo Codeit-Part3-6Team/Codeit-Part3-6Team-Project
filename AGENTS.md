@@ -17,7 +17,9 @@
 - 공유용 요약과 리포트는 `reports/`에 남깁니다.
 - 원본 데이터는 직접 수정하지 않습니다.
 - 대용량 모델 weight, checkpoint, 원본 데이터, 임시 산출물은 Git에 올리지 않습니다.
-- 문서를 수정할 때는 관련 README와 `docs/md/`를 확인하고, 설명용 HTML이 따로 있는 주제라면 `docs/html/`도 함께 확인합니다.
+- 팀원에게 처음 보여줄 문서는 `docs/team/`에서 확인합니다.
+- 세부 참고 문서는 `docs/md/`에서 확인합니다.
+- 설명용 HTML이 따로 있는 주제라면 `docs/html/`도 함께 확인합니다.
 - public 함수와 클래스의 docstring은 한국어로 작성합니다.
 - 주석은 처음 보는 팀원이 흐름을 이해하는 데 도움이 되는 위치에 짧게 남깁니다.
 
@@ -33,8 +35,10 @@ src/rag/                 RAG 문서 처리, 검색, 답변, 평가
 experiments/             실험 산출물
 reports/                 실험 요약과 팀 공유 자료
 notebooks/               로컬/Colab 실험 템플릿
-docs/md/                 관리용 Markdown 문서
+docs/team/               팀원이 처음 볼 킥오프, 운영, 역할 문서
+docs/md/                 세부 참고 Markdown 문서
 docs/html/               공유/설명용 HTML 문서
+docs/llm/                LLM 작업용 컨텍스트 문서
 tests/                   단위 테스트와 smoke test
 ```
 
@@ -42,9 +46,10 @@ tests/                   단위 테스트와 smoke test
 
 1. 현재 브랜치와 워킹트리를 확인합니다.
 2. 관련 README를 먼저 읽습니다.
-3. RAG 작업이면 `docs/llm/PROJECT_CONTEXT.md`, `docs/llm/ARCHITECTURE_MAP.md`, `docs/md/rag/RAG_PIPELINE_SPEC.md`를 확인합니다.
-4. config 변경이면 `configs/README.md`와 관련 YAML을 확인합니다.
-5. 실행 스크립트 변경이면 `scripts/README.md`와 `tests/test_scripts.py`를 확인합니다.
+3. 팀 공유 문서 작업이면 `docs/team/README.md`를 확인합니다.
+4. RAG 작업이면 `docs/llm/PROJECT_CONTEXT.md`, `docs/llm/ARCHITECTURE_MAP.md`, `docs/md/rag/RAG_PIPELINE_SPEC.md`를 확인합니다.
+5. config 변경이면 `configs/README.md`와 관련 YAML을 확인합니다.
+6. 실행 스크립트 변경이면 `scripts/README.md`와 `tests/test_scripts.py`를 확인합니다.
 
 ## 작업 후 확인
 
@@ -73,3 +78,4 @@ python -m pytest tests/test_rag_pipeline.py tests/test_rag_validation.py tests/t
 - `src/` 구현을 바꾸고 테스트나 README를 갱신하지 않는 것
 - 실험 산출물을 Git에 추가하는 것
 - RAG 답변만 보고 citation, retrieval 결과, failure artifact를 놓치는 것
+- 팀원이 처음 볼 문서와 세부 참고 문서를 같은 위치에 섞어두는 것

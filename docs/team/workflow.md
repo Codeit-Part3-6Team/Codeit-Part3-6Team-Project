@@ -134,5 +134,5 @@ PM은 모든 세부 구현을 직접 설명하기보다, 각 단계의 산출물
 - RAG 입출력 계약: `docs/md/rag/RAG_PIPELINE_SPEC.md`
 - 데이터 형식: `docs/md/data/DATA_CONTRACT.md`
 - 실험 실행: `docs/md/experiments/EXPERIMENT_GUIDE.md`
-- 역할별 첫 작업: `docs/md/workflow/ROLE_FOCUS_GUIDE.md`
-- GitHub 운영: `docs/md/workflow/GITHUB_OPERATIONS.md`
+- 역할별 첫 작업: `docs/team/roles.md`
+- GitHub 운영: `docs/team/operations.md`

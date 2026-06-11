@@ -40,7 +40,7 @@
    - Experiment Lead: config 실험, metric 해석, 결과 비교
    - Application Engineer: 입출력 계약, 데모/API 후보
    - Presentation Lead: 설명 자료, 용어 정리, 발표 흐름
-   - 자세한 설명은 전체 문서 목록이 아니라 `docs/md/workflow/ROLE_FOCUS_GUIDE.md`에서 역할별로 확인합니다.
+   - 자세한 설명은 전체 문서 목록이 아니라 `docs/team/roles.md`에서 역할별로 확인합니다.
 
 6. 첫 주 작업 방식
    - 모든 작업은 Issue로 시작합니다.
@@ -59,7 +59,7 @@
 
 - `docs/html/overview/pipeline_explainer.html`
 - `docs/html/overview/module_architecture.html`
-- `docs/md/workflow/ROLE_FOCUS_GUIDE.md`
-- `docs/md/workflow/FIRST_WEEK_KANBAN.md`
-- `docs/md/workflow/GITHUB_OPERATIONS.md`
+- `docs/team/roles.md`
+- `docs/team/first-week.md`
+- `docs/team/operations.md`
 - `docs/md/rag/RAG_PIPELINE_SPEC.md`
