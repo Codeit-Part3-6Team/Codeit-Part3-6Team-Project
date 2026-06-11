@@ -21,6 +21,7 @@
 | RAG embedding 산출물 | 있음 | `embeddings.jsonl` |
 | RAG 검색 비교 | 있음 | `scripts/compare_rag_retrievers.py` |
 | RAG 평가 metric | 있음 | `retrieval_hit_rate`, `citation_correct_rate` 등 |
+| RAG 품질 게이트 | 있음 | `tests/test_rag_quality_gate.py`, `RAG_QUALITY_CHECKLIST.md` |
 | RAG 오답 분석 | 있음 | `bad_retrievals.csv`, `unsupported_answers.csv`, `failed_questions.csv` |
 | RAG config validation | 있음 | `scripts/check_rag_pipeline.py` |
 | RAG dry-run/check 명령 | 있음 | 산출물 생성 전 경로/설정/문서 수 점검 |
@@ -56,6 +57,7 @@
 | FAISS/Chroma | 실제 vector index 저장/로드 구현 | 중간 |
 | LLM answerer | 검색 근거 기반 생성형 답변 구현 | 중간 |
 | 실제 샘플 문서 E2E | 실제 RFP PDF/HWPX/HWP로 전체 흐름 검증 | 높음 |
+| 실제 RFP 품질 기준 | 실제 문서별 chunk/retrieval 실패 유형 축적 | 중간 |
 
 ## 다음 보강 순서 추천
 

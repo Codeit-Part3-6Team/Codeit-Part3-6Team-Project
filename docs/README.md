@@ -13,6 +13,7 @@ mindmap
       Pipeline Overview
       Module Architecture
       Infra Checklist
+      RAG Quality Checklist
     rag
       RAG Pipeline Spec
     experiments
@@ -70,6 +71,7 @@ docs/
 | 프로젝트 전체 흐름 보기 | [PIPELINE_OVERVIEW.md](md/overview/PIPELINE_OVERVIEW.md) | [PIPELINE_OVERVIEW.html](html/overview/PIPELINE_OVERVIEW.html) |
 | 모듈 관계와 구조 보기 | [MODULE_ARCHITECTURE.md](md/overview/MODULE_ARCHITECTURE.md) | [module_architecture.html](html/overview/module_architecture.html) |
 | 구현된 인프라 확인 | [PIPELINE_INFRA_CHECKLIST.md](md/overview/PIPELINE_INFRA_CHECKLIST.md) | [PIPELINE_INFRA_CHECKLIST.html](html/overview/PIPELINE_INFRA_CHECKLIST.html) |
+| RAG 품질 게이트 확인 | [RAG_QUALITY_CHECKLIST.md](md/overview/RAG_QUALITY_CHECKLIST.md) | 별도 HTML 없음 |
 | RAG 계약 확인 | [RAG_PIPELINE_SPEC.md](md/rag/RAG_PIPELINE_SPEC.md) | [RAG_PIPELINE_SPEC.html](html/rag/RAG_PIPELINE_SPEC.html) |
 | 데이터 형식 확인 | [DATA_CONTRACT.md](md/data/DATA_CONTRACT.md) | [DATA_CONTRACT.html](html/data/DATA_CONTRACT.html) |
 | 실험 실행 방법 확인 | [EXPERIMENT_GUIDE.md](md/experiments/EXPERIMENT_GUIDE.md) | [EXPERIMENT_GUIDE.html](html/experiments/EXPERIMENT_GUIDE.html) |
