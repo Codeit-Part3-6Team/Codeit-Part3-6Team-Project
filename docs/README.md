@@ -22,6 +22,7 @@ mindmap
       First Week Kanban
       Project Card Seed
       Role Guide
+      Role Focus Guide
       Team Workflow
     experiments
       Experiment Guide
@@ -50,6 +51,7 @@ mindmap
 | 첫 주 Kanban 초안 | [FIRST_WEEK_KANBAN.md](md/workflow/FIRST_WEEK_KANBAN.md) |
 | GitHub Project 카드 입력용 seed | [GITHUB_PROJECT_CARD_SEED.md](md/workflow/GITHUB_PROJECT_CARD_SEED.md) |
 | 역할 분배 확인 | [ROLE_GUIDE.md](md/workflow/ROLE_GUIDE.md) |
+| 역할별 집중 포인트 확인 | [ROLE_FOCUS_GUIDE.md](md/workflow/ROLE_FOCUS_GUIDE.md) |
 | 실험 실행 방법 확인 | [EXPERIMENT_GUIDE.md](md/experiments/EXPERIMENT_GUIDE.md) |
 | 노트북 사용성 점검 | [NOTEBOOK_USAGE_CHECKLIST.md](md/experiments/NOTEBOOK_USAGE_CHECKLIST.md) |
 | 팀 설명 흐름 확인 | [TEAM_BRIEFING_FLOW.md](md/kickoff/TEAM_BRIEFING_FLOW.md) |
