@@ -44,7 +44,7 @@
 | best model 저장 | 분류/HF 중심 | RAG에서는 best retriever/index 기준을 별도 정의 |
 | 로그 | RAG/train/predict 실패 artifact는 있음 | 기타 스크립트에도 같은 패턴 적용 |
 | metric | accuracy/RAG 기본 metric 중심 | macro f1, confusion matrix, retrieval@k, answer faithfulness 후보 추가 |
-| 문서 loader 품질 | 입구는 있음 | 실제 PDF/HWP/HWPX 샘플 기반 보정 필요 |
+| 문서 loader 품질 | realistic DOCX/HWPX E2E, PDF 단위 테스트 통과 | 실제 외부 RFP 원문 확보 후 포맷별 재검증 |
 | HuggingFace trainer 기능 | 있음 | early stopping, scheduler, checkpoint save/resume config 반영 |
 
 ## 아직 없는 것
@@ -56,12 +56,16 @@
 | Elasticsearch | 키워드/하이브리드 검색 엔진 구현 | 낮음 |
 | FAISS/Chroma | 실제 vector index 저장/로드 구현 | 중간 |
 | LLM answerer | 검색 근거 기반 생성형 답변 구현 | 중간 |
-| 실제 샘플 문서 E2E | 실제 RFP PDF/HWPX/HWP로 전체 흐름 검증 | 높음 |
+| 실제 외부 RFP 문서 E2E | 실제 공고 PDF/HWPX/HWP로 전체 흐름 검증 | 높음 |
 | 실제 RFP 품질 기준 | 실제 문서별 chunk/retrieval 실패 유형 축적 | 중간 |
 
 ## 다음 보강 순서 추천
 
-1. **RAG check 명령을 실제 샘플 문서에 적용**
+1. **실제 외부 RFP 원문 확보 후 E2E 재검증**
+   현재는 realistic DOCX/HWPX 샘플로 `check -> ingest -> retrieve -> chat -> evaluate` 흐름을 확인했고,
+   PDF는 loader 단위 테스트를 통과했습니다. 실제 공고 원문이 들어오면 같은 체크리스트로 다시 검증합니다.
+
+2. **RAG check 명령을 실제 문서 config에 적용**
    예시:
 
    ```bash
@@ -69,9 +73,6 @@
    ```
 
    실제 산출물을 만들기 전에 어떤 문서를 읽고, 어떤 output dir을 쓰고, 어떤 retriever를 사용할지 점검합니다.
-
-2. **실제 샘플 문서 E2E**
-   실제 RFP 문서 하나를 기준으로 loader, chunk, retrieval, answer, evaluation 산출물 품질을 확인합니다.
 
 3. **RAG/검색 인프라 선택**
    FAISS, Chroma, Elasticsearch 중 실제 프로젝트 범위에 맞는 검색 저장소를 선택하고 config 계약을 확장합니다.

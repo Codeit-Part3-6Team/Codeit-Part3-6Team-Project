@@ -34,6 +34,7 @@
 | Experiment summary | 여러 실험의 metric/config/run info 요약 |
 | Notebook | local/Colab 실험 템플릿 |
 | Docs | Markdown 원본, HTML 설명 문서, README 지도 |
+| 실제 포맷 E2E 검증 | realistic DOCX/HWPX 샘플 기준 통과, PDF loader 단위 검증 통과 |
 
 ## 아직 구현 후보인 기능
 
@@ -44,12 +45,12 @@
 | reranker | 계약만 있음 | retrieval 품질 병목 확인 후 필요 |
 | vector index 저장/로드 | 일부 후보 | 검색 비용이 커지면 필요 |
 | fine-grained resume | 미구현 | 대량 문서 처리 중단 문제가 생기면 필요 |
-| 실제 RFP PDF/HWP E2E | 미구현 | 데이터 확보 후 최우선 검증 |
+| 실제 외부 RFP PDF/HWP E2E | 대기 | 실제 공고 원문 확보 후 PDF/HWP/HWPX 품질 재검증 |
 | 웹앱/데모 | 예비 구조 | 담당자와 범위 확정 후 구현 |
 
 ## 작업 우선순위
 
-1. 실제 RFP 샘플 문서로 RAG E2E를 검증합니다.
+1. 실제 외부 RFP 원문을 확보하면 PDF/HWP/HWPX E2E를 다시 검증합니다.
 2. 검색 품질을 비교할 수 있도록 retriever config와 metric을 정리합니다.
 3. LLM answerer 실제 호출 구현 또는 UI는 팀 범위, API 사용 가능 여부, 비용을 확인한 뒤 붙입니다.
 4. 문서와 README는 팀원이 이해하기 쉬운 수준을 유지합니다.
