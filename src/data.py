@@ -14,7 +14,8 @@ def read_json(path: str | Path) -> dict[str, Any]:
 
 def read_split_csv(path: str | Path) -> list[dict[str, str]]:
     """train/valid/test split CSV를 row dict 목록으로 읽습니다."""
-    with Path(path).open("r", encoding="utf-8", newline="") as f:
+    # 팀원이 Excel/Windows에서 저장한 CSV도 읽을 수 있게 UTF-8 BOM을 허용합니다.
+    with Path(path).open("r", encoding="utf-8-sig", newline="") as f:
         return list(csv.DictReader(f))
 
 

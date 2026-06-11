@@ -47,10 +47,13 @@ def _load_document_by_type(project_root: Path, path: Path, suffix: str) -> list[
         "hwpx": _parse_hwpx_document,
         "hwp": _parse_hwp_document,
     }
+    loader = loaders.get(suffix)
+    if loader is None:
+        raise ValueError(f"Unsupported RAG document type: {path.suffix}")
     try:
-        return loaders[suffix](project_root, path)
+        return loader(project_root, path)
     except KeyError as exc:
-        raise ValueError(f"Unsupported RAG document type: {path.suffix}") from exc
+        raise ValueError(f"{path} is missing an expected internal document entry: {exc}") from exc
 
 
 def _parse_txt_document(project_root: Path, path: Path) -> list[dict[str, str]]:

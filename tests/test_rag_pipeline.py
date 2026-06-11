@@ -64,6 +64,19 @@ def test_rag_ingest_resumes_from_existing_document_and_chunk_artifacts(isolated_
     assert checkpoint["stage"] == "embeddings"
 
 
+def test_rag_evaluation_accepts_utf8_bom_questions_csv(isolated_project: Path):
+    questions_path = isolated_project / "data" / "rag_smoke" / "eval_questions.csv"
+    original = questions_path.read_text(encoding="utf-8")
+    questions_path.write_text(original, encoding="utf-8-sig")
+
+    config = isolated_project / "configs" / "experiments" / "rag" / "rag_smoke_test.yaml"
+    run_rag_ingest(config, isolated_project)
+    metrics = run_rag_evaluation(config, isolated_project)
+
+    assert metrics["retrieval_hit_rate"] == 1.0
+    assert metrics["answer_contains_expected_rate"] == 1.0
+
+
 def test_run_rag_chat_script_supports_evaluation(isolated_project: Path, repo_root: Path):
     result = subprocess.run(
         [

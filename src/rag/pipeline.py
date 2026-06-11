@@ -321,7 +321,8 @@ def _write_rag_ingest_checkpoint(output_dir: str | Path, stage: str, **counts: i
 
 
 def _read_csv(path: str | Path) -> list[dict[str, str]]:
-    with Path(path).open("r", encoding="utf-8", newline="") as f:
+    # Windows/Excel에서 저장한 CSV는 UTF-8 BOM을 포함할 수 있으므로 utf-8-sig로 읽습니다.
+    with Path(path).open("r", encoding="utf-8-sig", newline="") as f:
         return list(csv.DictReader(f))
 
 

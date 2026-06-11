@@ -65,6 +65,16 @@ def test_load_documents_reports_invalid_hwp(tmp_path: Path):
         load_documents(tmp_path, "docs", ["hwp"])
 
 
+def test_load_documents_reports_invalid_docx_structure(tmp_path: Path):
+    docs_dir = tmp_path / "docs"
+    docs_dir.mkdir()
+    with zipfile.ZipFile(docs_dir / "invalid.docx", "w") as archive:
+        archive.writestr("wrong/document.xml", "<xml />")
+
+    with pytest.raises(ValueError, match="missing an expected internal document entry"):
+        load_documents(tmp_path, "docs", ["docx"])
+
+
 def _write_pdf(path: Path, text: str) -> None:
     stream = f"BT /F1 24 Tf 72 720 Td ({text}) Tj ET".encode("latin-1")
     objects = [
