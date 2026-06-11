@@ -1,25 +1,35 @@
-# Workflow Markdown
+# Workflow Docs
 
-Git, 역할 분배, 팀 운영 방식, 첫 주 보드 구성을 설명하는 Markdown 문서를 둡니다.
+이 디렉터리는 팀 운영 방식, 역할 분배, 작업 흐름, 첫 주 태스크를 설명하는 문서를 모아둡니다.
 
-## 문서 목록
+## 핵심 문서
+
+| 문서 | 용도 |
+| --- | --- |
+| `PROJECT_WORKFLOW_GUIDE.md` | Data 준비부터 발표까지 단계별 기준선 |
+| `ROLE_FOCUS_GUIDE.md` | 역할별로 처음 집중해야 할 작업 |
+| `GITHUB_OPERATIONS.md` | Issue, PR, Daily Report, Kanban 운영 방식 |
+| `FIRST_WEEK_KANBAN.md` | 첫 주에 보드로 옮길 작업 카드 초안 |
+
+## 참고 문서
 
 | 문서 | 용도 |
 | --- | --- |
 | `GIT_WORKFLOW.md` | branch, commit, PR, merge 규칙 |
-| `TEAM_WORKFLOW.md` | 팀 운영 방식, Kanban, Daily Report |
-| `ROLE_GUIDE.md` | PM, Data Engineer, Experiment Lead, Application Engineer, Presentation Lead 역할 |
-| `ROLE_FOCUS_GUIDE.md` | 역할별로 먼저 봐야 할 집중 포인트 |
-| `GITHUB_OPERATIONS.md` | GitHub 저장소, Issue, PR, 보드 운영 준비 |
-| `FIRST_WEEK_KANBAN.md` | 첫 주 Kanban 카드 초안 |
-| `GITHUB_PROJECT_CARD_SEED.md` | GitHub Project에 옮길 카드 목록 |
+| `TEAM_WORKFLOW.md` | 팀 운영 흐름과 회의 방식 |
+| `ROLE_GUIDE.md` | 역할별 책임 상세 설명 |
+| `GITHUB_PROJECT_CARD_SEED.md` | GitHub Project에 입력하기 쉬운 카드 목록 |
 
-## 읽는 순서
+## 설명할 때 쓰는 순서
 
-1. 협업 규칙을 먼저 보려면 `GIT_WORKFLOW.md`
-2. 팀 운영 흐름을 보려면 `TEAM_WORKFLOW.md`
-3. 팀원에게 역할별로 설명하려면 `ROLE_FOCUS_GUIDE.md`
-4. 역할별 책임을 자세히 보려면 `ROLE_GUIDE.md`
-5. GitHub 세팅을 준비하려면 `GITHUB_OPERATIONS.md`
-6. 첫 주 보드를 만들려면 `FIRST_WEEK_KANBAN.md`
-7. 실제 Project 카드로 옮기려면 `GITHUB_PROJECT_CARD_SEED.md`
+1. 프로젝트가 무엇인지 설명합니다.
+2. `PROJECT_WORKFLOW_GUIDE.md`로 작업 단계와 산출물 흐름을 맞춥니다.
+3. `ROLE_FOCUS_GUIDE.md`로 각자 첫 작업을 확인합니다.
+4. `GITHUB_OPERATIONS.md`로 Issue, PR, Daily Report 규칙을 공유합니다.
+5. `FIRST_WEEK_KANBAN.md`를 보드 카드로 옮깁니다.
+
+## 관리 원칙
+
+- 역할 이름이나 책임이 바뀌면 `ROLE_FOCUS_GUIDE.md`와 `ROLE_GUIDE.md`를 함께 확인합니다.
+- 작업 단계가 바뀌면 `PROJECT_WORKFLOW_GUIDE.md`를 먼저 수정합니다.
+- GitHub 운영 방식이 바뀌면 `GITHUB_OPERATIONS.md`, `.github/README.md`, Issue 템플릿을 함께 확인합니다.
