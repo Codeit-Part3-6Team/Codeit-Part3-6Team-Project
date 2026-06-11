@@ -20,6 +20,7 @@ mindmap
       Git Workflow
       GitHub Operations
       First Week Kanban
+      Project Card Seed
       Role Guide
       Team Workflow
     experiments
@@ -47,6 +48,7 @@ mindmap
 | RAG 계약 확인 | [RAG_PIPELINE_SPEC.md](md/rag/RAG_PIPELINE_SPEC.md) |
 | GitHub 운영 준비 | [GITHUB_OPERATIONS.md](md/workflow/GITHUB_OPERATIONS.md) |
 | 첫 주 Kanban 초안 | [FIRST_WEEK_KANBAN.md](md/workflow/FIRST_WEEK_KANBAN.md) |
+| GitHub Project 카드 입력용 seed | [GITHUB_PROJECT_CARD_SEED.md](md/workflow/GITHUB_PROJECT_CARD_SEED.md) |
 | 역할 분배 확인 | [ROLE_GUIDE.md](md/workflow/ROLE_GUIDE.md) |
 | 실험 실행 방법 확인 | [EXPERIMENT_GUIDE.md](md/experiments/EXPERIMENT_GUIDE.md) |
 | 노트북 사용성 점검 | [NOTEBOOK_USAGE_CHECKLIST.md](md/experiments/NOTEBOOK_USAGE_CHECKLIST.md) |

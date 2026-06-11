@@ -28,6 +28,7 @@ mindmap
       ROLE_GUIDE
       GITHUB_OPERATIONS
       FIRST_WEEK_KANBAN
+      GITHUB_PROJECT_CARD_SEED
     kickoff
       KICKOFF_GUIDE
       TEAM_BRIEFING_FLOW
@@ -50,9 +51,10 @@ docs/md/
 3. [rag/RAG_PIPELINE_SPEC.md](rag/RAG_PIPELINE_SPEC.md): RAG 입력, chunk, 검색, 답변, 평가 계약
 4. [workflow/GITHUB_OPERATIONS.md](workflow/GITHUB_OPERATIONS.md): GitHub 운영 준비
 5. [workflow/FIRST_WEEK_KANBAN.md](workflow/FIRST_WEEK_KANBAN.md): 첫 주 작업 카드 초안
-6. [experiments/EXPERIMENT_GUIDE.md](experiments/EXPERIMENT_GUIDE.md): 실험 실행과 결과 확인
-7. [experiments/NOTEBOOK_USAGE_CHECKLIST.md](experiments/NOTEBOOK_USAGE_CHECKLIST.md): 노트북 사용성 점검
-8. [kickoff/TEAM_BRIEFING_FLOW.md](kickoff/TEAM_BRIEFING_FLOW.md): 팀원 설명 흐름
+6. [workflow/GITHUB_PROJECT_CARD_SEED.md](workflow/GITHUB_PROJECT_CARD_SEED.md): GitHub Project 카드 입력용 seed
+7. [experiments/EXPERIMENT_GUIDE.md](experiments/EXPERIMENT_GUIDE.md): 실험 실행과 결과 확인
+8. [experiments/NOTEBOOK_USAGE_CHECKLIST.md](experiments/NOTEBOOK_USAGE_CHECKLIST.md): 노트북 사용성 점검
+9. [kickoff/TEAM_BRIEFING_FLOW.md](kickoff/TEAM_BRIEFING_FLOW.md): 팀원 설명 흐름
 
 ## HTML 문서
 

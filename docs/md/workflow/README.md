@@ -11,6 +11,7 @@ Git, 역할 분배, 팀 운영 방식, 첫 주 보드 구성을 설명하는 Mar
 | `ROLE_GUIDE.md` | PM, Data Engineer, Experiment Lead, Application Engineer, Presentation Lead 역할 |
 | `GITHUB_OPERATIONS.md` | GitHub 저장소, Issue, PR, 보드 운영 준비 |
 | `FIRST_WEEK_KANBAN.md` | 첫 주 Kanban 카드 초안 |
+| `GITHUB_PROJECT_CARD_SEED.md` | GitHub Project에 옮길 카드 목록 |
 
 ## 읽는 순서
 
@@ -19,3 +20,4 @@ Git, 역할 분배, 팀 운영 방식, 첫 주 보드 구성을 설명하는 Mar
 3. 역할별 책임을 보려면 `ROLE_GUIDE.md`
 4. GitHub 세팅을 준비하려면 `GITHUB_OPERATIONS.md`
 5. 첫 주 보드를 만들려면 `FIRST_WEEK_KANBAN.md`
+6. 실제 Project 카드로 옮기려면 `GITHUB_PROJECT_CARD_SEED.md`
