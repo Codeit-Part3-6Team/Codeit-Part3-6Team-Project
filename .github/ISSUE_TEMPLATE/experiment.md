@@ -1,6 +1,6 @@
 ---
 name: Experiment
-about: 모델 학습, 평가, 오류 분석 실험
+about: RAG 실험, 모델 학습, 평가, 오류 분석
 title: "[exp] "
 labels: experiment
 assignees: ""
@@ -10,11 +10,11 @@ assignees: ""
 
 -
 
-## 변경할 것
+## 변경할 조건
 
 - config:
 - data:
-- model:
+- retriever/model:
 - metric:
 
 ## 실행 명령
@@ -27,8 +27,16 @@ assignees: ""
 
 -
 
+## 확인할 산출물
+
+- [ ] `metrics.json`
+- [ ] `retrieval_results.jsonl` 또는 관련 검색 결과
+- [ ] `answers.jsonl` 또는 관련 답변 결과
+- [ ] 실패 분석 CSV
+- [ ] 실험 README 또는 보고 문서
+
 ## 완료 기준
 
-- [ ] `metrics.json` 또는 실험 결과를 확인했습니다.
-- [ ] 실험 README에 결론과 다음 액션을 기록했습니다.
-- [ ] 필요하면 `reports/experiment_summary.csv`를 갱신했습니다.
+- [ ] 실행 명령과 결과를 기록했습니다.
+- [ ] config와 산출물 경로를 남겼습니다.
+- [ ] 다음 액션 또는 실패 원인을 기록했습니다.

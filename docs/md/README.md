@@ -10,46 +10,37 @@ HTML로 공유할 문서는 `docs/html/`에서 따로 관리합니다. 모든 Ma
 mindmap
   root((docs/md))
     overview
-      PIPELINE_OVERVIEW.md
-      MODULE_ARCHITECTURE.md
-      PIPELINE_INFRA_CHECKLIST.md
+      PIPELINE_OVERVIEW
+      MODULE_ARCHITECTURE
+      PIPELINE_INFRA_CHECKLIST
+      RAG_QUALITY_CHECKLIST
     rag
-      RAG_PIPELINE_SPEC.md
+      RAG_PIPELINE_SPEC
     experiments
-      EXPERIMENT_GUIDE.md
-      COLAB_GUIDE.md
+      EXPERIMENT_GUIDE
+      COLAB_GUIDE
+      NOTEBOOK_USAGE_CHECKLIST
     data
-      DATA_CONTRACT.md
+      DATA_CONTRACT
     workflow
-      GIT_WORKFLOW.md
-      ROLE_GUIDE.md
-      TEAM_WORKFLOW.md
+      GIT_WORKFLOW
+      TEAM_WORKFLOW
+      ROLE_GUIDE
+      GITHUB_OPERATIONS
+      FIRST_WEEK_KANBAN
     kickoff
-      KICKOFF_GUIDE.md
-    html 문서
-      공유용 설명
-      선택적 대응
+      KICKOFF_GUIDE
+      TEAM_BRIEFING_FLOW
 ```
 
 ```text
 docs/md/
-|-- overview/        프로젝트 큰 그림
-|   |-- PIPELINE_OVERVIEW.md
-|   |-- MODULE_ARCHITECTURE.md
-|   `-- PIPELINE_INFRA_CHECKLIST.md
+|-- overview/        프로젝트 큰 그림과 인프라 상태
 |-- rag/             RAG 입력/출력 계약
-|   `-- RAG_PIPELINE_SPEC.md
-|-- experiments/     실험 실행과 Colab 운영
-|   |-- EXPERIMENT_GUIDE.md
-|   `-- COLAB_GUIDE.md
+|-- experiments/     실험 실행, Colab, 노트북 사용성
 |-- data/            데이터 계약
-|   `-- DATA_CONTRACT.md
-|-- workflow/        협업 규칙
-|   |-- GIT_WORKFLOW.md
-|   |-- ROLE_GUIDE.md
-|   `-- TEAM_WORKFLOW.md
-`-- kickoff/         팀 설명 자료
-    `-- KICKOFF_GUIDE.md
+|-- workflow/        Git, 팀 운영, 첫 주 Kanban
+`-- kickoff/         팀 설명과 킥오프 원본
 ```
 
 ## 추천 읽는 순서
@@ -57,9 +48,11 @@ docs/md/
 1. [overview/PIPELINE_OVERVIEW.md](overview/PIPELINE_OVERVIEW.md): 프로젝트 전체 실행 흐름
 2. [overview/MODULE_ARCHITECTURE.md](overview/MODULE_ARCHITECTURE.md): 코드와 폴더 관계
 3. [rag/RAG_PIPELINE_SPEC.md](rag/RAG_PIPELINE_SPEC.md): RAG 입력, chunk, 검색, 답변, 평가 계약
-4. [experiments/EXPERIMENT_GUIDE.md](experiments/EXPERIMENT_GUIDE.md): 실험 실행과 결과 확인
-5. [workflow/TEAM_WORKFLOW.md](workflow/TEAM_WORKFLOW.md): 팀 운영 규칙
-6. [kickoff/KICKOFF_GUIDE.md](kickoff/KICKOFF_GUIDE.md): 킥오프 설명 원본
+4. [workflow/GITHUB_OPERATIONS.md](workflow/GITHUB_OPERATIONS.md): GitHub 운영 준비
+5. [workflow/FIRST_WEEK_KANBAN.md](workflow/FIRST_WEEK_KANBAN.md): 첫 주 작업 카드 초안
+6. [experiments/EXPERIMENT_GUIDE.md](experiments/EXPERIMENT_GUIDE.md): 실험 실행과 결과 확인
+7. [experiments/NOTEBOOK_USAGE_CHECKLIST.md](experiments/NOTEBOOK_USAGE_CHECKLIST.md): 노트북 사용성 점검
+8. [kickoff/TEAM_BRIEFING_FLOW.md](kickoff/TEAM_BRIEFING_FLOW.md): 팀원 설명 흐름
 
 ## HTML 문서
 
@@ -70,8 +63,4 @@ docs/md/overview/PIPELINE_OVERVIEW.md
 -> docs/html/overview/PIPELINE_OVERVIEW.html
 ```
 
-HTML은 설명용 산출물입니다. 모든 Markdown 문서를 HTML로 만들 필요는 없고, 직접 디자인한 설명용 HTML은 Markdown 원본과 1:1 대응하지 않을 수 있습니다.
-
-- `docs/html/overview/pipeline_explainer.html`
-- `docs/html/overview/module_architecture.html`
-- `docs/html/kickoff/kickoff.html`
+HTML은 설명용 산출물입니다. 모든 Markdown 문서를 HTML로 만들 필요는 없고, 발표나 온보딩에 직접 쓰는 문서만 선별해서 관리합니다.

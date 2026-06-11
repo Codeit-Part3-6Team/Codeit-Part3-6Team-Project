@@ -13,7 +13,6 @@ mindmap
       막힌 점
     Experiment Log
       experiment_log.csv
-      담당자
       config
       result_path
     Summary
@@ -22,12 +21,12 @@ mindmap
     RAG Compare
       rag_retriever_comparison.csv
       rag_retriever_comparison.json
-    공유 기준
-      필요한 결과만 커밋
+    Sharing
+      필요한 결과만 commit
       대용량 artifact 제외
 ```
 
-## 텍스트 구조
+## 파일 구조
 
 ```text
 reports/
@@ -41,9 +40,9 @@ reports/
 
 ## 주요 파일
 
-- `daily_report_template.md`: Daily Report 템플릿
-- `experiment_log.csv`: 실험 기록용 CSV
+- `daily_report_template.md`: 매일 진행 상황, 막힌 점, 다음 액션을 정리하는 템플릿
+- `experiment_log.csv`: 사람이 직접 남기는 실험 로그
 - `experiment_summary.csv`: `scripts/summarize_experiments.py`가 생성하는 실험 요약
 - `rag_retriever_comparison.csv`: RAG retriever 비교 결과
 
-생성 파일은 `.gitignore` 대상일 수 있습니다. 공유가 필요한 결과만 선별해서 커밋합니다.
+생성 파일은 `.gitignore` 대상일 수 있습니다. 공유가 필요한 결과만 선별해서 commit합니다.

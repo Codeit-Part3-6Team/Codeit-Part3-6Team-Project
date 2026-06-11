@@ -60,6 +60,33 @@ notebooks/README.md와 docs/md/experiments/COLAB_GUIDE.md를 읽고,
 각 셀에는 처음 보는 사람이 이해할 수 있는 짧은 설명과 주석을 넣어줘.
 ```
 
+## GitHub 운영 문서 요청
+
+```text
+AGENTS.md와 docs/md/workflow/GITHUB_OPERATIONS.md를 읽고 진행해줘.
+{운영 주제}에 필요한 Issue, PR, Kanban, Daily Report 규칙을 정리해줘.
+이미 있는 템플릿과 충돌하지 않게 하고, 팀원이 바로 복사해서 쓸 수 있는 형태로 작성해줘.
+문서를 수정했다면 관련 README 링크도 확인해줘.
+```
+
+## 첫 주 태스크 정리 요청
+
+```text
+docs/md/workflow/FIRST_WEEK_KANBAN.md와 docs/md/workflow/ROLE_GUIDE.md를 읽고,
+{역할 또는 목표}에 맞는 첫 주 작업 카드를 보강해줘.
+각 카드는 목적, 담당 후보, 완료 기준, 확인 방법이 드러나게 작성해줘.
+기능 구현으로 바로 넘어가지 말고, 프로젝트 시작 전에 필요한 운영 준비를 우선해줘.
+```
+
+## 노트북 사용성 점검 요청
+
+```text
+notebooks/README.md와 docs/md/experiments/EXPERIMENT_GUIDE.md를 읽고,
+처음 보는 팀원이 노트북에서 어떤 config를 바꿔야 하는지 이해할 수 있는지 점검해줘.
+부족한 셀 설명, metric 확인, 그래프 확인, 산출물 경로 설명을 보강해줘.
+테스트가 있으면 tests/test_notebooks.py를 실행해줘.
+```
+
 ## 좋은 작업 결과 형식
 
 LLM에게 마지막 정리를 요청할 때는 아래 형식을 권장합니다.
@@ -74,4 +101,3 @@ LLM에게 마지막 정리를 요청할 때는 아래 형식을 권장합니다.
 남은 것:
 - ...
 ```
-

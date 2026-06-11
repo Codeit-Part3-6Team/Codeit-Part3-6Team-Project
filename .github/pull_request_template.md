@@ -5,22 +5,22 @@
 ## 확인한 것
 
 - [ ] 관련 Issue를 연결했습니다.
-- [ ] 로컬 또는 Colab에서 실행 결과를 확인했습니다.
-- [ ] 데이터 구조나 Data Contract 변경 여부를 확인했습니다.
-- [ ] 실험 결과가 있다면 `experiments/{experiment_name}` 또는 요약 경로를 남겼습니다.
+- [ ] 필요한 테스트를 실행했습니다.
+- [ ] 데이터 계약 또는 config 변경 여부를 확인했습니다.
+- [ ] 실험 결과가 있다면 산출물 경로를 남겼습니다.
 - [ ] 문서 업데이트가 필요한 변경인지 확인했습니다.
 
 ## 실행/검증 결과
 
 ```text
-예: pytest
-예: python scripts/run_train.py --config configs/smoke/smoke_test_text.yaml --project-root .
+예시:
+python -m pytest
 ```
 
-## 리뷰어가 봐줬으면 하는 부분
+## 리뷰어가 봐야 하는 부분
 
 -
 
-## 참고
+## 참고 링크
 
 -
