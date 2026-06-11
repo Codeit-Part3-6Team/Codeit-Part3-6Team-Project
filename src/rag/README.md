@@ -88,3 +88,4 @@ document_loader
 - answerer: `extractive/local`
 
 FAISS, Chroma, Elasticsearch, LLM answerer는 확장 계약만 잡혀 있으며, 실제 구현은 프로젝트 요구가 확정되면 추가합니다.
+LLM answerer provider 후보는 `openai`, `huggingface`, `ollama`입니다.

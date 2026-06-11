@@ -15,7 +15,7 @@ SUPPORTED_RETRIEVERS = {"keyword", "semantic", "hybrid"}
 SUPPORTED_RUNTIME_RETRIEVERS = {"keyword", "semantic", "hybrid"}
 SUPPORTED_RERANKER_PROVIDERS = {"local", "huggingface"}
 SUPPORTED_ANSWERERS = {"extractive", "llm"}
-SUPPORTED_ANSWERER_PROVIDERS = {"local", "openai", "huggingface"}
+SUPPORTED_ANSWERER_PROVIDERS = {"local", "openai", "huggingface", "ollama"}
 
 
 def check_rag_pipeline(config_path: str | Path, project_root: str | Path = ".") -> dict[str, Any]:
@@ -82,7 +82,7 @@ def _build_summary(
     _validate_vector_store_config(vector_store, errors, warnings)
     _validate_retriever_config(retriever, errors)
     _validate_reranker_config(reranker, errors, warnings)
-    _validate_answerer_config(answerer, errors)
+    _validate_answerer_config(answerer, errors, warnings)
     _validate_artifact_policy(artifact_policy, errors)
     _validate_questions_path(root, questions_path, errors)
 
@@ -113,6 +113,7 @@ def _build_summary(
         "reranker_enabled": bool(reranker.get("enabled", False)) if isinstance(reranker, dict) else False,
         "answerer_mode": answerer.get("mode", "extractive"),
         "answerer_provider": answerer.get("provider", "local"),
+        "answerer_model": answerer.get("model_name", ""),
     }
 
 
@@ -250,7 +251,11 @@ def _validate_reranker_config(
         warnings.append("reranker is config-ready but not implemented in smoke runtime")
 
 
-def _validate_answerer_config(answerer: dict[str, Any], errors: list[str]) -> None:
+def _validate_answerer_config(
+    answerer: dict[str, Any],
+    errors: list[str],
+    warnings: list[str],
+) -> None:
     mode = answerer.get("mode", "extractive")
     if mode not in SUPPORTED_ANSWERERS:
         errors.append(f"unsupported answerer mode: {mode}")
@@ -258,11 +263,37 @@ def _validate_answerer_config(answerer: dict[str, Any], errors: list[str]) -> No
     if provider not in SUPPORTED_ANSWERER_PROVIDERS:
         errors.append(f"unsupported answerer provider: {provider}")
     model_name = str(answerer.get("model_name", "") or "").strip()
-    if mode == "llm":
-        if provider == "local":
-            errors.append("rag.answerer.provider must be openai or huggingface when mode is llm")
-        elif not model_name:
-            errors.append("rag.answerer.model_name is required when answerer mode is llm")
+    if mode == "extractive":
+        if provider != "local":
+            errors.append("rag.answerer.provider must be local when mode is extractive")
+        return
+    if mode != "llm":
+        return
+
+    if provider == "local":
+        errors.append("rag.answerer.provider must be openai, huggingface, or ollama when mode is llm")
+        return
+    if not model_name:
+        errors.append("rag.answerer.model_name is required when answerer mode is llm")
+
+    temperature = _as_float(answerer.get("temperature", 0.2), "rag.answerer.temperature", errors)
+    if temperature is not None and temperature < 0:
+        errors.append("rag.answerer.temperature must be zero or positive")
+    max_tokens = _as_int(answerer.get("max_tokens", answerer.get("max_new_tokens", 512)), "rag.answerer.max_tokens", errors)
+    if max_tokens is not None and max_tokens <= 0:
+        errors.append("rag.answerer.max_tokens must be positive")
+    if "require_citations" in answerer and not isinstance(answerer["require_citations"], bool):
+        errors.append("rag.answerer.require_citations must be a boolean")
+
+    if provider == "openai":
+        api_key_env = str(answerer.get("api_key_env", "OPENAI_API_KEY") or "").strip()
+        if not api_key_env:
+            errors.append("rag.answerer.api_key_env must not be empty when provider is openai")
+    if provider == "ollama":
+        base_url = str(answerer.get("base_url", "http://localhost:11434") or "").strip()
+        if not base_url:
+            errors.append("rag.answerer.base_url must not be empty when provider is ollama")
+    warnings.append(f"answerer provider '{provider}' is config-ready but not implemented in smoke runtime")
 
 
 def _validate_artifact_policy(policy: Any, errors: list[str]) -> None:

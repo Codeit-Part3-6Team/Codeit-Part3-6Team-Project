@@ -244,6 +244,11 @@ def build_answerer_adapter(config: dict[str, Any]) -> RagAnswererAdapter:
         return ExtractiveAnswererAdapter(
             fallback_message=config.get("fallback_message", "문서에서 확인하지 못했습니다."),
         )
+    if mode == "llm" and provider in {"openai", "huggingface", "ollama"}:
+        raise NotImplementedError(
+            "RAG LLM answerer contract is validated, but runtime generation is not implemented yet: "
+            f"provider={provider}, model_name={config.get('model_name', '')}"
+        )
     raise NotImplementedError(f"RAG answerer is not implemented yet: mode={mode}, provider={provider}")
 
 
@@ -266,6 +271,7 @@ def describe_rag_implementations() -> dict[str, list[dict[str, str]]]:
             {"type": "reranker", "key": "enabled", "description": "validated config contract only"},
             {"type": "answerer", "key": "llm/openai", "description": "validated config contract only"},
             {"type": "answerer", "key": "llm/huggingface", "description": "validated config contract only"},
+            {"type": "answerer", "key": "llm/ollama", "description": "validated config contract only"},
         ],
     }
 

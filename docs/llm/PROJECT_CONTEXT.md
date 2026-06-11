@@ -40,7 +40,7 @@
 | 후보 | 상태 | 우선순위 판단 |
 | --- | --- | --- |
 | FAISS/Chroma/Elasticsearch adapter | 계약만 있음 | 실제 데이터 규모가 커지면 필요 |
-| LLM answerer | 계약만 있음 | RAG 답변 품질 실험 단계에서 필요 |
+| LLM answerer | config 계약과 validation 있음 | RAG 답변 품질 실험 단계에서 실제 호출 구현 필요 |
 | reranker | 계약만 있음 | retrieval 품질 병목 확인 후 필요 |
 | vector index 저장/로드 | 일부 후보 | 검색 비용이 커지면 필요 |
 | fine-grained resume | 미구현 | 대량 문서 처리 중단 문제가 생기면 필요 |
@@ -51,7 +51,7 @@
 
 1. 실제 RFP 샘플 문서로 RAG E2E를 검증합니다.
 2. 검색 품질을 비교할 수 있도록 retriever config와 metric을 정리합니다.
-3. LLM answerer 또는 UI는 팀 범위와 API 사용 가능 여부를 확인한 뒤 붙입니다.
+3. LLM answerer 실제 호출 구현 또는 UI는 팀 범위, API 사용 가능 여부, 비용을 확인한 뒤 붙입니다.
 4. 문서와 README는 팀원이 이해하기 쉬운 수준을 유지합니다.
 
 ## 중요한 설계 판단
@@ -61,4 +61,3 @@
 - RAG 결과는 답변만 남기지 않고 retrieval 결과와 citation을 함께 남깁니다.
 - 실패도 artifact로 남깁니다.
 - Git에는 재현 가능한 코드와 작은 샘플만 남깁니다.
-

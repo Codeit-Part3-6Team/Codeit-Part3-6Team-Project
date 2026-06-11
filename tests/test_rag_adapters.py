@@ -25,6 +25,8 @@ def test_rag_adapter_registry_describes_implemented_and_contract_only_options():
     assert ("embedding", "huggingface") in implemented
     assert ("vector_store", "faiss") in contract_only
     assert ("answerer", "llm/openai") in contract_only
+    assert ("answerer", "llm/huggingface") in contract_only
+    assert ("answerer", "llm/ollama") in contract_only
 
 
 def test_local_embedding_adapter_embeds_chunks():
@@ -115,5 +117,5 @@ def test_huggingface_embedding_adapter_is_registered_without_loading_model():
 
 
 def test_contract_only_adapters_raise_clear_errors():
-    with pytest.raises(NotImplementedError, match="answerer"):
-        build_answerer_adapter({"mode": "llm", "provider": "openai"})
+    with pytest.raises(NotImplementedError, match="contract is validated"):
+        build_answerer_adapter({"mode": "llm", "provider": "openai", "model_name": "gpt-4o-mini"})

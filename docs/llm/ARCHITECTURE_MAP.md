@@ -63,6 +63,7 @@ run_rag_chat.py
 | embedding 구현 추가 | `src/rag/embedder.py`, `src/rag/adapters.py` | `tests/test_rag_adapters.py` |
 | retriever 구현 추가 | `src/rag/retriever.py`, `src/rag/adapters.py` | `scripts/compare_rag_retrievers.py` |
 | answerer 구현 추가 | `src/rag/answerer.py`, `src/rag/adapters.py` | `tests/test_rag_pipeline.py` |
+| LLM answerer provider 추가 | `src/rag/adapters.py`, `src/rag/validation.py` | `configs/README.md`, `tests/test_rag_validation.py` |
 | artifact 정책 변경 | `src/artifacts.py` | `tests/test_experiments.py` |
 | CLI 추가 | `scripts/` | `scripts/README.md`, `tests/test_scripts.py` |
 | 노트북 변경 | `notebooks/` | `tests/test_notebooks.py` |
@@ -79,6 +80,9 @@ run_rag_chat.py
 3. adapter registry에서 provider를 선택하게 합니다.
 4. 작은 smoke test를 추가합니다.
 5. README와 RAG spec을 갱신합니다.
+
+LLM answerer는 현재 `openai`, `huggingface`, `ollama` provider 계약만 검증합니다.
+실제 API/server 호출 구현은 프로젝트 진행 중 결정합니다.
 
 ## 산출물 계약
 
@@ -102,4 +106,3 @@ experiments/{experiment_name}/
 |-- failure.log
 `-- rag_ingest_checkpoint.json
 ```
-

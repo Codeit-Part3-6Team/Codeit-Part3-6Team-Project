@@ -82,7 +82,7 @@ evaluation:
     assert any("vector_store.path is required" in error for error in result["errors"])
     assert any("reranker.top_k must be positive" in error for error in result["errors"])
     assert any("reranker.model_name is required" in error for error in result["errors"])
-    assert any("answerer.provider must be openai or huggingface" in error for error in result["errors"])
+    assert any("answerer.provider must be openai, huggingface, or ollama" in error for error in result["errors"])
     assert any("unsupported artifact_policy.on_existing" in error for error in result["errors"])
     assert any("evaluation questions not found" in error for error in result["errors"])
 
@@ -128,6 +128,97 @@ evaluation:
     assert any("vector_store.url is required" in error for error in result["errors"])
     assert any("vector_store.index_name is required" in error for error in result["errors"])
     assert any("answerer.model_name is required" in error for error in result["errors"])
+
+
+def test_check_rag_pipeline_accepts_contract_only_llm_answerer(isolated_project: Path):
+    config_path = isolated_project / "configs" / "llm_answerer_contract.yaml"
+    config_path.write_text(
+        """
+experiment:
+  name: llm_answerer_contract
+paths:
+  raw_docs_dir: data/rag_smoke
+  output_dir: experiments/llm_answerer_contract
+rag:
+  loader:
+    file_types: [txt]
+  chunk:
+    size: 500
+    overlap: 80
+  embedding:
+    provider: local
+    dimension: 64
+  vector_store:
+    type: memory
+  retriever:
+    method: semantic
+    top_k: 3
+  answerer:
+    mode: llm
+    provider: openai
+    model_name: gpt-4o-mini
+    temperature: 0.2
+    max_tokens: 512
+    api_key_env: OPENAI_API_KEY
+    require_citations: true
+evaluation:
+  questions_path: data/rag_smoke/eval_questions.csv
+""",
+        encoding="utf-8",
+    )
+
+    result = check_rag_pipeline(config_path, isolated_project)
+
+    assert result["ok"] is True
+    assert result["errors"] == []
+    assert result["summary"]["answerer_mode"] == "llm"
+    assert result["summary"]["answerer_provider"] == "openai"
+    assert result["summary"]["answerer_model"] == "gpt-4o-mini"
+    assert any("answerer provider 'openai' is config-ready" in warning for warning in result["warnings"])
+
+
+def test_check_rag_pipeline_validates_ollama_answerer_contract(isolated_project: Path):
+    config_path = isolated_project / "configs" / "bad_ollama_answerer.yaml"
+    config_path.write_text(
+        """
+experiment:
+  name: bad_ollama_answerer
+paths:
+  raw_docs_dir: data/rag_smoke
+  output_dir: experiments/bad_ollama_answerer
+rag:
+  loader:
+    file_types: [txt]
+  chunk:
+    size: 500
+    overlap: 80
+  embedding:
+    provider: local
+  vector_store:
+    type: memory
+  retriever:
+    method: semantic
+  answerer:
+    mode: llm
+    provider: ollama
+    model_name: llama3.1
+    base_url:
+    temperature: -0.1
+    max_tokens: 0
+    require_citations: required
+evaluation:
+  questions_path: data/rag_smoke/eval_questions.csv
+""",
+        encoding="utf-8",
+    )
+
+    result = check_rag_pipeline(config_path, isolated_project)
+
+    assert result["ok"] is False
+    assert any("answerer.temperature must be zero or positive" in error for error in result["errors"])
+    assert any("answerer.max_tokens must be positive" in error for error in result["errors"])
+    assert any("answerer.require_citations must be a boolean" in error for error in result["errors"])
+    assert any("answerer.base_url must not be empty" in error for error in result["errors"])
 
 
 def test_check_rag_pipeline_script_uses_exit_code(isolated_project: Path, repo_root: Path):
