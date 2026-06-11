@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Protocol
 
@@ -192,6 +192,65 @@ class ExtractiveAnswererAdapter:
         return build_answer(question, retrieved_chunks, fallback_message=self.fallback_message)
 
 
+@dataclass
+class HuggingFaceLLMAnswererAdapter:
+    """HuggingFace transformers pipeline으로 근거 기반 답변을 생성합니다."""
+
+    model_name: str
+    task: str = "text-generation"
+    device: str = "auto"
+    temperature: float = 0.2
+    max_new_tokens: int = 256
+    require_citations: bool = True
+    fallback_message: str = "문서에서 확인하지 못했습니다."
+    _pipeline: Any = field(default=None, init=False, repr=False)
+
+    def answer(self, question: str, retrieved_chunks: list[dict[str, Any]]) -> dict[str, Any]:
+        """검색된 chunk를 프롬프트 근거로 묶어 LLM 답변과 citation을 반환합니다."""
+        if not retrieved_chunks:
+            return {
+                "question": question,
+                "answer": self.fallback_message,
+                "citations": [],
+                "status": "not_found",
+            }
+
+        prompt = _build_rag_prompt(question, retrieved_chunks)
+        generation_kwargs: dict[str, Any] = {
+            "max_new_tokens": self.max_new_tokens,
+            "do_sample": self.temperature > 0,
+            "return_full_text": False,
+        }
+        if self.temperature > 0:
+            generation_kwargs["temperature"] = self.temperature
+        generated = self._get_pipeline()(prompt, **generation_kwargs)
+        answer_text = _extract_generated_text(generated, prompt).strip() or self.fallback_message
+        citations = _citations_from_chunks(retrieved_chunks) if self.require_citations else []
+        return {
+            "question": question,
+            "answer": answer_text,
+            "citations": citations,
+            "status": "answered" if answer_text != self.fallback_message else "not_found",
+        }
+
+    def _get_pipeline(self) -> Any:
+        if self._pipeline is None:
+            try:
+                from transformers import pipeline
+            except ImportError as exc:
+                raise ImportError(
+                    "HuggingFace LLM answerer를 사용하려면 transformers가 필요합니다. "
+                    "`pip install -r requirements.txt`를 먼저 실행하세요."
+                ) from exc
+            self._pipeline = pipeline(
+                self.task,
+                model=self.model_name,
+                tokenizer=self.model_name,
+                device=_resolve_hf_pipeline_device(self.device),
+            )
+        return self._pipeline
+
+
 def build_embedding_adapter(config: dict[str, Any]) -> RagEmbeddingAdapter:
     """rag.embedding config에 맞는 embedding adapter를 반환합니다."""
     provider = config.get("provider", "local")
@@ -244,7 +303,17 @@ def build_answerer_adapter(config: dict[str, Any]) -> RagAnswererAdapter:
         return ExtractiveAnswererAdapter(
             fallback_message=config.get("fallback_message", "문서에서 확인하지 못했습니다."),
         )
-    if mode == "llm" and provider in {"openai", "huggingface", "ollama"}:
+    if mode == "llm" and provider == "huggingface":
+        return HuggingFaceLLMAnswererAdapter(
+            model_name=str(config["model_name"]),
+            task=str(config.get("task", "text-generation")),
+            device=str(config.get("device", "auto")),
+            temperature=float(config.get("temperature", 0.2)),
+            max_new_tokens=int(config.get("max_new_tokens", config.get("max_tokens", 256))),
+            require_citations=bool(config.get("require_citations", True)),
+            fallback_message=str(config.get("fallback_message", "문서에서 확인하지 못했습니다.")),
+        )
+    if mode == "llm" and provider in {"openai", "ollama"}:
         raise NotImplementedError(
             "RAG LLM answerer contract is validated, but runtime generation is not implemented yet: "
             f"provider={provider}, model_name={config.get('model_name', '')}"
@@ -263,6 +332,7 @@ def describe_rag_implementations() -> dict[str, list[dict[str, str]]]:
             {"type": "retriever", "key": "semantic", "description": "local hashing vector semantic search"},
             {"type": "retriever", "key": "hybrid", "description": "weighted keyword + semantic search"},
             {"type": "answerer", "key": "extractive/local", "description": "chunk sentence extraction"},
+            {"type": "answerer", "key": "llm/huggingface", "description": "transformers generation pipeline"},
         ],
         "contract_only": [
             {"type": "vector_store", "key": "faiss", "description": "validated config contract only"},
@@ -270,7 +340,6 @@ def describe_rag_implementations() -> dict[str, list[dict[str, str]]]:
             {"type": "vector_store", "key": "elasticsearch", "description": "validated config contract only"},
             {"type": "reranker", "key": "enabled", "description": "validated config contract only"},
             {"type": "answerer", "key": "llm/openai", "description": "validated config contract only"},
-            {"type": "answerer", "key": "llm/huggingface", "description": "validated config contract only"},
             {"type": "answerer", "key": "llm/ollama", "description": "validated config contract only"},
         ],
     }
@@ -370,3 +439,72 @@ def _with_rank(row: dict[str, str | float | int], rank: int) -> dict[str, str | 
     ranked = dict(row)
     ranked["rank"] = rank
     return ranked
+
+
+def _build_rag_prompt(question: str, retrieved_chunks: list[dict[str, Any]]) -> str:
+    context_blocks = []
+    for index, chunk in enumerate(retrieved_chunks, start=1):
+        context_blocks.append(
+            "\n".join(
+                [
+                    f"[근거 {index}]",
+                    f"chunk_id: {chunk.get('chunk_id', '')}",
+                    f"source: {chunk.get('source_path', '')} / page {chunk.get('page', '')} / {chunk.get('section', '')}",
+                    str(chunk.get("text", "")),
+                ]
+            )
+        )
+    context = "\n\n".join(context_blocks)
+    return (
+        "너는 RFP 문서 분석 도우미다. 아래 근거에 있는 내용만 사용해서 한국어로 짧게 답하라.\n"
+        "근거에 없는 내용은 추측하지 말고 '문서에서 확인하지 못했습니다.'라고 답하라.\n\n"
+        f"{context}\n\n"
+        f"질문: {question}\n"
+        "답변:"
+    )
+
+
+def _extract_generated_text(generated: Any, prompt: str) -> str:
+    if isinstance(generated, list) and generated:
+        first = generated[0]
+        if isinstance(first, dict):
+            text = str(first.get("generated_text", first.get("summary_text", "")))
+        else:
+            text = str(first)
+    else:
+        text = str(generated)
+    if text.startswith(prompt):
+        text = text[len(prompt) :]
+    return text.strip()
+
+
+def _citations_from_chunks(retrieved_chunks: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    citations = []
+    seen = set()
+    for chunk in retrieved_chunks:
+        chunk_id = str(chunk.get("chunk_id", ""))
+        if not chunk_id or chunk_id in seen:
+            continue
+        seen.add(chunk_id)
+        citations.append(
+            {
+                "chunk_id": chunk_id,
+                "document_id": chunk.get("document_id", ""),
+                "source_path": chunk.get("source_path", ""),
+                "page": chunk.get("page", ""),
+                "section": chunk.get("section", ""),
+            }
+        )
+    return citations
+
+
+def _resolve_hf_pipeline_device(device: str) -> int:
+    if device == "cuda":
+        return 0
+    if device == "auto":
+        try:
+            import torch
+        except ImportError:
+            return -1
+        return 0 if torch.cuda.is_available() else -1
+    return -1

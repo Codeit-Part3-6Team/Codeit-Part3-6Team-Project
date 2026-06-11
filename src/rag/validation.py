@@ -293,7 +293,12 @@ def _validate_answerer_config(
         base_url = str(answerer.get("base_url", "http://localhost:11434") or "").strip()
         if not base_url:
             errors.append("rag.answerer.base_url must not be empty when provider is ollama")
-    warnings.append(f"answerer provider '{provider}' is config-ready but not implemented in smoke runtime")
+    if provider == "huggingface":
+        device = answerer.get("device", "auto")
+        if device not in {"auto", "cpu", "cuda"}:
+            errors.append(f"unsupported answerer device: {device}")
+    else:
+        warnings.append(f"answerer provider '{provider}' is config-ready but not implemented in smoke runtime")
 
 
 def _validate_artifact_policy(policy: Any, errors: list[str]) -> None:

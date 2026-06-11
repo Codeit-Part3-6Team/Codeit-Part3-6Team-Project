@@ -221,6 +221,50 @@ evaluation:
     assert any("answerer.base_url must not be empty" in error for error in result["errors"])
 
 
+def test_check_rag_pipeline_accepts_huggingface_llm_answerer_runtime(isolated_project: Path):
+    config_path = isolated_project / "configs" / "hf_llm_answerer.yaml"
+    config_path.write_text(
+        """
+experiment:
+  name: hf_llm_answerer
+paths:
+  raw_docs_dir: data/rag_smoke
+  output_dir: experiments/hf_llm_answerer
+rag:
+  loader:
+    file_types: [txt]
+  chunk:
+    size: 500
+    overlap: 80
+  embedding:
+    provider: local
+  vector_store:
+    type: memory
+  retriever:
+    method: semantic
+  answerer:
+    mode: llm
+    provider: huggingface
+    model_name: google/gemma-2-2b-it
+    task: text-generation
+    device: cpu
+    temperature: 0.0
+    max_new_tokens: 128
+    require_citations: true
+evaluation:
+  questions_path: data/rag_smoke/eval_questions.csv
+""",
+        encoding="utf-8",
+    )
+
+    result = check_rag_pipeline(config_path, isolated_project)
+
+    assert result["ok"] is True
+    assert result["errors"] == []
+    assert result["summary"]["answerer_provider"] == "huggingface"
+    assert not any("answerer provider 'huggingface' is config-ready" in warning for warning in result["warnings"])
+
+
 def test_check_rag_pipeline_script_uses_exit_code(isolated_project: Path, repo_root: Path):
     ok_result = subprocess.run(
         [

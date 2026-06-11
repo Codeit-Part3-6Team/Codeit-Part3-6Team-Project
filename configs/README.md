@@ -19,6 +19,8 @@ mindmap
         baseline
         HuggingFace
         Colab
+      rag
+        HuggingFace LLM answerer
     smoke
       이미지 smoke
       텍스트 smoke
@@ -51,7 +53,8 @@ configs/
 |       |-- rag_smoke_hybrid.yaml    # hybrid retriever 비교 실험
 |       `-- README.md
 |-- examples/
-|   `-- classification/              # 분류/HuggingFace 참고 예제
+|   |-- classification/              # 분류/HuggingFace 참고 예제
+|   `-- rag/                         # RAG 구현체 참고 예제
 |-- smoke/                           # 빠른 환경 검증용 config
 |-- preprocess/                      # 전처리 버전 config
 `-- README.md
@@ -199,9 +202,21 @@ rag:
     fallback_message: 문서에서 확인하지 못했습니다.
 ```
 
-현재 실제 구현은 `extractive/local`입니다. 검색된 chunk에서 답변 문장을 추출합니다.
+현재 실제 구현은 `extractive/local`과 `llm/huggingface`입니다.
+`extractive/local`은 검색된 chunk에서 답변 문장을 추출하고, `llm/huggingface`는 `transformers.pipeline`으로 근거 기반 답변을 생성합니다.
 
-LLM 답변 생성은 아직 실제 호출 구현을 붙이지 않고, 나중에 adapter를 추가하기 쉽도록 config 계약만 열어둡니다.
+```yaml
+rag:
+  answerer:
+    mode: llm
+    provider: huggingface
+    model_name: google/gemma-2-2b-it
+    task: text-generation
+    device: cpu
+    temperature: 0.0
+    max_new_tokens: 256
+    require_citations: true
+```
 
 ```yaml
 rag:
@@ -230,13 +245,16 @@ rag:
 - `mode`: `extractive`, `llm`
 - `provider`: `local`, `openai`, `huggingface`, `ollama`
 - `model_name`: LLM provider를 사용할 때 필요한 모델 이름입니다.
+- `task`: HuggingFace pipeline task입니다. 기본값은 `text-generation`입니다.
+- `device`: HuggingFace 실행 장치입니다. `auto`, `cpu`, `cuda`를 사용할 수 있습니다.
 - `temperature`: 생성 답변의 변동성을 조정합니다.
 - `max_tokens`: 생성 답변 최대 길이입니다. HuggingFace 계열에서는 `max_new_tokens`로도 쓸 수 있습니다.
 - `api_key_env`: OpenAI API key를 읽을 환경 변수 이름입니다.
 - `base_url`: Ollama 같은 로컬 LLM 서버 주소입니다.
 - `require_citations`: 답변에 근거 chunk citation을 요구하는 정책입니다.
 
-주의: `llm/openai`, `llm/huggingface`, `llm/ollama`는 validation 계약만 준비되어 있으며, smoke runtime의 실제 답변 생성 구현은 아직 없습니다.
+주의: `llm/huggingface`는 runtime 구현이 있지만, 실제 실행 시 모델 다운로드와 추론 비용이 발생할 수 있습니다.
+`llm/openai`, `llm/ollama`는 validation 계약만 준비되어 있으며, smoke runtime의 실제 답변 생성 구현은 아직 없습니다.
 
 ### `rag.checkpoint`
 

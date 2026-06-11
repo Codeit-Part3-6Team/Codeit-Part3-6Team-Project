@@ -27,6 +27,7 @@ mindmap
       answerer.py
       citation
       extractive answer
+      HuggingFace LLM answer
     Orchestration
       adapters.py
       pipeline.py
@@ -85,7 +86,7 @@ document_loader
 - embedding: `local`, `huggingface`
 - vector store: `memory`
 - retriever: `keyword`, `semantic`, `hybrid`
-- answerer: `extractive/local`
+- answerer: `extractive/local`, `llm/huggingface`
 
-FAISS, Chroma, Elasticsearch, LLM answerer는 확장 계약만 잡혀 있으며, 실제 구현은 프로젝트 요구가 확정되면 추가합니다.
-LLM answerer provider 후보는 `openai`, `huggingface`, `ollama`입니다.
+FAISS, Chroma, Elasticsearch는 확장 계약만 잡혀 있으며, 실제 구현은 프로젝트 요구가 확정되면 추가합니다.
+LLM answerer는 HuggingFace provider만 runtime 구현이 있고, OpenAI/Ollama provider는 config 계약만 준비된 상태입니다.
