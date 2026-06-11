@@ -8,7 +8,7 @@ from pathlib import Path
 
 import pytest
 
-from src.artifacts import maybe_backup
+from src.artifacts import maybe_backup, write_failure_artifact, write_run_status
 from src.experiments import collect_experiment_summaries, write_experiment_summary
 from src.rag.pipeline import run_rag_evaluation
 from src.train import run_training
@@ -232,3 +232,15 @@ backup:
     backup_dir = isolated_project / "backups" / "backup_failure"
     assert (backup_dir / "failure.log").exists()
     assert (backup_dir / "run_status.json").exists()
+
+
+def test_write_run_status_clears_stale_failure_log(tmp_path: Path):
+    output_dir = tmp_path / "experiment"
+    output_dir.mkdir()
+
+    write_failure_artifact(output_dir, "rag_evaluation", RuntimeError("boom"))
+    assert (output_dir / "failure.log").exists()
+
+    write_run_status(output_dir, "rag_evaluation", "success", result={"retrieval_hit_rate": 1.0})
+
+    assert not (output_dir / "failure.log").exists()

@@ -108,7 +108,11 @@ def write_run_status(
         payload["result"] = result
     if error is not None:
         payload["error"] = error
-    write_json(Path(output_dir) / "run_status.json", payload)
+    output_path = Path(output_dir)
+    if status in {"running", "success"}:
+        # 이전 실패 실행에서 남은 failure.log가 현재 성공 상태와 충돌하지 않도록 정리합니다.
+        output_path.joinpath("failure.log").unlink(missing_ok=True)
+    write_json(output_path / "run_status.json", payload)
 
 
 def write_failure_artifact(output_dir: str | Path, operation: str, exc: Exception) -> None:
