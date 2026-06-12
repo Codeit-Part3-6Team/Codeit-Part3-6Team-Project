@@ -150,6 +150,12 @@ class LangChainRagEngine:
             except ImportError as exc:
                 raise ImportError("OllamaEmbeddings를 사용하려면 langchain-ollama가 필요합니다.") from exc
             return OllamaEmbeddings(model=model_name)
+        if provider == "openai":
+            try:
+                from langchain_openai import OpenAIEmbeddings
+            except ImportError as exc:
+                raise ImportError("OpenAIEmbeddings를 사용하려면 langchain-openai가 필요합니다.") from exc
+            return OpenAIEmbeddings(model=model_name)
         raise NotImplementedError(f"unsupported LangChain embedding provider: {provider}")
 
     def _build_chat_model(self, answerer_cfg: dict[str, Any]) -> Any:
@@ -161,13 +167,21 @@ class LangChainRagEngine:
                 from langchain_ollama import ChatOllama
             except ImportError as exc:
                 raise ImportError("ChatOllama를 사용하려면 langchain-ollama가 필요합니다.") from exc
-            return ChatOllama(model=model_name, temperature=temperature)
+            kwargs: dict[str, Any] = {"model": model_name, "temperature": temperature}
+            if answerer_cfg.get("base_url"):
+                kwargs["base_url"] = answerer_cfg["base_url"]
+            if answerer_cfg.get("max_tokens"):
+                kwargs["num_predict"] = int(answerer_cfg["max_tokens"])
+            return ChatOllama(**kwargs)
         if provider == "openai":
             try:
                 from langchain_openai import ChatOpenAI
             except ImportError as exc:
                 raise ImportError("ChatOpenAI를 사용하려면 langchain-openai가 필요합니다.") from exc
-            return ChatOpenAI(model=model_name, temperature=temperature)
+            kwargs = {"model": model_name, "temperature": temperature}
+            if answerer_cfg.get("max_tokens"):
+                kwargs["max_tokens"] = int(answerer_cfg["max_tokens"])
+            return ChatOpenAI(**kwargs)
         raise NotImplementedError(f"unsupported LangChain answerer provider: {provider}")
 
     def _embedding_model_name(self) -> str:
