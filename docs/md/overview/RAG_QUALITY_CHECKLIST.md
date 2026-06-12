@@ -106,7 +106,7 @@ experiments/{experiment_name}/
 
 ## 통과 기준
 
-smoke 데이터 기준:
+sample 데이터 기준:
 
 - `retrieval_hit_rate == 1.0`
 - `citation_correct_rate == 1.0`

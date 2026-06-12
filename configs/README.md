@@ -8,9 +8,9 @@
 
 | 목적 | config |
 | --- | --- |
-| 기본 RAG smoke test | `configs/experiments/rag/rag_smoke_test.yaml` |
-| keyword retriever 비교 | `configs/experiments/rag/rag_smoke_keyword.yaml` |
-| keyword + semantic hybrid 비교 | `configs/experiments/rag/rag_smoke_hybrid.yaml` |
+| semantic retriever 기본 실행 | `configs/experiments/rag/rag_semantic.yaml` |
+| keyword retriever 비교 | `configs/experiments/rag/rag_keyword.yaml` |
+| keyword + semantic hybrid 비교 | `configs/experiments/rag/rag_hybrid.yaml` |
 | HuggingFace LLM answerer 예시 | `configs/examples/rag/rag_hf_llm_answerer.yaml` |
 
 ## 디렉터리 구조
@@ -61,11 +61,11 @@ mindmap
 ## 기본 실행
 
 ```bash
-python scripts/check_rag_pipeline.py --config configs/experiments/rag/rag_smoke_test.yaml --project-root .
-python scripts/run_rag_ingest.py --config configs/experiments/rag/rag_smoke_test.yaml --project-root .
-python scripts/run_rag_retrieve.py --config configs/experiments/rag/rag_smoke_test.yaml --project-root . --question "예산은 얼마야?"
-python scripts/run_rag_chat.py --config configs/experiments/rag/rag_smoke_test.yaml --project-root . --question "예산은 얼마야?"
-python scripts/run_rag_chat.py --config configs/experiments/rag/rag_smoke_test.yaml --project-root . --evaluate
+python scripts/check_rag_pipeline.py --config configs/experiments/rag/rag_semantic.yaml --project-root .
+python scripts/run_rag_ingest.py --config configs/experiments/rag/rag_semantic.yaml --project-root .
+python scripts/run_rag_retrieve.py --config configs/experiments/rag/rag_semantic.yaml --project-root . --question "예산은 얼마야?"
+python scripts/run_rag_chat.py --config configs/experiments/rag/rag_semantic.yaml --project-root . --question "예산은 얼마야?"
+python scripts/run_rag_chat.py --config configs/experiments/rag/rag_semantic.yaml --project-root . --evaluate
 ```
 
 ## 새 RAG 실험 만들기
@@ -73,7 +73,7 @@ python scripts/run_rag_chat.py --config configs/experiments/rag/rag_smoke_test.y
 기존 RAG config를 복사해서 시작합니다.
 
 ```text
-configs/experiments/rag/rag_smoke_test.yaml
+configs/experiments/rag/rag_semantic.yaml
 -> configs/experiments/rag/rag_top5_chunk800.yaml
 ```
 
@@ -134,7 +134,7 @@ rag:
     normalize: true
 ```
 
-- `local`: 빠른 smoke test용 hashing embedding
+- `local`: 빠른 동작 확인용 hashing embedding
 - `huggingface`: transformers 기반 mean pooling embedding
 
 ### Vector Store
@@ -144,7 +144,7 @@ rag:
   vector_store:
     type: memory
     path:
-    collection_name: rag_smoke_test
+    collection_name: rag_semantic
 ```
 
 현재 기본 구현은 `memory`입니다. FAISS, Chroma, Elasticsearch는 config 계약을 먼저 잡아둔 확장 후보입니다.
@@ -221,7 +221,7 @@ RAG ingest 산출물인 `parsed_documents.csv`, `chunks.csv`, `embeddings.jsonl`
 
 ```yaml
 evaluation:
-  questions_path: data/rag_smoke/eval_questions.csv
+  questions_path: data/rag_sample/eval_questions.csv
 
 metric:
   monitor: retrieval_hit_rate
@@ -241,7 +241,7 @@ backup:
   enabled: true
   on_finish: true
   on_failure: true
-  backup_dir: /content/drive/MyDrive/codeit_rag_project/backups/rag_smoke
+  backup_dir: /content/drive/MyDrive/codeit_rag_project/backups/rag_semantic
   include_logs: true
   include_checkpoints: true
 ```

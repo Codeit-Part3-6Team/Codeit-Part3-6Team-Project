@@ -8,16 +8,16 @@
 
 | config | 목적 | 먼저 바꿔볼 옵션 |
 | --- | --- | --- |
-| `rag_smoke_test.yaml` | semantic retriever 기반 기본 RAG 실험 | `rag.chunk`, `rag.retriever.top_k` |
-| `rag_smoke_keyword.yaml` | keyword retriever 비교 | `rag.retriever.method` |
-| `rag_smoke_hybrid.yaml` | keyword + semantic hybrid 비교 | `rag.retriever.keyword_weight`, `rag.retriever.semantic_weight` |
+| `rag_semantic.yaml` | semantic retriever 기반 기본 RAG 실험 | `rag.chunk`, `rag.retriever.top_k` |
+| `rag_keyword.yaml` | keyword retriever 비교 | `rag.retriever.method` |
+| `rag_hybrid.yaml` | keyword + semantic hybrid 비교 | `rag.retriever.keyword_weight`, `rag.retriever.semantic_weight` |
 
 ## 실험 복사 규칙
 
 새 실험은 기존 config를 복사하고 이름과 출력 경로를 먼저 바꿉니다.
 
 ```text
-rag_smoke_test.yaml
+rag_semantic.yaml
 -> rag_top5_chunk800.yaml
 ```
 
@@ -68,10 +68,10 @@ rag:
 ## 실행 순서
 
 ```bash
-python scripts/check_rag_pipeline.py --config configs/experiments/rag/rag_smoke_test.yaml --project-root .
-python scripts/run_rag_ingest.py --config configs/experiments/rag/rag_smoke_test.yaml --project-root .
-python scripts/run_rag_retrieve.py --config configs/experiments/rag/rag_smoke_test.yaml --project-root . --question "예산은 얼마야?"
-python scripts/run_rag_chat.py --config configs/experiments/rag/rag_smoke_test.yaml --project-root . --evaluate
+python scripts/check_rag_pipeline.py --config configs/experiments/rag/rag_semantic.yaml --project-root .
+python scripts/run_rag_ingest.py --config configs/experiments/rag/rag_semantic.yaml --project-root .
+python scripts/run_rag_retrieve.py --config configs/experiments/rag/rag_semantic.yaml --project-root . --question "예산은 얼마야?"
+python scripts/run_rag_chat.py --config configs/experiments/rag/rag_semantic.yaml --project-root . --evaluate
 ```
 
 ## 결과 확인
@@ -79,7 +79,7 @@ python scripts/run_rag_chat.py --config configs/experiments/rag/rag_smoke_test.y
 RAG 실험 결과는 `paths.output_dir` 아래에 남습니다.
 
 ```text
-experiments/rag_smoke_test/
+experiments/rag_semantic/
 |-- config.yaml
 |-- parsed_documents.csv
 |-- chunks.csv

@@ -21,13 +21,13 @@ flowchart LR
 처음에는 아래 config로 시작합니다.
 
 ```text
-configs/experiments/rag/rag_smoke_test.yaml
+configs/experiments/rag/rag_semantic.yaml
 ```
 
 비교 실험은 기존 config를 복사해서 만듭니다.
 
 ```text
-configs/experiments/rag/rag_smoke_test.yaml
+configs/experiments/rag/rag_semantic.yaml
 -> configs/experiments/rag/rag_top5_chunk800.yaml
 ```
 
@@ -47,7 +47,7 @@ artifact_policy:
 ## 2. 실행 전 점검
 
 ```bash
-python scripts/check_rag_pipeline.py --config configs/experiments/rag/rag_smoke_test.yaml --project-root .
+python scripts/check_rag_pipeline.py --config configs/experiments/rag/rag_semantic.yaml --project-root .
 ```
 
 이 단계에서 확인하는 것:
@@ -61,13 +61,13 @@ python scripts/check_rag_pipeline.py --config configs/experiments/rag/rag_smoke_
 ## 3. 문서 Ingest
 
 ```bash
-python scripts/run_rag_ingest.py --config configs/experiments/rag/rag_smoke_test.yaml --project-root .
+python scripts/run_rag_ingest.py --config configs/experiments/rag/rag_semantic.yaml --project-root .
 ```
 
 생성되는 주요 산출물:
 
 ```text
-experiments/rag_smoke_test/
+experiments/rag_semantic/
 |-- parsed_documents.csv
 |-- chunks.csv
 `-- embeddings.jsonl
@@ -84,7 +84,7 @@ experiments/rag_smoke_test/
 
 ```bash
 python scripts/run_rag_retrieve.py \
-  --config configs/experiments/rag/rag_smoke_test.yaml \
+  --config configs/experiments/rag/rag_semantic.yaml \
   --project-root . \
   --question "예산은 얼마야?"
 ```
@@ -101,7 +101,7 @@ python scripts/run_rag_retrieve.py \
 
 ```bash
 python scripts/run_rag_chat.py \
-  --config configs/experiments/rag/rag_smoke_test.yaml \
+  --config configs/experiments/rag/rag_semantic.yaml \
   --project-root . \
   --question "예산은 얼마야?"
 ```
@@ -110,7 +110,7 @@ python scripts/run_rag_chat.py \
 
 ```bash
 python scripts/run_rag_chat.py \
-  --config configs/experiments/rag/rag_smoke_test.yaml \
+  --config configs/experiments/rag/rag_semantic.yaml \
   --project-root . \
   --evaluate
 ```
@@ -118,7 +118,7 @@ python scripts/run_rag_chat.py \
 생성되는 주요 산출물:
 
 ```text
-experiments/rag_smoke_test/
+experiments/rag_semantic/
 |-- retrieval_results.jsonl
 |-- answers.jsonl
 |-- metrics.json
@@ -165,7 +165,7 @@ RAG에서는 답변 문장만 보지 않습니다. 아래 순서로 봅니다.
 RAG 실험 이름은 바꾼 조건이 보이게 짓습니다.
 
 ```text
-rag_smoke_test
+rag_semantic
 rag_keyword_top3
 rag_hybrid_top5
 rag_chunk800_overlap120
@@ -198,7 +198,7 @@ backup:
   enabled: true
   on_finish: true
   on_failure: true
-  backup_dir: /content/drive/MyDrive/codeit_rag_project/backups/rag_smoke
+  backup_dir: /content/drive/MyDrive/codeit_rag_project/backups/rag_semantic
   include_logs: true
   include_checkpoints: true
 ```

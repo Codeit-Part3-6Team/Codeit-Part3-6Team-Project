@@ -78,7 +78,7 @@ run_rag_chat.py
 1. config 계약을 먼저 정합니다.
 2. validation에서 지원 provider와 필수 옵션을 점검합니다.
 3. adapter registry에서 provider를 선택하게 합니다.
-4. 작은 smoke test를 추가합니다.
+4. 작은 동작 확인 테스트를 추가합니다.
 5. README와 RAG spec을 갱신합니다.
 
 LLM answerer는 현재 `openai`, `huggingface`, `ollama` provider 계약만 검증합니다.

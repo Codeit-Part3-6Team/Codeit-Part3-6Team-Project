@@ -44,7 +44,7 @@ tests/
 |-- test_docs_structure.py       # 문서 디렉터리 구조
 |-- test_scripts.py              # 실행 스크립트 진입점
 |-- test_config.py               # config 로딩과 경로 규칙
-|-- test_pipeline_smoke.py       # 참고용 분류 smoke pipeline
+|-- test_pipeline_smoke.py       # 참고용 분류 config 기반 pipeline
 `-- test_experiments.py          # 참고용 실험 artifact 정책
 ```
 
@@ -72,25 +72,25 @@ python -m pytest \
   tests/test_notebooks.py
 ```
 
-## 직접 smoke 실행
+## 직접 RAG 실행
 
 ```bash
 python scripts/check_rag_pipeline.py \
   --project-root . \
-  --config configs/experiments/rag/rag_smoke_test.yaml
+  --config configs/experiments/rag/rag_semantic.yaml
 
 python scripts/run_rag_ingest.py \
   --project-root . \
-  --config configs/experiments/rag/rag_smoke_test.yaml
+  --config configs/experiments/rag/rag_semantic.yaml
 
 python scripts/run_rag_retrieve.py \
   --project-root . \
-  --config configs/experiments/rag/rag_smoke_test.yaml \
+  --config configs/experiments/rag/rag_semantic.yaml \
   --query "제안 마감일은 언제인가?"
 
 python scripts/run_rag_chat.py \
   --project-root . \
-  --config configs/experiments/rag/rag_smoke_test.yaml \
+  --config configs/experiments/rag/rag_semantic.yaml \
   --question "입찰 참가 자격은 무엇인가?"
 ```
 

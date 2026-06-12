@@ -1,7 +1,7 @@
 # Colab / Drive RAG 실행 가이드
 
 이 문서는 Colab에서 RAG 실험을 실행하고, 결과를 Google Drive에 남기는 방법을 설명합니다.
-RAG smoke test와 기본 검색/답변 검증은 로컬 Jupyter로도 충분합니다.
+RAG config 실행과 기본 검색/답변 검증은 로컬 Jupyter로도 충분합니다.
 
 현재 프로젝트의 기본 실험은 분류 모델 학습이 아니라 RAG 문서 처리, 검색, 답변, 평가입니다.
 
@@ -73,7 +73,7 @@ pip install -r requirements.txt
 Colab 전용 config는 기존 RAG config를 복사해서 경로만 Drive 기준으로 바꿉니다.
 
 ```text
-configs/experiments/rag/rag_smoke_test.yaml
+configs/experiments/rag/rag_semantic.yaml
 -> configs/experiments/rag/rag_colab_drive.yaml
 ```
 
@@ -172,7 +172,7 @@ rag:
     provider: huggingface
 ```
 
-Colab에서 HuggingFace 모델을 쓰면 모델 다운로드와 추론 시간이 발생합니다. 먼저 `local` provider 기반 RAG smoke test를 통과시킨 뒤 바꾸는 것을 권장합니다.
+Colab에서 HuggingFace 모델을 쓰면 모델 다운로드와 추론 시간이 발생합니다. 먼저 `local` provider 기반 RAG config 실행을 통과시킨 뒤 바꾸는 것을 권장합니다.
 
 ## 공유할 때 남길 것
 
@@ -185,4 +185,4 @@ Colab에서 HuggingFace 모델을 쓰면 모델 다운로드와 추론 시간이
 
 ## 참고
 
-예전 분류/HuggingFace fine-tuning config는 `configs/examples/classification/`에 남아 있습니다. 현재 RAG 프로젝트의 기본 실험 흐름은 RAG smoke walkthrough이며, Colab에서 돌릴 사람은 위 흐름을 사용합니다.
+예전 분류/HuggingFace fine-tuning config는 `configs/examples/classification/`에 남아 있습니다. 현재 RAG 프로젝트의 기본 실험 흐름은 RAG config walkthrough이며, Colab에서 돌릴 사람은 위 흐름을 사용합니다.

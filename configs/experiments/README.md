@@ -4,9 +4,9 @@
 
 현재 프로젝트 방향은 RAG이므로 기본 실험 config는 `rag/` 아래에서 관리합니다.
 
-- `rag/rag_smoke_test.yaml`: semantic retriever 기반 기본 RAG 실험
-- `rag/rag_smoke_keyword.yaml`: keyword retriever 비교 실험
-- `rag/rag_smoke_hybrid.yaml`: keyword + semantic hybrid 비교 실험
+- `rag/rag_semantic.yaml`: semantic retriever 기반 기본 RAG 실험
+- `rag/rag_keyword.yaml`: keyword retriever 비교 실험
+- `rag/rag_hybrid.yaml`: keyword + semantic hybrid 비교 실험
 
 새 RAG 실험을 만들 때는 기존 config를 복사한 뒤 최소한 `experiment.name`, `paths.output_dir`, `rag.retriever`, `rag.chunk`, `artifact_policy.run_id`를 확인합니다.
 

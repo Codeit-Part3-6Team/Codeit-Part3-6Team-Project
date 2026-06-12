@@ -1,12 +1,12 @@
-experiment:
-  name: rag_smoke_hybrid
+﻿experiment:
+  name: rag_hybrid
   author: team
   seed: 42
   contract_version: rag-v0.1
 
 paths:
-  raw_docs_dir: data/rag_smoke
-  output_dir: experiments/rag_smoke_hybrid
+  raw_docs_dir: data/rag_sample
+  output_dir: experiments/rag_hybrid
 
 artifact_policy:
   run_id:
@@ -31,7 +31,7 @@ rag:
   vector_store:
     type: memory
     path:
-    collection_name: rag_smoke_hybrid
+    collection_name: rag_hybrid
   retriever:
     method: hybrid
     top_k: 3
@@ -50,7 +50,7 @@ rag:
     fallback_message: 문서에서 확인하지 못했습니다.
 
 evaluation:
-  questions_path: data/rag_smoke/eval_questions.csv
+  questions_path: data/rag_sample/eval_questions.csv
 
 metric:
   monitor: retrieval_hit_rate

@@ -9,9 +9,9 @@ from src.rag.pipeline import run_rag_chat, run_rag_evaluation, run_rag_ingest, r
 
 
 def test_rag_quality_gate_reproducibility_and_contracts(isolated_project: Path):
-    """RAG smoke pipeline의 재현성, 입출력 계약, 산출물 품질을 함께 확인합니다."""
-    config = isolated_project / "configs" / "experiments" / "rag" / "rag_smoke_test.yaml"
-    output_dir = isolated_project / "experiments" / "rag_smoke_test"
+    """RAG config pipeline의 재현성, 입출력 계약, 산출물 품질을 함께 확인합니다."""
+    config = isolated_project / "configs" / "experiments" / "rag" / "rag_semantic.yaml"
+    output_dir = isolated_project / "experiments" / "rag_semantic"
 
     first_ingest = run_rag_ingest(config, isolated_project)
     first_chunks = (output_dir / "chunks.csv").read_text(encoding="utf-8")
@@ -58,8 +58,8 @@ def test_rag_quality_gate_reproducibility_and_contracts(isolated_project: Path):
 
 
 def test_rag_quality_gate_error_analysis_headers_exist(isolated_project: Path):
-    config = isolated_project / "configs" / "experiments" / "rag" / "rag_smoke_test.yaml"
-    output_dir = isolated_project / "experiments" / "rag_smoke_test"
+    config = isolated_project / "configs" / "experiments" / "rag" / "rag_semantic.yaml"
+    output_dir = isolated_project / "experiments" / "rag_semantic"
 
     run_rag_evaluation(config, isolated_project)
 

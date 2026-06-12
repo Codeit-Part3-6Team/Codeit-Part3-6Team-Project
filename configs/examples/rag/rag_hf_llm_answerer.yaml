@@ -5,7 +5,7 @@ experiment:
   contract_version: rag-v0.1
 
 paths:
-  raw_docs_dir: data/rag_smoke
+  raw_docs_dir: data/rag_sample
   output_dir: experiments/rag_hf_llm_answerer_example
 
 artifact_policy:
@@ -53,7 +53,7 @@ rag:
     fallback_message: 문서에서 확인하지 못했습니다.
 
 evaluation:
-  questions_path: data/rag_smoke/eval_questions.csv
+  questions_path: data/rag_sample/eval_questions.csv
 
 metric:
   monitor: retrieval_hit_rate

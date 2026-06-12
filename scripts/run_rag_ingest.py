@@ -15,7 +15,7 @@ from src.rag.pipeline import run_rag_ingest
 def main() -> None:
     """RAG 문서를 chunk 산출물로 변환합니다."""
     parser = argparse.ArgumentParser()
-    parser.add_argument("--config", default="configs/experiments/rag/rag_smoke_test.yaml")
+    parser.add_argument("--config", default="configs/experiments/rag/rag_semantic.yaml")
     parser.add_argument("--project-root", default=".")
     args = parser.parse_args()
 

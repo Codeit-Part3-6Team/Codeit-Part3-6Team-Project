@@ -7,12 +7,12 @@ from pathlib import Path
 from src.rag.validation import check_rag_pipeline
 
 
-def test_check_rag_pipeline_accepts_smoke_config(isolated_project: Path):
-    result = check_rag_pipeline("configs/experiments/rag/rag_smoke_test.yaml", isolated_project)
+def test_check_rag_pipeline_accepts_default_config(isolated_project: Path):
+    result = check_rag_pipeline("configs/experiments/rag/rag_semantic.yaml", isolated_project)
 
     assert result["ok"] is True
     assert result["errors"] == []
-    assert result["summary"]["experiment"] == "rag_smoke_test"
+    assert result["summary"]["experiment"] == "rag_semantic"
     assert result["summary"]["document_counts"]["txt"] == 1
     assert result["summary"]["retriever_method"] == "semantic"
     assert result["summary"]["embedding_provider"] == "local"
@@ -30,7 +30,7 @@ def test_check_rag_pipeline_reports_bad_config_values(isolated_project: Path):
 experiment:
   name: bad_rag
 paths:
-  raw_docs_dir: data/rag_smoke
+  raw_docs_dir: data/rag_sample
   output_dir: experiments/bad_rag
 rag:
   loader:
@@ -61,7 +61,7 @@ rag:
 artifact_policy:
   on_existing: invalid
 evaluation:
-  questions_path: data/rag_smoke/missing.csv
+  questions_path: data/rag_sample/missing.csv
 """,
         encoding="utf-8",
     )
@@ -94,7 +94,7 @@ def test_check_rag_pipeline_validates_llm_answerer_contract(isolated_project: Pa
 experiment:
   name: bad_llm_answerer
 paths:
-  raw_docs_dir: data/rag_smoke
+  raw_docs_dir: data/rag_sample
   output_dir: experiments/bad_llm_answerer
 rag:
   loader:
@@ -116,7 +116,7 @@ rag:
     mode: llm
     provider: openai
 evaluation:
-  questions_path: data/rag_smoke/eval_questions.csv
+  questions_path: data/rag_sample/eval_questions.csv
 """,
         encoding="utf-8",
     )
@@ -137,7 +137,7 @@ def test_check_rag_pipeline_accepts_contract_only_llm_answerer(isolated_project:
 experiment:
   name: llm_answerer_contract
 paths:
-  raw_docs_dir: data/rag_smoke
+  raw_docs_dir: data/rag_sample
   output_dir: experiments/llm_answerer_contract
 rag:
   loader:
@@ -162,7 +162,7 @@ rag:
     api_key_env: OPENAI_API_KEY
     require_citations: true
 evaluation:
-  questions_path: data/rag_smoke/eval_questions.csv
+  questions_path: data/rag_sample/eval_questions.csv
 """,
         encoding="utf-8",
     )
@@ -184,7 +184,7 @@ def test_check_rag_pipeline_validates_ollama_answerer_contract(isolated_project:
 experiment:
   name: bad_ollama_answerer
 paths:
-  raw_docs_dir: data/rag_smoke
+  raw_docs_dir: data/rag_sample
   output_dir: experiments/bad_ollama_answerer
 rag:
   loader:
@@ -207,7 +207,7 @@ rag:
     max_tokens: 0
     require_citations: required
 evaluation:
-  questions_path: data/rag_smoke/eval_questions.csv
+  questions_path: data/rag_sample/eval_questions.csv
 """,
         encoding="utf-8",
     )
@@ -228,7 +228,7 @@ def test_check_rag_pipeline_accepts_huggingface_llm_answerer_runtime(isolated_pr
 experiment:
   name: hf_llm_answerer
 paths:
-  raw_docs_dir: data/rag_smoke
+  raw_docs_dir: data/rag_sample
   output_dir: experiments/hf_llm_answerer
 rag:
   loader:
@@ -252,7 +252,7 @@ rag:
     max_new_tokens: 128
     require_citations: true
 evaluation:
-  questions_path: data/rag_smoke/eval_questions.csv
+  questions_path: data/rag_sample/eval_questions.csv
 """,
         encoding="utf-8",
     )
@@ -273,7 +273,7 @@ def test_check_rag_pipeline_script_uses_exit_code(isolated_project: Path, repo_r
             "--project-root",
             str(isolated_project),
             "--config",
-            "configs/experiments/rag/rag_smoke_test.yaml",
+            "configs/experiments/rag/rag_semantic.yaml",
         ],
         capture_output=True,
         text=True,

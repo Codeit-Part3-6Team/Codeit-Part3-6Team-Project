@@ -20,9 +20,9 @@ def main() -> None:
         "--configs",
         nargs="+",
         default=[
-            "configs/experiments/rag/rag_smoke_keyword.yaml",
-            "configs/experiments/rag/rag_smoke_test.yaml",
-            "configs/experiments/rag/rag_smoke_hybrid.yaml",
+            "configs/experiments/rag/rag_keyword.yaml",
+            "configs/experiments/rag/rag_semantic.yaml",
+            "configs/experiments/rag/rag_hybrid.yaml",
         ],
     )
     parser.add_argument("--output", default="reports/rag_retriever_comparison.csv")

@@ -85,12 +85,12 @@ tests/        파이프라인이 깨졌는지 확인하는 테스트
 
 ```yaml
 experiment:
-  name: rag_smoke_test
+  name: rag_semantic
   seed: 42
 
 paths:
-  raw_docs_dir: data/rag_smoke
-  output_dir: experiments/rag_smoke_test
+  raw_docs_dir: data/rag_sample
+  output_dir: experiments/rag_semantic
 
 rag:
   chunk:
@@ -115,7 +115,7 @@ config에는 다음 정보가 들어갑니다.
 ### 1. RAG 실행 전 점검
 
 ```bash
-python scripts/check_rag_pipeline.py --config configs/experiments/rag/rag_smoke_test.yaml --project-root .
+python scripts/check_rag_pipeline.py --config configs/experiments/rag/rag_semantic.yaml --project-root .
 ```
 
 확인하는 것:
@@ -128,7 +128,7 @@ python scripts/check_rag_pipeline.py --config configs/experiments/rag/rag_smoke_
 ### 2. 문서 ingest
 
 ```bash
-python scripts/run_rag_ingest.py --config configs/experiments/rag/rag_smoke_test.yaml --project-root .
+python scripts/run_rag_ingest.py --config configs/experiments/rag/rag_semantic.yaml --project-root .
 ```
 
 ingest 단계에서 하는 일:
@@ -144,7 +144,7 @@ ingest 단계에서 하는 일:
 
 ```bash
 python scripts/run_rag_chat.py \
-  --config configs/experiments/rag/rag_smoke_test.yaml \
+  --config configs/experiments/rag/rag_semantic.yaml \
   --project-root . \
   --question "예산은 얼마야?"
 ```
@@ -159,7 +159,7 @@ python scripts/run_rag_chat.py \
 ### 4. RAG 평가와 실험 요약
 
 ```bash
-python scripts/run_rag_chat.py --config configs/experiments/rag/rag_smoke_test.yaml --project-root . --evaluate
+python scripts/run_rag_chat.py --config configs/experiments/rag/rag_semantic.yaml --project-root . --evaluate
 python scripts/summarize_experiments.py --project-root .
 ```
 
@@ -175,7 +175,7 @@ reports/experiment_summary.json
 각 실험은 `experiments/{experiment.name}/` 아래에 저장됩니다.
 
 ```text
-experiments/rag_smoke_test/
+experiments/rag_semantic/
 |-- config.yaml
 |-- parsed_documents.csv
 |-- chunks.csv
@@ -197,15 +197,15 @@ experiments/rag_smoke_test/
 현재 파이프라인에는 두 종류의 실험이 있습니다.
 
 ```text
-smoke test: 파이프라인이 정상 동작하는지 빠르게 확인
+동작 확인: 파이프라인이 정상 동작하는지 빠르게 확인
 real experiment: 실제 모델 성능을 확인하는 실험
 ```
 
 RAG 예시:
 
-- `configs/experiments/rag/rag_smoke_test.yaml`: semantic retriever 기본 실험
-- `configs/experiments/rag/rag_smoke_keyword.yaml`: keyword retriever 비교 실험
-- `configs/experiments/rag/rag_smoke_hybrid.yaml`: hybrid retriever 비교 실험
+- `configs/experiments/rag/rag_semantic.yaml`: semantic retriever 기본 실험
+- `configs/experiments/rag/rag_keyword.yaml`: keyword retriever 비교 실험
+- `configs/experiments/rag/rag_hybrid.yaml`: hybrid retriever 비교 실험
 
 분류 모델과 HuggingFace fine-tuning config는 현재 RAG 프로젝트의 본 실험이 아니라 `configs/examples/classification/`에 참고용으로 보관합니다.
 
@@ -217,7 +217,7 @@ RAG 예시:
 document -> chunk -> embedding -> retrieve -> answer + citations
 ```
 
-현재 RAG smoke pipeline은 외부 모델 없이 hashing embedding 기반 semantic retrieval로 구현되어 있습니다.
+현재 RAG config pipeline은 외부 모델 없이 hashing embedding 기반 semantic retrieval로 구현되어 있습니다.
 loader는 `txt`, `pdf`, `docx`, `hwpx`, `hwp` 확장자를 대상으로 하며, 형식이 달라도 같은 document/chunk 계약으로 변환합니다.
 목표는 성능이 아니라 다음 항목을 빠르게 검증하는 것입니다.
 
@@ -229,10 +229,10 @@ loader는 `txt`, `pdf`, `docx`, `hwpx`, `hwp` 확장자를 대상으로 하며, 
 - `metrics.json`과 `evaluation_results.csv`를 남길 수 있는가
 - 실험 요약에서 RAG metric을 볼 수 있는가
 
-RAG smoke 산출물:
+RAG config 산출물:
 
 ```text
-experiments/rag_smoke_test/
+experiments/rag_semantic/
 |-- parsed_documents.csv
 |-- chunks.csv
 |-- embeddings.jsonl

@@ -15,7 +15,7 @@ from src.rag.pipeline import run_rag_retrieve
 def main() -> None:
     """질문 하나에 대한 RAG 검색 결과를 출력합니다."""
     parser = argparse.ArgumentParser()
-    parser.add_argument("--config", default="configs/experiments/rag/rag_smoke_test.yaml")
+    parser.add_argument("--config", default="configs/experiments/rag/rag_semantic.yaml")
     parser.add_argument("--project-root", default=".")
     parser.add_argument("--question", required=True)
     args = parser.parse_args()

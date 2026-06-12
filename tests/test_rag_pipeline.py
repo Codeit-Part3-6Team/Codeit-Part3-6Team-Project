@@ -9,15 +9,15 @@ from src.rag.comparison import compare_rag_retrievers
 from src.rag.pipeline import run_rag_chat, run_rag_evaluation, run_rag_ingest, run_rag_retrieve
 
 
-def test_rag_smoke_pipeline_writes_artifacts(isolated_project: Path):
-    config = isolated_project / "configs" / "experiments" / "rag" / "rag_smoke_test.yaml"
+def test_rag_config_pipeline_writes_artifacts(isolated_project: Path):
+    config = isolated_project / "configs" / "experiments" / "rag" / "rag_semantic.yaml"
 
     ingest_summary = run_rag_ingest(config, isolated_project)
     retrieval = run_rag_retrieve(config, isolated_project, "예산이 얼마야?")
     answer = run_rag_chat(config, isolated_project, "예산이 얼마야?")
     metrics = run_rag_evaluation(config, isolated_project)
 
-    output_dir = isolated_project / "experiments" / "rag_smoke_test"
+    output_dir = isolated_project / "experiments" / "rag_semantic"
     assert ingest_summary == {"documents": 3, "chunks": 3, "embeddings": 3}
     assert retrieval["retriever_method"] == "semantic"
     assert retrieval["retrieved_chunks"][0]["chunk_id"] == "rfp_sample_chunk_0001"
@@ -49,8 +49,8 @@ def test_rag_smoke_pipeline_writes_artifacts(isolated_project: Path):
 
 
 def test_rag_ingest_resumes_from_existing_document_and_chunk_artifacts(isolated_project: Path):
-    config = isolated_project / "configs" / "experiments" / "rag" / "rag_smoke_test.yaml"
-    output_dir = isolated_project / "experiments" / "rag_smoke_test"
+    config = isolated_project / "configs" / "experiments" / "rag" / "rag_semantic.yaml"
+    output_dir = isolated_project / "experiments" / "rag_semantic"
 
     first_summary = run_rag_ingest(config, isolated_project)
     (output_dir / "embeddings.jsonl").unlink()
@@ -65,11 +65,11 @@ def test_rag_ingest_resumes_from_existing_document_and_chunk_artifacts(isolated_
 
 
 def test_rag_evaluation_accepts_utf8_bom_questions_csv(isolated_project: Path):
-    questions_path = isolated_project / "data" / "rag_smoke" / "eval_questions.csv"
+    questions_path = isolated_project / "data" / "rag_sample" / "eval_questions.csv"
     original = questions_path.read_text(encoding="utf-8")
     questions_path.write_text(original, encoding="utf-8-sig")
 
-    config = isolated_project / "configs" / "experiments" / "rag" / "rag_smoke_test.yaml"
+    config = isolated_project / "configs" / "experiments" / "rag" / "rag_semantic.yaml"
     run_rag_ingest(config, isolated_project)
     metrics = run_rag_evaluation(config, isolated_project)
 
@@ -85,7 +85,7 @@ def test_run_rag_chat_script_supports_evaluation(isolated_project: Path, repo_ro
             "--project-root",
             str(isolated_project),
             "--config",
-            str(isolated_project / "configs" / "experiments" / "rag" / "rag_smoke_test.yaml"),
+            str(isolated_project / "configs" / "experiments" / "rag" / "rag_semantic.yaml"),
             "--evaluate",
         ],
         check=True,
@@ -108,7 +108,7 @@ def test_run_rag_chat_script_resolves_config_from_project_root(
             "--project-root",
             str(isolated_project),
             "--config",
-            "configs/experiments/rag/rag_smoke_test.yaml",
+            "configs/experiments/rag/rag_semantic.yaml",
             "--evaluate",
         ],
         check=True,
@@ -123,9 +123,9 @@ def test_run_rag_chat_script_resolves_config_from_project_root(
 def test_compare_rag_retrievers_writes_report(isolated_project: Path, repo_root: Path):
     rows = compare_rag_retrievers(
         [
-            isolated_project / "configs" / "experiments" / "rag" / "rag_smoke_keyword.yaml",
-            isolated_project / "configs" / "experiments" / "rag" / "rag_smoke_test.yaml",
-            isolated_project / "configs" / "experiments" / "rag" / "rag_smoke_hybrid.yaml",
+            isolated_project / "configs" / "experiments" / "rag" / "rag_keyword.yaml",
+            isolated_project / "configs" / "experiments" / "rag" / "rag_semantic.yaml",
+            isolated_project / "configs" / "experiments" / "rag" / "rag_hybrid.yaml",
         ],
         isolated_project,
     )
@@ -150,12 +150,12 @@ def test_compare_rag_retrievers_writes_report(isolated_project: Path, repo_root:
 
 
 def test_rag_hybrid_retriever_config_runs_pipeline(isolated_project: Path):
-    config = isolated_project / "configs" / "experiments" / "rag" / "rag_smoke_hybrid.yaml"
+    config = isolated_project / "configs" / "experiments" / "rag" / "rag_hybrid.yaml"
 
     metrics = run_rag_evaluation(config, isolated_project)
 
     assert metrics["retrieval_hit_rate"] == 1.0
-    assert (isolated_project / "experiments" / "rag_smoke_hybrid" / "metrics.json").exists()
+    assert (isolated_project / "experiments" / "rag_hybrid" / "metrics.json").exists()
 
 
 def test_rag_evaluation_writes_failure_artifacts(isolated_project: Path):
@@ -165,7 +165,7 @@ def test_rag_evaluation_writes_failure_artifacts(isolated_project: Path):
 experiment:
   name: rag_failure
 paths:
-  raw_docs_dir: data/rag_smoke
+  raw_docs_dir: data/rag_sample
   output_dir: experiments/rag_failure
 rag:
   loader:
@@ -179,7 +179,7 @@ rag:
   answerer:
     mode: extractive
 evaluation:
-  questions_path: data/rag_smoke/missing_questions.csv
+  questions_path: data/rag_sample/missing_questions.csv
 """,
         encoding="utf-8",
     )

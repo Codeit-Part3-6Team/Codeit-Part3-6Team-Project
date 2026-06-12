@@ -21,7 +21,7 @@ mindmap
       텍스트 smoke
       CSV
       sample input
-    rag_smoke
+    rag_sample
       RFP 샘플
       평가 질문
     external
@@ -35,9 +35,9 @@ mindmap
 data/
 |-- raw/             # 원본 데이터
 |-- interim/         # 중간 처리 데이터
-|-- processed/       # 이미지 smoke test용 처리 데이터
-|-- text_processed/  # 텍스트 smoke test용 처리 데이터
-|-- rag_smoke/       # RAG smoke test용 샘플 문서와 평가 질문
+|-- processed/       # 이미지 동작 확인용 처리 데이터
+|-- text_processed/  # 텍스트 동작 확인용 처리 데이터
+|-- rag_sample/      # RAG config 실행용 샘플 문서와 평가 질문
 `-- external/        # 외부에서 받은 참고 데이터
 ```
 
@@ -50,6 +50,6 @@ data/
 
 ## 현재 포함된 샘플
 
-- `processed/`: 이미지 분류 smoke test용 작은 PPM 이미지
-- `text_processed/`: 텍스트 분류 smoke test용 CSV와 샘플 txt
-- `rag_smoke/`: RAG 문서 검색 smoke test용 RFP 샘플과 평가 질문
+- `processed/`: 이미지 분류 동작 확인용 작은 PPM 이미지
+- `text_processed/`: 텍스트 분류 동작 확인용 CSV와 샘플 txt
+- `rag_sample/`: RAG 문서 검색 동작 확인용 RFP 샘플과 평가 질문

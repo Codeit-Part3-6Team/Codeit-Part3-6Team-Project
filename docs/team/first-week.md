@@ -25,7 +25,7 @@ Done
 
 | 카드 | 담당 후보 | 완료 기준 |
 | --- | --- | --- |
-| 개발 환경 세팅 확인 | 전체 | `python -m pytest` 또는 지정 smoke test 결과를 공유합니다. |
+| 개발 환경 세팅 확인 | 전체 | `python -m pytest` 또는 지정된 동작 확인 결과를 공유합니다. |
 | README와 킥오프 문서 읽기 | 전체 | 질문 또는 이해 안 된 부분을 Issue 댓글로 남깁니다. |
 | Daily Report 첫 작성 | 전체 | 각자 오늘 할 일과 막힌 점을 1회 작성합니다. |
 | GitHub Issue/PR 흐름 연습 | 전체 | 작은 문서 수정 PR을 하나 열고 리뷰 흐름을 확인합니다. |
@@ -52,7 +52,7 @@ Done
 
 | 카드 | 완료 기준 |
 | --- | --- |
-| RAG smoke pipeline 실행 | ingest, retrieve, chat, evaluate 명령 결과를 공유합니다. |
+| RAG config 기반 pipeline 실행 | ingest, retrieve, chat, evaluate 명령 결과를 공유합니다. |
 | retriever 비교 결과 확인 | keyword, semantic, hybrid 비교 결과를 읽고 차이를 설명합니다. |
 | config 변경 실험 1회 수행 | `top_k`, `chunk.size`, `retriever.method` 중 하나를 바꿔 결과를 비교합니다. |
 | metric 해석 메모 작성 | `retrieval_hit_rate`, `citation_correct_rate`, `not_found_rate`의 의미를 설명합니다. |

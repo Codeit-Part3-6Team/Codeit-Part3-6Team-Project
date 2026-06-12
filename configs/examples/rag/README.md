@@ -1,6 +1,6 @@
 # RAG 예제 config
 
-실제 smoke test 기본값이 아니라, 프로젝트에서 특정 기능을 켜고 싶을 때 참고할 config를 둡니다.
+기본 실행 config가 아니라, 프로젝트에서 특정 기능을 켜고 싶을 때 참고할 config를 둡니다.
 
 - `rag_hf_llm_answerer.yaml`: HuggingFace `transformers.pipeline` 기반 LLM answerer 예시
 

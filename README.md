@@ -40,7 +40,7 @@ raw docs -> chunk -> embedding/index -> retrieve -> answer -> citation/evaluate
 |   |-- experiments/rag/   # 실제 RAG 실험 config
 |   `-- examples/          # 참고용 config
 |-- data/
-|   `-- rag_smoke/         # 작은 RAG smoke 문서와 평가 질문
+|   `-- rag_sample/        # RAG config 실행용 샘플 문서와 평가 질문
 |-- docs/
 |   |-- team/              # 팀원이 처음 볼 문서
 |   |-- md/                # 세부 참고 문서
@@ -80,24 +80,24 @@ python -m pytest
 기본 config:
 
 ```text
-configs/experiments/rag/rag_smoke_test.yaml
+configs/experiments/rag/rag_semantic.yaml
 ```
 
 실행:
 
 ```bash
-python scripts/check_rag_pipeline.py --config configs/experiments/rag/rag_smoke_test.yaml --project-root .
-python scripts/run_rag_ingest.py --config configs/experiments/rag/rag_smoke_test.yaml --project-root .
-python scripts/run_rag_retrieve.py --config configs/experiments/rag/rag_smoke_test.yaml --project-root . --question "예산은 얼마야?"
-python scripts/run_rag_chat.py --config configs/experiments/rag/rag_smoke_test.yaml --project-root . --question "예산은 얼마야?"
-python scripts/run_rag_chat.py --config configs/experiments/rag/rag_smoke_test.yaml --project-root . --evaluate
+python scripts/check_rag_pipeline.py --config configs/experiments/rag/rag_semantic.yaml --project-root .
+python scripts/run_rag_ingest.py --config configs/experiments/rag/rag_semantic.yaml --project-root .
+python scripts/run_rag_retrieve.py --config configs/experiments/rag/rag_semantic.yaml --project-root . --question "예산은 얼마야?"
+python scripts/run_rag_chat.py --config configs/experiments/rag/rag_semantic.yaml --project-root . --question "예산은 얼마야?"
+python scripts/run_rag_chat.py --config configs/experiments/rag/rag_semantic.yaml --project-root . --evaluate
 python scripts/compare_rag_retrievers.py --project-root .
 ```
 
 ## RAG 산출물
 
 ```text
-experiments/rag_smoke_test/
+experiments/rag_semantic/
 |-- config.yaml
 |-- parsed_documents.csv
 |-- chunks.csv

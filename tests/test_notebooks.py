@@ -18,8 +18,8 @@ def _joined_source(notebook: dict) -> str:
     )
 
 
-def test_rag_smoke_walkthrough_notebook_structure() -> None:
-    notebook = _load_notebook("notebooks/rag/rag_smoke_walkthrough.ipynb")
+def test_rag_config_run_notebook_structure() -> None:
+    notebook = _load_notebook("notebooks/rag/rag_config_run.ipynb")
 
     assert notebook["nbformat"] == 4
     assert len(notebook["cells"]) >= 10
@@ -31,9 +31,9 @@ def test_rag_smoke_walkthrough_notebook_structure() -> None:
         "scripts/run_rag_retrieve.py",
         "scripts/run_rag_chat.py",
         "scripts/compare_rag_retrievers.py",
-        "configs/experiments/rag/rag_smoke_test.yaml",
-        "configs/experiments/rag/rag_smoke_hybrid.yaml",
-        "data/rag_smoke/eval_questions.csv",
+        "configs/experiments/rag/rag_semantic.yaml",
+        "configs/experiments/rag/rag_hybrid.yaml",
+        "data/rag_sample/eval_questions.csv",
     ]
     for ref in expected_refs:
         assert ref in source
@@ -65,6 +65,6 @@ def test_colab_drive_run_notebook_structure() -> None:
 def test_notebook_readme_points_to_templates() -> None:
     readme = (ROOT / "notebooks/README.md").read_text(encoding="utf-8")
 
-    assert "rag/rag_smoke_walkthrough.ipynb" in readme
+    assert "rag/rag_config_run.ipynb" in readme
     assert "rag/rag_colab_drive_run.ipynb" in readme
     assert "templates/colab_drive_run.md" in readme

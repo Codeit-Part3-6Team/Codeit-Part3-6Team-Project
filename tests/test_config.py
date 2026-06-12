@@ -14,7 +14,7 @@ def test_load_config_reads_text_smoke_config(repo_root):
 
 
 def test_load_config_reads_rag_file_types(repo_root):
-    config = load_config(repo_root / "configs" / "experiments" / "rag" / "rag_smoke_test.yaml")
+    config = load_config(repo_root / "configs" / "experiments" / "rag" / "rag_semantic.yaml")
 
     assert config["rag"]["loader"]["file_types"] == ["txt", "pdf", "docx", "hwpx", "hwp"]
     assert config["rag"]["embedding"]["provider"] == "local"
@@ -24,9 +24,9 @@ def test_load_config_reads_rag_file_types(repo_root):
 
 
 def test_load_config_reads_rag_hybrid_config(repo_root):
-    config = load_config(repo_root / "configs" / "experiments" / "rag" / "rag_smoke_hybrid.yaml")
+    config = load_config(repo_root / "configs" / "experiments" / "rag" / "rag_hybrid.yaml")
 
-    assert config["experiment"]["name"] == "rag_smoke_hybrid"
+    assert config["experiment"]["name"] == "rag_hybrid"
     assert config["rag"]["retriever"]["method"] == "hybrid"
     assert config["rag"]["retriever"]["keyword_weight"] == 0.4
     assert config["rag"]["retriever"]["semantic_weight"] == 0.6
