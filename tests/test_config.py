@@ -13,10 +13,11 @@ def test_load_config_reads_text_smoke_config(repo_root):
     assert config["artifact_policy"]["on_existing"] == "overwrite"
 
 
-def test_load_config_reads_rag_file_types(repo_root):
+def test_load_config_reads_local_fallback_rag_file_types(repo_root):
     config = load_config(repo_root / "configs" / "experiments" / "rag" / "rag_semantic.yaml")
 
     assert config["rag"]["loader"]["file_types"] == ["txt", "pdf", "docx", "hwpx", "hwp"]
+    assert config["rag"].get("engine", "local") == "local"
     assert config["rag"]["embedding"]["provider"] == "local"
     assert config["rag"]["vector_store"]["type"] == "memory"
     assert config["rag"]["reranker"]["enabled"] is False

@@ -90,13 +90,13 @@ artifact_policy:
 
 def test_write_experiment_summary_collects_rag_metrics(isolated_project: Path):
     run_rag_evaluation(
-        isolated_project / "configs" / "experiments" / "rag" / "rag_semantic.yaml",
+        isolated_project / "configs" / "experiments" / "rag" / "rag_langchain.yaml",
         isolated_project,
     )
 
     rows = write_experiment_summary(isolated_project)
 
-    assert rows[0]["experiment"] == "rag_semantic"
+    assert rows[0]["experiment"] == "rag_langchain"
     assert rows[0]["retrieval_hit_rate"] == 1.0
     assert rows[0]["citation_correct_rate"] == 1.0
 

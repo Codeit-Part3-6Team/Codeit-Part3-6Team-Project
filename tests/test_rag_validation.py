@@ -7,7 +7,7 @@ from pathlib import Path
 from src.rag.validation import check_rag_pipeline
 
 
-def test_check_rag_pipeline_accepts_default_config(isolated_project: Path):
+def test_check_rag_pipeline_accepts_local_fallback_config(isolated_project: Path):
     result = check_rag_pipeline("configs/experiments/rag/rag_semantic.yaml", isolated_project)
 
     assert result["ok"] is True
@@ -303,7 +303,7 @@ def test_check_rag_pipeline_script_uses_exit_code(isolated_project: Path, repo_r
             "--project-root",
             str(isolated_project),
             "--config",
-            "configs/experiments/rag/rag_semantic.yaml",
+            "configs/experiments/rag/rag_langchain.yaml",
         ],
         capture_output=True,
         text=True,

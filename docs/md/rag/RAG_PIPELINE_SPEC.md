@@ -81,7 +81,7 @@ indexes/
 `-- rag_sample/            # vector index 후보
 
 experiments/
-`-- rag_semantic/        # 검색/답변 실험 산출물
+`-- rag_langchain/       # 검색/답변 실험 산출물
 
 src/
 `-- rag/
@@ -509,10 +509,10 @@ metric:
 1. `configs/experiments/rag/rag_langchain.yaml` 작성
 2. `data/rag_sample/rfp_sample.txt` 작성
 3. `src/rag/document_loader.py` 작성
-4. `src/rag/chunker.py` 작성
-5. `src/rag/embedder.py` 작성
-6. `src/rag/vector_store.py` 작성
-7. `src/rag/retriever.py` 작성
+4. `src/rag/engines/base.py` 작성
+5. `src/rag/engines/local.py` 작성
+6. `src/rag/engines/langchain.py` 작성
+7. local fallback용 `chunker.py`, `embedder.py`, `vector_store.py`, `retriever.py` 작성
 8. `scripts/run_rag_ingest.py` 작성
 9. `scripts/run_rag_retrieve.py` 작성
 10. `scripts/run_rag_chat.py` 작성

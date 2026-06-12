@@ -9,18 +9,18 @@ from src.rag.comparison import compare_rag_retrievers
 from src.rag.pipeline import run_rag_chat, run_rag_evaluation, run_rag_ingest, run_rag_retrieve
 
 
-def test_rag_config_pipeline_writes_artifacts(isolated_project: Path):
-    config = isolated_project / "configs" / "experiments" / "rag" / "rag_semantic.yaml"
+def test_rag_langchain_pipeline_writes_artifacts(isolated_project: Path):
+    config = isolated_project / "configs" / "experiments" / "rag" / "rag_langchain.yaml"
 
     ingest_summary = run_rag_ingest(config, isolated_project)
     retrieval = run_rag_retrieve(config, isolated_project, "예산이 얼마야?")
     answer = run_rag_chat(config, isolated_project, "예산이 얼마야?")
     metrics = run_rag_evaluation(config, isolated_project)
 
-    output_dir = isolated_project / "experiments" / "rag_semantic"
+    output_dir = isolated_project / "experiments" / "rag_langchain"
     assert ingest_summary == {"documents": 3, "chunks": 3, "embeddings": 3}
-    assert retrieval["retriever_method"] == "semantic"
-    assert retrieval["retrieved_chunks"][0]["chunk_id"] == "rfp_sample_chunk_0001"
+    assert retrieval["retriever_method"] == "similarity"
+    assert "rfp_sample_chunk_0001" in {row["chunk_id"] for row in retrieval["retrieved_chunks"]}
     assert answer["status"] == "answered"
     assert "5천만 원" in answer["answer"]
     assert answer["citations"][0]["chunk_id"] == "rfp_sample_chunk_0001"
@@ -48,9 +48,9 @@ def test_rag_config_pipeline_writes_artifacts(isolated_project: Path):
     assert "question,expected_answer" in (output_dir / "bad_retrievals.csv").read_text(encoding="utf-8")
 
 
-def test_rag_ingest_resumes_from_existing_document_and_chunk_artifacts(isolated_project: Path):
-    config = isolated_project / "configs" / "experiments" / "rag" / "rag_semantic.yaml"
-    output_dir = isolated_project / "experiments" / "rag_semantic"
+def test_rag_langchain_ingest_resumes_from_existing_document_and_chunk_artifacts(isolated_project: Path):
+    config = isolated_project / "configs" / "experiments" / "rag" / "rag_langchain.yaml"
+    output_dir = isolated_project / "experiments" / "rag_langchain"
 
     first_summary = run_rag_ingest(config, isolated_project)
     (output_dir / "embeddings.jsonl").unlink()
@@ -69,7 +69,7 @@ def test_rag_evaluation_accepts_utf8_bom_questions_csv(isolated_project: Path):
     original = questions_path.read_text(encoding="utf-8")
     questions_path.write_text(original, encoding="utf-8-sig")
 
-    config = isolated_project / "configs" / "experiments" / "rag" / "rag_semantic.yaml"
+    config = isolated_project / "configs" / "experiments" / "rag" / "rag_langchain.yaml"
     run_rag_ingest(config, isolated_project)
     metrics = run_rag_evaluation(config, isolated_project)
 
@@ -84,8 +84,6 @@ def test_run_rag_chat_script_supports_evaluation(isolated_project: Path, repo_ro
             str(repo_root / "scripts" / "run_rag_chat.py"),
             "--project-root",
             str(isolated_project),
-            "--config",
-            str(isolated_project / "configs" / "experiments" / "rag" / "rag_semantic.yaml"),
             "--evaluate",
         ],
         check=True,
@@ -108,7 +106,7 @@ def test_run_rag_chat_script_resolves_config_from_project_root(
             "--project-root",
             str(isolated_project),
             "--config",
-            "configs/experiments/rag/rag_semantic.yaml",
+            "configs/experiments/rag/rag_langchain.yaml",
             "--evaluate",
         ],
         check=True,
@@ -151,14 +149,14 @@ def test_compare_rag_retrievers_writes_report(isolated_project: Path, repo_root:
     assert "rag_langchain,langchain,similarity,local,local" in result.stdout
 
 
-def test_rag_langchain_default_config_runs_pipeline(isolated_project: Path):
-    config = isolated_project / "configs" / "experiments" / "rag" / "rag_langchain.yaml"
+def test_rag_local_fallback_semantic_config_runs_pipeline(isolated_project: Path):
+    config = isolated_project / "configs" / "experiments" / "rag" / "rag_semantic.yaml"
 
     metrics = run_rag_evaluation(config, isolated_project)
 
     assert metrics["retrieval_hit_rate"] == 1.0
     assert metrics["citation_correct_rate"] == 1.0
-    assert (isolated_project / "experiments" / "rag_langchain" / "metrics.json").exists()
+    assert (isolated_project / "experiments" / "rag_semantic" / "metrics.json").exists()
 
 
 def test_rag_hybrid_retriever_config_runs_pipeline(isolated_project: Path):
