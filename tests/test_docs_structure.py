@@ -131,3 +131,24 @@ def test_rag_pipeline_spec_matches_langchain_runtime_boundary() -> None:
     forbidden = [phrase for phrase in forbidden_phrases if phrase in text]
     assert not missing, f"RAG 스펙에 현재 구현 상태 핵심 문구가 없습니다: {missing}"
     assert not forbidden, f"RAG 스펙에 오래되었거나 혼동되는 문구가 남아 있습니다: {forbidden}"
+
+
+def test_root_readme_is_rag_first() -> None:
+    """GitHub 첫 화면이 RAG 실행과 산출물 계약을 먼저 보여주는지 확인합니다."""
+    text = (ROOT / "README.md").read_text(encoding="utf-8")
+    required_phrases = [
+        "# RAG 기반 RFP 문서 분석 파이프라인",
+        "raw docs -> chunk -> embedding/index -> retrieve -> answer -> citation/evaluate",
+        "## 기본 RAG 실행",
+        "## RAG 산출물 계약",
+        "## 참고: 기존 ML/HuggingFace 예제",
+    ]
+    missing = [phrase for phrase in required_phrases if phrase not in text]
+    assert not missing, f"README에 RAG-first 핵심 문구가 없습니다: {missing}"
+
+    reference_index = text.index("## 참고: 기존 ML/HuggingFace 예제")
+    first_training_reference = min(
+        (text.find(phrase) for phrase in ["일반 ML", "epoch", "fine-tuning"] if text.find(phrase) != -1),
+        default=-1,
+    )
+    assert first_training_reference == -1 or first_training_reference > reference_index
