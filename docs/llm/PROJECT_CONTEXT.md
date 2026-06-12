@@ -60,6 +60,8 @@
 
 - config 중심으로 실험을 바꾸는 구조를 유지합니다.
 - 이 프로젝트는 LangChain 대체재가 아니라 LangChain 기반 RAG 실행도 같은 산출물/evaluation 계약으로 관리하는 harness입니다.
+- LangChain `Document`, retriever result, chain output은 엔진 내부에서 끝내고, pipeline에는 프로젝트 표준 dict만 넘깁니다.
+- 검색과 답변 생성을 완전히 chain 안에 숨기지 않습니다. retrieval 결과를 먼저 표준 artifact로 남긴 뒤 answer artifact와 citation을 연결합니다.
 - `scripts/`는 얇게 두고, 실제 로직은 `src/`에 둡니다.
 - RAG 결과는 답변만 남기지 않고 retrieval 결과와 citation을 함께 남깁니다.
 - 실패도 artifact로 남깁니다.

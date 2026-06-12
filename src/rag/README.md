@@ -70,6 +70,19 @@ document_loader
 -> evaluation
 ```
 
+## LangChain 경계
+
+LangChain은 splitter, embedding, vector store, retriever, LLM 호출을 맡는 내부 엔진으로 사용합니다.
+하지만 `pipeline.py` 밖으로 LangChain `Document`, retriever result, chain output을 그대로 내보내지 않습니다.
+
+엔진은 LangChain 결과를 항상 아래 프로젝트 표준 row로 변환한 뒤 반환합니다.
+
+- chunk row: `chunks.csv`에 저장 가능한 dict
+- retrieval row: `retrieval_results.jsonl`에 저장 가능한 dict
+- answer payload: `answers.jsonl`에 저장 가능한 dict
+
+이 경계를 유지해야 LangChain 기반 실행과 local fallback 실행을 같은 artifact/evaluation 규칙으로 비교할 수 있습니다.
+
 ## 파일 역할
 
 - `document_loader.py`: txt/pdf/docx/hwpx/hwp 문서를 표준 document row로 변환
@@ -89,7 +102,7 @@ document_loader
 
 - engine: `local`, `langchain`
 - embedding: `local`, `huggingface`
-- vector store: `memory`
+- vector store: `memory`, `chroma`
 - retriever: `keyword`, `semantic`, `hybrid`
 - answerer: `extractive/local`, `llm/huggingface`
 

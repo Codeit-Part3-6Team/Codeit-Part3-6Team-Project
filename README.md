@@ -58,6 +58,7 @@ raw docs -> chunk -> embedding/index -> retrieve -> answer -> citation/evaluate
 기존 분류/HuggingFace 학습 코드는 참고용으로 남아 있습니다. 현재 프로젝트의 기본 흐름은 `scripts/run_rag_*`와 `src/rag/`입니다.
 
 이 프로젝트는 LangChain 대체재가 아니라, LangChain 기반 RAG 실험도 같은 config와 artifact 규칙으로 실행하기 위한 실험 운영 레이어입니다.
+LangChain의 `Document`, retriever result, chain output은 엔진 내부에서 프로젝트 표준 dict로 변환하고, pipeline은 항상 같은 산출물 형식만 다룹니다.
 
 ## 빠른 시작
 
@@ -118,6 +119,7 @@ experiments/rag_semantic/
 ```
 
 RAG에서는 모델 weight보다 위 산출물이 더 중요합니다. 답변이 맞는지 보려면 `answers.jsonl`만 보지 말고 `retrieval_results.jsonl`, citation, 실패 CSV를 함께 봅니다.
+LangChain을 쓰더라도 이 산출물 구조는 유지합니다. 즉, 계산 엔진은 바뀔 수 있지만 실험 비교 기준은 `retrieval_results.jsonl`, `answers.jsonl`, `metrics.json`, 실패 CSV로 고정합니다.
 
 ## 주요 Config
 

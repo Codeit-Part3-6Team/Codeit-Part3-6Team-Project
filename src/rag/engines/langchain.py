@@ -9,7 +9,7 @@ from src.rag.answerer import build_answer
 
 @dataclass
 class LangChainRagEngine:
-    """LangChain 컴포넌트로 chunking, embedding, retrieval, answer를 수행하는 엔진입니다."""
+    """LangChain 컴포넌트로 RAG를 실행하고 프로젝트 표준 산출물로 변환하는 엔진입니다."""
 
     config: dict[str, Any]
     output_dir: Path
@@ -92,10 +92,7 @@ class LangChainRagEngine:
         top_k = int(retriever_cfg.get("top_k", retriever_cfg.get("k", 3)))
         if store is not None:
             rows = store.similarity_search_with_score(question, k=top_k)
-            return [
-                _retrieval_row_from_document(rank, document, score)
-                for rank, (document, score) in enumerate(rows, start=1)
-            ]
+            return _retrieval_rows_from_documents(rows)
         query_vector = self._build_embeddings().embed_query(question)
         return _retrieve_from_artifact(question, chunks, embeddings, query_vector, top_k)
 
@@ -108,6 +105,13 @@ class LangChainRagEngine:
                 retrieved_chunks,
                 fallback_message=answerer_cfg.get("fallback_message", "문서에서 확인하지 못했습니다."),
             )
+        if not retrieved_chunks:
+            return {
+                "question": question,
+                "answer": answerer_cfg.get("fallback_message", "문서에서 확인하지 못했습니다."),
+                "citations": [],
+                "status": "not_found",
+            }
         prompt = _build_prompt(question, retrieved_chunks)
         model = self._build_chat_model(answerer_cfg)
         response = model.invoke(prompt)
@@ -211,17 +215,25 @@ def _metadata_from_chunk(chunk: dict[str, Any]) -> dict[str, Any]:
 
 
 def _retrieval_row_from_document(rank: int, document: Any, score: float) -> dict[str, str | float | int]:
-    metadata = document.metadata
+    metadata = dict(getattr(document, "metadata", {}) or {})
+    chunk_id = str(metadata.get("chunk_id", ""))
+    if not chunk_id:
+        raise ValueError("LangChain Document metadata must include chunk_id")
     return {
         "rank": rank,
         "score": round(float(score), 4),
-        "chunk_id": str(metadata.get("chunk_id", "")),
+        "chunk_id": chunk_id,
         "document_id": str(metadata.get("document_id", "")),
         "source_path": str(metadata.get("source_path", "")),
         "page": str(metadata.get("page", "")),
         "section": str(metadata.get("section", "")),
-        "text": document.page_content,
+        "text": str(getattr(document, "page_content", "")),
     }
+
+
+def _retrieval_rows_from_documents(rows: list[tuple[Any, float]]) -> list[dict[str, str | float | int]]:
+    """LangChain 검색 결과를 retrieval_results.jsonl에 저장 가능한 표준 dict로 변환합니다."""
+    return [_retrieval_row_from_document(rank, document, score) for rank, (document, score) in enumerate(rows, start=1)]
 
 
 def _retrieve_from_artifact(
