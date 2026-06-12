@@ -107,3 +107,27 @@ def test_data_contract_is_rag_first() -> None:
 
     missing = [phrase for phrase in required_phrases if phrase not in text]
     assert not missing, f"RAG 데이터 계약 문서에 핵심 문구가 없습니다: {missing}"
+
+
+def test_rag_pipeline_spec_matches_langchain_runtime_boundary() -> None:
+    """RAG 스펙이 현재 LangChain/vector store 구현 상태를 모호하게 설명하지 않는지 확인합니다."""
+    text = (ROOT / "docs" / "md" / "rag" / "RAG_PIPELINE_SPEC.md").read_text(encoding="utf-8")
+    required_phrases = [
+        "`vector_store.type: memory`",
+        "`vector_store.type: chroma`",
+        "FAISS와 Elasticsearch는 아직 확장 후보",
+        "`rag.retriever.method`: `similarity` for LangChain",
+        "`rag.answerer.provider`: `local`, `openai`, `ollama` in LangChain runtime",
+    ]
+    forbidden_phrases = [
+        "별도 vector DB/index는 아직 만들지 않고",
+        "Chroma 후보",
+        "index_dir:",
+        "retriever:\n    method: semantic\n    top_k: 5",
+        "reranker:\n    enabled: true",
+    ]
+
+    missing = [phrase for phrase in required_phrases if phrase not in text]
+    forbidden = [phrase for phrase in forbidden_phrases if phrase in text]
+    assert not missing, f"RAG 스펙에 현재 구현 상태 핵심 문구가 없습니다: {missing}"
+    assert not forbidden, f"RAG 스펙에 오래되었거나 혼동되는 문구가 남아 있습니다: {forbidden}"
