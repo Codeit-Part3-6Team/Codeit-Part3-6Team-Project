@@ -1,10 +1,18 @@
-# Colab / Drive RAG 실행 가이드
+# 선택형 Colab / Drive RAG 실행 가이드
 
-이 문서는 로컬 환경 대신 Colab에서 RAG 실험을 실행하고, 결과를 Google Drive에 남기는 방법을 설명합니다.
+이 문서는 필요한 경우에만 Colab에서 RAG 실험을 실행하고, 결과를 Google Drive에 남기는 방법을 설명합니다.
+RAG smoke test와 기본 검색/답변 검증은 로컬 Jupyter로도 충분합니다.
 
 현재 프로젝트의 기본 실험은 분류 모델 학습이 아니라 RAG 문서 처리, 검색, 답변, 평가입니다.
 
-## Colab 실행 흐름
+## 언제 Colab을 쓰는가
+
+- 원본 문서와 실험 결과를 Google Drive에서 공유해야 할 때
+- 로컬 환경 세팅이 불안정해서 동일한 실행 환경이 필요할 때
+- HuggingFace embedding, reranker, LLM answerer처럼 모델 다운로드와 추론 자원이 필요한 옵션을 확인할 때
+- Drive 백업 흐름까지 한 번에 검증하고 싶을 때
+
+## 선택형 Colab 실행 흐름
 
 ```mermaid
 mindmap
@@ -142,7 +150,7 @@ run_status.json
 README.md
 ```
 
-## Colab에서 먼저 볼 것
+## Colab 결과에서 먼저 볼 것
 
 1. `metrics.json`: 전체 점수
 2. `bad_retrievals.csv`: 검색 실패 질문
@@ -177,4 +185,4 @@ Colab에서 HuggingFace 모델을 쓰면 모델 다운로드와 추론 시간이
 
 ## 참고
 
-예전 분류/HuggingFace fine-tuning config는 `configs/examples/classification/`에 남아 있습니다. 현재 RAG 프로젝트의 기본 Colab 실행 흐름은 위 RAG 명령을 기준으로 합니다.
+예전 분류/HuggingFace fine-tuning config는 `configs/examples/classification/`에 남아 있습니다. 현재 RAG 프로젝트의 기본 실험 흐름은 로컬 RAG smoke walkthrough이며, Colab은 위 조건에 해당할 때 선택합니다.

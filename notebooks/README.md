@@ -1,35 +1,59 @@
 # 실험 노트북
 
-이 디렉터리는 RAG 실험을 노트북에서 따라 실행하기 위한 템플릿을 둡니다.
-기본 목표는 모델 학습이 아니라 문서 적재, 검색, 답변, citation, 평가 산출물이 config 기준으로 잘 이어지는지 확인하는 것입니다.
+이 디렉터리는 RAG 실험을 사람이 직접 따라가며 확인하기 위한 노트북을 둡니다.
+기본 실행 환경은 로컬 Jupyter입니다. RAG smoke 실험은 대규모 학습을 하지 않기 때문에 Colab이나 GPU가 반드시 필요하지 않습니다.
 
-## 노트북 구성
+## 구조
 
-```mermaid
-mindmap
-  root((notebooks))
-    Local
-      local_experiment_template.ipynb
-      환경 점검
-      RAG smoke 실행
-      검색 결과 확인
-      평가 지표 확인
-    Colab
-      colab_experiment_template.ipynb
-      Drive mount
-      repo clone
-      Drive 기반 config 생성
-      산출물 백업 확인
-    Reference
-      template_colab_experiment.md
-      NOTEBOOK_USAGE_CHECKLIST
+```text
+notebooks/
+|-- README.md
+|-- rag/
+|   |-- rag_smoke_walkthrough.ipynb        # 기본 RAG 실행/검증 노트북
+|   `-- rag_optional_colab_drive.ipynb     # 선택형 Colab/Drive 실행 노트북
+`-- templates/
+    `-- optional_colab_drive.md            # Colab 노트북 작성용 텍스트 템플릿
 ```
 
-## 파일
+## 노트북 사용 기준
 
-- `local_experiment_template.ipynb`: 로컬 Jupyter에서 RAG 파이프라인을 검증하는 기본 템플릿입니다.
-- `colab_experiment_template.ipynb`: Google Colab에서 Drive 경로를 사용해 RAG 실험을 실행하는 템플릿입니다.
-- `template_colab_experiment.md`: Colab 노트북을 만들 때 참고할 수 있는 텍스트형 실행 순서입니다.
+```mermaid
+flowchart TD
+    A["RAG 실험을 시작한다"] --> B{"목적이 무엇인가?"}
+    B -->|파이프라인 동작 확인| C["rag_smoke_walkthrough.ipynb"]
+    B -->|검색 품질/답변/citation 확인| C
+    B -->|Drive에 원본 문서와 결과를 둔다| D["rag_optional_colab_drive.ipynb"]
+    B -->|HF embedding/reranker/LLM 실험| D
+    C --> E["로컬 smoke 결과 확인"]
+    D --> F["Colab/Drive 결과 확인"]
+```
+
+## 기본 노트북
+
+`rag/rag_smoke_walkthrough.ipynb`를 먼저 사용합니다.
+
+이 노트북에서 확인하는 것은 아래 흐름입니다.
+
+- config validation
+- 문서 ingest와 chunk 생성
+- 단일 질문 retrieval
+- 답변 생성과 citation 확인
+- 평가 질문 CSV 기반 evaluate
+- retriever config 비교
+
+## 선택형 Colab 노트북
+
+`rag/rag_optional_colab_drive.ipynb`는 기본 노트북이 아닙니다.
+아래 상황에서만 사용합니다.
+
+- 팀원이 같은 Drive 경로로 원본 문서와 산출물을 공유해야 할 때
+- 로컬 환경 세팅이 불안정해서 Colab에서 재현하고 싶을 때
+- HuggingFace embedding, reranker, LLM answerer처럼 다운로드와 추론 자원이 더 필요한 옵션을 실험할 때
+- 실험 결과를 Drive에 자동 백업하는 흐름을 보여주고 싶을 때
+
+CPU 기반 local provider, 작은 smoke 문서, 키워드/간단 vector 검색만 확인한다면 로컬 노트북으로 충분합니다.
+
+텍스트 템플릿으로 먼저 흐름을 확인하고 싶다면 `templates/optional_colab_drive.md`를 봅니다.
 
 ## 실험할 때 주로 바꾸는 값
 
@@ -44,9 +68,8 @@ RAG 실험은 epoch를 돌리는 학습 구조가 아니므로 아래 값을 바
 - `rag.evaluation.questions_path`: 평가 질문 CSV 경로
 - `artifact_policy.backup_dir`: Drive 등 외부 백업 위치
 
-## 사용 기준
+## 주의
 
-- 로컬 환경에서는 먼저 `local_experiment_template.ipynb`로 smoke config를 돌립니다.
-- Colab에서는 `REPO_URL`과 Drive 작업 경로를 실제 프로젝트 값으로 바꾼 뒤 실행합니다.
 - 노트북 출력은 커질 수 있으므로 commit 전에 불필요한 실행 결과를 정리합니다.
+- 원본 데이터와 대용량 index는 Git에 올리지 않습니다.
 - 노트북 사용법과 확인 기준은 [NOTEBOOK_USAGE_CHECKLIST.md](../docs/md/experiments/NOTEBOOK_USAGE_CHECKLIST.md)를 함께 봅니다.

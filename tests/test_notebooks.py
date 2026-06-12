@@ -18,8 +18,8 @@ def _joined_source(notebook: dict) -> str:
     )
 
 
-def test_local_experiment_notebook_structure() -> None:
-    notebook = _load_notebook("notebooks/local_experiment_template.ipynb")
+def test_rag_smoke_walkthrough_notebook_structure() -> None:
+    notebook = _load_notebook("notebooks/rag/rag_smoke_walkthrough.ipynb")
 
     assert notebook["nbformat"] == 4
     assert len(notebook["cells"]) >= 10
@@ -40,14 +40,14 @@ def test_local_experiment_notebook_structure() -> None:
         assert (ROOT / ref).exists(), f"Notebook reference does not exist: {ref}"
 
 
-def test_colab_experiment_notebook_structure() -> None:
-    notebook = _load_notebook("notebooks/colab_experiment_template.ipynb")
+def test_optional_colab_drive_notebook_structure() -> None:
+    notebook = _load_notebook("notebooks/rag/rag_optional_colab_drive.ipynb")
 
     assert notebook["nbformat"] == 4
-    assert notebook.get("metadata", {}).get("accelerator") == "GPU"
     source = _joined_source(notebook)
 
     expected_texts = [
+        "Colab이 꼭 필요한 것은 아닙니다",
         "from google.colab import drive",
         "drive.mount",
         "REPO_URL",
@@ -65,5 +65,6 @@ def test_colab_experiment_notebook_structure() -> None:
 def test_notebook_readme_points_to_templates() -> None:
     readme = (ROOT / "notebooks/README.md").read_text(encoding="utf-8")
 
-    assert "local_experiment_template.ipynb" in readme
-    assert "colab_experiment_template.ipynb" in readme
+    assert "rag/rag_smoke_walkthrough.ipynb" in readme
+    assert "rag/rag_optional_colab_drive.ipynb" in readme
+    assert "templates/optional_colab_drive.md" in readme

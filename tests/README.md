@@ -40,7 +40,7 @@ tests/
 |-- test_rag_document_loader.py  # PDF/DOCX/HWPX 등 문서 loader
 |-- test_rag_pipeline.py         # ingest/retrieve/chat 흐름
 |-- test_rag_adapters.py         # loader/retriever/answerer adapter 선택
-|-- test_notebooks.py            # 로컬/Colab 노트북 템플릿 구조
+|-- test_notebooks.py            # RAG 노트북 구조
 |-- test_docs_structure.py       # 문서 디렉터리 구조
 |-- test_scripts.py              # 실행 스크립트 진입점
 |-- test_config.py               # config 로딩과 경로 규칙

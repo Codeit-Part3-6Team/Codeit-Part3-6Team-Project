@@ -1,7 +1,17 @@
-# Colab RAG 실험 템플릿
+# 선택형 Colab / Drive RAG 템플릿
 
+Colab은 RAG 실험의 기본 실행 환경이 아닙니다.
 실제 `.ipynb` 노트북을 만들 때 아래 순서를 셀 단위로 옮겨 사용합니다.
 자세한 설명은 `docs/md/experiments/COLAB_GUIDE.md`를 기준으로 합니다.
+
+## 언제 사용하는가
+
+- Drive에 원본 문서와 실험 결과를 함께 관리할 때
+- 로컬 환경이 불안정해서 Colab에서 재현하고 싶을 때
+- HuggingFace embedding, reranker, LLM answerer처럼 다운로드와 추론 자원이 더 필요한 옵션을 확인할 때
+- 팀원에게 동일한 실행 환경을 빠르게 공유하고 싶을 때
+
+작은 RAG smoke test와 local provider 검증은 로컬 Jupyter에서 먼저 확인합니다.
 
 ## 1. Drive 연결
 
@@ -114,7 +124,7 @@ python scripts/compare_rag_retrievers.py \
 ## 체크리스트
 
 - Drive에 원본 문서가 있고 Git에는 올라가지 않는가?
-- config의 입력/출력/백업 경로가 Colab 기준으로 맞는가?
+- config의 입력/출력/백업 경로가 Drive 기준으로 맞는가?
 - ingest, retrieve, chat, evaluate가 모두 실행되는가?
 - retrieval 결과와 citation을 사람이 직접 확인했는가?
 - 실험 README나 report에 결론과 다음 액션을 적었는가?

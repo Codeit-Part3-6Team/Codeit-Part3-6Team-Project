@@ -26,7 +26,7 @@
    - chunking, embedding, retrieval, answer, evaluation 흐름
    - config 기반 실험 실행
    - 실험 산출물과 실패 로그
-   - local/Colab 노트북 템플릿
+   - 로컬 기본 RAG 노트북과 선택형 Colab/Drive 노트북
 
 4. 아직 나중에 붙일 것
    - 실제 외부 RFP 문서 검증
