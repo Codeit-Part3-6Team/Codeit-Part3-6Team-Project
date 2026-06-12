@@ -146,7 +146,7 @@ rag:
 | [docs/team/README.md](docs/team/README.md) | 팀원이 처음 볼 문서 입구 |
 | [docs/md/rag/RAG_PIPELINE_SPEC.md](docs/md/rag/RAG_PIPELINE_SPEC.md) | RAG 입력, chunk, 검색, 답변, 평가 계약 |
 | [docs/md/experiments/EXPERIMENT_GUIDE.md](docs/md/experiments/EXPERIMENT_GUIDE.md) | RAG 실험 실행과 결과 확인 |
-| [docs/md/experiments/COLAB_GUIDE.md](docs/md/experiments/COLAB_GUIDE.md) | 선택형 Colab/Drive RAG 실행 |
+| [docs/md/experiments/COLAB_GUIDE.md](docs/md/experiments/COLAB_GUIDE.md) | Colab/Drive RAG 실행 |
 | [docs/html/overview/pipeline_explainer.html](docs/html/overview/pipeline_explainer.html) | 쉬운 파이프라인 설명 |
 | [docs/html/overview/module_architecture.html](docs/html/overview/module_architecture.html) | 모듈 구조 다이어그램 |
 | [docs/html/kickoff/kickoff.html](docs/html/kickoff/kickoff.html) | 킥오프 설명용 HTML |

@@ -1,14 +1,14 @@
 # Experiment Markdown
 
-실험 실행, 선택형 Colab/Drive 실행, 노트북 사용성, 실험 운영 방법을 설명하는 Markdown 문서를 둡니다.
+실험 실행, Colab/Drive 실행, 노트북 사용성, 실험 운영 방법을 설명하는 Markdown 문서를 둡니다.
 
 ## 문서 목록
 
 | 문서 | 용도 |
 | --- | --- |
 | `EXPERIMENT_GUIDE.md` | 실험 실행과 결과 확인 방법 |
-| `COLAB_GUIDE.md` | 선택형 Colab/Drive 기반 실행 방법 |
-| `NOTEBOOK_USAGE_CHECKLIST.md` | 로컬 기본 노트북과 선택형 Colab 노트북이 팀원이 쓰기 쉬운지 확인하는 기준 |
+| `COLAB_GUIDE.md` | Colab/Drive 기반 실행 방법 |
+| `NOTEBOOK_USAGE_CHECKLIST.md` | 로컬 노트북과 Colab 노트북이 팀원이 쓰기 쉬운지 확인하는 기준 |
 
 ## 사용 기준
 

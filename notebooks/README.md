@@ -10,9 +10,9 @@ notebooks/
 |-- README.md
 |-- rag/
 |   |-- rag_smoke_walkthrough.ipynb        # 기본 RAG 실행/검증 노트북
-|   `-- rag_optional_colab_drive.ipynb     # 선택형 Colab/Drive 실행 노트북
+|   `-- rag_colab_drive_run.ipynb          # Colab/Drive 실행 노트북
 `-- templates/
-    `-- optional_colab_drive.md            # Colab 노트북 작성용 텍스트 템플릿
+    `-- colab_drive_run.md                 # Colab 노트북 작성용 텍스트 템플릿
 ```
 
 ## 노트북 사용 기준
@@ -22,7 +22,7 @@ flowchart TD
     A["RAG 실험을 시작한다"] --> B{"목적이 무엇인가?"}
     B -->|파이프라인 동작 확인| C["rag_smoke_walkthrough.ipynb"]
     B -->|검색 품질/답변/citation 확인| C
-    B -->|Drive에 원본 문서와 결과를 둔다| D["rag_optional_colab_drive.ipynb"]
+    B -->|Drive에 원본 문서와 결과를 둔다| D["rag_colab_drive_run.ipynb"]
     B -->|HF embedding/reranker/LLM 실험| D
     C --> E["로컬 smoke 결과 확인"]
     D --> F["Colab/Drive 결과 확인"]
@@ -41,10 +41,10 @@ flowchart TD
 - 평가 질문 CSV 기반 evaluate
 - retriever config 비교
 
-## 선택형 Colab 노트북
+## Colab 실행 노트북
 
-`rag/rag_optional_colab_drive.ipynb`는 기본 노트북이 아닙니다.
-아래 상황에서만 사용합니다.
+`rag/rag_colab_drive_run.ipynb`는 Colab에서 실험을 돌릴 사람을 위한 실행 노트북입니다.
+아래 상황이면 이 노트북을 사용합니다.
 
 - 팀원이 같은 Drive 경로로 원본 문서와 산출물을 공유해야 할 때
 - 로컬 환경 세팅이 불안정해서 Colab에서 재현하고 싶을 때
@@ -53,7 +53,7 @@ flowchart TD
 
 CPU 기반 local provider, 작은 smoke 문서, 키워드/간단 vector 검색만 확인한다면 로컬 노트북으로 충분합니다.
 
-텍스트 템플릿으로 먼저 흐름을 확인하고 싶다면 `templates/optional_colab_drive.md`를 봅니다.
+텍스트 템플릿으로 먼저 흐름을 확인하고 싶다면 `templates/colab_drive_run.md`를 봅니다.
 
 ## 실험할 때 주로 바꾸는 값
 

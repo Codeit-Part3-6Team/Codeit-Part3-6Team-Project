@@ -40,14 +40,14 @@ def test_rag_smoke_walkthrough_notebook_structure() -> None:
         assert (ROOT / ref).exists(), f"Notebook reference does not exist: {ref}"
 
 
-def test_optional_colab_drive_notebook_structure() -> None:
-    notebook = _load_notebook("notebooks/rag/rag_optional_colab_drive.ipynb")
+def test_colab_drive_run_notebook_structure() -> None:
+    notebook = _load_notebook("notebooks/rag/rag_colab_drive_run.ipynb")
 
     assert notebook["nbformat"] == 4
     source = _joined_source(notebook)
 
     expected_texts = [
-        "Colab이 꼭 필요한 것은 아닙니다",
+        "Colab에서 RAG 실험을 돌릴 때",
         "from google.colab import drive",
         "drive.mount",
         "REPO_URL",
@@ -66,5 +66,5 @@ def test_notebook_readme_points_to_templates() -> None:
     readme = (ROOT / "notebooks/README.md").read_text(encoding="utf-8")
 
     assert "rag/rag_smoke_walkthrough.ipynb" in readme
-    assert "rag/rag_optional_colab_drive.ipynb" in readme
-    assert "templates/optional_colab_drive.md" in readme
+    assert "rag/rag_colab_drive_run.ipynb" in readme
+    assert "templates/colab_drive_run.md" in readme
