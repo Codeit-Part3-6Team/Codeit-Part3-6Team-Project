@@ -9,19 +9,13 @@
 팀원에게 보여줄 때는 먼저 `notebooks/rag/rag_config_run.ipynb`를 엽니다.
 노트북의 마지막 `팀 공유 전 리허설` 섹션에서 기본 TXT 샘플과 DOCX/HWPX 준실제 샘플을 함께 확인할 수 있습니다.
 
-터미널에서 빠르게 확인하고 싶다면 아래 명령 하나로 같은 리허설을 실행합니다.
-
-```bash
-python scripts/run_rag_rehearsal.py --project-root .
-```
-
 통과 기준:
 
-- 결과 JSON의 최상위 `ok`가 `true`
-- 각 run의 `ingest.documents`, `ingest.chunks`, `ingest.embeddings`가 0보다 큼
+- `check_rag_pipeline.py` 결과의 `ok`가 `True`
+- `run_rag_ingest.py` 결과의 `documents`, `chunks`, `embeddings`가 0보다 큼
 - `metrics.not_found_rate`가 `0.0`
-- `missing_artifacts`가 빈 배열
-- `failure_log_exists`가 `false`
+- 산출물 체크 표에서 필수 artifact가 모두 `True`
+- `failure.log`는 생성되지 않음
 
 ## 리허설 대상
 

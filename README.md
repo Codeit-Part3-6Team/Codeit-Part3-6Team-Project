@@ -89,12 +89,6 @@ retriever 비교:
 python scripts/compare_rag_retrievers.py --project-root .
 ```
 
-팀 공유 전 리허설:
-
-```bash
-python scripts/run_rag_rehearsal.py --project-root .
-```
-
 팀원에게 화면으로 설명할 때는 `notebooks/rag/rag_config_run.ipynb`를 열고 마지막 리허설 섹션을 함께 확인합니다.
 
 ## RAG 산출물 계약
