@@ -25,7 +25,7 @@ def test_rag_config_run_notebook_structure() -> None:
     assert len(notebook["cells"]) >= 10
     source = _joined_source(notebook)
 
-    expected_refs = [
+    expected_file_refs = [
         "scripts/check_rag_pipeline.py",
         "scripts/run_rag_ingest.py",
         "scripts/run_rag_retrieve.py",
@@ -35,9 +35,16 @@ def test_rag_config_run_notebook_structure() -> None:
         "configs/experiments/rag/rag_hybrid.yaml",
         "data/rag_sample/eval_questions.csv",
     ]
-    for ref in expected_refs:
+    expected_texts = [
+        "display_metrics",
+        "display_answers",
+        "display_failure_tables",
+    ]
+    for ref in expected_file_refs:
         assert ref in source
         assert (ROOT / ref).exists(), f"Notebook reference does not exist: {ref}"
+    for text in expected_texts:
+        assert text in source
 
 
 def test_colab_drive_run_notebook_structure() -> None:
@@ -57,6 +64,9 @@ def test_colab_drive_run_notebook_structure() -> None:
         "configs/experiments/rag/rag_colab_drive.yaml",
         "scripts/run_rag_ingest.py",
         "scripts/run_rag_chat.py",
+        "display_metrics",
+        "display_answers",
+        "display_failure_tables",
     ]
     for text in expected_texts:
         assert text in source
