@@ -12,6 +12,7 @@
 | keyword retriever 비교 | `configs/experiments/rag/rag_keyword.yaml` |
 | keyword + semantic hybrid 비교 | `configs/experiments/rag/rag_hybrid.yaml` |
 | HuggingFace LLM answerer 예시 | `configs/examples/rag/rag_hf_llm_answerer.yaml` |
+| LangChain + Ollama 실행 예시 | `configs/examples/rag/rag_langchain_ollama.yaml` |
 
 ## 디렉터리 구조
 
@@ -43,7 +44,9 @@ mindmap
       run_id
       on_existing
     rag
+      engine
       loader
+      splitter
       chunk
       embedding
       vector_store
@@ -121,6 +124,17 @@ rag:
 ```
 
 chunk가 너무 작으면 문맥이 사라지고, 너무 크면 검색 정확도가 떨어질 수 있습니다.
+
+LangChain 엔진에서는 아래처럼 splitter 옵션을 사용합니다.
+
+```yaml
+rag:
+  engine: langchain
+  splitter:
+    type: recursive_character
+    chunk_size: 800
+    chunk_overlap: 120
+```
 
 ### Embedding
 

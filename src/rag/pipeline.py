@@ -12,14 +12,8 @@ from src.artifacts import (
     write_run_status,
 )
 from src.config import load_config, write_config_copy, write_json
-from src.rag.adapters import (
-    build_answerer_adapter,
-    build_embedding_adapter,
-    build_retriever_adapter,
-    resolve_vector_store_artifact_path,
-)
-from src.rag.chunker import chunk_documents
 from src.rag.document_loader import load_documents
+from src.rag.engines import build_rag_engine
 from src.utils.paths import ensure_dir
 
 
@@ -62,12 +56,10 @@ def run_rag_ingest(config_path: str | Path, project_root: str | Path = ".") -> d
         resume_enabled = bool(checkpoint_cfg.get("enabled", True) and checkpoint_cfg.get("resume", True))
         loader_cfg = config.get("rag", {}).get("loader", {})
         raw_docs_dir = config["paths"]["raw_docs_dir"]
-        chunk_cfg = config.get("rag", {}).get("chunk", {})
         documents_path = output_dir / "parsed_documents.csv"
         chunks_path = output_dir / "chunks.csv"
-        embedding_cfg = config.get("rag", {}).get("embedding", {})
-        vector_store_cfg = config.get("rag", {}).get("vector_store", {})
-        embeddings_path = resolve_vector_store_artifact_path(output_dir, vector_store_cfg)
+        embeddings_path = output_dir / "embeddings.jsonl"
+        engine = build_rag_engine(config, output_dir)
 
         write_config_copy(config_path, output_dir)
         # RAG resume은 현재 stage 단위입니다.
@@ -82,18 +74,14 @@ def run_rag_ingest(config_path: str | Path, project_root: str | Path = ".") -> d
         if resume_enabled and chunks_path.exists():
             chunks = _read_csv(chunks_path)
         else:
-            chunks = chunk_documents(
-                documents,
-                chunk_size=int(chunk_cfg.get("size", 500)),
-                overlap=int(chunk_cfg.get("overlap", 80)),
-            )
+            chunks = engine.chunk_documents(documents)
             _write_csv(chunks_path, chunks, CHUNK_COLUMNS)
         _write_rag_ingest_checkpoint(output_dir, "chunks", documents=len(documents), chunks=len(chunks))
 
         if resume_enabled and embeddings_path.exists():
             embeddings = _read_jsonl(embeddings_path)
         else:
-            embeddings = build_embedding_adapter(embedding_cfg).embed_chunks(chunks)
+            embeddings = engine.embed_chunks(chunks)
             _write_jsonl(embeddings_path, embeddings)
         _write_rag_ingest_checkpoint(
             output_dir,
@@ -138,17 +126,16 @@ def _run_rag_retrieve_checked(
     question: str,
 ) -> dict[str, Any]:
     chunks_path = output_dir / "chunks.csv"
-    vector_store_cfg = config.get("rag", {}).get("vector_store", {})
-    embeddings_path = resolve_vector_store_artifact_path(output_dir, vector_store_cfg)
+    embeddings_path = output_dir / "embeddings.jsonl"
     if not chunks_path.exists() or not embeddings_path.exists():
         # 사용자가 retrieve부터 실행해도 최소 파이프라인은 자동으로 준비되게 합니다.
         run_rag_ingest(config_path, root)
 
     retriever_cfg = config.get("rag", {}).get("retriever", {})
-    embedding_cfg = config.get("rag", {}).get("embedding", {})
     chunks = _read_csv(chunks_path)
     method = retriever_cfg.get("method", "keyword")
-    retrieved = build_retriever_adapter(retriever_cfg, embedding_cfg).retrieve(
+    engine = build_rag_engine(config, output_dir)
+    retrieved = engine.retrieve(
         question,
         chunks,
         _read_jsonl(embeddings_path),
@@ -174,8 +161,7 @@ def run_rag_chat(config_path: str | Path, project_root: str | Path, question: st
     _write_run_status(output_dir, "rag_chat", "running")
     try:
         retrieval = run_rag_retrieve(config_path, root, question)
-        answer_cfg = config.get("rag", {}).get("answerer", {})
-        answer = build_answerer_adapter(answer_cfg).answer(question, retrieval["retrieved_chunks"])
+        answer = build_rag_engine(config, output_dir).answer(question, retrieval["retrieved_chunks"])
         _append_jsonl(output_dir / "answers.jsonl", answer)
         _write_run_status(output_dir, "rag_chat", "success", result={"status": answer["status"]})
         return answer
@@ -198,13 +184,12 @@ def run_rag_evaluation(config_path: str | Path, project_root: str | Path = ".") 
             raise FileNotFoundError(f"RAG evaluation questions not found: {questions_path}")
 
         rows = _read_csv(questions_path)
-        answer_cfg = config.get("rag", {}).get("answerer", {})
         result_rows: list[dict[str, str]] = []
         analysis_rows: list[dict[str, str]] = []
-        answerer = build_answerer_adapter(answer_cfg)
+        engine = build_rag_engine(config, output_dir)
         for row in rows:
             retrieval = run_rag_retrieve(config_path, root, row["question"])
-            answer = answerer.answer(row["question"], retrieval["retrieved_chunks"])
+            answer = engine.answer(row["question"], retrieval["retrieved_chunks"])
             _append_jsonl(output_dir / "answers.jsonl", answer)
             expected_chunk_ids = _split_expected_ids(row["expected_chunk_ids"])
             retrieved_ids = {str(item["chunk_id"]) for item in retrieval["retrieved_chunks"]}

@@ -1,6 +1,7 @@
 # RAG 모듈
 
 `src/rag/`는 문서 기반 검색과 답변 파이프라인을 구현합니다.
+현재 방향은 pipeline이 산출물/evaluation을 책임지고, 실제 RAG 엔진은 local 또는 LangChain 구현으로 분리하는 것입니다.
 
 ## RAG 모듈 마인드맵
 
@@ -15,6 +16,8 @@ mindmap
       hwpx
       hwp
     Processing
+      engines
+      langchain
       chunker.py
       embedder.py
       vector_store.py
@@ -49,6 +52,7 @@ src/rag/
 |-- chunker.py          # document row를 chunk row로 분리
 |-- embedder.py         # local hashing embedding 구현
 |-- vector_store.py     # vector store 기본 도구
+|-- engines/            # local/LangChain RAG 엔진
 |-- retriever.py        # keyword/semantic/hybrid 검색
 |-- answerer.py         # 답변과 citation 생성
 |-- adapters.py         # config 기반 구현체 선택
@@ -61,16 +65,16 @@ src/rag/
 
 ```text
 document_loader
--> chunker
--> embedding adapter
--> retriever adapter
--> answerer adapter
+-> rag engine
+-> retrieval/answer artifact
 -> evaluation
 ```
 
 ## 파일 역할
 
 - `document_loader.py`: txt/pdf/docx/hwpx/hwp 문서를 표준 document row로 변환
+- `engines/local.py`: 기존 lightweight local 엔진
+- `engines/langchain.py`: LangChain splitter/embedding/vector store/LLM 기반 엔진
 - `chunker.py`: document row를 검색 가능한 chunk row로 분리
 - `embedder.py`: local hashing embedding 구현
 - `retriever.py`: keyword 검색과 score 계산
@@ -83,10 +87,11 @@ document_loader
 
 ## 현재 구현된 옵션
 
+- engine: `local`, `langchain`
 - embedding: `local`, `huggingface`
 - vector store: `memory`
 - retriever: `keyword`, `semantic`, `hybrid`
 - answerer: `extractive/local`, `llm/huggingface`
 
-FAISS, Chroma, Elasticsearch는 확장 계약만 잡혀 있으며, 실제 구현은 프로젝트 요구가 확정되면 추가합니다.
-LLM answerer는 HuggingFace provider만 runtime 구현이 있고, OpenAI/Ollama provider는 config 계약만 준비된 상태입니다.
+LangChain 엔진에서는 RecursiveCharacterTextSplitter, HuggingFace/Ollama embedding, Chroma, Ollama/OpenAI answerer를 config로 선택하는 방향을 사용합니다.
+local 엔진은 빠른 테스트와 fallback 용도로 유지합니다.

@@ -1,0 +1,75 @@
+from __future__ import annotations
+
+import sys
+from pathlib import Path
+from types import SimpleNamespace
+
+from src.rag.engines import build_rag_engine
+
+
+class FakeDocument:
+    def __init__(self, page_content, metadata=None):
+        self.page_content = page_content
+        self.metadata = metadata or {}
+
+
+class FakeSplitter:
+    def __init__(self, chunk_size, chunk_overlap):
+        self.chunk_size = chunk_size
+        self.chunk_overlap = chunk_overlap
+
+    def split_documents(self, documents):
+        return documents
+
+
+class FakeEmbeddings:
+    def __init__(self, model=None, model_name=None):
+        self.model = model or model_name
+
+    def embed_documents(self, texts):
+        return [[float(len(text)), 1.0] for text in texts]
+
+    def embed_query(self, text):
+        return [float(len(text)), 1.0]
+
+
+def test_langchain_engine_uses_standard_artifact_contract(monkeypatch, tmp_path: Path):
+    monkeypatch.setitem(sys.modules, "langchain_core.documents", SimpleNamespace(Document=FakeDocument))
+    monkeypatch.setitem(
+        sys.modules,
+        "langchain_text_splitters",
+        SimpleNamespace(RecursiveCharacterTextSplitter=FakeSplitter),
+    )
+    monkeypatch.setitem(sys.modules, "langchain_ollama", SimpleNamespace(OllamaEmbeddings=FakeEmbeddings))
+    config = {
+        "rag": {
+            "engine": "langchain",
+            "splitter": {"type": "recursive_character", "chunk_size": 500, "chunk_overlap": 80},
+            "embedding": {"provider": "ollama", "model_name": "nomic-embed-text"},
+            "vector_store": {"type": "memory"},
+            "retriever": {"method": "similarity", "top_k": 1},
+            "answerer": {"mode": "extractive", "provider": "local", "fallback_message": "없음"},
+        }
+    }
+    engine = build_rag_engine(config, tmp_path)
+    documents = [
+        {
+            "document_id": "doc",
+            "title": "sample",
+            "source_path": "sample.txt",
+            "page": "1",
+            "section": "예산",
+            "text": "본 사업의 예산은 5천만 원입니다.",
+        }
+    ]
+
+    chunks = engine.chunk_documents(documents)
+    embeddings = engine.embed_chunks(chunks)
+    retrieved = engine.retrieve("예산이 얼마야?", chunks, embeddings)
+    answer = engine.answer("예산이 얼마야?", retrieved)
+
+    assert chunks[0]["chunk_id"] == "doc_chunk_0001"
+    assert embeddings[0]["chunk_id"] == "doc_chunk_0001"
+    assert retrieved[0]["chunk_id"] == "doc_chunk_0001"
+    assert answer["status"] == "answered"
+    assert answer["citations"][0]["chunk_id"] == "doc_chunk_0001"

@@ -23,10 +23,11 @@
 | 영역 | 구현 상태 |
 | --- | --- |
 | 문서 로딩 | `txt`, `pdf`, `docx`, `hwpx`, `hwp` loader |
-| Chunking | 문자 기준 size/overlap |
-| Embedding | local hashing, HuggingFace mean pooling |
-| Retrieval | keyword, semantic, hybrid |
-| Answering | local extractive answer, HuggingFace LLM answerer |
+| Engine | local fallback, LangChain 운영 후보 |
+| Chunking | local splitter, LangChain RecursiveCharacterTextSplitter |
+| Embedding | local hashing, HuggingFace/Ollama 등 LangChain embedding 후보 |
+| Retrieval | local keyword/semantic/hybrid, LangChain similarity 후보 |
+| Answering | local extractive answer, LangChain Ollama/OpenAI 후보 |
 | Evaluation | retrieval hit rate, citation correctness, answer contains expected |
 | Config validation | RAG 실행 전 config와 경로 점검 |
 | Checkpoint/Resume | RAG ingest stage 단위 artifact 재사용 |
@@ -58,6 +59,7 @@
 ## 중요한 설계 판단
 
 - config 중심으로 실험을 바꾸는 구조를 유지합니다.
+- 이 프로젝트는 LangChain 대체재가 아니라 LangChain 기반 RAG 실행도 같은 산출물/evaluation 계약으로 관리하는 harness입니다.
 - `scripts/`는 얇게 두고, 실제 로직은 `src/`에 둡니다.
 - RAG 결과는 답변만 남기지 않고 retrieval 결과와 citation을 함께 남깁니다.
 - 실패도 artifact로 남깁니다.

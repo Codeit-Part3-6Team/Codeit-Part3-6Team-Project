@@ -13,9 +13,14 @@ SUPPORTED_EMBEDDING_PROVIDERS = {"local", "huggingface"}
 SUPPORTED_VECTOR_STORES = {"memory", "faiss", "chroma", "elasticsearch"}
 SUPPORTED_RETRIEVERS = {"keyword", "semantic", "hybrid"}
 SUPPORTED_RUNTIME_RETRIEVERS = {"keyword", "semantic", "hybrid"}
+SUPPORTED_LANGCHAIN_RETRIEVERS = {"similarity", "mmr"}
 SUPPORTED_RERANKER_PROVIDERS = {"local", "huggingface"}
 SUPPORTED_ANSWERERS = {"extractive", "llm"}
 SUPPORTED_ANSWERER_PROVIDERS = {"local", "openai", "huggingface", "ollama"}
+SUPPORTED_RAG_ENGINES = {"local", "langchain"}
+SUPPORTED_LANGCHAIN_EMBEDDING_PROVIDERS = {"huggingface", "ollama", "openai"}
+SUPPORTED_LANGCHAIN_VECTOR_STORES = {"memory", "chroma"}
+SUPPORTED_LANGCHAIN_ANSWERERS = {"local", "ollama", "openai"}
 
 
 def check_rag_pipeline(config_path: str | Path, project_root: str | Path = ".") -> dict[str, Any]:
@@ -59,6 +64,7 @@ def _build_summary(
 ) -> dict[str, Any]:
     paths = config.get("paths", {})
     rag = config.get("rag", {})
+    engine = str(rag.get("engine", "local") or "local")
     loader = rag.get("loader", {})
     chunk = rag.get("chunk", {})
     checkpoint = rag.get("checkpoint", {})
@@ -76,13 +82,14 @@ def _build_summary(
 
     file_types = _normalize_file_types(loader.get("file_types", ["txt"]), errors)
     document_counts = _count_documents(raw_docs_dir, file_types, errors, warnings)
-    _validate_chunk_config(chunk, errors)
+    _validate_engine_config(engine, errors)
+    _validate_chunk_config(rag.get("splitter", chunk), errors)
     _validate_checkpoint_config(checkpoint, errors)
-    _validate_embedding_config(embedding, errors)
-    _validate_vector_store_config(vector_store, errors, warnings)
-    _validate_retriever_config(retriever, errors)
+    _validate_embedding_config(embedding, engine, errors)
+    _validate_vector_store_config(vector_store, engine, errors, warnings)
+    _validate_retriever_config(retriever, engine, errors)
     _validate_reranker_config(reranker, errors, warnings)
-    _validate_answerer_config(answerer, errors, warnings)
+    _validate_answerer_config(answerer, engine, errors, warnings)
     _validate_artifact_policy(artifact_policy, errors)
     _validate_questions_path(root, questions_path, errors)
 
@@ -98,6 +105,7 @@ def _build_summary(
         "file_types": sorted(file_types),
         "document_counts": dict(sorted(document_counts.items())),
         "retriever_method": retriever.get("method", "keyword"),
+        "engine": engine,
         "chunk_size": chunk.get("size"),
         "chunk_overlap": chunk.get("overlap"),
         "checkpoint_enabled": checkpoint.get("enabled", True) if isinstance(checkpoint, dict) else True,
@@ -156,9 +164,14 @@ def _count_documents(
     return counts
 
 
+def _validate_engine_config(engine: str, errors: list[str]) -> None:
+    if engine not in SUPPORTED_RAG_ENGINES:
+        errors.append(f"unsupported rag.engine: {engine}")
+
+
 def _validate_chunk_config(chunk: dict[str, Any], errors: list[str]) -> None:
-    size = _as_int(chunk.get("size"), "rag.chunk.size", errors)
-    overlap = _as_int(chunk.get("overlap"), "rag.chunk.overlap", errors)
+    size = _as_int(chunk.get("size", chunk.get("chunk_size")), "rag.chunk.size", errors)
+    overlap = _as_int(chunk.get("overlap", chunk.get("chunk_overlap")), "rag.chunk.overlap", errors)
     if size is not None and size <= 0:
         errors.append("rag.chunk.size must be positive")
     if overlap is not None and overlap < 0:
@@ -173,13 +186,14 @@ def _validate_checkpoint_config(checkpoint: dict[str, Any], errors: list[str]) -
             errors.append(f"rag.checkpoint.{key} must be a boolean")
 
 
-def _validate_embedding_config(embedding: dict[str, Any], errors: list[str]) -> None:
+def _validate_embedding_config(embedding: dict[str, Any], engine: str, errors: list[str]) -> None:
     provider = embedding.get("provider", "local")
-    if provider not in SUPPORTED_EMBEDDING_PROVIDERS:
+    supported = SUPPORTED_LANGCHAIN_EMBEDDING_PROVIDERS if engine == "langchain" else SUPPORTED_EMBEDDING_PROVIDERS
+    if provider not in supported:
         errors.append(f"unsupported embedding provider: {provider}")
     model_name = str(embedding.get("model_name", "") or "").strip()
-    if provider == "huggingface" and not model_name:
-        errors.append("rag.embedding.model_name is required when provider is huggingface")
+    if provider in {"huggingface", "ollama", "openai"} and not model_name:
+        errors.append(f"rag.embedding.model_name is required when provider is {provider}")
     dimension = _as_int(embedding.get("dimension", 64), "rag.embedding.dimension", errors)
     if dimension is not None and dimension <= 0:
         errors.append("rag.embedding.dimension must be positive")
@@ -190,11 +204,13 @@ def _validate_embedding_config(embedding: dict[str, Any], errors: list[str]) -> 
 
 def _validate_vector_store_config(
     vector_store: dict[str, Any],
+    engine: str,
     errors: list[str],
     warnings: list[str],
 ) -> None:
     store_type = vector_store.get("type", "memory")
-    if store_type not in SUPPORTED_VECTOR_STORES:
+    supported = SUPPORTED_LANGCHAIN_VECTOR_STORES if engine == "langchain" else SUPPORTED_VECTOR_STORES
+    if store_type not in supported:
         errors.append(f"unsupported vector_store type: {store_type}")
         return
     path = str(vector_store.get("path", "") or "").strip()
@@ -207,15 +223,16 @@ def _validate_vector_store_config(
             errors.append("rag.vector_store.url is required when type is elasticsearch")
         if not index_name:
             errors.append("rag.vector_store.index_name is required when type is elasticsearch")
-    if store_type != "memory":
+    if store_type != "memory" and engine != "langchain":
         warnings.append(f"vector_store type '{store_type}' is config-ready but not implemented in smoke runtime")
 
 
-def _validate_retriever_config(retriever: dict[str, Any], errors: list[str]) -> None:
+def _validate_retriever_config(retriever: dict[str, Any], engine: str, errors: list[str]) -> None:
     method = retriever.get("method", "keyword")
-    if method not in SUPPORTED_RETRIEVERS:
+    supported = SUPPORTED_LANGCHAIN_RETRIEVERS if engine == "langchain" else SUPPORTED_RETRIEVERS
+    if method not in supported:
         errors.append(f"unsupported retriever method: {method}")
-    elif method not in SUPPORTED_RUNTIME_RETRIEVERS:
+    elif engine != "langchain" and method not in SUPPORTED_RUNTIME_RETRIEVERS:
         errors.append(f"retriever method is not implemented in smoke runtime yet: {method}")
     top_k = _as_int(retriever.get("top_k", 3), "rag.retriever.top_k", errors)
     if top_k is not None and top_k <= 0:
@@ -253,6 +270,7 @@ def _validate_reranker_config(
 
 def _validate_answerer_config(
     answerer: dict[str, Any],
+    engine: str,
     errors: list[str],
     warnings: list[str],
 ) -> None:
@@ -260,7 +278,8 @@ def _validate_answerer_config(
     if mode not in SUPPORTED_ANSWERERS:
         errors.append(f"unsupported answerer mode: {mode}")
     provider = answerer.get("provider", "local")
-    if provider not in SUPPORTED_ANSWERER_PROVIDERS:
+    supported_providers = SUPPORTED_LANGCHAIN_ANSWERERS if engine == "langchain" else SUPPORTED_ANSWERER_PROVIDERS
+    if provider not in supported_providers:
         errors.append(f"unsupported answerer provider: {provider}")
     model_name = str(answerer.get("model_name", "") or "").strip()
     if mode == "extractive":
@@ -297,7 +316,7 @@ def _validate_answerer_config(
         device = answerer.get("device", "auto")
         if device not in {"auto", "cpu", "cuda"}:
             errors.append(f"unsupported answerer device: {device}")
-    else:
+    elif engine != "langchain":
         warnings.append(f"answerer provider '{provider}' is config-ready but not implemented in smoke runtime")
 
 

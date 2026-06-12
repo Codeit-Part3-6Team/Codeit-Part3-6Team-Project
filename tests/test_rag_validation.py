@@ -265,6 +265,20 @@ evaluation:
     assert not any("answerer provider 'huggingface' is config-ready" in warning for warning in result["warnings"])
 
 
+def test_check_rag_pipeline_accepts_langchain_ollama_config(isolated_project: Path):
+    result = check_rag_pipeline(
+        "configs/examples/rag/rag_langchain_ollama.yaml",
+        isolated_project,
+    )
+
+    assert result["ok"], result["errors"]
+    assert result["summary"]["engine"] == "langchain"
+    assert result["summary"]["retriever_method"] == "similarity"
+    assert result["summary"]["embedding_provider"] == "ollama"
+    assert result["summary"]["answerer_provider"] == "ollama"
+    assert not any("not implemented in smoke runtime" in warning for warning in result["warnings"])
+
+
 def test_check_rag_pipeline_script_uses_exit_code(isolated_project: Path, repo_root: Path):
     ok_result = subprocess.run(
         [

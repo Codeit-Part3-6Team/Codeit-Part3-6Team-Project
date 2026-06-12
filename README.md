@@ -23,10 +23,11 @@ raw docs -> chunk -> embedding/index -> retrieve -> answer -> citation/evaluate
 | 영역 | 상태 |
 | --- | --- |
 | 문서 로딩 | `txt`, `pdf`, `docx`, `hwpx`, `hwp` |
-| Chunking | 문자 기준 size/overlap config |
-| Embedding | local hashing, HuggingFace mean pooling |
-| Retrieval | keyword, semantic, hybrid |
-| Answer | local extractive answer, HuggingFace LLM answerer 후보 |
+| Engine | local fallback, LangChain 운영 후보 |
+| Chunking | local splitter, LangChain RecursiveCharacterTextSplitter |
+| Embedding | local hashing, HuggingFace/Ollama 등 LangChain embedding 후보 |
+| Retrieval | local keyword/semantic/hybrid, LangChain similarity 후보 |
+| Answer | local extractive answer, LangChain Ollama/OpenAI 후보 |
 | Evaluation | retrieval hit rate, citation correctness, 실패 질문 CSV |
 | Resume | parsed/chunks/embeddings 단계별 재사용 |
 | Config Validation | RAG 실행 전 config와 입력 경로 점검 |
@@ -55,6 +56,8 @@ raw docs -> chunk -> embedding/index -> retrieve -> answer -> citation/evaluate
 ```
 
 기존 분류/HuggingFace 학습 코드는 참고용으로 남아 있습니다. 현재 프로젝트의 기본 흐름은 `scripts/run_rag_*`와 `src/rag/`입니다.
+
+이 프로젝트는 LangChain 대체재가 아니라, LangChain 기반 RAG 실험도 같은 config와 artifact 규칙으로 실행하기 위한 실험 운영 레이어입니다.
 
 ## 빠른 시작
 
@@ -120,6 +123,7 @@ RAG에서는 모델 weight보다 위 산출물이 더 중요합니다. 답변이
 
 ```yaml
 rag:
+  engine: local
   chunk:
     size: 500
     overlap: 80
@@ -136,6 +140,8 @@ rag:
     enabled: true
     resume: true
 ```
+
+LangChain 기반 실행 후보는 `configs/examples/rag/rag_langchain_ollama.yaml`에서 확인합니다.
 
 자세한 config 설명은 [configs/README.md](configs/README.md)를 봅니다.
 
