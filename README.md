@@ -153,7 +153,8 @@ rag:
     resume: true
 ```
 
-Ollama/OpenAI 같은 생성형 답변 후보는 `configs/examples/rag/rag_langchain_ollama.yaml`에서 확인합니다.
+Ollama/OpenAI 같은 생성형 답변 후보는 `configs/examples/rag/rag_langchain_ollama.yaml`, `configs/examples/rag/rag_langchain_openai.yaml`에서 확인합니다.
+해당 예시를 직접 실행할 때만 로컬 Ollama 서버나 OpenAI API를 호출하며, 기본 config와 테스트는 비용이 들지 않는 local provider를 사용합니다.
 자세한 config 설명은 [configs/README.md](configs/README.md)를 봅니다.
 
 ## 프로젝트 구조

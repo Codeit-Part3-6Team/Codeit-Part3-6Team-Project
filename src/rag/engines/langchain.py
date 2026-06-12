@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import os
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
@@ -184,6 +185,10 @@ class LangChainRagEngine:
             kwargs = {"model": model_name, "temperature": temperature}
             if answerer_cfg.get("max_tokens"):
                 kwargs["max_tokens"] = int(answerer_cfg["max_tokens"])
+            api_key_env = str(answerer_cfg.get("api_key_env", "OPENAI_API_KEY") or "OPENAI_API_KEY")
+            api_key = os.environ.get(api_key_env)
+            if api_key:
+                kwargs["api_key"] = api_key
             return ChatOpenAI(**kwargs)
         raise NotImplementedError(f"unsupported LangChain answerer provider: {provider}")
 

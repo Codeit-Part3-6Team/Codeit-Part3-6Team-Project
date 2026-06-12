@@ -279,6 +279,21 @@ def test_check_rag_pipeline_accepts_langchain_ollama_config(isolated_project: Pa
     assert not any("not implemented in smoke runtime" in warning for warning in result["warnings"])
 
 
+def test_check_rag_pipeline_accepts_langchain_openai_config(isolated_project: Path):
+    result = check_rag_pipeline(
+        "configs/examples/rag/rag_langchain_openai.yaml",
+        isolated_project,
+    )
+
+    assert result["ok"], result["errors"]
+    assert result["summary"]["engine"] == "langchain"
+    assert result["summary"]["retriever_method"] == "similarity"
+    assert result["summary"]["embedding_provider"] == "local"
+    assert result["summary"]["answerer_provider"] == "openai"
+    assert result["summary"]["answerer_model"] == "gpt-4.1-mini"
+    assert not any("not implemented in smoke runtime" in warning for warning in result["warnings"])
+
+
 def test_check_rag_pipeline_accepts_langchain_default_config(isolated_project: Path):
     result = check_rag_pipeline(
         "configs/experiments/rag/rag_langchain.yaml",

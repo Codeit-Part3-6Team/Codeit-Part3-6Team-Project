@@ -112,5 +112,6 @@ experiments/rag_langchain/
 
 - `configs/examples/rag/rag_hf_llm_answerer.yaml`: HuggingFace LLM answerer 예시
 - `configs/examples/rag/rag_langchain_ollama.yaml`: Ollama embedding/answerer 기반 LangChain 예시
+- `configs/examples/rag/rag_langchain_openai.yaml`: OpenAI answerer 기반 LangChain 예시
 
 분류/HuggingFace fine-tuning 예시는 `configs/examples/classification/`에만 보관합니다.

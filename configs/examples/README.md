@@ -15,6 +15,8 @@ configs/examples/
 ## RAG 참고 예제
 
 - `rag/rag_hf_llm_answerer.yaml`: RAG answerer를 HuggingFace LLM으로 바꾸는 예시
+- `rag/rag_langchain_ollama.yaml`: LangChain 기반 Ollama embedding/answerer 예시
+- `rag/rag_langchain_openai.yaml`: LangChain 기반 OpenAI answerer opt-in 예시
 
 이 예제는 RAG 프로젝트와 직접 관련이 있지만, smoke 기본값은 아닙니다. 실제 모델 다운로드와 추론 비용이 생길 수 있으므로 기본 실험이 통과한 뒤 사용합니다.
 

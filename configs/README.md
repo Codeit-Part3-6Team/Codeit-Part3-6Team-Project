@@ -14,6 +14,7 @@
 | keyword + semantic hybrid 비교 | `configs/experiments/rag/rag_hybrid.yaml` |
 | HuggingFace LLM answerer 예시 | `configs/examples/rag/rag_hf_llm_answerer.yaml` |
 | LangChain + Ollama 실행 예시 | `configs/examples/rag/rag_langchain_ollama.yaml` |
+| LangChain + OpenAI 실행 예시 | `configs/examples/rag/rag_langchain_openai.yaml` |
 
 ## 디렉터리 구조
 
@@ -221,6 +222,20 @@ rag:
 ```
 
 LangChain 엔진에서는 Ollama/OpenAI answerer를 사용할 수 있습니다. 팀원 PC에서 바로 검증할 때는 `local` answerer를 쓰고, 실제 생성형 답변 실험에서 Ollama/OpenAI로 바꿉니다.
+
+```yaml
+rag:
+  answerer:
+    mode: llm
+    provider: openai
+    model_name: gpt-4.1-mini
+    api_key_env: OPENAI_API_KEY
+    temperature: 0.2
+    max_tokens: 512
+    require_citations: true
+```
+
+OpenAI는 `api_key_env`에 적은 환경변수가 실제 실행 환경에 있을 때만 호출할 수 있습니다. 예시 config를 저장하거나 validation하는 것만으로는 비용이 발생하지 않습니다.
 
 ### Checkpoint / Resume
 

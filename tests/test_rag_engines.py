@@ -253,6 +253,7 @@ def test_langchain_ollama_answerer_returns_standard_payload(monkeypatch, tmp_pat
 def test_langchain_openai_answerer_returns_standard_payload(monkeypatch, tmp_path: Path):
     FakeChatOpenAI.calls = []
     FakeChatOpenAI.last_prompt = ""
+    monkeypatch.setenv("TEST_OPENAI_API_KEY", "sk-test")
     monkeypatch.setitem(sys.modules, "langchain_openai", SimpleNamespace(ChatOpenAI=FakeChatOpenAI))
     config = {
         "rag": {
@@ -262,6 +263,7 @@ def test_langchain_openai_answerer_returns_standard_payload(monkeypatch, tmp_pat
             "answerer": {
                 "provider": "openai",
                 "model_name": "gpt-4.1-mini",
+                "api_key_env": "TEST_OPENAI_API_KEY",
                 "temperature": 0.2,
                 "max_tokens": 256,
             },
@@ -294,5 +296,6 @@ def test_langchain_openai_answerer_returns_standard_payload(monkeypatch, tmp_pat
         "model": "gpt-4.1-mini",
         "temperature": 0.2,
         "max_tokens": 256,
+        "api_key": "sk-test",
     }
     assert "chunk_id: doc_chunk_0002" in FakeChatOpenAI.last_prompt
