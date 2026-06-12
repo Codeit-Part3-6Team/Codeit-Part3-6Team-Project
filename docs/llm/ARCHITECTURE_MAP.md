@@ -32,6 +32,10 @@ experiments/ + reports/
 ## RAG 실행 흐름
 
 ```text
+configs/experiments/rag/*.yaml
+    -> scripts/check_rag_pipeline.py
+    -> config, input path, output path, provider option 점검
+
 run_rag_ingest.py
     -> src/config.py
     -> src/rag/document_loader.py
@@ -54,6 +58,16 @@ run_rag_chat.py
     -> experiments/{name}/metrics.json
 ```
 
+## 기준 Config와 데이터
+
+| config | 데이터 | 확인 범위 |
+| --- | --- | --- |
+| `configs/experiments/rag/rag_langchain.yaml` | `data/rag_sample/` | TXT 샘플 기준 기본 RAG 흐름 |
+| `configs/experiments/rag/rag_realistic_docs.yaml` | `data/rag_realistic/` | DOCX/HWPX loader, chunk, retrieval, answer, evaluation E2E |
+| `configs/experiments/rag/rag_keyword.yaml` | `data/rag_sample/` | local keyword retriever 비교 |
+| `configs/experiments/rag/rag_semantic.yaml` | `data/rag_sample/` | local semantic retriever 비교 |
+| `configs/experiments/rag/rag_hybrid.yaml` | `data/rag_sample/` | local hybrid retriever 비교 |
+
 ## 작업별 수정 위치
 
 | 작업 | 주 수정 위치 | 함께 볼 파일 |
@@ -69,6 +83,7 @@ run_rag_chat.py
 | CLI 추가 | `scripts/` | `scripts/README.md`, `tests/test_scripts.py` |
 | 노트북 변경 | `notebooks/` | `tests/test_notebooks.py` |
 | 문서 구조 변경 | `docs/` | `tests/test_docs_structure.py` |
+| 실제 포맷 E2E 검증 추가 | `data/rag_realistic/`, `configs/experiments/rag/*.yaml`, `tests/test_rag_quality_gate.py` | `docs/md/overview/RAG_QUALITY_CHECKLIST.md` |
 
 ## Engine 판단 기준
 

@@ -35,7 +35,7 @@
 | Experiment summary | 여러 실험의 metric/config/run info 요약 |
 | Notebook | 로컬 RAG walkthrough, Colab/Drive 실행 템플릿 |
 | Docs | Markdown 원본, HTML 설명 문서, README 지도 |
-| 실제 포맷 E2E 검증 | realistic DOCX/HWPX 샘플 기준 통과, PDF loader 단위 검증 통과 |
+| 실제 포맷 E2E 검증 | `configs/experiments/rag/rag_realistic_docs.yaml` 기준 DOCX/HWPX 준실제 샘플 통과, PDF loader 단위 검증 통과 |
 
 ## 아직 구현 후보인 기능
 
@@ -55,6 +55,16 @@
 2. 검색 품질을 비교할 수 있도록 retriever config와 metric을 정리합니다.
 3. OpenAI/Ollama answerer 또는 UI는 팀 범위, API 사용 가능 여부, 비용을 확인한 뒤 실제 실험 config로 승격합니다.
 4. 문서와 README는 팀원이 이해하기 쉬운 수준을 유지합니다.
+
+## 기준 검증 Config
+
+| config | 목적 | 최소 확인 명령 |
+| --- | --- | --- |
+| `configs/experiments/rag/rag_langchain.yaml` | TXT 샘플 기준 기본 LangChain RAG 흐름 | `python scripts/run_rag_chat.py --config configs/experiments/rag/rag_langchain.yaml --project-root . --evaluate` |
+| `configs/experiments/rag/rag_realistic_docs.yaml` | DOCX/HWPX 준실제 RFP 문서 포맷 E2E | `python scripts/run_rag_chat.py --config configs/experiments/rag/rag_realistic_docs.yaml --project-root . --evaluate` |
+| `configs/experiments/rag/rag_keyword.yaml` | local keyword retriever 비교 | `python scripts/compare_rag_retrievers.py --project-root .` |
+| `configs/experiments/rag/rag_semantic.yaml` | local semantic retriever 비교 | `python scripts/compare_rag_retrievers.py --project-root .` |
+| `configs/experiments/rag/rag_hybrid.yaml` | local hybrid retriever 비교 | `python scripts/compare_rag_retrievers.py --project-root .` |
 
 ## 중요한 설계 판단
 

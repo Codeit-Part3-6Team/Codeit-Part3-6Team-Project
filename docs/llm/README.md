@@ -40,6 +40,7 @@ LLM에게 작업을 맡길 때는 먼저 루트 `AGENTS.md`를 읽게 합니다.
 | 어떤 파일을 고칠지 판단 | `ARCHITECTURE_MAP.md` |
 | 작업 전후 체크 | `WORKFLOW_CHECKLIST.md` |
 | 요청 프롬프트 작성 | `TASK_PROMPTS.md` |
+| 실제 문서 포맷 E2E 검증 | `docs/md/overview/RAG_QUALITY_CHECKLIST.md` |
 | 팀 공유 문서 보강 | `docs/team/README.md` |
 | GitHub 운영 문서 보강 | `docs/team/operations.md` |
 | 첫 주 태스크 정리 | `docs/team/first-week.md` |

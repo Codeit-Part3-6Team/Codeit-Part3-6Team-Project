@@ -52,6 +52,26 @@ validation, 예시 config, 테스트, 문서까지 같이 맞춰줘.
 필요한 테스트를 추가하고, 마지막에 어떤 리스크가 테스트로 고정됐는지 정리해줘.
 ```
 
+## 실제 문서 포맷 E2E 검증 요청
+
+```text
+AGENTS.md, docs/llm/PROJECT_CONTEXT.md, docs/md/overview/RAG_QUALITY_CHECKLIST.md를 읽고 진행해줘.
+DOCX/HWPX/PDF 같은 실제 문서 포맷이 RAG pipeline에서 check -> ingest -> chat --evaluate 순서로 동작하는지 검증해줘.
+저장소 fixture는 configs/experiments/rag/rag_realistic_docs.yaml과 data/rag_realistic/을 먼저 사용해줘.
+실제 외부 원문을 추가로 쓰는 경우 원본 데이터나 큰 파일은 Git에 넣지 말고, 재현 가능한 작은 fixture와 config만 남겨줘.
+검증 결과는 documents/chunks/embeddings count, metrics.json 값, 실패 CSV 여부 중심으로 정리해줘.
+```
+
+## LLM Answerer 도입 검토 요청
+
+```text
+AGENTS.md와 docs/md/rag/RAG_PIPELINE_SPEC.md를 읽고 진행해줘.
+OpenAI 또는 Ollama 기반 answerer를 붙이는 것이 현재 config/artifact 계약을 깨지 않는지 검토해줘.
+LangChain chain output을 그대로 밖으로 내보내지 말고, answers.jsonl의 answer/citations/status 형식으로 변환해줘.
+외부 API가 필요한 테스트는 mock으로 고정하고, 실제 호출 config는 examples 또는 opt-in config로 분리해줘.
+비용, 환경변수, 재현성, 환각 가능성을 README에 짧게 남겨줘.
+```
+
 ## GitHub 운영 문서 요청
 
 ```text

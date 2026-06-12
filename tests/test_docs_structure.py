@@ -83,6 +83,7 @@ def test_llm_prompts_preserve_langchain_harness_boundary() -> None:
     required_phrases = [
         "LangChain 기반 RAG 실험/운영 harness",
         "프로젝트 표준 artifact",
+        "rag_realistic_docs.yaml",
         "retrieval_results.jsonl",
         "answers.jsonl",
         "metrics.json",
@@ -91,6 +92,17 @@ def test_llm_prompts_preserve_langchain_harness_boundary() -> None:
 
     missing = [phrase for phrase in required_phrases if phrase not in text]
     assert not missing, f"LLM 프롬프트 문서에 핵심 문구가 없습니다: {missing}"
+
+
+def test_llm_context_mentions_realistic_rag_e2e_config() -> None:
+    """LLM 작업 문서가 준실제 RFP 포맷 검증 config를 안내하는지 확인합니다."""
+    context = (ROOT / "docs" / "llm" / "PROJECT_CONTEXT.md").read_text(encoding="utf-8")
+    architecture = (ROOT / "docs" / "llm" / "ARCHITECTURE_MAP.md").read_text(encoding="utf-8")
+    checklist = (ROOT / "docs" / "llm" / "WORKFLOW_CHECKLIST.md").read_text(encoding="utf-8")
+
+    for text in [context, architecture, checklist]:
+        assert "rag_realistic_docs.yaml" in text
+        assert "DOCX/HWPX" in text
 
 
 def test_data_contract_is_rag_first() -> None:

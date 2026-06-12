@@ -27,6 +27,7 @@
 - [ ] HTML 설명 문서와 대응되는 내용이면 `docs/html/`도 확인합니다.
 - [ ] 실험 산출물, 모델 weight, 원본 데이터가 Git에 들어가지 않았는지 확인합니다.
 - [ ] 변경 내용을 커밋 단위로 분리할 수 있는지 확인합니다.
+- [ ] RAG 작업이라면 `retrieval_results.jsonl`, `answers.jsonl`, `metrics.json`, 실패 CSV가 생성되는지 확인합니다.
 
 ## 테스트 선택 기준
 
@@ -36,6 +37,7 @@
 | config 경로/계약 | `python -m pytest tests/test_config.py tests/test_rag_validation.py` |
 | scripts 변경 | `python -m pytest tests/test_scripts.py` |
 | RAG 구현 변경 | `python -m pytest tests/test_rag_pipeline.py tests/test_rag_adapters.py tests/test_rag_document_loader.py` |
+| 실제 문서 포맷 E2E | `python -m pytest tests/test_rag_quality_gate.py` |
 | 모델/학습 변경 | `python -m pytest tests/test_models.py tests/test_pipeline_smoke.py` |
 | 노트북 변경 | `python -m pytest tests/test_notebooks.py` |
 | 넓은 변경 | `python -m pytest` |
@@ -51,3 +53,19 @@
 문서나 config 경로도 같이 갱신했는가?
 ```
 
+## RAG 기준 검증 명령
+
+TXT 기본 샘플:
+
+```bash
+python scripts/check_rag_pipeline.py --config configs/experiments/rag/rag_langchain.yaml --project-root .
+python scripts/run_rag_chat.py --config configs/experiments/rag/rag_langchain.yaml --project-root . --evaluate
+```
+
+DOCX/HWPX 준실제 샘플:
+
+```bash
+python scripts/check_rag_pipeline.py --config configs/experiments/rag/rag_realistic_docs.yaml --project-root .
+python scripts/run_rag_ingest.py --config configs/experiments/rag/rag_realistic_docs.yaml --project-root .
+python scripts/run_rag_chat.py --config configs/experiments/rag/rag_realistic_docs.yaml --project-root . --evaluate
+```
