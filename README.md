@@ -89,6 +89,12 @@ retriever 비교:
 python scripts/compare_rag_retrievers.py --project-root .
 ```
 
+팀 공유 전 리허설:
+
+```bash
+python scripts/run_rag_rehearsal.py --project-root .
+```
+
 ## RAG 산출물 계약
 
 각 실험은 `experiments/{experiment.name}/` 아래에 산출물을 남깁니다.
@@ -185,6 +191,7 @@ Ollama/OpenAI 같은 생성형 답변 후보는 `configs/examples/rag/rag_langch
 | 문서 | 용도 |
 | --- | --- |
 | [docs/team/README.md](docs/team/README.md) | 팀원이 처음 볼 문서 입구 |
+| [docs/team/rehearsal.md](docs/team/rehearsal.md) | 팀 공유 전 RAG 파이프라인 리허설 |
 | [docs/md/rag/RAG_PIPELINE_SPEC.md](docs/md/rag/RAG_PIPELINE_SPEC.md) | RAG 입력, chunk, 검색, 답변, 평가 계약 |
 | [docs/md/data/DATA_CONTRACT.md](docs/md/data/DATA_CONTRACT.md) | RAG 원본 문서, chunk metadata, 평가 질문 계약 |
 | [docs/md/experiments/EXPERIMENT_GUIDE.md](docs/md/experiments/EXPERIMENT_GUIDE.md) | RAG 실험 실행과 결과 확인 |

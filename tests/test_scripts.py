@@ -175,3 +175,25 @@ def test_run_predict_script_writes_failure_artifacts(isolated_project: Path, rep
     assert run_status["status"] == "failed"
     assert run_status["error"]["type"] == "ValueError"
     assert "Unsupported model artifact" in failure_log
+
+
+def test_run_rag_rehearsal_script_checks_default_configs(isolated_project: Path, repo_root: Path):
+    result = subprocess.run(
+        [
+            sys.executable,
+            str(repo_root / "scripts" / "run_rag_rehearsal.py"),
+            "--project-root",
+            str(isolated_project),
+        ],
+        check=True,
+        capture_output=True,
+        text=True,
+    )
+
+    payload = json.loads(result.stdout)
+    assert payload["ok"] is True
+    assert [row["experiment"] for row in payload["runs"]] == ["rag_langchain", "rag_realistic_docs"]
+    assert all(row["ingest"]["documents"] > 0 for row in payload["runs"])
+    assert all(row["metrics"]["not_found_rate"] == 0.0 for row in payload["runs"])
+    assert all(row["missing_artifacts"] == [] for row in payload["runs"])
+    assert all(row["failure_log_exists"] is False for row in payload["runs"])

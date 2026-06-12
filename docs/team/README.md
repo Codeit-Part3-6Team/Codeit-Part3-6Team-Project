@@ -4,7 +4,7 @@
 
 세부 구현 문서는 `docs/md/`에 남겨둡니다. 처음부터 전부 읽을 필요는 없습니다.
 
-## 먼저 볼 문서 5개
+## 먼저 볼 문서 6개
 
 | 순서 | 문서 | 목적 |
 | --- | --- | --- |
@@ -13,6 +13,7 @@
 | 3 | [workflow.md](workflow.md) | Data 준비부터 발표까지 어떻게 이어지는지 |
 | 4 | [roles.md](roles.md) | 내 역할이 처음 무엇을 하면 되는지 |
 | 5 | [first-week.md](first-week.md) | 첫 주에 어떤 작업부터 할지 |
+| 6 | [rehearsal.md](rehearsal.md) | 공유 전 RAG 파이프라인을 어떻게 검증할지 |
 
 ## 큰 흐름
 
@@ -41,6 +42,7 @@ flowchart LR
 | RAG 입력/출력 계약이 필요할 때 | [../md/rag/RAG_PIPELINE_SPEC.md](../md/rag/RAG_PIPELINE_SPEC.md) |
 | 데이터 형식을 맞춰야 할 때 | [../md/data/DATA_CONTRACT.md](../md/data/DATA_CONTRACT.md) |
 | 실험 실행 방법이 필요할 때 | [../md/experiments/EXPERIMENT_GUIDE.md](../md/experiments/EXPERIMENT_GUIDE.md) |
+| 공유 전 전체 리허설이 필요할 때 | [rehearsal.md](rehearsal.md) |
 | 노트북 설명을 보강할 때 | [../md/experiments/NOTEBOOK_USAGE_CHECKLIST.md](../md/experiments/NOTEBOOK_USAGE_CHECKLIST.md) |
 | LLM에게 작업을 맡길 때 | [../llm/README.md](../llm/README.md) |
 

@@ -13,6 +13,7 @@
 | `run_rag_retrieve.py` | 질문에 대한 검색 결과 확인 |
 | `run_rag_chat.py` | 답변 생성 또는 평가 실행 |
 | `compare_rag_retrievers.py` | retriever config 비교 리포트 생성 |
+| `run_rag_rehearsal.py` | 팀 공유 전 기본 RAG config와 준실제 문서 config를 한 번에 검증 |
 
 ## 기본 실행 순서
 
@@ -23,6 +24,12 @@ python scripts/run_rag_retrieve.py --config configs/experiments/rag/rag_langchai
 python scripts/run_rag_chat.py --config configs/experiments/rag/rag_langchain.yaml --project-root . --question "예산은 얼마야?"
 python scripts/run_rag_chat.py --config configs/experiments/rag/rag_langchain.yaml --project-root . --evaluate
 python scripts/compare_rag_retrievers.py --project-root .
+```
+
+공유 전 전체 리허설:
+
+```bash
+python scripts/run_rag_rehearsal.py --project-root .
 ```
 
 ## RAG 산출물
