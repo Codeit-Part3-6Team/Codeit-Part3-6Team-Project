@@ -24,6 +24,9 @@ mindmap
     rag_sample
       RFP 샘플
       평가 질문
+    rag_realistic
+      DOCX HWPX fixture
+      준실제 RFP E2E
     external
       외부 참고 데이터
       라이선스 확인
@@ -38,6 +41,7 @@ data/
 |-- processed/       # 이미지 동작 확인용 처리 데이터
 |-- text_processed/  # 텍스트 동작 확인용 처리 데이터
 |-- rag_sample/      # RAG config 실행용 샘플 문서와 평가 질문
+|-- rag_realistic/   # DOCX/HWPX 준실제 RFP fixture와 평가 질문
 `-- external/        # 외부에서 받은 참고 데이터
 ```
 
@@ -53,3 +57,4 @@ data/
 - `processed/`: 이미지 분류 동작 확인용 작은 PPM 이미지
 - `text_processed/`: 텍스트 분류 동작 확인용 CSV와 샘플 txt
 - `rag_sample/`: RAG 문서 검색 동작 확인용 RFP 샘플과 평가 질문
+- `rag_realistic/`: 실제 입력 포맷에 가까운 DOCX/HWPX RFP fixture와 평가 질문

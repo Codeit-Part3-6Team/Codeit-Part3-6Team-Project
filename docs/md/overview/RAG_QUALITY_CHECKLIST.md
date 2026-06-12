@@ -47,6 +47,7 @@ mindmap
 | 출력 계약 | retrieval payload, answer payload, citation payload가 기대 key를 갖는가 | `tests/test_rag_quality_gate.py` |
 | citation 연결 | answer citation이 검색된 chunk 안에서 나오는가 | `tests/test_rag_quality_gate.py` |
 | 평가 산출물 | evaluation과 error analysis CSV가 항상 생성되는가 | `tests/test_rag_quality_gate.py` |
+| 준실제 문서 E2E | DOCX/HWPX fixture가 check, ingest, evaluate까지 통과하는가 | `tests/test_rag_quality_gate.py` |
 | 실패 로그 상태 | 성공 재실행 후 오래된 `failure.log`가 남지 않는가 | `tests/test_experiments.py` |
 | CSV 호환성 | UTF-8 BOM이 있는 평가/데이터 CSV도 읽히는가 | `tests/test_rag_pipeline.py`, `tests/test_validate_data.py` |
 
@@ -77,6 +78,16 @@ python -m pytest
 | 재실행 안전성 | 같은 config를 다시 실행했을 때 산출물이 예측 가능한 위치에 남는가? |
 
 ## 실제 문서 E2E 확인 순서
+
+저장소에 포함된 준실제 DOCX/HWPX fixture는 아래 config로 확인합니다.
+
+```bash
+python scripts/check_rag_pipeline.py --config configs/experiments/rag/rag_realistic_docs.yaml --project-root .
+python scripts/run_rag_ingest.py --config configs/experiments/rag/rag_realistic_docs.yaml --project-root .
+python scripts/run_rag_chat.py --config configs/experiments/rag/rag_realistic_docs.yaml --project-root . --evaluate
+```
+
+외부에서 받은 실제 문서로 검증할 때는 같은 순서로 config 경로만 바꿉니다.
 
 ```bash
 python scripts/check_rag_pipeline.py --config <config.yaml> --project-root .

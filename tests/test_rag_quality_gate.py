@@ -5,6 +5,7 @@ import json
 from pathlib import Path
 from typing import Any
 
+from src.rag.validation import check_rag_pipeline
 from src.rag.pipeline import run_rag_chat, run_rag_evaluation, run_rag_ingest, run_rag_retrieve
 
 
@@ -79,6 +80,43 @@ def test_rag_quality_gate_error_analysis_headers_exist(isolated_project: Path):
         with (output_dir / filename).open("r", encoding="utf-8", newline="") as f:
             reader = csv.reader(f)
             assert next(reader) == expected_header
+
+
+def test_rag_quality_gate_realistic_docx_hwpx_e2e(isolated_project: Path):
+    """준실제 DOCX/HWPX fixture가 check부터 평가까지 같은 계약으로 동작하는지 확인합니다."""
+    config = isolated_project / "configs" / "experiments" / "rag" / "rag_realistic_docs.yaml"
+    output_dir = isolated_project / "experiments" / "rag_realistic_docs"
+
+    check = check_rag_pipeline(config, isolated_project)
+    assert check["ok"], check
+    assert check["summary"]["document_counts"] == {"docx": 1, "hwpx": 1}
+    assert check["summary"]["engine"] == "langchain"
+
+    ingest = run_rag_ingest(config, isolated_project)
+    metrics = run_rag_evaluation(config, isolated_project)
+
+    assert ingest == {"documents": 6, "chunks": 6, "embeddings": 6}
+    assert metrics == {
+        "retrieval_hit_rate": 1.0,
+        "answer_contains_expected_rate": 1.0,
+        "citation_correct_rate": 1.0,
+        "not_found_rate": 0.0,
+    }
+
+    documents = _read_csv(output_dir / "parsed_documents.csv")
+    chunks = _read_csv(output_dir / "chunks.csv")
+    evaluation_rows = _read_csv(output_dir / "evaluation_results.csv")
+
+    assert {Path(row["source_path"]).suffix for row in documents} == {".docx", ".hwpx"}
+    assert {row["section"] for row in chunks} >= {"사업 개요", "제출 일정", "참가 자격"}
+    assert {row["status"] for row in evaluation_rows} == {"answered"}
+    assert all(row["retrieval_hit"] == "true" for row in evaluation_rows)
+    assert all(row["answer_contains_expected"] == "true" for row in evaluation_rows)
+    assert all(row["citation_correct"] == "true" for row in evaluation_rows)
+
+    for filename in ["bad_retrievals.csv", "unsupported_answers.csv", "failed_questions.csv"]:
+        assert (output_dir / filename).exists()
+    assert not (output_dir / "failure.log").exists()
 
 
 def _read_csv(path: Path) -> list[dict[str, str]]:

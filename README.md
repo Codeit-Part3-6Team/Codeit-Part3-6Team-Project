@@ -75,6 +75,14 @@ python scripts/run_rag_chat.py --config configs/experiments/rag/rag_langchain.ya
 python scripts/run_rag_chat.py --config configs/experiments/rag/rag_langchain.yaml --project-root . --evaluate
 ```
 
+DOCX/HWPX 준실제 문서 fixture까지 확인하려면:
+
+```bash
+python scripts/check_rag_pipeline.py --config configs/experiments/rag/rag_realistic_docs.yaml --project-root .
+python scripts/run_rag_ingest.py --config configs/experiments/rag/rag_realistic_docs.yaml --project-root .
+python scripts/run_rag_chat.py --config configs/experiments/rag/rag_realistic_docs.yaml --project-root . --evaluate
+```
+
 retriever 비교:
 
 ```bash
@@ -156,7 +164,8 @@ Ollama/OpenAI 같은 생성형 답변 후보는 `configs/examples/rag/rag_langch
 |   |-- experiments/rag/   # 실제 RAG 실험 config
 |   `-- examples/          # 참고용 config
 |-- data/
-|   `-- rag_sample/        # RAG config 실행용 샘플 문서와 평가 질문
+|   |-- rag_sample/        # RAG config 실행용 TXT 샘플 문서와 평가 질문
+|   `-- rag_realistic/     # DOCX/HWPX 준실제 RFP fixture
 |-- docs/
 |   |-- team/              # 팀원이 처음 볼 문서
 |   |-- md/                # 세부 참고 문서

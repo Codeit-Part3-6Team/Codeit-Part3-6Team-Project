@@ -9,6 +9,7 @@
 | config | 목적 | 먼저 바꿔볼 옵션 |
 | --- | --- | --- |
 | `rag_langchain.yaml` | LangChain 엔진 기반 기본 RAG 실험 | `rag.splitter`, `rag.embedding`, `rag.retriever.top_k` |
+| `rag_realistic_docs.yaml` | DOCX/HWPX 준실제 RFP fixture E2E 검증 | `rag.loader.file_types`, `rag.splitter`, `rag.retriever.top_k` |
 | `rag_semantic.yaml` | local semantic retriever 비교 실험 | `rag.chunk`, `rag.retriever.top_k` |
 | `rag_keyword.yaml` | keyword retriever 비교 | `rag.retriever.method` |
 | `rag_hybrid.yaml` | keyword + semantic hybrid 비교 | `rag.retriever.keyword_weight`, `rag.retriever.semantic_weight` |
