@@ -30,8 +30,10 @@ def test_rag_config_run_notebook_structure() -> None:
         "scripts/run_rag_ingest.py",
         "scripts/run_rag_retrieve.py",
         "scripts/run_rag_chat.py",
+        "scripts/run_rag_rehearsal.py",
         "scripts/compare_rag_retrievers.py",
         "configs/experiments/rag/rag_langchain.yaml",
+        "configs/experiments/rag/rag_realistic_docs.yaml",
         "configs/experiments/rag/rag_hybrid.yaml",
         "data/rag_sample/eval_questions.csv",
     ]
@@ -39,6 +41,9 @@ def test_rag_config_run_notebook_structure() -> None:
         "display_metrics",
         "display_answers",
         "display_failure_tables",
+        "display_rehearsal",
+        "REALISTIC_OUTPUT_DIR",
+        "source_path",
     ]
     for ref in expected_file_refs:
         assert ref in source

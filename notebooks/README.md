@@ -40,6 +40,10 @@ flowchart TD
 - 답변 생성과 citation 확인
 - 평가 질문 CSV 기반 evaluate
 - retriever config 비교
+- 팀 공유 전 리허설 요약
+- DOCX/HWPX 준실제 샘플 산출물 확인
+
+팀원에게 파이프라인을 보여줄 때는 이 노트북을 기본 화면으로 사용합니다. `scripts/run_rag_rehearsal.py`는 노트북 안에서 호출하거나 CI/터미널에서 빠르게 확인할 때 쓰는 보조 도구입니다.
 
 ## Colab 실행 노트북
 

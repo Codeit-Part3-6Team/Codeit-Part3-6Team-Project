@@ -6,7 +6,10 @@
 
 ## 빠른 리허설
 
-아래 명령 하나로 기본 TXT 샘플과 DOCX/HWPX 준실제 샘플을 함께 확인합니다.
+팀원에게 보여줄 때는 먼저 `notebooks/rag/rag_config_run.ipynb`를 엽니다.
+노트북의 마지막 `팀 공유 전 리허설` 섹션에서 기본 TXT 샘플과 DOCX/HWPX 준실제 샘플을 함께 확인할 수 있습니다.
+
+터미널에서 빠르게 확인하고 싶다면 아래 명령 하나로 같은 리허설을 실행합니다.
 
 ```bash
 python scripts/run_rag_rehearsal.py --project-root .
