@@ -1,112 +1,96 @@
 # Config 가이드
 
-`configs/`는 실험 조건을 코드 밖에서 관리하는 곳입니다.
+`configs/`는 RAG 실험 조건을 코드 밖에서 관리하는 곳입니다.
 
-이 프로젝트에서는 가능하면 코드를 직접 고치기보다 config를 복사하고 수정해서 실험을 바꿉니다. 이렇게 하면 누가 어떤 조건으로 실험했는지 `experiments/` 산출물에 함께 남길 수 있습니다.
+이 프로젝트의 기본 방향은 RFP/입찰 문서 RAG입니다. 따라서 처음 보는 팀원은 `configs/experiments/rag/` 아래의 config부터 봅니다. HuggingFace 분류/파인튜닝 config는 메인 흐름이 아니라 참고 예제입니다.
 
-## Config 구조 마인드맵
+## 먼저 볼 RAG Config
+
+| 목적 | config |
+| --- | --- |
+| 기본 RAG smoke test | `configs/experiments/rag/rag_smoke_test.yaml` |
+| keyword retriever 비교 | `configs/experiments/rag/rag_smoke_keyword.yaml` |
+| keyword + semantic hybrid 비교 | `configs/experiments/rag/rag_smoke_hybrid.yaml` |
+| HuggingFace LLM answerer 예시 | `configs/examples/rag/rag_hf_llm_answerer.yaml` |
+
+## 디렉터리 구조
+
+```text
+configs/
+|-- experiments/
+|   `-- rag/                    # 실제 프로젝트 RAG 실험 config
+|-- examples/
+|   |-- rag/                    # RAG 구현체/외부 모델 참고 config
+|   `-- classification/         # 분류/HF 파인튜닝 참고 예제
+|-- smoke/                      # 예전 ML 파이프라인 검증용 작은 config
+|-- preprocess/                 # 데이터 전처리 버전 config
+`-- README.md
+```
+
+## RAG Config 한 장 보기
 
 ```mermaid
 mindmap
-  root((configs))
-    experiments
-      rag
-        smoke test
-        keyword 비교
-        hybrid 비교
-    examples
-      classification
-        baseline
-        HuggingFace
-        Colab
-      rag
-        HuggingFace LLM answerer
-    smoke
-      이미지 smoke
-      텍스트 smoke
-      HF tiny smoke
-    preprocess
-      전처리 버전
-    공통 옵션
-      experiment
-      paths
-      artifact_policy
-      backup
-    RAG 옵션
+  root((RAG Config))
+    experiment
+      name
+      seed
+      contract_version
+    paths
+      raw_docs_dir
+      output_dir
+    artifact_policy
+      run_id
+      on_existing
+    rag
       loader
       chunk
       embedding
       vector_store
       retriever
+      reranker
       answerer
       checkpoint
+    evaluation
+      questions_path
+    metric
+      monitor
+      mode
 ```
 
-## 텍스트 구조
-
-```text
-configs/
-|-- experiments/
-|   `-- rag/
-|       |-- rag_smoke_test.yaml      # 기본 semantic RAG 실험
-|       |-- rag_smoke_keyword.yaml   # keyword retriever 비교 실험
-|       |-- rag_smoke_hybrid.yaml    # hybrid retriever 비교 실험
-|       `-- README.md
-|-- examples/
-|   |-- classification/              # 분류/HuggingFace 참고 예제
-|   `-- rag/                         # RAG 구현체 참고 예제
-|-- smoke/                           # 빠른 환경 검증용 config
-|-- preprocess/                      # 전처리 버전 config
-`-- README.md
-```
-
-## 기본 사용법
+## 기본 실행
 
 ```bash
+python scripts/check_rag_pipeline.py --config configs/experiments/rag/rag_smoke_test.yaml --project-root .
 python scripts/run_rag_ingest.py --config configs/experiments/rag/rag_smoke_test.yaml --project-root .
+python scripts/run_rag_retrieve.py --config configs/experiments/rag/rag_smoke_test.yaml --project-root . --question "예산은 얼마야?"
+python scripts/run_rag_chat.py --config configs/experiments/rag/rag_smoke_test.yaml --project-root . --question "예산은 얼마야?"
 python scripts/run_rag_chat.py --config configs/experiments/rag/rag_smoke_test.yaml --project-root . --evaluate
 ```
 
-새 실험을 만들 때는 기존 config를 복사해서 시작합니다.
+## 새 RAG 실험 만들기
+
+기존 RAG config를 복사해서 시작합니다.
 
 ```text
 configs/experiments/rag/rag_smoke_test.yaml
--> configs/experiments/rag/rag_hybrid_top5.yaml
+-> configs/experiments/rag/rag_top5_chunk800.yaml
 ```
 
-복사한 뒤에는 최소한 `experiment.name` 또는 `artifact_policy.run_id`를 바꿔 결과가 덮어써지지 않게 합니다.
-
-## 공통 옵션
-
-### `experiment`
+최소한 아래 값은 바꿉니다.
 
 ```yaml
 experiment:
-  name: rag_smoke_test
-  author: team
-  seed: 42
-  contract_version: v1.0
-```
+  name: rag_top5_chunk800
 
-- `name`: 실험 이름입니다. 기본 출력 폴더 이름으로도 사용됩니다.
-- `author`: 실험 작성자 또는 팀 이름입니다.
-- `seed`: 재현성을 위한 난수 고정값입니다.
-- `contract_version`: 데이터 계약 버전입니다.
-
-### `paths`
-
-```yaml
 paths:
-  raw_docs_dir: data/rag_smoke
-  output_dir: experiments/rag_smoke_test
+  output_dir: experiments/rag_top5_chunk800
+
+artifact_policy:
+  run_id:
 ```
 
-- `raw_docs_dir`: RAG가 읽을 원본 문서 폴더입니다.
-- `output_dir`: 실험 산출물을 저장할 폴더입니다.
-
-상대 경로는 `--project-root` 기준으로 해석합니다.
-
-### `artifact_policy`
+같은 `experiment.name`으로 여러 번 실행해야 한다면 `artifact_policy.run_id`를 지정합니다.
 
 ```yaml
 artifact_policy:
@@ -114,18 +98,9 @@ artifact_policy:
   on_existing: overwrite
 ```
 
-- `run_id`: 같은 실험 이름 아래에서 여러 실행 결과를 나눌 때 사용합니다.
-- `on_existing`: 기존 산출물이 있을 때 동작입니다.
-  - `overwrite`: 덮어씁니다.
-  - `fail`: 이미 결과가 있으면 실패시킵니다.
+## 자주 바꾸는 RAG 옵션
 
-반복 비교 실험을 할 때는 `run_id`를 적극적으로 사용하는 것이 안전합니다.
-
-## RAG 옵션
-
-RAG 프로젝트에서 가장 자주 바꾸는 영역입니다.
-
-### `rag.loader`
+### 문서 로딩
 
 ```yaml
 rag:
@@ -133,9 +108,9 @@ rag:
     file_types: [txt, pdf, docx, hwpx, hwp]
 ```
 
-읽을 문서 확장자를 지정합니다.
+실제 RFP 파일 형식에 맞춰 읽을 확장자를 정합니다.
 
-### `rag.chunk`
+### Chunking
 
 ```yaml
 rag:
@@ -145,13 +120,9 @@ rag:
     unit: char
 ```
 
-- `size`: chunk 하나의 크기입니다.
-- `overlap`: 앞뒤 chunk가 겹치는 길이입니다.
-- `unit`: 현재는 `char` 기준입니다.
+chunk가 너무 작으면 문맥이 사라지고, 너무 크면 검색 정확도가 떨어질 수 있습니다.
 
-chunk가 너무 작으면 맥락이 사라지고, 너무 크면 검색 정확도가 떨어질 수 있습니다.
-
-### `rag.embedding`
+### Embedding
 
 ```yaml
 rag:
@@ -159,14 +130,14 @@ rag:
     provider: local
     model_name: hashing-char-ngram-v1
     dimension: 64
+    device: auto
+    normalize: true
 ```
-
-지원 구현:
 
 - `local`: 빠른 smoke test용 hashing embedding
 - `huggingface`: transformers 기반 mean pooling embedding
 
-### `rag.vector_store`
+### Vector Store
 
 ```yaml
 rag:
@@ -176,34 +147,49 @@ rag:
     collection_name: rag_smoke_test
 ```
 
-현재 실제 구현은 `memory`입니다. FAISS, Chroma, Elasticsearch는 확장 계약만 열어둔 상태입니다.
+현재 기본 구현은 `memory`입니다. FAISS, Chroma, Elasticsearch는 config 계약을 먼저 잡아둔 확장 후보입니다.
 
-### `rag.retriever`
+### Retriever
 
 ```yaml
 rag:
   retriever:
-    method: hybrid
+    method: semantic
     top_k: 3
     score_threshold: 0.0
 ```
 
 - `method`: `keyword`, `semantic`, `hybrid`
-- `top_k`: 검색 결과 개수입니다.
-- `score_threshold`: 너무 낮은 점수의 검색 결과를 버릴 때 사용합니다.
+- `top_k`: 답변 후보로 넘길 근거 chunk 개수
+- `score_threshold`: 너무 낮은 점수의 검색 결과를 버리는 기준
 
-### `rag.answerer`
+### Reranker
+
+```yaml
+rag:
+  reranker:
+    enabled: false
+    provider: huggingface
+    model_name:
+    top_k: 3
+```
+
+reranker는 검색 결과를 다시 정렬하는 단계입니다. 현재는 config와 validation 중심으로 준비되어 있고, 실제 프로젝트 요구에 맞춰 붙이는 후보입니다.
+
+### Answerer
 
 ```yaml
 rag:
   answerer:
     mode: extractive
     provider: local
+    model_name:
     fallback_message: 문서에서 확인하지 못했습니다.
 ```
 
-현재 실제 구현은 `extractive/local`과 `llm/huggingface`입니다.
-`extractive/local`은 검색된 chunk에서 답변 문장을 추출하고, `llm/huggingface`는 `transformers.pipeline`으로 근거 기반 답변을 생성합니다.
+현재 기본 실행은 `extractive/local`입니다. 검색된 chunk에서 답변 문장을 뽑고 citation을 남깁니다.
+
+HuggingFace LLM 답변 예시는 아래처럼 둡니다.
 
 ```yaml
 rag:
@@ -218,45 +204,9 @@ rag:
     require_citations: true
 ```
 
-```yaml
-rag:
-  answerer:
-    mode: llm
-    provider: openai
-    model_name: gpt-4o-mini
-    temperature: 0.2
-    max_tokens: 512
-    api_key_env: OPENAI_API_KEY
-    require_citations: true
-```
+OpenAI/Ollama도 config 계약은 준비할 수 있지만, 실제 answerer 구현체를 붙인 뒤 사용하는 것이 안전합니다.
 
-```yaml
-rag:
-  answerer:
-    mode: llm
-    provider: ollama
-    model_name: llama3.1
-    base_url: http://localhost:11434
-    temperature: 0.2
-    max_tokens: 512
-    require_citations: true
-```
-
-- `mode`: `extractive`, `llm`
-- `provider`: `local`, `openai`, `huggingface`, `ollama`
-- `model_name`: LLM provider를 사용할 때 필요한 모델 이름입니다.
-- `task`: HuggingFace pipeline task입니다. 기본값은 `text-generation`입니다.
-- `device`: HuggingFace 실행 장치입니다. `auto`, `cpu`, `cuda`를 사용할 수 있습니다.
-- `temperature`: 생성 답변의 변동성을 조정합니다.
-- `max_tokens`: 생성 답변 최대 길이입니다. HuggingFace 계열에서는 `max_new_tokens`로도 쓸 수 있습니다.
-- `api_key_env`: OpenAI API key를 읽을 환경 변수 이름입니다.
-- `base_url`: Ollama 같은 로컬 LLM 서버 주소입니다.
-- `require_citations`: 답변에 근거 chunk citation을 요구하는 정책입니다.
-
-주의: `llm/huggingface`는 runtime 구현이 있지만, 실제 실행 시 모델 다운로드와 추론 비용이 발생할 수 있습니다.
-`llm/openai`, `llm/ollama`는 validation 계약만 준비되어 있으며, smoke runtime의 실제 답변 생성 구현은 아직 없습니다.
-
-### `rag.checkpoint`
+### Checkpoint / Resume
 
 ```yaml
 rag:
@@ -265,94 +215,7 @@ rag:
     resume: true
 ```
 
-RAG ingest 산출물인 `parsed_documents.csv`, `chunks.csv`, `embeddings.jsonl`을 재사용합니다.
-
-현재는 stage 단위 resume입니다. 문서별 offset resume은 아직 구현하지 않았습니다.
-
-## 분류 모델 참고 옵션
-
-### `data`
-
-```yaml
-data:
-  task: text_classification
-  train_csv: train.csv
-  valid_csv: valid.csv
-  test_csv: test.csv
-```
-
-- `task`: 데이터 작업 종류입니다. 예: `text_classification`, `image_classification`
-- `train_csv`, `valid_csv`, `test_csv`: split 파일 이름입니다.
-
-### `model`
-
-```yaml
-model:
-  name: keyword_text_classifier
-```
-
-또는 HuggingFace 모델을 사용할 수 있습니다.
-
-```yaml
-model:
-  name: huggingface_sequence_classifier
-  model_name: distilbert-base-multilingual-cased
-```
-
-- `name`: `src/models/registry.py`에서 찾는 모델 구현체 이름입니다.
-- `model_name`: HuggingFace base model 이름입니다.
-
-### `train`
-
-```yaml
-train:
-  epochs: 3
-  batch_size: 8
-  learning_rate: 0.00005
-```
-
-학습 반복 수, batch size, learning rate 등을 조정합니다.
-
-## 학습 제어 옵션
-
-### `checkpoint`
-
-```yaml
-checkpoint:
-  enabled: true
-  dir: checkpoints
-  save_best: true
-  save_last: true
-  save_every_epoch: false
-  resume_from:
-```
-
-- `save_best`: 가장 좋은 metric의 checkpoint를 저장합니다.
-- `save_last`: 마지막 checkpoint를 저장합니다.
-- `resume_from`: 이어 학습할 checkpoint 경로입니다.
-
-### `early_stopping`
-
-```yaml
-early_stopping:
-  enabled: true
-  patience: 3
-  min_delta: 0.0
-```
-
-성능 개선이 일정 기간 없으면 학습을 멈춥니다.
-
-### `scheduler`
-
-```yaml
-scheduler:
-  enabled: true
-  name: linear
-  warmup_ratio: 0.1
-  warmup_steps:
-```
-
-learning rate schedule을 조정합니다.
+RAG ingest 산출물인 `parsed_documents.csv`, `chunks.csv`, `embeddings.jsonl`을 단계 단위로 재사용합니다. 문서 내부 offset 단위 resume은 아직 별도 구현 대상입니다.
 
 ## 평가 옵션
 
@@ -365,9 +228,11 @@ metric:
   mode: max
 ```
 
-- `questions_path`: RAG 평가 질문 파일입니다.
-- `monitor`: 대표 metric입니다.
-- `mode`: `max` 또는 `min`입니다.
+- `questions_path`: 평가 질문 CSV
+- `monitor`: 대표 metric
+- `mode`: `max` 또는 `min`
+
+RAG에서는 accuracy보다 retrieval hit rate, citation correctness, 실패 질문 목록을 먼저 봅니다.
 
 ## 백업 옵션
 
@@ -376,64 +241,30 @@ backup:
   enabled: true
   on_finish: true
   on_failure: true
-  backup_dir: /content/drive/MyDrive/codeit_ml_project/backups/exp001
+  backup_dir: /content/drive/MyDrive/codeit_rag_project/backups/rag_smoke
   include_logs: true
   include_checkpoints: true
 ```
 
-Colab에서는 `backup_dir`를 Drive 경로로 두는 것을 권장합니다.
+Colab에서 실행한다면 `backup_dir`를 Google Drive 경로로 둡니다.
 
-## 자주 쓰는 실험 변경 예시
+## HuggingFace와 분류 Config의 위치
 
-### RAG 검색 방식만 바꾸기
+HuggingFace는 RAG에서도 사용할 수 있습니다. 다만 위치가 다릅니다.
 
-```yaml
-experiment:
-  name: rag_smoke_hybrid
+| 목적 | config 위치 |
+| --- | --- |
+| RAG embedding | `rag.embedding.provider: huggingface` |
+| RAG reranker | `rag.reranker.provider: huggingface` |
+| RAG answerer | `rag.answerer.provider: huggingface` |
+| 텍스트 분류 파인튜닝 | `configs/examples/classification/` |
 
-rag:
-  retriever:
-    method: hybrid
-    top_k: 3
-```
-
-### 검색 결과 개수 늘리기
-
-```yaml
-artifact_policy:
-  run_id: top_k_5
-
-rag:
-  retriever:
-    top_k: 5
-```
-
-### chunk 크기 바꾸기
-
-```yaml
-artifact_policy:
-  run_id: chunk_800_overlap_120
-
-rag:
-  chunk:
-    size: 800
-    overlap: 120
-```
-
-### Colab에서 결과를 Drive에 저장하기
-
-```yaml
-paths:
-  output_dir: /content/drive/MyDrive/codeit_ml_project/experiments/exp002
-
-backup:
-  enabled: true
-  backup_dir: /content/drive/MyDrive/codeit_ml_project/backups/exp002
-```
+분류/HuggingFace fine-tuning config는 RAG 프로젝트의 본 실험이 아니라 참고 예제입니다.
 
 ## 주의사항
 
-- config를 바꿨으면 실험 산출물의 `config.yaml`도 함께 확인합니다.
-- 같은 `experiment.name`을 반복 실행하면 결과가 덮어써질 수 있습니다.
-- 비교 실험은 `artifact_policy.run_id`로 구분하는 것이 안전합니다.
+- 새 실험은 `configs/experiments/rag/`에 둡니다.
+- 참고 예제는 `configs/examples/`에 둡니다.
+- config를 바꿨으면 산출물의 `config.yaml` snapshot도 확인합니다.
 - 실제 데이터가 오면 loader, chunking, metric은 반드시 다시 점검합니다.
+- RAG 결과는 답변만 보지 말고 retrieval 결과와 citation을 함께 봅니다.

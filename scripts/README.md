@@ -1,97 +1,35 @@
-# 실행 스크립트
+# Scripts
 
-팀원이 직접 실행하는 공식 진입점입니다.
-`src/`는 재사용 가능한 파이프라인 로직이고, `scripts/`는 사람이 실행하는 명령이라고 보면 됩니다.
+`scripts/`는 사람이 직접 실행하는 공식 진입점입니다.
 
-## 실행 스크립트 마인드맵
+현재 프로젝트의 기본 실행 대상은 RAG입니다. 분류 학습용 `run_train.py`, `run_predict.py`는 예전 ML 파이프라인 참고용으로 남겨둡니다.
 
-```mermaid
-mindmap
-  root((scripts))
-    데이터 확인
-      run_validate.py
-    분류 실험
-      run_train.py
-      run_predict.py
-    RAG 실행
-      check_rag_pipeline.py
-      run_rag_ingest.py
-      run_rag_retrieve.py
-      run_rag_chat.py
-    RAG 비교
-      compare_rag_retrievers.py
-    결과 요약
-      summarize_experiments.py
-    공통 입력
-      config
-      project-root
-      question
-```
+## RAG 실행 명령
 
-## 텍스트 구조
+| script | 용도 |
+| --- | --- |
+| `check_rag_pipeline.py` | RAG config, 입력 문서, 평가 질문 경로 점검 |
+| `run_rag_ingest.py` | 문서 로딩, chunking, embedding 생성 |
+| `run_rag_retrieve.py` | 질문에 대한 검색 결과 확인 |
+| `run_rag_chat.py` | 답변 생성 또는 평가 실행 |
+| `compare_rag_retrievers.py` | retriever config 비교 리포트 생성 |
 
-```text
-scripts/
-|-- run_validate.py            # 데이터 계약 검증
-|-- run_train.py               # 분류/HF 학습 실행
-|-- run_predict.py             # 단건 예측 실행
-|-- check_rag_pipeline.py      # RAG config와 입력 경로 점검
-|-- run_rag_ingest.py          # 문서 파싱, chunking, embedding 생성
-|-- run_rag_retrieve.py        # 질문에 대한 검색 결과 확인
-|-- run_rag_chat.py            # 답변 생성 또는 평가 실행
-|-- compare_rag_retrievers.py  # RAG 검색 방식 비교
-`-- summarize_experiments.py   # 실험 결과 요약 생성
-```
-
-## 가벼운 텍스트 smoke test
-
-```bash
-python scripts/run_validate.py --data-dir data/text_processed
-python scripts/run_train.py --config configs/smoke/smoke_test_text.yaml --project-root .
-python scripts/run_predict.py --config configs/smoke/smoke_test_text.yaml --project-root . --input data/text_processed/sample_positive.txt
-```
-
-## HuggingFace fine-tuning 예시
-
-처음 실행할 때는 base model을 내려받기 때문에 인터넷 연결이 필요합니다. CPU에서도 실행은 가능하지만, 실제 프로젝트 데이터에서는 GPU/Colab 사용을 권장합니다.
-
-환경 확인용 tiny model:
-
-```bash
-python scripts/run_train.py --config configs/smoke/smoke_test_hf_tiny.yaml --project-root .
-python scripts/run_predict.py --config configs/smoke/smoke_test_hf_tiny.yaml --project-root . --input data/text_processed/sample_positive.txt
-```
-
-실제 실험 후보:
-
-```bash
-python scripts/run_train.py --config configs/examples/classification/exp002_hf_text_finetune.yaml --project-root .
-python scripts/run_predict.py --config configs/examples/classification/exp002_hf_text_finetune.yaml --project-root . --input data/text_processed/sample_positive.txt
-```
-
-실험 결과는 config의 `paths.output_dir`에 따라 `experiments/{experiment_name}/` 아래에 저장됩니다.
-
-## RAG smoke test
-
-RFP 분석 챗봇 후보를 위한 최소 RAG 흐름입니다.
-처음에는 외부 모델 없이 txt 문서, hashing embedding 기반 semantic retrieval, 추출형 답변으로 파이프라인 연결만 확인합니다.
-loader는 `txt`, `pdf`, `docx`, `hwpx`, `hwp`를 대상으로 합니다.
-PDF/HWP는 각각 `pypdf`, `olefile` 패키지가 필요합니다.
-`check_rag_pipeline.py`는 실제 산출물을 만들기 전에 config, 입력 문서, 평가 질문 경로를 점검합니다.
+## 기본 실행 순서
 
 ```bash
 python scripts/check_rag_pipeline.py --config configs/experiments/rag/rag_smoke_test.yaml --project-root .
 python scripts/run_rag_ingest.py --config configs/experiments/rag/rag_smoke_test.yaml --project-root .
-python scripts/run_rag_retrieve.py --config configs/experiments/rag/rag_smoke_test.yaml --project-root . --question "예산이 얼마야?"
-python scripts/run_rag_chat.py --config configs/experiments/rag/rag_smoke_test.yaml --project-root . --question "예산이 얼마야?"
+python scripts/run_rag_retrieve.py --config configs/experiments/rag/rag_smoke_test.yaml --project-root . --question "예산은 얼마야?"
+python scripts/run_rag_chat.py --config configs/experiments/rag/rag_smoke_test.yaml --project-root . --question "예산은 얼마야?"
 python scripts/run_rag_chat.py --config configs/experiments/rag/rag_smoke_test.yaml --project-root . --evaluate
 python scripts/compare_rag_retrievers.py --project-root .
 ```
 
-기본 산출물:
+## RAG 산출물
 
 ```text
 experiments/rag_smoke_test/
+|-- config.yaml
 |-- parsed_documents.csv
 |-- chunks.csv
 |-- embeddings.jsonl
@@ -101,29 +39,35 @@ experiments/rag_smoke_test/
 |-- bad_retrievals.csv
 |-- unsupported_answers.csv
 |-- failed_questions.csv
+|-- metrics.json
 |-- run_status.json
 |-- failure.log
-`-- metrics.json
+`-- rag_ingest_checkpoint.json
 ```
 
-검색 방식 비교 산출물:
+## 결과 요약
 
-```text
-reports/rag_retriever_comparison.csv
-reports/rag_retriever_comparison.json
-```
-
-## 실험 결과 요약
-
-여러 실험의 `metrics.json`, `config.yaml`, `run_info.json`을 모아 비교용 CSV/JSON을 생성합니다.
+여러 실험의 `metrics.json`, `config.yaml`, `run_info.json`을 모아 비교하려면 아래 명령을 실행합니다.
 
 ```bash
 python scripts/summarize_experiments.py --project-root .
 ```
 
-기본 산출물:
+결과:
 
 ```text
 reports/experiment_summary.csv
 reports/experiment_summary.json
 ```
+
+## 참고용 ML 명령
+
+아래 명령은 현재 RAG 프로젝트의 기본 흐름이 아니라, 기존 분류/HuggingFace 파이프라인 검증용입니다.
+
+```bash
+python scripts/run_validate.py --data-dir data/text_processed
+python scripts/run_train.py --config configs/smoke/smoke_test_text.yaml --project-root .
+python scripts/run_predict.py --config configs/smoke/smoke_test_text.yaml --project-root . --input data/text_processed/sample_positive.txt
+```
+
+새 팀원에게는 우선 RAG 명령만 안내합니다.

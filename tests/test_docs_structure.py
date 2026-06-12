@@ -5,7 +5,7 @@ ROOT = Path(__file__).resolve().parents[1]
 
 
 def test_docs_core_directories_exist() -> None:
-    """팀 공유 문서, 세부 문서, HTML 자료, LLM 문맥 디렉터리를 확인합니다."""
+    """팀 문서, 세부 문서, HTML 자료, LLM 문맥 디렉터리를 확인합니다."""
     required_dirs = [
         ROOT / "docs" / "team",
         ROOT / "docs" / "md",
@@ -33,12 +33,8 @@ def test_key_directories_have_readme() -> None:
         "docs",
         "docs/team",
         "docs/html",
-        "docs/html/data",
-        "docs/html/experiments",
         "docs/html/kickoff",
         "docs/html/overview",
-        "docs/html/rag",
-        "docs/html/workflow",
         "docs/llm",
         "docs/md",
         "docs/md/data",

@@ -1,198 +1,225 @@
-# 실험 가이드
+# RAG 실험 가이드
 
-모든 실험은 config 기반으로 실행하고, 재현 가능한 산출물을 남깁니다.
-전체 파이프라인의 큰 그림은 `PIPELINE_OVERVIEW.md`를 먼저 참고합니다.
+이 문서는 RAG 프로젝트에서 config를 바꿔가며 실험하고 결과를 확인하는 방법을 설명합니다.
 
-## 실험 운영 마인드맵
+분류 모델 학습이나 HuggingFace fine-tuning은 현재 프로젝트의 본 실험이 아닙니다. 기본 실험은 RAG 문서 처리, 검색, 답변, citation, 평가 산출물을 확인하는 흐름입니다.
+
+## 실험 흐름
 
 ```mermaid
-mindmap
-  root((Experiment))
-    Before Run
-      data contract 확인
-      config 선택
-      seed 고정
-      smoke test
-    Run
-      train
-      predict
-      evaluate
-      summarize
-    Control
-      early stopping
-      scheduler
-      checkpoint
-      resume
-    Artifacts
-      metrics
-      history
-      best model
-      run status
-      README
-    Review
-      성능 비교
-      실패 원인
-      다음 실험
-      발표 근거
+flowchart LR
+  A["config 선택"] --> B["실행 전 점검"]
+  B --> C["문서 ingest"]
+  C --> D["검색 확인"]
+  D --> E["답변/평가 실행"]
+  E --> F["metric과 실패 사례 확인"]
+  F --> G["다음 config 후보 정리"]
 ```
 
-## 기본 실행 흐름
+## 1. 기본 Config 선택
 
-1. 데이터가 Data Contract를 만족하는지 확인합니다.
-2. smoke test config로 파이프라인이 정상 동작하는지 확인합니다.
-3. 실제 실험 config를 만들어 train/predict를 실행합니다.
-4. metrics, history, README를 보고 다음 실험 방향을 기록합니다.
-
-```bash
-python scripts/run_validate.py --data-dir data/text_processed
-python scripts/run_train.py --config configs/smoke/smoke_test_text.yaml --project-root .
-python scripts/run_predict.py --config configs/smoke/smoke_test_text.yaml --project-root . --input data/text_processed/sample_positive.txt
-```
-
-## HuggingFace 실험
-
-HuggingFace 모델은 `configs/examples/classification/exp002_hf_text_finetune.yaml`을 시작점으로 사용합니다.
-
-```bash
-python scripts/run_train.py --config configs/examples/classification/exp002_hf_text_finetune.yaml --project-root .
-```
-
-처음 실행할 때는 base model 다운로드가 필요합니다. 로컬 CPU에서도 동작은 가능하지만, 실제 데이터셋에서는 Colab/GPU 환경을 권장합니다.
-Colab에서 Drive 경로를 사용하려면 `COLAB_GUIDE.md`와 `configs/examples/classification/exp002_hf_text_finetune_colab.yaml`을 참고합니다.
-
-## 실험 결과 요약
-
-여러 실험 결과를 한 번에 비교하려면 요약 스크립트를 실행합니다.
-
-```bash
-python scripts/summarize_experiments.py --project-root .
-```
-
-기본적으로 다음 파일이 생성됩니다.
+처음에는 아래 config로 시작합니다.
 
 ```text
-reports/experiment_summary.csv
-reports/experiment_summary.json
+configs/experiments/rag/rag_smoke_test.yaml
 ```
 
-## 필수 산출물
+비교 실험은 기존 config를 복사해서 만듭니다.
 
 ```text
-experiments/{experiment_name}/
-|-- config.yaml
+configs/experiments/rag/rag_smoke_test.yaml
+-> configs/experiments/rag/rag_top5_chunk800.yaml
+```
+
+새 config에서는 최소한 아래 값을 확인합니다.
+
+```yaml
+experiment:
+  name: rag_top5_chunk800
+
+paths:
+  output_dir: experiments/rag_top5_chunk800
+
+artifact_policy:
+  run_id:
+```
+
+## 2. 실행 전 점검
+
+```bash
+python scripts/check_rag_pipeline.py --config configs/experiments/rag/rag_smoke_test.yaml --project-root .
+```
+
+이 단계에서 확인하는 것:
+
+- `paths.raw_docs_dir`가 존재하는지
+- `evaluation.questions_path`가 존재하는지
+- loader가 지원하는 파일 형식인지
+- chunk, retriever, answerer config 값이 유효한지
+- output 경로 정책이 충돌하지 않는지
+
+## 3. 문서 Ingest
+
+```bash
+python scripts/run_rag_ingest.py --config configs/experiments/rag/rag_smoke_test.yaml --project-root .
+```
+
+생성되는 주요 산출물:
+
+```text
+experiments/rag_smoke_test/
+|-- parsed_documents.csv
+|-- chunks.csv
+`-- embeddings.jsonl
+```
+
+확인할 것:
+
+- 문서가 몇 개 읽혔는지
+- chunk가 비정상적으로 너무 많거나 적지 않은지
+- source path, page, section 같은 근거 추적 정보가 남았는지
+- embedding 산출물이 chunk와 연결되는지
+
+## 4. 검색 확인
+
+```bash
+python scripts/run_rag_retrieve.py \
+  --config configs/experiments/rag/rag_smoke_test.yaml \
+  --project-root . \
+  --question "예산은 얼마야?"
+```
+
+확인할 것:
+
+- top-k 안에 질문과 관련 있는 chunk가 들어오는지
+- score가 너무 낮은 결과만 나오지는 않는지
+- `source_path`, `page`, `chunk_id`가 답변 근거로 쓸 수 있는지
+
+## 5. 답변과 평가 실행
+
+단일 질문:
+
+```bash
+python scripts/run_rag_chat.py \
+  --config configs/experiments/rag/rag_smoke_test.yaml \
+  --project-root . \
+  --question "예산은 얼마야?"
+```
+
+평가 질문 세트:
+
+```bash
+python scripts/run_rag_chat.py \
+  --config configs/experiments/rag/rag_smoke_test.yaml \
+  --project-root . \
+  --evaluate
+```
+
+생성되는 주요 산출물:
+
+```text
+experiments/rag_smoke_test/
+|-- retrieval_results.jsonl
+|-- answers.jsonl
 |-- metrics.json
-|-- history.csv
-|-- run_info.json
+|-- bad_retrievals.csv
+|-- unsupported_answers.csv
+|-- failed_questions.csv
 |-- run_status.json
-|-- README.md
-`-- best_model.json
+`-- README.md
 ```
 
-HuggingFace 실험은 추가로 다음 폴더를 생성합니다.
+## 6. Metric과 실패 사례 확인
 
-```text
-experiments/{experiment_name}/hf_model/
-```
+RAG에서는 답변 문장만 보지 않습니다. 아래 순서로 봅니다.
 
-실패한 학습/예측 실행은 같은 폴더에 `failure.log`를 남깁니다.
-`run_status.json`의 `status`가 `failed`이면 이 파일에서 에러 타입, 메시지, traceback을 확인합니다.
+1. `retrieval_results.jsonl`: 정답 근거 후보가 검색되었는지
+2. `answers.jsonl`: 답변이 검색된 근거에 기반하는지
+3. `metrics.json`: 대표 지표가 개선되었는지
+4. `bad_retrievals.csv`: 기대 chunk를 못 찾은 질문
+5. `unsupported_answers.csv`: 근거 없이 답한 질문
+6. `failed_questions.csv`: 실행 중 실패한 질문
 
-## 실험 로그 컬럼
+대표 metric:
 
-```text
-exp_id, owner, date, config, model, data_version, metric, result_path, notes
-```
+| metric | 의미 |
+| --- | --- |
+| `retrieval_hit_rate` | 기대 근거 chunk가 top-k 안에 들어온 비율 |
+| `citation_correct_rate` | citation이 기대 근거와 맞는 비율 |
+| `unsupported_answer_rate` | 근거 부족 답변 비율 |
+
+## 주로 바꿔볼 Config 옵션
+
+| 옵션 | 실험 질문 |
+| --- | --- |
+| `rag.chunk.size` | chunk를 크게/작게 하면 근거 검색이 좋아지는가? |
+| `rag.chunk.overlap` | 앞뒤 문맥을 더 겹치면 답변 근거가 안정적인가? |
+| `rag.retriever.method` | keyword, semantic, hybrid 중 어떤 방식이 맞는가? |
+| `rag.retriever.top_k` | 근거 개수를 늘리면 답변 품질이 좋아지는가? |
+| `rag.embedding.provider` | local과 HuggingFace embedding 차이가 있는가? |
+| `rag.reranker.enabled` | 재정렬을 붙일 가치가 있는가? |
+| `rag.answerer.mode` | extractive 답변으로 충분한가, LLM 답변이 필요한가? |
 
 ## 실험 이름 규칙
 
-실험명은 `exp번호_대상_핵심변경` 형태를 권장합니다.
+RAG 실험 이름은 바꾼 조건이 보이게 짓습니다.
 
 ```text
-exp001_text_baseline
-exp002_hf_text_finetune
-exp003_hf_lr2e-5_max128
-exp004_hf_roberta_max256
+rag_smoke_test
+rag_keyword_top3
+rag_hybrid_top5
+rag_chunk800_overlap120
+rag_hf_answerer_gemma
 ```
 
-좋은 실험명은 이름만 봐도 무엇을 바꿨는지 대략 알 수 있어야 합니다.
+좋은 이름은 나중에 `experiments/` 폴더만 봐도 어떤 조건인지 짐작할 수 있어야 합니다.
 
-## Artifact 정책
+## 비교 리포트
 
-같은 실험명을 여러 번 실행해야 할 때는 config에서 `artifact_policy.run_id`를 지정합니다.
+retriever 비교는 아래 스크립트로 실행합니다.
 
-```yaml
-artifact_policy:
-  run_id: run_001
-  on_existing: overwrite
+```bash
+python scripts/compare_rag_retrievers.py --project-root .
 ```
 
-이 경우 산출물은 아래처럼 저장됩니다.
+결과:
 
 ```text
-experiments/{experiment_name}/{run_id}/
+reports/rag_retriever_comparison.csv
+reports/rag_retriever_comparison.json
 ```
 
-기존 산출물을 실수로 덮어쓰고 싶지 않으면 `on_existing: fail`을 사용합니다.
-이미 파일이 있는 output directory에 다시 실행하면 실행 전에 실패합니다.
+## 백업
 
-## 규칙
-
-- 학습 전에 data validation을 통과시킵니다.
-- 큰 실험 전에 smoke test를 먼저 통과시킵니다.
-- 가능하면 한 실험에서는 주요 변경점을 하나만 둡니다.
-- 성공한 실험과 실패한 실험을 모두 기록합니다.
-- validation/test/predict transform은 결정적으로 동작해야 합니다.
-- HuggingFace base model, max length, batch size, learning rate는 config에 남깁니다.
-- 실험 README의 결론, 다음 액션, 실패/주의 사항을 실험 직후에 적습니다.
-## 백업 정책
-
-실험 백업은 config의 `backup` 블록에서 조정합니다.
+Colab이나 Drive 백업이 필요하면 config의 `backup` 블록을 사용합니다.
 
 ```yaml
 backup:
   enabled: true
   on_finish: true
   on_failure: true
+  backup_dir: /content/drive/MyDrive/codeit_rag_project/backups/rag_smoke
   include_logs: true
   include_checkpoints: true
 ```
 
-- `on_finish`: 학습이 성공한 뒤 `backup_dir`로 산출물을 복사합니다.
-- `on_failure`: 학습이 실패해도 `failure.log`, `run_status.json` 같은 원인 분석 파일을 복사합니다.
-- `include_logs`: `false`면 `*.log` 파일을 백업에서 제외합니다.
-- `include_checkpoints`: `false`면 `hf_model/`, `checkpoints/`, `*.pt`, `*.ckpt` 같은 큰 모델 산출물을 제외합니다.
+## HuggingFace는 어디에 쓰는가
 
-`backup.on_best`는 백업 시점 정책이고, 모델 저장 기준은 아래 `checkpoint.save_best`에서 제어합니다.
-현재 HuggingFace 학습 루프는 monitor metric이 개선될 때 `checkpoints/best`를 저장합니다.
+RAG에서 HuggingFace는 분류 모델 파인튜닝이 아니라 아래 위치에서 사용합니다.
 
-## 학습 제어 정책
+| 목적 | config |
+| --- | --- |
+| embedding 모델 교체 | `rag.embedding.provider: huggingface` |
+| reranker 후보 | `rag.reranker.provider: huggingface` |
+| LLM 답변 생성 후보 | `rag.answerer.provider: huggingface` |
 
-HuggingFace fine-tuning은 아래 config 블록을 실제 학습 루프에 반영합니다.
-일반 smoke 모델은 같은 config 계약을 갖지만, 현재는 빠른 파이프라인 검증용이라 checkpoint/scheduler를 적용하지 않습니다.
+분류/HuggingFace fine-tuning 예시는 `configs/examples/classification/`에 남겨둔 참고 자료입니다. RAG 실험을 시작할 때는 그 config를 복사하지 않습니다.
 
-```yaml
-checkpoint:
-  enabled: true
-  dir: checkpoints
-  save_best: true
-  save_last: true
-  save_every_epoch: false
-  resume_from:
+## 실험 리뷰 체크리스트
 
-early_stopping:
-  enabled: true
-  patience: 3
-  min_delta: 0.0
-
-scheduler:
-  enabled: true
-  name: linear
-  warmup_ratio: 0.1
-  warmup_steps:
-```
-
-- `checkpoint.save_best`: monitor metric이 개선될 때 `checkpoints/best`를 저장합니다.
-- `checkpoint.save_last`: 매 epoch 후 `checkpoints/last`를 저장합니다.
-- `checkpoint.resume_from`: 이전 checkpoint 디렉터리를 지정해 optimizer/scheduler 상태까지 복원합니다.
-- `early_stopping`: monitor metric 개선이 `patience`만큼 멈추면 학습을 종료합니다.
-- `scheduler`: HuggingFace `get_scheduler`를 사용해 learning rate schedule을 적용합니다.
+- 실행한 config 경로를 기록했는가?
+- 산출물의 `config.yaml` snapshot을 확인했는가?
+- 답변뿐 아니라 retrieval 결과와 citation을 확인했는가?
+- 실패 질문 CSV를 봤는가?
+- 바꾼 옵션이 하나 또는 소수로 제한되어 비교 가능한가?
+- 발표에서 설명할 성공 사례와 실패 사례를 남겼는가?

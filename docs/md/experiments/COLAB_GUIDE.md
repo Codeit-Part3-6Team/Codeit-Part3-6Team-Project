@@ -1,53 +1,51 @@
-# Colab / Drive 실행 가이드
+# Colab / Drive RAG 실행 가이드
 
-이 문서는 팀원이 로컬 환경 세팅에 막혔을 때 Colab에서 같은 파이프라인을 실행하기 위한 가이드입니다.
+이 문서는 로컬 환경 대신 Colab에서 RAG 실험을 실행하고, 결과를 Google Drive에 남기는 방법을 설명합니다.
 
-실제 노트북 템플릿은 `notebooks/colab_experiment_template.ipynb`를 사용합니다.
+현재 프로젝트의 기본 실험은 분류 모델 학습이 아니라 RAG 문서 처리, 검색, 답변, 평가입니다.
 
-## Colab 실행 마인드맵
+## Colab 실행 흐름
 
 ```mermaid
 mindmap
-  root((Colab Experiment))
+  root((Colab RAG Experiment))
     Drive
-      data
+      raw_docs
+      eval_questions
       experiments
       backups
     Notebook
       repo clone
-      requirements 설치
-      GPU 확인
-      config 수정
-    Pipeline
-      validate
-      train
-      predict
-      summarize
-    Backup
-      best model
+      requirements install
+      config copy
+      path edit
+    RAG Pipeline
+      check
+      ingest
+      retrieve
+      chat
+      evaluate
+    Review
       metrics
-      run status
-      experiment summary
-    Handoff
-      결과 경로
-      실행 명령
-      다음 실험 메모
+      citations
+      failure csv
+      screenshots
 ```
 
 ## 권장 Drive 구조
 
 ```text
-MyDrive/codeit_ml_project/
+MyDrive/codeit_rag_project/
 |-- data/
-|   `-- text_processed/
-|       |-- train.csv
-|       |-- valid.csv
-|       |-- test.csv
-|       |-- class_map.json
-|       `-- dataset_info.json
+|   |-- raw_docs/
+|   |   `-- sample_rfp.pdf
+|   `-- eval_questions.csv
 |-- experiments/
-`-- backups/
+|-- backups/
+`-- reports/
 ```
+
+원본 문서는 직접 수정하지 않습니다. 전처리나 변환 결과가 필요하면 별도 폴더에 둡니다.
 
 ## Colab 시작 셀
 
@@ -62,78 +60,121 @@ cd <repo-name>
 pip install -r requirements.txt
 ```
 
-## 가벼운 환경 확인
+## RAG Config 복사
 
-GPU가 잡혔는지 먼저 확인합니다.
-
-```python
-import torch
-
-print(torch.__version__)
-print(torch.cuda.is_available())
-print(torch.cuda.get_device_name(0) if torch.cuda.is_available() else "CPU")
-```
-
-HuggingFace까지 실제로 실행 가능한지 확인합니다.
-
-```bash
-python scripts/run_train.py --config configs/smoke/smoke_test_hf_tiny.yaml --project-root .
-python scripts/run_predict.py --config configs/smoke/smoke_test_hf_tiny.yaml --project-root . --input data/text_processed/sample_positive.txt
-```
-
-## Drive 데이터로 학습하기
-
-Drive에 `text_processed` 데이터를 올려둔 뒤 Colab 전용 config를 사용합니다.
-
-```bash
-python scripts/run_validate.py \
-  --project-root . \
-  --data-dir /content/drive/MyDrive/codeit_ml_project/data/text_processed
-
-python scripts/run_train.py \
-  --project-root . \
-  --config configs/examples/classification/exp002_hf_text_finetune_colab.yaml
-```
-
-이 config는 결과를 Drive에 바로 저장합니다.
+Colab 전용 config는 기존 RAG config를 복사해서 경로만 Drive 기준으로 바꿉니다.
 
 ```text
-/content/drive/MyDrive/codeit_ml_project/experiments/exp002_hf_text_finetune_colab
+configs/experiments/rag/rag_smoke_test.yaml
+-> configs/experiments/rag/rag_colab_drive.yaml
 ```
 
-`backup.enabled: true`이므로 학습 종료 후 backup 경로에도 산출물이 복사됩니다.
+예시:
+
+```yaml
+experiment:
+  name: rag_colab_drive
+
+paths:
+  raw_docs_dir: /content/drive/MyDrive/codeit_rag_project/data/raw_docs
+  output_dir: /content/drive/MyDrive/codeit_rag_project/experiments/rag_colab_drive
+
+evaluation:
+  questions_path: /content/drive/MyDrive/codeit_rag_project/data/eval_questions.csv
+
+backup:
+  enabled: true
+  on_finish: true
+  on_failure: true
+  backup_dir: /content/drive/MyDrive/codeit_rag_project/backups/rag_colab_drive
+  include_logs: true
+  include_checkpoints: true
+```
+
+## 실행 전 점검
+
+```bash
+python scripts/check_rag_pipeline.py \
+  --config configs/experiments/rag/rag_colab_drive.yaml \
+  --project-root .
+```
+
+먼저 이 명령이 통과하는지 확인합니다. 여기서 실패하면 문서 경로, 질문 CSV 경로, config 값을 먼저 고칩니다.
+
+## RAG 실행
+
+```bash
+python scripts/run_rag_ingest.py \
+  --config configs/experiments/rag/rag_colab_drive.yaml \
+  --project-root .
+```
+
+```bash
+python scripts/run_rag_retrieve.py \
+  --config configs/experiments/rag/rag_colab_drive.yaml \
+  --project-root . \
+  --question "예산은 얼마야?"
+```
+
+```bash
+python scripts/run_rag_chat.py \
+  --config configs/experiments/rag/rag_colab_drive.yaml \
+  --project-root . \
+  --evaluate
+```
+
+## 결과 확인
+
+Drive의 `experiments/rag_colab_drive/`에서 아래 파일을 확인합니다.
 
 ```text
-/content/drive/MyDrive/codeit_ml_project/backups/exp002_hf_text_finetune_colab
+config.yaml
+parsed_documents.csv
+chunks.csv
+embeddings.jsonl
+retrieval_results.jsonl
+answers.jsonl
+metrics.json
+bad_retrievals.csv
+unsupported_answers.csv
+failed_questions.csv
+run_status.json
+README.md
 ```
 
-## 실험 요약
+## Colab에서 먼저 볼 것
 
-로컬 repo 안의 `experiments/`를 요약하려면:
+1. `metrics.json`: 전체 점수
+2. `bad_retrievals.csv`: 검색 실패 질문
+3. `unsupported_answers.csv`: 근거 부족 답변
+4. `answers.jsonl`: 답변과 citation
+5. `chunks.csv`: 검색 근거가 실제 문서 내용과 맞는지
 
-```bash
-python scripts/summarize_experiments.py --project-root .
+## HuggingFace 사용 시 주의
+
+RAG에서 HuggingFace를 사용할 수 있는 위치는 세 곳입니다.
+
+```yaml
+rag:
+  embedding:
+    provider: huggingface
+  reranker:
+    provider: huggingface
+  answerer:
+    provider: huggingface
 ```
 
-Drive 경로에 저장한 실험을 요약하려면:
+Colab에서 HuggingFace 모델을 쓰면 모델 다운로드와 추론 시간이 발생합니다. 먼저 `local` provider 기반 RAG smoke test를 통과시킨 뒤 바꾸는 것을 권장합니다.
 
-```bash
-python scripts/summarize_experiments.py \
-  --project-root . \
-  --experiments-dir /content/drive/MyDrive/codeit_ml_project/experiments \
-  --output /content/drive/MyDrive/codeit_ml_project/reports/experiment_summary.csv
-```
+## 공유할 때 남길 것
 
-## 운영 팁
+- 사용한 config 경로
+- Drive 결과 폴더
+- `metrics.json` 요약
+- 성공 질문 1개와 실패 질문 1개
+- 답변과 citation 캡처
+- 다음에 바꿔볼 config 옵션
 
-- Colab 런타임이 끊길 수 있으니 실험 결과는 Drive 경로에 저장합니다.
-- smoke test는 `smoke_test_hf_tiny.yaml`로 먼저 확인합니다.
-- 실제 실험은 config를 복사해서 `experiment.name`, `output_dir`, `backup_dir`를 바꾼 뒤 실행합니다.
-- 팀 공유 전에는 `reports/experiment_summary.csv`와 각 실험 README의 결론/다음 액션을 확인합니다.
-## 백업 옵션
+## 참고
 
-`backup.on_failure: true`를 켜두면 학습이 실패해도 `failure.log`와 `run_status.json`을
-Drive에 남길 수 있어서 Colab 런타임이 끊기거나 에러가 났을 때 원인 확인이 쉽습니다.
-
-용량을 줄이고 싶으면 config에서 `include_checkpoints: false`로 두어 모델 weight 계열 산출물을
-백업에서 제외할 수 있습니다. 로그가 필요 없으면 `include_logs: false`도 사용할 수 있습니다.
+예전 분류/HuggingFace fine-tuning config는 `configs/examples/classification/`에 남아 있습니다. 현재 RAG 프로젝트의 기본 Colab 실행 흐름은 위 RAG 명령을 기준으로 합니다.

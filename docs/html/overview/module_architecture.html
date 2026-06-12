@@ -1,509 +1,70 @@
-﻿<!doctype html>
+<!doctype html>
 <html lang="ko">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>모듈 구조 설명</title>
+  <title>RAG Module Architecture</title>
   <style>
-:root {
-  --bg: #f6f7f9;
-  --paper: #ffffff;
-  --ink: #1f2937;
-  --muted: #667085;
-  --line: #d8dee8;
-  --blue: #2563eb;
-  --code-bg: #111827;
-  --code: #e5e7eb;
-}
-* { box-sizing: border-box; }
-body {
-  margin: 0;
-  background: var(--bg);
-  color: var(--ink);
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans KR", Arial, sans-serif;
-  line-height: 1.7;
-  word-break: keep-all;
-}
-header {
-  background: #182235;
-  color: #fff;
-  padding: 34px 24px 26px;
-}
-main, header .wrap {
-  width: min(1040px, calc(100% - 36px));
-  margin: 0 auto;
-}
-main {
-  background: var(--paper);
-  border: 1px solid var(--line);
-  border-radius: 10px;
-  margin-top: 24px;
-  margin-bottom: 48px;
-  padding: 30px;
-}
-h1, h2, h3, h4 {
-  letter-spacing: 0;
-  line-height: 1.28;
-}
-h1 { margin: 0; font-size: 34px; }
-h2 { margin-top: 34px; padding-top: 10px; border-top: 1px solid #e8ebf1; font-size: 25px; }
-h3 { margin-top: 24px; font-size: 20px; }
-h4 { margin-top: 20px; font-size: 17px; }
-p { margin: 10px 0; }
-a { color: var(--blue); text-decoration: none; }
-a:hover { text-decoration: underline; }
-code {
-  font-family: Consolas, "SFMono-Regular", monospace;
-  background: #eef2ff;
-  color: #27306f;
-  padding: 2px 6px;
-  border-radius: 4px;
-}
-pre {
-  margin: 14px 0;
-  padding: 16px;
-  overflow-x: auto;
-  border-radius: 8px;
-  background: var(--code-bg);
-  color: var(--code);
-}
-pre code {
-  background: transparent;
-  color: inherit;
-  padding: 0;
-}
-table {
-  width: 100%;
-  border-collapse: collapse;
-  margin: 14px 0;
-  min-width: 720px;
-}
-.table-wrap {
-  overflow-x: auto;
-}
-th, td {
-  border: 1px solid var(--line);
-  padding: 10px 12px;
-  text-align: left;
-  vertical-align: top;
-}
-th { background: #f2f5fa; }
-blockquote {
-  border-left: 4px solid var(--blue);
-  margin: 16px 0;
-  padding: 8px 16px;
-  background: #eef4ff;
-  color: #31415f;
-}
-.diagram-wrap {
-  overflow-x: auto;
-  border: 1px solid var(--line);
-  border-radius: 8px;
-  background: #fbfcff;
-  padding: 14px;
-  margin: 14px 0;
-}
-.diagram {
-  display: block;
-  min-width: 900px;
-  width: 100%;
-  height: auto;
-}
-.diagram text {
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans KR", Arial, sans-serif;
-  letter-spacing: 0;
-}
-.diagram .box {
-  fill: #ffffff;
-  stroke: #cfd7e6;
-  stroke-width: 1.4;
-  rx: 8;
-}
-.diagram .group {
-  fill: #f6f8fc;
-  stroke: #d8dee8;
-  stroke-width: 1.2;
-  rx: 10;
-}
-.diagram .title {
-  fill: var(--ink);
-  font-size: 15px;
-  font-weight: 700;
-}
-.diagram .desc {
-  fill: var(--muted);
-  font-size: 12px;
-}
-.diagram .group-title {
-  fill: #334155;
-  font-size: 14px;
-  font-weight: 700;
-}
-.diagram .arrow {
-  fill: none;
-  stroke: #64748b;
-  stroke-width: 2;
-  marker-end: url(#arrow);
-}
-ul, ol { padding-left: 24px; }
-li { margin: 4px 0; }
-.meta {
-  margin-top: 8px;
-  color: #d8e1ef;
-  font-size: 14px;
-}
-</style>
+    body { margin: 0; font-family: Arial, sans-serif; color: #172033; background: #f7f9fc; }
+    main { max-width: 1080px; margin: 0 auto; padding: 44px 24px; }
+    h1 { margin: 0 0 10px; font-size: 36px; }
+    h2 { margin-top: 34px; }
+    p { line-height: 1.7; }
+    .band { background: #fff; border: 1px solid #dce3ef; border-radius: 8px; padding: 18px; margin-top: 16px; }
+    .flow { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+    .node { padding: 12px 14px; background: #eaf2ff; border: 1px solid #b8cbea; border-radius: 8px; font-weight: 700; }
+    .arrow { color: #516070; }
+    table { width: 100%; border-collapse: collapse; background: #fff; }
+    th, td { border: 1px solid #dce3ef; padding: 10px; text-align: left; vertical-align: top; }
+    th { background: #edf3fb; }
+    code { background: #eef3fa; border-radius: 6px; padding: 2px 5px; }
+  </style>
 </head>
 <body>
-  <header>
-    <div class="wrap">
-      <h1>모듈 구조 설명</h1>
-      <div class="meta">Markdown 원본: ../md/MODULE_ARCHITECTURE.md</div>
-    </div>
-  </header>
   <main>
-<h1>모듈 구조 설명</h1>
-<p>이 문서는 팀원이 저장소를 처음 봤을 때 “어디를 실행하고, 어디를 수정하고, 결과가 어디에 남는지” 빠르게 이해하도록 만든 구조 설명서입니다.</p>
-<h2>한 줄 요약</h2>
-<p><code>configs/</code>가 실험 조건을 정하고, <code>scripts/</code>가 실행 진입점이 되며, <code>src/</code>가 실제 구현을 담당하고, <code>experiments/</code>와 <code>reports/</code>가 결과를 기록합니다.</p>
-<pre><code class="language-text">
-configs/*.yaml
-    |
-    v
-scripts/*.py
-    |
-    v
-src/
-    |
-    v
-experiments/ + reports/
-</code></pre>
-<h2>디렉터리 역할</h2>
-<div class="table-wrap"><table>
-<thead><tr>
-<th>경로</th>
-<th>역할</th>
-<th>팀원이 주로 보는 시점</th>
-</tr></thead><tbody>
-<tr>
-<td><code>configs/</code></td>
-<td>실험 조건, 경로, 모델, RAG 옵션, 백업 정책</td>
-<td>실험을 바꿀 때</td>
-</tr>
-<tr>
-<td><code>scripts/</code></td>
-<td>공식 실행 명령</td>
-<td>학습, 예측, RAG 실행할 때</td>
-</tr>
-<tr>
-<td><code>src/</code></td>
-<td>실제 파이프라인 구현</td>
-<td>기능을 추가하거나 버그를 고칠 때</td>
-</tr>
-<tr>
-<td><code>data/</code></td>
-<td>원본/중간/처리 데이터</td>
-<td>데이터 계약을 맞출 때</td>
-</tr>
-<tr>
-<td><code>experiments/</code></td>
-<td>실험별 산출물</td>
-<td>결과를 비교하고 재현할 때</td>
-</tr>
-<tr>
-<td><code>reports/</code></td>
-<td>실험 요약과 팀 보고 자료</td>
-<td>공유용 결과를 만들 때</td>
-</tr>
-<tr>
-<td><code>docs/md/</code></td>
-<td>원본/관리용 Markdown 문서</td>
-<td>문서를 수정하고 버전 관리할 때</td>
-</tr>
-<tr>
-<td><code>docs/html/</code></td>
-<td>공유/설명용 HTML 문서</td>
-<td>킥오프, 온보딩, 발표 때</td>
-</tr>
-<tr>
-<td><code>tests/</code></td>
-<td>회귀 방지 테스트</td>
-<td>수정 후 안전 확인할 때</td>
-</tr>
-</tbody></table></div>
-<h2>핵심 모듈</h2>
-<div class="table-wrap"><table>
-<thead><tr>
-<th>모듈</th>
-<th>책임</th>
-</tr></thead><tbody>
-<tr>
-<td><code>src/config.py</code></td>
-<td>YAML config 로딩, JSON 저장</td>
-</tr>
-<tr>
-<td><code>src/artifacts.py</code></td>
-<td>실험 폴더, run status, failure log, backup 관리</td>
-</tr>
-<tr>
-<td><code>src/data.py</code></td>
-<td>분류 모델용 데이터 로딩</td>
-</tr>
-<tr>
-<td><code>src/train.py</code></td>
-<td>분류 모델 학습, checkpoint, scheduler, early stopping</td>
-</tr>
-<tr>
-<td><code>src/predict.py</code></td>
-<td>저장된 모델로 단건 예측</td>
-</tr>
-<tr>
-<td><code>src/metrics.py</code></td>
-<td>평가 지표 계산</td>
-</tr>
-<tr>
-<td><code>src/experiments.py</code></td>
-<td>여러 실험 결과 요약</td>
-</tr>
-<tr>
-<td><code>src/models/</code></td>
-<td>분류 모델 registry와 구현체</td>
-</tr>
-<tr>
-<td><code>src/rag/</code></td>
-<td>RAG 문서 처리, 검색, 답변, 평가</td>
-</tr>
-<tr>
-<td><code>src/utils/</code></td>
-<td>path, seed, logging 같은 공통 유틸</td>
-</tr>
-</tbody></table></div>
-<h2>분류 모델 흐름</h2>
-<pre><code class="language-text">
-run_validate.py
-    -&gt; validate_data.py
-    -&gt; data contract 확인
+    <h1>RAG 모듈 구조</h1>
+    <p>새 기능을 붙일 때는 먼저 RAG 경로를 봅니다. 기존 학습/분류 코드는 참고용으로 남아 있습니다.</p>
 
-run_train.py
-    -&gt; config.py
-    -&gt; data.py
-    -&gt; models/registry.py
-    -&gt; train.py
-    -&gt; artifacts.py
-    -&gt; experiments/{name}/
+    <section class="band">
+      <h2>실행 흐름</h2>
+      <div class="flow">
+        <div class="node">configs/experiments/rag</div><div class="arrow">-></div>
+        <div class="node">scripts/run_rag_*</div><div class="arrow">-></div>
+        <div class="node">src/rag</div><div class="arrow">-></div>
+        <div class="node">experiments</div><div class="arrow">-></div>
+        <div class="node">reports</div>
+      </div>
+    </section>
 
-run_predict.py
-    -&gt; config.py
-    -&gt; predict.py
-    -&gt; experiments/{name}/predictions.csv
-</code></pre>
-<p>분류 모델은 현재 이미지 smoke model, 텍스트 keyword model, HuggingFace sequence classifier를 지원합니다.</p>
-<h2>RAG 흐름</h2>
-<pre><code class="language-text">
-run_rag_ingest.py
-    -&gt; document_loader.py
-    -&gt; chunker.py
-    -&gt; adapters.py
-    -&gt; embeddings.jsonl
-    -&gt; rag_ingest_checkpoint.json
+    <h2>RAG 내부 모듈</h2>
+    <table>
+      <thead><tr><th>모듈</th><th>책임</th></tr></thead>
+      <tbody>
+        <tr><td><code>document_loader.py</code></td><td>원본 문서 로딩</td></tr>
+        <tr><td><code>chunker.py</code></td><td>검색 가능한 chunk 생성</td></tr>
+        <tr><td><code>embedder.py</code></td><td>chunk와 질문 embedding 생성</td></tr>
+        <tr><td><code>vector_store.py</code></td><td>embedding 기반 검색</td></tr>
+        <tr><td><code>retriever.py</code></td><td>keyword, semantic, hybrid retrieval</td></tr>
+        <tr><td><code>answerer.py</code></td><td>답변과 citation 생성</td></tr>
+        <tr><td><code>adapters.py</code></td><td>config에 맞는 구현체 선택</td></tr>
+        <tr><td><code>pipeline.py</code></td><td>ingest, retrieve, chat, evaluate 연결</td></tr>
+        <tr><td><code>validation.py</code></td><td>RAG config와 입력 경로 점검</td></tr>
+      </tbody>
+    </table>
 
-run_rag_retrieve.py
-    -&gt; adapters.py
-    -&gt; retriever.py
-    -&gt; retrieval_results.jsonl
+    <h2>공통 인프라</h2>
+    <table>
+      <thead><tr><th>모듈</th><th>책임</th></tr></thead>
+      <tbody>
+        <tr><td><code>src/config.py</code></td><td>YAML config 로딩</td></tr>
+        <tr><td><code>src/artifacts.py</code></td><td>산출물, 상태 파일, 실패 로그, 백업</td></tr>
+        <tr><td><code>src/experiments.py</code></td><td>실험 summary 생성</td></tr>
+        <tr><td><code>src/utils</code></td><td>path, seed, logging 유틸</td></tr>
+      </tbody>
+    </table>
 
-run_rag_chat.py
-    -&gt; retrieve
-    -&gt; answerer.py
-    -&gt; answers.jsonl
-
-run_rag_chat.py --evaluate
-    -&gt; evaluation_results.csv
-    -&gt; bad_retrievals.csv
-    -&gt; unsupported_answers.csv
-    -&gt; failed_questions.csv
-</code></pre>
-<p>RAG는 “문서 읽기 -&gt; chunk 나누기 -&gt; embedding 만들기 -&gt; 검색하기 -&gt; 답변하기 -&gt; 평가하기” 순서로 나뉩니다.</p>
-<h2>모듈 관계 다이어그램</h2>
-<div class="diagram-wrap">
-<svg class="diagram" viewBox="0 0 980 360" role="img" aria-label="config, scripts, src, experiments, reports 관계 다이어그램">
-  <defs>
-    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
-      <path d="M 0 0 L 10 5 L 0 10 z" fill="#64748b"></path>
-    </marker>
-  </defs>
-  <rect class="group" x="24" y="38" width="185" height="260"></rect>
-  <text class="group-title" x="44" y="68">실행 진입점</text>
-  <rect class="box" x="44" y="92" width="145" height="72"></rect>
-  <text class="title" x="62" y="122">configs/*.yaml</text>
-  <text class="desc" x="62" y="145">실험 조건과 경로</text>
-  <rect class="box" x="44" y="190" width="145" height="72"></rect>
-  <text class="title" x="62" y="220">scripts/*.py</text>
-  <text class="desc" x="62" y="243">공식 실행 명령</text>
-
-  <rect class="group" x="260" y="38" width="225" height="260"></rect>
-  <text class="group-title" x="280" y="68">공통 인프라</text>
-  <rect class="box" x="282" y="92" width="180" height="58"></rect>
-  <text class="title" x="302" y="123">src/config.py</text>
-  <text class="desc" x="302" y="140">config 로딩</text>
-  <rect class="box" x="282" y="166" width="180" height="58"></rect>
-  <text class="title" x="302" y="197">src/artifacts.py</text>
-  <text class="desc" x="302" y="214">상태, 실패 로그, 백업</text>
-  <rect class="box" x="282" y="240" width="180" height="58"></rect>
-  <text class="title" x="302" y="271">src/utils/</text>
-  <text class="desc" x="302" y="288">path, seed, logging</text>
-
-  <rect class="group" x="540" y="38" width="190" height="260"></rect>
-  <text class="group-title" x="560" y="68">도메인 구현</text>
-  <rect class="box" x="562" y="92" width="146" height="58"></rect>
-  <text class="title" x="582" y="123">src/rag/</text>
-  <text class="desc" x="582" y="140">검색, 답변, 평가</text>
-  <rect class="box" x="562" y="166" width="146" height="58"></rect>
-  <text class="title" x="582" y="197">src/train.py</text>
-  <text class="desc" x="582" y="214">참고 학습 흐름</text>
-  <rect class="box" x="562" y="240" width="146" height="58"></rect>
-  <text class="title" x="582" y="271">src/models/</text>
-  <text class="desc" x="582" y="288">분류 예제 모델</text>
-
-  <rect class="group" x="785" y="38" width="170" height="260"></rect>
-  <text class="group-title" x="805" y="68">결과 산출물</text>
-  <rect class="box" x="807" y="92" width="126" height="58"></rect>
-  <text class="title" x="824" y="123">experiments/</text>
-  <text class="desc" x="824" y="140">config, metric</text>
-  <rect class="box" x="807" y="190" width="126" height="58"></rect>
-  <text class="title" x="824" y="221">reports/</text>
-  <text class="desc" x="824" y="238">요약 리포트</text>
-
-  <path class="arrow" d="M 189 128 H 282"></path>
-  <path class="arrow" d="M 189 226 H 282"></path>
-  <path class="arrow" d="M 462 121 H 562"></path>
-  <path class="arrow" d="M 462 195 H 562"></path>
-  <path class="arrow" d="M 462 269 H 562"></path>
-  <path class="arrow" d="M 708 121 H 807"></path>
-  <path class="arrow" d="M 870 150 V 190"></path>
-</svg>
-</div>
-<p>핵심은 <code>scripts/</code>가 직접 모든 일을 하지 않는다는 점입니다. script는 config를 읽고, 공통 artifact 정책을 적용한 뒤, ML 또는 RAG 구현체에 일을 위임합니다.</p>
-<h2>RAG 내부 관계 다이어그램</h2>
-<div class="diagram-wrap">
-<svg class="diagram" viewBox="0 0 980 250" role="img" aria-label="RAG 내부 처리 흐름 다이어그램">
-  <defs>
-    <marker id="arrow-rag" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
-      <path d="M 0 0 L 10 5 L 0 10 z" fill="#64748b"></path>
-    </marker>
-  </defs>
-  <path class="arrow" marker-end="url(#arrow-rag)" d="M 130 108 H 208"></path>
-  <path class="arrow" marker-end="url(#arrow-rag)" d="M 320 108 H 398"></path>
-  <path class="arrow" marker-end="url(#arrow-rag)" d="M 510 108 H 588"></path>
-  <path class="arrow" marker-end="url(#arrow-rag)" d="M 700 108 H 778"></path>
-  <path class="arrow" marker-end="url(#arrow-rag)" d="M 510 156 C 585 216 682 216 778 156"></path>
-  <rect class="box" x="24" y="70" width="106" height="76"></rect>
-  <text class="title" x="44" y="101">Raw Docs</text>
-  <text class="desc" x="44" y="122">txt, pdf, hwp</text>
-  <rect class="box" x="208" y="70" width="112" height="76"></rect>
-  <text class="title" x="228" y="101">Loader</text>
-  <text class="desc" x="228" y="122">document row</text>
-  <rect class="box" x="398" y="70" width="112" height="76"></rect>
-  <text class="title" x="418" y="101">Chunker</text>
-  <text class="desc" x="418" y="122">근거 단위</text>
-  <rect class="box" x="588" y="70" width="112" height="76"></rect>
-  <text class="title" x="608" y="101">Embedding</text>
-  <text class="desc" x="608" y="122">vector 생성</text>
-  <rect class="box" x="778" y="70" width="128" height="76"></rect>
-  <text class="title" x="798" y="101">Retriever</text>
-  <text class="desc" x="798" y="122">top-k 검색</text>
-  <rect class="box" x="778" y="166" width="128" height="58"></rect>
-  <text class="title" x="798" y="198">Answer</text>
-  <text class="desc" x="798" y="215">답변 + citation</text>
-  <path class="arrow" marker-end="url(#arrow-rag)" d="M 842 146 V 166"></path>
-</svg>
-</div>
-<p>RAG에서 새 구현체를 붙일 때는 pipeline 전체를 바꾸기보다 adapter factory와 필요한 하위 모듈만 확장하는 것이 기본 방향입니다.</p>
-<h2>RAG Adapter 구조</h2>
-<p>RAG 쪽은 실제 구현체를 config로 갈아 끼우기 쉽도록 adapter registry 형태로 둡니다.</p>
-<div class="table-wrap"><table>
-<thead><tr>
-<th>영역</th>
-<th>현재 실제 구현</th>
-<th>계약만 있는 확장 후보</th>
-</tr></thead><tbody>
-<tr>
-<td>embedding</td>
-<td><code>local</code>, <code>huggingface</code></td>
-<td>OpenAI embedding 등</td>
-</tr>
-<tr>
-<td>vector store</td>
-<td><code>memory</code></td>
-<td><code>faiss</code>, <code>chroma</code>, <code>elasticsearch</code></td>
-</tr>
-<tr>
-<td>retriever</td>
-<td><code>keyword</code>, <code>semantic</code>, <code>hybrid</code></td>
-<td>reranker 결합 검색</td>
-</tr>
-<tr>
-<td>answerer</td>
-<td><code>extractive/local</code></td>
-<td><code>openai</code>, <code>huggingface</code> LLM 답변</td>
-</tr>
-</tbody></table></div>
-<p>따라서 지금 구조는 “인터페이스만 있는 상태”가 아니라, smoke test와 기본 RAG 실험은 실제로 돌 수 있고, 더 무거운 외부 도구는 나중에 adapter를 붙이는 형태입니다.</p>
-<h2>Checkpoint와 Resume</h2>
-<p>분류 모델:</p>
-<ul>
-<li>best checkpoint 저장</li>
-<li>last checkpoint 저장</li>
-<li>HuggingFace trainer state 기반 resume</li>
-<li>scheduler와 early stopping config 제어</li>
-</ul>
-<p>RAG:</p>
-<ul>
-<li><code>parsed_documents.csv</code>가 있으면 문서 파싱 단계를 재사용합니다.</li>
-<li><code>chunks.csv</code>가 있으면 chunking 단계를 재사용합니다.</li>
-<li><code>embeddings.jsonl</code>이 있으면 embedding 단계를 재사용합니다.</li>
-<li><code>rag_ingest_checkpoint.json</code>에 마지막 완료 stage와 count를 기록합니다.</li>
-</ul>
-<p>현재 RAG resume은 단계 단위 resume입니다. 문서 100개 중 57번째 문서부터 이어 가는 수준의 offset resume은 아직 구현하지 않았습니다.</p>
-<h2>어디를 수정하면 되나</h2>
-<div class="table-wrap"><table>
-<thead><tr>
-<th>하고 싶은 일</th>
-<th>주로 수정할 위치</th>
-</tr></thead><tbody>
-<tr>
-<td>실험 조건 변경</td>
-<td><code>configs/*.yaml</code></td>
-</tr>
-<tr>
-<td>새 분류 모델 추가</td>
-<td><code>src/models/</code>, <code>src/models/registry.py</code></td>
-</tr>
-<tr>
-<td>새 RAG embedding 추가</td>
-<td><code>src/rag/adapters.py</code></td>
-</tr>
-<tr>
-<td>새 vector store 추가</td>
-<td><code>src/rag/adapters.py</code>, 필요시 <code>src/rag/vector_store.py</code></td>
-</tr>
-<tr>
-<td>새 문서 포맷 추가</td>
-<td><code>src/rag/document_loader.py</code></td>
-</tr>
-<tr>
-<td>평가 지표 추가</td>
-<td><code>src/metrics.py</code> 또는 <code>src/rag/pipeline.py</code></td>
-</tr>
-<tr>
-<td>실행 명령 추가</td>
-<td><code>scripts/</code></td>
-</tr>
-<tr>
-<td>팀 설명 자료 추가</td>
-<td><code>docs/md/</code> 또는 <code>docs/html/</code></td>
-</tr>
-</tbody></table></div>
+    <h2>참고용 Legacy</h2>
+    <p><code>src/train.py</code>, <code>src/predict.py</code>, <code>src/models/</code>는 기존 분류/HuggingFace 학습 파이프라인 참고용입니다. RAG 기능 추가의 기본 위치는 아닙니다.</p>
   </main>
 </body>
 </html>
