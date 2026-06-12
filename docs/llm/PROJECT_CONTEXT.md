@@ -42,9 +42,9 @@
 | 후보 | 상태 | 우선순위 판단 |
 | --- | --- | --- |
 | FAISS/Elasticsearch adapter | 계약만 있음 | 실제 데이터 규모가 커지면 필요 |
-| OpenAI/Ollama answerer | LangChain 엔진에서 사용 가능 | API/로컬 서버 사용 가능 여부와 비용 확인 후 본 실험에 적용 |
+| OpenAI/Ollama answerer | LangChain 엔진에서 사용 가능 | API/로컬 서버 사용 가능 여부, 비용, 환각률 확인 후 본 실험에 적용 |
 | reranker | 계약만 있음 | retrieval 품질 병목 확인 후 필요 |
-| vector index 저장/로드 | Chroma 후보 있음 | 검색 비용이 커지면 필요 |
+| vector index 저장/로드 | Chroma provider 계약 있음 | 검색 비용이 커지면 실제 index 저장소로 승격 |
 | fine-grained resume | 미구현 | 대량 문서 처리 중단 문제가 생기면 필요 |
 | 실제 외부 RFP PDF/HWP E2E | 대기 | 실제 공고 원문 확보 후 PDF/HWP/HWPX 품질 재검증 |
 | 웹앱/데모 | 예비 구조 | 담당자와 범위 확정 후 구현 |

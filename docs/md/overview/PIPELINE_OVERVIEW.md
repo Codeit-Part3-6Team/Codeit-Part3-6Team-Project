@@ -1,7 +1,7 @@
 # 파이프라인 설명서
 
 이 문서는 팀원에게 현재 프로젝트 파이프라인을 설명하기 위한 개요 문서입니다.
-세부 명령어는 `README.md`, 실험 규칙은 `experiments/EXPERIMENT_GUIDE.md`, Colab 실행은 `experiments/COLAB_GUIDE.md`를 참고합니다.
+세부 명령어는 루트 `README.md`, 실험 규칙은 `../experiments/EXPERIMENT_GUIDE.md`, Colab 실행은 `../experiments/COLAB_GUIDE.md`를 참고합니다.
 운영 기능의 현재 상태와 남은 보강 항목은 `PIPELINE_INFRA_CHECKLIST.md`에서 관리합니다.
 
 ## 한 줄 요약
@@ -15,10 +15,10 @@ mindmap
   root((RAG 실험 파이프라인))
     Config
       실험 이름
-      데이터 경로
+      원본 문서 경로
       chunk 설정
       retriever 설정
-      checkpoint/resume
+      answerer 설정
     Data
       원본 문서
       파싱 결과
@@ -248,23 +248,20 @@ experiments/rag_langchain/
 `-- metrics.json
 ```
 
-다음 확장 후보는 `sentence-transformers embedding -> vector index -> semantic retrieval 고도화`입니다.
-현재는 `scripts/compare_rag_retrievers.py`로 keyword와 semantic retriever 결과를 비교할 수 있습니다.
+다음 확장 후보는 `실제 RFP 원문 확보 -> LangChain embedding/vector store 선택 -> retrieval 품질 비교 -> 생성형 answerer 품질 검증`입니다.
+현재는 `scripts/compare_rag_retrievers.py`로 기본 config들의 retrieval 결과를 비교할 수 있습니다.
 
 ## 아직 보강하면 좋은 부분
 
 현재 파이프라인은 기본 실행과 실험 기록 중심입니다.
 실제 프로젝트에서 더 단단하게 만들려면 다음 항목을 추가할 수 있습니다.
 
-- macro f1, class별 precision/recall/f1
-- confusion matrix
-- `eval_predictions.csv`
-- `wrong_predictions.csv`
-- best model과 last model 구분
-- config validation
-- 실패한 실험의 `failure.log`
-- RAG embedding/vector store
-- RAG PDF parser
-- RAG unsupported answer 분석 리포트
+- 실제 외부 RFP PDF/HWP/HWPX E2E 검증
+- retrieval@k, citation coverage, answer faithfulness 같은 RAG 품질 metric
+- reranker 적용 여부 비교
+- Chroma/FAISS/Elasticsearch 중 실제 vector/index 저장소 선택
+- Google Drive 또는 공유 스토리지 백업 정책
+- best retriever/index/config 선정 기준
+- UI/API 연결 시 답변과 citation을 함께 보여주는 계약
 
-이 항목들은 프로젝트 주제가 확정된 뒤 우선순위를 정해 추가하는 것이 좋습니다.
+이 항목들은 팀 범위와 실제 데이터가 확정된 뒤 우선순위를 정해 추가하는 것이 좋습니다.

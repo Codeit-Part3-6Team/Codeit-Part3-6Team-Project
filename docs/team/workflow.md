@@ -20,7 +20,7 @@ flowchart LR
 | --- | --- | --- | --- | --- |
 | Data 준비 | Data Engineer | 원본 RFP 문서 | 로딩 가능한 문서, 평가 질문 초안, 데이터 이슈 목록 | pipeline이 문서를 읽고 chunk를 만들 수 있음 |
 | 검색/답변 실험 | Experiment Lead / Model Engineer | 문서, 질문, config | retrieval 결과, answer, citation, metric | 질문별 근거 chunk와 답변을 확인할 수 있음 |
-| 파라미터 조정 | Experiment Lead / Model Engineer | baseline 결과 | 비교 실험 결과, best/last 산출물, 실패 사례 | 어떤 설정이 왜 나은지 설명 가능함 |
+| 파라미터 조정 | Experiment Lead / Model Engineer | baseline 결과 | 비교 실험 결과, best config/index 후보, 실패 사례 | 어떤 설정이 왜 나은지 설명 가능함 |
 | 데모 형태 정리 | Application Engineer | RAG 입출력 예시 | 간단한 실행 흐름, 화면/API 후보, citation 표시 방식 | 사용자가 질문을 넣고 답변 근거를 볼 수 있음 |
 | 시연/발표 | Presentation Lead / PM | 실험 결과, 데모, 실패 사례 | 발표 흐름, 쉬운 용어, 결과 캡처 | 문제-방법-결과-한계를 연결해서 설명 가능함 |
 

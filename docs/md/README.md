@@ -22,10 +22,6 @@ mindmap
       MODULE_ARCHITECTURE
       PIPELINE_INFRA_CHECKLIST
       RAG_QUALITY_CHECKLIST
-    kickoff
-      README
-    workflow
-      README
 ```
 
 ## 디렉터리 설명
@@ -36,8 +32,7 @@ docs/md/
 |-- data/         데이터 제공 형식과 원본 데이터 관리 기준
 |-- experiments/  실험 실행, Colab, 노트북 사용법
 |-- overview/     전체 구조, 모듈 관계, 인프라 체크리스트
-|-- kickoff/      team 문서로 이동했다는 안내
-`-- workflow/     team 문서로 이동했다는 안내
+`-- rag/          RAG 입력/출력, 검색, 답변, 평가 계약
 ```
 
 ## 역할별로 찾을 참고 문서

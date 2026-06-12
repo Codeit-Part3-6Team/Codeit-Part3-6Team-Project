@@ -5,7 +5,7 @@
 
 ## 한 줄 요약
 
-현재 파이프라인은 **실험을 config로 실행하고 산출물을 남기는 기본 구조, LangChain 기반 RAG 엔진, RAG용 validation/failure artifact, HuggingFace 학습 제어(checkpoint/resume/early stopping/scheduler)까지 갖춘 상태입니다.** 남은 보강은 step 단위 checkpoint, RAG 산출물 백업, 실제 외부 RFP 품질 검증처럼 프로젝트 주제가 확정된 뒤 붙여도 되는 영역입니다.
+현재 파이프라인은 **실험을 config로 실행하고 산출물을 남기는 기본 구조, LangChain 기반 RAG 엔진, RAG용 validation/failure artifact, stage 단위 ingest resume까지 갖춘 상태입니다.** 남은 보강은 RAG 산출물 백업 정책, 실제 외부 RFP 품질 검증, reranker/vector index 고도화처럼 프로젝트 범위가 확정된 뒤 붙이면 좋은 영역입니다.
 
 ## 현재 갖춘 것
 
@@ -14,8 +14,7 @@
 | config 기반 실행 | 있음 | `configs/*.yaml`, `scripts/run_*.py` |
 | 프로젝트 루트 기준 경로 처리 | RAG는 있음 | RAG config path와 내부 경로를 `project_root` 기준으로 처리 |
 | 데이터 검증 | 있음 | `scripts/run_validate.py`, `src/validate_data.py` |
-| 이미지/text smoke test | 있음 | `configs/smoke/smoke_test.yaml`, `configs/smoke/smoke_test_text.yaml` |
-| HuggingFace smoke test | 있음 | `configs/smoke/smoke_test_hf_tiny.yaml` |
+| 예전 ML smoke test | 참고용 | `configs/smoke/` 아래 이미지/text/HF smoke config |
 | RAG config 실행 | 있음 | `configs/experiments/rag/rag_langchain.yaml`, `scripts/run_rag_*.py` |
 | 다중 문서 loader | 있음 | txt/pdf/docx/hwpx/hwp 대상 loader |
 | RAG embedding 산출물 | 있음 | `embeddings.jsonl` |
@@ -33,25 +32,25 @@
 | overwrite 방지 | 있음 | `artifact_policy.on_existing: fail` |
 | 실험 산출물 저장 | 있음 | `experiments/{experiment.name}/` |
 | 실험 요약 리포트 | 있음 | `scripts/summarize_experiments.py` |
-| Colab/Drive 실행 가이드 | 있음 | `experiments/COLAB_GUIDE.md` |
+| Colab/Drive 실행 가이드 | 있음 | `docs/md/experiments/COLAB_GUIDE.md` |
 | 기본 테스트 | 있음 | `pytest` 기반 smoke/unit tests |
 
 ## 일부만 갖춘 것
 
 | 항목 | 현재 상태 | 보강 방향 |
 |---|---|---|
-| 백업 | `on_finish` 중심 | 중간 백업, 실패 시 백업, RAG 산출물 백업 정책 추가 |
-| best model 저장 | 분류/HF 중심 | RAG에서는 best retriever/index 기준을 별도 정의 |
+| 백업 | 기본 정책 있음 | RAG 산출물, index, report를 어떤 범위로 백업할지 운영 정책 구체화 |
+| best run 선정 | 기본 metric 있음 | RAG에서는 best retriever/index/config 기준을 별도 정의 |
 | 로그 | RAG/train/predict 실패 artifact는 있음 | 기타 스크립트에도 같은 패턴 적용 |
-| metric | accuracy/RAG 기본 metric 중심 | macro f1, confusion matrix, retrieval@k, answer faithfulness 후보 추가 |
+| metric | RAG 기본 metric 중심 | retrieval@k, answer faithfulness, citation coverage 후보 추가 |
 | 문서 loader 품질 | realistic DOCX/HWPX E2E, PDF 단위 테스트 통과 | 실제 외부 RFP 원문 확보 후 포맷별 재검증 |
-| HuggingFace trainer 기능 | 있음 | early stopping, scheduler, checkpoint save/resume config 반영 |
+| 생성형 답변 품질 | provider 계약 있음 | Ollama/OpenAI 실제 실행 환경에서 비용, 속도, 환각률 점검 |
 
 ## 아직 없는 것
 
 | 항목 | 의미 | 우선순위 |
 |---|---|---|
-| step checkpoint | step 단위 checkpoint 저장 | 낮음 |
+| step checkpoint | 질문/문서 배치 안의 더 작은 단위 checkpoint 저장 | 낮음 |
 | RAG fine-grained resume | 문서/배치 중간 지점부터 이어서 실행 | 낮음 |
 | Elasticsearch | 키워드/하이브리드 검색 엔진 구현 | 낮음 |
 | FAISS/Elasticsearch | 실제 검색 인프라 연결 | 낮음 |
@@ -90,9 +89,8 @@
 이 질문에 직접 답하는 기능부터 우선 보강합니다.
 ## 백업 정책 현재 상태
 
-- 학습 성공 후 백업: `backup.enabled: true`와 `backup.on_finish: true`로 제어합니다.
-- 학습 실패 후 백업: `backup.on_failure: true`로 `failure.log`, `run_status.json` 같은 원인 분석 파일을 남깁니다.
+- 실행 성공 후 백업: `backup.enabled: true`와 `backup.on_finish: true`로 제어합니다.
+- 실행 실패 후 백업: `backup.on_failure: true`로 `failure.log`, `run_status.json` 같은 원인 분석 파일을 남깁니다.
 - 로그 포함 여부: `backup.include_logs`로 `*.log` 백업 여부를 조정합니다.
-- 체크포인트 포함 여부: `backup.include_checkpoints`로 `hf_model/`, `checkpoints/`, `*.pt`, `*.ckpt` 같은 큰 모델 산출물 백업 여부를 조정합니다.
-- HF 학습 제어: `checkpoint`, `early_stopping`, `scheduler` config가 HuggingFace 학습 루프에 반영됩니다.
-- 아직 남은 영역: step 단위 checkpoint, RAG 산출물 백업 정책, RAG index resume은 별도 보강 대상입니다.
+- 큰 산출물 포함 여부: `backup.include_checkpoints`로 vector index, model checkpoint 같은 큰 산출물 백업 여부를 조정할 수 있습니다.
+- 아직 남은 영역: RAG index resume, 중간 백업 주기, Google Drive 백업 운영 규칙은 실제 데이터 규모가 보이면 별도 보강합니다.
