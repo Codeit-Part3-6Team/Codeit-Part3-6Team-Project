@@ -68,6 +68,8 @@ cd <repo-name>
 pip install -r requirements.txt
 ```
 
+기본 `requirements.txt`는 `rag_langchain.yaml` 실행과 Ollama/OpenAI/Chroma 후보 검증을 우선합니다. HuggingFace LangChain integration은 `transformers` 계열 버전과 충돌할 수 있어 기본 설치에서 제외합니다.
+
 ## RAG Config 복사
 
 Colab 전용 config는 기존 RAG config를 복사해서 경로만 Drive 기준으로 바꿉니다.
@@ -172,7 +174,7 @@ rag:
     provider: huggingface
 ```
 
-Colab에서 HuggingFace 모델을 쓰면 모델 다운로드와 추론 시간이 발생합니다. 먼저 `local` provider 기반 RAG config 실행을 통과시킨 뒤 바꾸는 것을 권장합니다.
+Colab에서 HuggingFace 모델을 쓰면 모델 다운로드와 추론 시간이 발생합니다. 또한 HuggingFace LangChain integration은 기본 requirements에 포함하지 않으므로, 사용 전 별도 호환 환경에서 의존성 조합을 확인합니다. 먼저 `local` provider 기반 RAG config 실행을 통과시킨 뒤 바꾸는 것을 권장합니다.
 
 ## 공유할 때 남길 것
 

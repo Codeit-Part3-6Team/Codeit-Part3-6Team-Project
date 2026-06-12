@@ -35,6 +35,8 @@ conda activate codeit-ml-pipeline
 pip install -r requirements.txt
 ```
 
+기본 requirements는 `rag_langchain.yaml` 실행과 Ollama/OpenAI/Chroma 후보 검증을 우선합니다. HuggingFace LangChain integration은 현재 `transformers` 핀과 의존성 충돌이 날 수 있어 기본 설치에서 제외합니다.
+
 테스트:
 
 ```bash

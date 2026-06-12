@@ -152,3 +152,10 @@ def test_root_readme_is_rag_first() -> None:
         default=-1,
     )
     assert first_training_reference == -1 or first_training_reference > reference_index
+
+
+def test_default_requirements_exclude_conflicting_optional_huggingface_langchain() -> None:
+    """기본 requirements가 현재 RAG E2E 환경에서 충돌나는 optional HF integration을 포함하지 않는지 확인합니다."""
+    text = (ROOT / "requirements.txt").read_text(encoding="utf-8")
+
+    assert "langchain-huggingface" not in text

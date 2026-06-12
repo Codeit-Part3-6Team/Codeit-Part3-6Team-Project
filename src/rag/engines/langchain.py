@@ -142,7 +142,10 @@ class LangChainRagEngine:
             try:
                 from langchain_huggingface import HuggingFaceEmbeddings
             except ImportError as exc:
-                raise ImportError("HuggingFaceEmbeddings를 사용하려면 langchain-huggingface가 필요합니다.") from exc
+                raise ImportError(
+                    "HuggingFaceEmbeddings를 사용하려면 langchain-huggingface가 필요합니다. "
+                    "현재 기본 requirements.txt에는 포함하지 않으므로 별도 호환 환경에서 설치하세요."
+                ) from exc
             return HuggingFaceEmbeddings(model_name=model_name)
         if provider == "ollama":
             try:
