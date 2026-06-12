@@ -1,4 +1,4 @@
-# Colab 실험 템플릿
+# Colab RAG 실험 템플릿
 
 실제 `.ipynb` 노트북을 만들 때 아래 순서를 셀 단위로 옮겨 사용합니다.
 자세한 설명은 `docs/md/experiments/COLAB_GUIDE.md`를 기준으로 합니다.
@@ -7,69 +7,114 @@
 
 ```python
 from google.colab import drive
+
 drive.mount("/content/drive")
 ```
 
 ## 2. 저장소 준비
 
 ```bash
-git clone <repo-url>
-cd <repo-name>
+REPO_URL="<repo-url>"
+git clone "$REPO_URL" /content/codeit-rag-project
+cd /content/codeit-rag-project
 pip install -r requirements.txt
 ```
 
-## 3. GPU 확인
+## 3. 작업 경로 만들기
 
 ```python
-import torch
+from pathlib import Path
 
-print(torch.__version__)
-print(torch.cuda.is_available())
-print(torch.cuda.get_device_name(0) if torch.cuda.is_available() else "CPU")
+DRIVE_ROOT = Path("/content/drive/MyDrive/codeit_rag_project")
+for name in ["data/raw", "experiments", "reports", "backups"]:
+    (DRIVE_ROOT / name).mkdir(parents=True, exist_ok=True)
+
+print(DRIVE_ROOT)
 ```
 
-## 4. Smoke test
+## 4. RAG config 선택
+
+처음에는 repo 안의 smoke config를 사용합니다.
 
 ```bash
-python scripts/run_validate.py --data-dir data/text_processed --project-root .
-python scripts/run_train.py --config configs/smoke/smoke_test_text.yaml --project-root .
-python scripts/run_train.py --config configs/smoke/smoke_test_hf_tiny.yaml --project-root .
+python scripts/check_rag_pipeline.py \
+  --project-root . \
+  --config configs/experiments/rag/rag_smoke_test.yaml
 ```
 
-## 5. Drive 데이터 학습
+Drive 문서로 실험할 때는 아래 값이 들어간 별도 config를 만들어 사용합니다.
+
+- `paths.input_dir`: `/content/drive/MyDrive/codeit_rag_project/data/raw`
+- `paths.output_dir`: `/content/drive/MyDrive/codeit_rag_project/experiments/<run-name>`
+- `artifact_policy.backup_dir`: `/content/drive/MyDrive/codeit_rag_project/backups/<run-name>`
+- `rag.evaluation.questions_path`: 평가 질문 CSV 경로
+
+## 5. 문서 적재
 
 ```bash
-python scripts/run_validate.py \
+python scripts/run_rag_ingest.py \
   --project-root . \
-  --data-dir /content/drive/MyDrive/codeit_ml_project/data/text_processed
-
-python scripts/run_train.py \
-  --project-root . \
-  --config configs/examples/classification/exp002_hf_text_finetune_colab.yaml
+  --config configs/experiments/rag/rag_smoke_test.yaml
 ```
 
-## 6. 예측 확인
+확인할 것:
+
+- chunk 개수
+- 문서별 chunk 분포
+- 실패한 문서가 있다면 failure artifact
+
+## 6. 검색 품질 확인
 
 ```bash
-python scripts/run_predict.py \
+python scripts/run_rag_retrieve.py \
   --project-root . \
-  --config configs/examples/classification/exp002_hf_text_finetune_colab.yaml \
-  --input /content/drive/MyDrive/codeit_ml_project/data/text_processed/sample_positive.txt
+  --config configs/experiments/rag/rag_smoke_test.yaml \
+  --query "제안 마감일은 언제인가?"
 ```
 
-## 7. 실험 요약
+확인할 것:
+
+- 질문과 관련 있는 chunk가 상위에 나오는지
+- `top_k`를 바꿨을 때 근거가 충분해지는지
+- citation에 문서명과 chunk 정보가 남는지
+
+## 7. 답변과 평가 실행
 
 ```bash
-python scripts/summarize_experiments.py \
+python scripts/run_rag_chat.py \
   --project-root . \
-  --experiments-dir /content/drive/MyDrive/codeit_ml_project/experiments \
-  --output /content/drive/MyDrive/codeit_ml_project/reports/experiment_summary.csv
+  --config configs/experiments/rag/rag_smoke_test.yaml \
+  --question "입찰 참가 자격은 무엇인가?"
 ```
+
+```bash
+python scripts/run_rag_chat.py \
+  --project-root . \
+  --config configs/experiments/rag/rag_smoke_test.yaml \
+  --evaluate
+```
+
+확인할 것:
+
+- 답변이 근거 문서의 내용에서 벗어나지 않는지
+- citation이 함께 남는지
+- evaluation 결과 CSV/JSON이 저장되는지
+
+## 8. 실험 비교
+
+```bash
+python scripts/compare_rag_retrievers.py \
+  --project-root . \
+  --config-a configs/experiments/rag/rag_smoke_test.yaml \
+  --config-b configs/experiments/rag/rag_smoke_hybrid.yaml
+```
+
+비교할 때는 chunk 설정, 검색 방식, `top_k`, answerer provider 중 하나씩만 바꾸는 것이 좋습니다.
 
 ## 체크리스트
 
-- Drive에 데이터가 올라가 있는지 확인
-- config의 `experiment.name`, `output_dir`, `backup_dir` 확인
-- smoke test 통과 확인
-- 학습 후 `metrics.json`, `history.csv`, `README.md`, `hf_model/` 확인
-- 실험 README에 결론과 다음 액션 작성
+- Drive에 원본 문서가 있고 Git에는 올라가지 않는가?
+- config의 입력/출력/백업 경로가 Colab 기준으로 맞는가?
+- ingest, retrieve, chat, evaluate가 모두 실행되는가?
+- retrieval 결과와 citation을 사람이 직접 확인했는가?
+- 실험 README나 report에 결론과 다음 액션을 적었는가?

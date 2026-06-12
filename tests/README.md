@@ -1,70 +1,103 @@
 # 테스트
 
-초기 테스트는 `pytest` 기반으로 진행합니다.
+이 저장소의 기본 테스트 기준은 RAG 파이프라인입니다.
+분류 모델과 HuggingFace fine-tuning 관련 테스트는 예전 실험 인프라를 보존하기 위한 참고 범위로 남겨둡니다.
 
 ## 테스트 범위 마인드맵
 
 ```mermaid
 mindmap
   root((tests))
-    Config
-      config path
-      validation
-      examples
-    Data
-      processed contract
-      loader
-    Pipeline
-      smoke train
-      predict
-      scripts
     RAG
+      config validation
       document loader
+      ingest
+      retrieve
+      chat
       adapters
-      retrieval
-      validation
     Docs
-      docs structure
+      team docs
+      markdown structure
       notebook structure
-    Models
-      registry
-      baseline
-      HuggingFace smoke
+    Scripts
+      entrypoint
+      path resolution
+      artifacts
+    Config
+      project-root relative path
+      examples
+    Reference
+      classification smoke
+      HuggingFace example
+      experiment artifacts
 ```
 
-## 텍스트 구조
+## 주요 테스트 파일
 
 ```text
 tests/
-|-- test_config.py               # config 로딩과 경로 규칙
-|-- test_docs_structure.py       # Markdown/HTML 문서 구조
-|-- test_notebooks.py            # 노트북 템플릿 구조
+|-- test_rag_validation.py       # RAG config validation
+|-- test_rag_document_loader.py  # PDF/DOCX/HWPX 등 문서 loader
+|-- test_rag_pipeline.py         # ingest/retrieve/chat 흐름
+|-- test_rag_adapters.py         # loader/retriever/answerer adapter 선택
+|-- test_notebooks.py            # 로컬/Colab 노트북 템플릿 구조
+|-- test_docs_structure.py       # 문서 디렉터리 구조
 |-- test_scripts.py              # 실행 스크립트 진입점
-|-- test_validate_data.py        # 데이터 계약 검증
-|-- test_pipeline_smoke.py       # 이미지/텍스트 smoke pipeline
-|-- test_models.py               # 모델 registry와 기본 모델
-|-- test_experiments.py          # 실험 요약과 artifact
-|-- test_rag_document_loader.py  # RAG 문서 loader
-|-- test_rag_adapters.py         # RAG adapter 선택
-|-- test_rag_pipeline.py         # RAG ingest/retrieve/chat
-`-- test_rag_validation.py       # RAG config validation
+|-- test_config.py               # config 로딩과 경로 규칙
+|-- test_pipeline_smoke.py       # 참고용 분류 smoke pipeline
+`-- test_experiments.py          # 참고용 실험 artifact 정책
 ```
+
+## 전체 테스트
 
 ```bash
 conda activate codeit-ml-pipeline
-pytest
+python -m pytest
 ```
 
-직접 smoke test를 확인하고 싶을 때는 아래 명령을 사용합니다.
+## RAG 작업 후 우선 확인
 
 ```bash
-python scripts/run_validate.py --data-dir data/processed
-python scripts/run_train.py --config configs/smoke/smoke_test.yaml --project-root .
-python scripts/run_predict.py --config configs/smoke/smoke_test.yaml --project-root . --input data/processed/images/red_000.ppm
-
-python scripts/run_validate.py --data-dir data/text_processed
-python scripts/run_train.py --config configs/smoke/smoke_test_text.yaml --project-root .
-python scripts/run_predict.py --config configs/smoke/smoke_test_text.yaml --project-root . --input data/text_processed/sample_positive.txt
+python -m pytest \
+  tests/test_rag_pipeline.py \
+  tests/test_rag_validation.py \
+  tests/test_rag_adapters.py
 ```
 
-RAG 문서 loader 테스트는 외부 파일 없이 zip/xml 기반 DOCX/HWPX 샘플을 즉석에서 만들어 검증합니다.
+## 문서와 노트북 작업 후 확인
+
+```bash
+python -m pytest \
+  tests/test_docs_structure.py \
+  tests/test_notebooks.py
+```
+
+## 직접 smoke 실행
+
+```bash
+python scripts/check_rag_pipeline.py \
+  --project-root . \
+  --config configs/experiments/rag/rag_smoke_test.yaml
+
+python scripts/run_rag_ingest.py \
+  --project-root . \
+  --config configs/experiments/rag/rag_smoke_test.yaml
+
+python scripts/run_rag_retrieve.py \
+  --project-root . \
+  --config configs/experiments/rag/rag_smoke_test.yaml \
+  --query "제안 마감일은 언제인가?"
+
+python scripts/run_rag_chat.py \
+  --project-root . \
+  --config configs/experiments/rag/rag_smoke_test.yaml \
+  --question "입찰 참가 자격은 무엇인가?"
+```
+
+## 확인 관점
+
+- 원본 데이터는 수정하지 않고 chunk와 index 산출물이 별도로 남는가?
+- retrieval 결과에 문서명, chunk id, score가 남는가?
+- 답변에 citation이 함께 남는가?
+- 실패 상황에서 failure artifact가 남는가?
+- config를 바꿨을 때 코드 수정 없이 실험 조건이 바뀌는가?

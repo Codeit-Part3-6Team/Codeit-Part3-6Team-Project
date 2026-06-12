@@ -1,47 +1,52 @@
 # 실험 노트북
 
-이 폴더는 Jupyter/Colab 기반 실험을 위한 노트북 템플릿을 둡니다.
+이 디렉터리는 RAG 실험을 노트북에서 따라 실행하기 위한 템플릿을 둡니다.
+기본 목표는 모델 학습이 아니라 문서 적재, 검색, 답변, citation, 평가 산출물이 config 기준으로 잘 이어지는지 확인하는 것입니다.
 
-## 노트북 마인드맵
+## 노트북 구성
 
 ```mermaid
 mindmap
   root((notebooks))
     Local
       local_experiment_template.ipynb
-      환경 확인
-      config 선택
-      결과 확인
+      환경 점검
+      RAG smoke 실행
+      검색 결과 확인
+      평가 지표 확인
     Colab
       colab_experiment_template.ipynb
       Drive mount
-      GPU 확인
-      backup
+      repo clone
+      Drive 기반 config 생성
+      산출물 백업 확인
     Reference
       template_colab_experiment.md
       NOTEBOOK_USAGE_CHECKLIST
-    실험 옵션
-      experiment.name
-      paths.output_dir
-      artifact_policy.run_id
-      rag.retriever.method
 ```
 
 ## 파일
 
-- `local_experiment_template.ipynb`: 로컬 Jupyter에서 프로젝트 루트 기준으로 실행하는 실험 템플릿
-- `colab_experiment_template.ipynb`: Google Colab에서 Drive mount, repo clone, smoke test, Drive 저장까지 진행하는 템플릿
-- `template_colab_experiment.md`: Colab 실행 순서를 텍스트로 정리한 참고 문서
+- `local_experiment_template.ipynb`: 로컬 Jupyter에서 RAG 파이프라인을 검증하는 기본 템플릿입니다.
+- `colab_experiment_template.ipynb`: Google Colab에서 Drive 경로를 사용해 RAG 실험을 실행하는 템플릿입니다.
+- `template_colab_experiment.md`: Colab 노트북을 만들 때 참고할 수 있는 텍스트형 실행 순서입니다.
+
+## 실험할 때 주로 바꾸는 값
+
+RAG 실험은 epoch를 돌리는 학습 구조가 아니므로 아래 값을 바꾸면서 비교합니다.
+
+- `paths.input_dir`: 읽을 RFP 문서가 있는 위치
+- `paths.output_dir`: 실험 산출물을 남길 위치
+- `rag.chunk.size`, `rag.chunk.overlap`: 문서를 나누는 크기와 겹침 정도
+- `rag.embedding.provider`: embedding 구현체
+- `rag.retriever.method`, `rag.retriever.top_k`: 검색 방식과 가져올 근거 수
+- `rag.answerer.provider`: 답변 생성 방식
+- `rag.evaluation.questions_path`: 평가 질문 CSV 경로
+- `artifact_policy.backup_dir`: Drive 등 외부 백업 위치
 
 ## 사용 기준
 
-- 로컬 환경이 준비되어 있으면 `local_experiment_template.ipynb`를 먼저 사용합니다.
-- GPU나 Drive 백업이 필요하면 `colab_experiment_template.ipynb`를 사용합니다.
-- 노트북을 복사해 실험할 때는 `experiment.name`, `paths.output_dir`, `artifact_policy.run_id`를 바꿔 결과가 섞이지 않게 합니다.
-- 노트북 설명과 metric 확인 셀을 보강할 때는 [NOTEBOOK_USAGE_CHECKLIST.md](../docs/md/experiments/NOTEBOOK_USAGE_CHECKLIST.md)를 기준으로 점검합니다.
-
-## 주의
-
-- 노트북 출력은 커질 수 있으므로 commit 전에 실행 결과를 정리합니다.
-- Colab 노트북의 `REPO_URL`은 GitHub 원격 저장소가 준비된 뒤 실제 주소로 바꿉니다.
-- 실제 프로젝트 데이터는 Git에 직접 올리지 않고 Drive 또는 별도 데이터 저장소를 사용합니다.
+- 로컬 환경에서는 먼저 `local_experiment_template.ipynb`로 smoke config를 돌립니다.
+- Colab에서는 `REPO_URL`과 Drive 작업 경로를 실제 프로젝트 값으로 바꾼 뒤 실행합니다.
+- 노트북 출력은 커질 수 있으므로 commit 전에 불필요한 실행 결과를 정리합니다.
+- 노트북 사용법과 확인 기준은 [NOTEBOOK_USAGE_CHECKLIST.md](../docs/md/experiments/NOTEBOOK_USAGE_CHECKLIST.md)를 함께 봅니다.

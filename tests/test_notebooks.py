@@ -26,15 +26,14 @@ def test_local_experiment_notebook_structure() -> None:
     source = _joined_source(notebook)
 
     expected_refs = [
-        "scripts/run_validate.py",
-        "scripts/run_train.py",
-        "scripts/run_predict.py",
+        "scripts/check_rag_pipeline.py",
         "scripts/run_rag_ingest.py",
+        "scripts/run_rag_retrieve.py",
         "scripts/run_rag_chat.py",
-        "scripts/summarize_experiments.py",
-        "configs/smoke/smoke_test_text.yaml",
+        "scripts/compare_rag_retrievers.py",
         "configs/experiments/rag/rag_smoke_test.yaml",
-        "data/text_processed/sample_positive.txt",
+        "configs/experiments/rag/rag_smoke_hybrid.yaml",
+        "data/rag_smoke/eval_questions.csv",
     ]
     for ref in expected_refs:
         assert ref in source
@@ -54,8 +53,10 @@ def test_colab_experiment_notebook_structure() -> None:
         "REPO_URL",
         "git clone",
         "pip install -r requirements.txt",
-        "/content/drive/MyDrive/codeit_ml_project",
-        "configs/examples/classification/exp002_hf_text_finetune_colab.yaml",
+        "/content/drive/MyDrive/codeit_rag_project",
+        "configs/experiments/rag/rag_colab_drive.yaml",
+        "scripts/run_rag_ingest.py",
+        "scripts/run_rag_chat.py",
     ]
     for text in expected_texts:
         assert text in source
