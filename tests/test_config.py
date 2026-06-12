@@ -32,6 +32,20 @@ def test_load_config_reads_rag_hybrid_config(repo_root):
     assert config["rag"]["retriever"]["semantic_weight"] == 0.6
 
 
+def test_load_config_accepts_utf8_bom_yaml(tmp_path):
+    config_path = tmp_path / "bom_config.yaml"
+    config_path.write_text(
+        "experiment:\n  name: bom_unit\nrag:\n  retriever:\n    method: semantic\n",
+        encoding="utf-8-sig",
+    )
+
+    config = load_config(config_path)
+
+    assert "experiment" in config
+    assert "\ufeffexperiment" not in config
+    assert config["experiment"]["name"] == "bom_unit"
+
+
 def test_load_config_reads_huggingface_text_config(repo_root):
     config = load_config(repo_root / "configs" / "examples" / "classification" / "exp002_hf_text_finetune.yaml")
 

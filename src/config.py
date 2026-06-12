@@ -12,7 +12,8 @@ def load_config(path: str | Path) -> dict[str, Any]:
     돌아갈 수 있도록 작은 fallback parser를 함께 둡니다.
     """
     config_path = Path(path)
-    text = config_path.read_text(encoding="utf-8")
+    # Windows/Excel/일부 에디터가 붙인 UTF-8 BOM이 최상위 key에 섞이지 않게 제거합니다.
+    text = config_path.read_text(encoding="utf-8-sig")
     try:
         # 팀 프로젝트에서는 PyYAML을 쓰는 것이 기본이고, fallback은 최소 실행을 위한 안전망입니다.
         import yaml  # type: ignore
@@ -31,7 +32,7 @@ def write_config_copy(
     output = Path(output_dir)
     output.mkdir(parents=True, exist_ok=True)
     source = Path(config_path)
-    (output / filename).write_text(source.read_text(encoding="utf-8"), encoding="utf-8")
+    (output / filename).write_text(source.read_text(encoding="utf-8-sig"), encoding="utf-8")
 
 
 def write_json(path: str | Path, payload: dict[str, Any]) -> None:
