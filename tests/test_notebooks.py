@@ -31,7 +31,7 @@ def test_rag_config_run_notebook_structure() -> None:
         "scripts/run_rag_retrieve.py",
         "scripts/run_rag_chat.py",
         "scripts/compare_rag_retrievers.py",
-        "configs/experiments/rag/rag_semantic.yaml",
+        "configs/experiments/rag/rag_langchain.yaml",
         "configs/experiments/rag/rag_hybrid.yaml",
         "data/rag_sample/eval_questions.csv",
     ]

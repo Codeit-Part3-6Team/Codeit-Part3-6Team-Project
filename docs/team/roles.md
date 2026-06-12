@@ -69,15 +69,15 @@ flowchart LR
 2. `retrieval_results.jsonl`에서 질문별 top-k chunk를 확인합니다.
 3. `answers.jsonl`에서 답변과 citation을 확인합니다.
 4. `metrics.json`과 실패 분석 CSV를 봅니다.
-5. `chunk.size`, `retriever.method`, `top_k` 중 하나씩 바꿔 비교합니다.
+5. `splitter.chunk_size`, `retriever.method`, `top_k` 중 하나씩 바꿔 비교합니다.
 
 ### 먼저 바꿔볼 옵션
 
 | 옵션 | 확인할 내용 |
 | --- | --- |
-| `rag.chunk.size` | 문서 조각 길이 |
-| `rag.chunk.overlap` | 조각 사이의 겹침 |
-| `rag.retriever.method` | keyword, semantic, hybrid 검색 방식 |
+| `rag.splitter.chunk_size` | 문서 조각 길이 |
+| `rag.splitter.chunk_overlap` | 조각 사이의 겹침 |
+| `rag.retriever.method` | similarity, keyword, semantic, hybrid 검색 방식 |
 | `rag.retriever.top_k` | 답변에 참고할 근거 개수 |
 | `rag.answerer.mode` | extractive 또는 LLM 답변 방식 |
 

@@ -35,20 +35,21 @@ experiments/ + reports/
 run_rag_ingest.py
     -> src/config.py
     -> src/rag/document_loader.py
-    -> src/rag/chunker.py
-    -> src/rag/adapters.py
-    -> src/rag/embedder.py
+    -> src/rag/engines/base.py
+    -> src/rag/engines/langchain.py 또는 src/rag/engines/local.py
     -> experiments/{name}/parsed_documents.csv
     -> experiments/{name}/chunks.csv
     -> experiments/{name}/embeddings.jsonl
     -> experiments/{name}/rag_ingest_checkpoint.json
 
 run_rag_retrieve.py
-    -> src/rag/retriever.py
+    -> src/rag/pipeline.py
+    -> src/rag/engines/*
     -> experiments/{name}/retrieval_results.jsonl
 
 run_rag_chat.py
-    -> src/rag/answerer.py
+    -> src/rag/pipeline.py
+    -> src/rag/engines/*
     -> experiments/{name}/answers.jsonl
     -> experiments/{name}/metrics.json
 ```
@@ -59,30 +60,31 @@ run_rag_chat.py
 | --- | --- | --- |
 | RAG config 옵션 추가 | `src/rag/validation.py`, `configs/experiments/rag/*.yaml` | `configs/README.md`, `tests/test_rag_validation.py` |
 | 새 document loader 추가 | `src/rag/document_loader.py` | `tests/test_rag_document_loader.py` |
-| chunking 정책 변경 | `src/rag/chunker.py` | `docs/md/rag/RAG_PIPELINE_SPEC.md` |
-| embedding 구현 추가 | `src/rag/embedder.py`, `src/rag/adapters.py` | `tests/test_rag_adapters.py` |
-| retriever 구현 추가 | `src/rag/retriever.py`, `src/rag/adapters.py` | `scripts/compare_rag_retrievers.py` |
-| answerer 구현 추가 | `src/rag/answerer.py`, `src/rag/adapters.py` | `tests/test_rag_pipeline.py` |
-| LLM answerer provider 추가 | `src/rag/adapters.py`, `src/rag/validation.py` | `configs/README.md`, `tests/test_rag_validation.py` |
+| chunking 정책 변경 | `src/rag/engines/langchain.py`, `src/rag/chunker.py` | `docs/md/rag/RAG_PIPELINE_SPEC.md` |
+| embedding 구현 추가 | `src/rag/engines/langchain.py`, `src/rag/embedder.py` | `tests/test_rag_engines.py` |
+| retriever 구현 추가 | `src/rag/engines/langchain.py`, `src/rag/retriever.py` | `scripts/compare_rag_retrievers.py` |
+| answerer 구현 추가 | `src/rag/engines/langchain.py`, `src/rag/answerer.py` | `tests/test_rag_pipeline.py` |
+| LLM answerer provider 추가 | `src/rag/engines/langchain.py`, `src/rag/validation.py` | `configs/README.md`, `tests/test_rag_validation.py` |
 | artifact 정책 변경 | `src/artifacts.py` | `tests/test_experiments.py` |
 | CLI 추가 | `scripts/` | `scripts/README.md`, `tests/test_scripts.py` |
 | 노트북 변경 | `notebooks/` | `tests/test_notebooks.py` |
 | 문서 구조 변경 | `docs/` | `tests/test_docs_structure.py` |
 
-## Adapter 판단 기준
+## Engine 판단 기준
 
-현재 RAG adapter는 config로 구현체를 선택하는 방향입니다.
+현재 RAG runtime은 `rag.engine`으로 구현체를 선택합니다.
+기본 실행은 `langchain`이고, `local`은 dependency-free smoke/fallback 용도로 유지합니다.
 
-새 provider를 추가할 때는 다음 순서를 지킵니다.
+새 engine/provider를 추가할 때는 다음 순서를 지킵니다.
 
 1. config 계약을 먼저 정합니다.
 2. validation에서 지원 provider와 필수 옵션을 점검합니다.
-3. adapter registry에서 provider를 선택하게 합니다.
-4. 작은 동작 확인 테스트를 추가합니다.
+3. engine 내부에서 LangChain 결과를 프로젝트 표준 dict로 변환합니다.
+4. 작은 동작 확인 테스트와 artifact 변환 테스트를 추가합니다.
 5. README와 RAG spec을 갱신합니다.
 
-LLM answerer는 현재 `openai`, `huggingface`, `ollama` provider 계약만 검증합니다.
-실제 API/server 호출 구현은 프로젝트 진행 중 결정합니다.
+LLM answerer는 LangChain 엔진에서 `ollama`, `openai`를 사용할 수 있습니다.
+pipeline 밖으로 LangChain `Document`나 chain output을 그대로 넘기지 않는 것이 핵심 원칙입니다.
 
 ## 산출물 계약
 

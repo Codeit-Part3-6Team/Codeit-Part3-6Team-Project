@@ -41,12 +41,13 @@
       <thead><tr><th>모듈</th><th>책임</th></tr></thead>
       <tbody>
         <tr><td><code>document_loader.py</code></td><td>원본 문서 로딩</td></tr>
-        <tr><td><code>chunker.py</code></td><td>검색 가능한 chunk 생성</td></tr>
-        <tr><td><code>embedder.py</code></td><td>chunk와 질문 embedding 생성</td></tr>
-        <tr><td><code>vector_store.py</code></td><td>embedding 기반 검색</td></tr>
-        <tr><td><code>retriever.py</code></td><td>keyword, semantic, hybrid retrieval</td></tr>
+        <tr><td><code>engines/</code></td><td>LangChain 기본 엔진과 local fallback 엔진</td></tr>
+        <tr><td><code>chunker.py</code></td><td>local fallback용 chunk 생성</td></tr>
+        <tr><td><code>embedder.py</code></td><td>local fallback용 embedding 생성</td></tr>
+        <tr><td><code>vector_store.py</code></td><td>local fallback용 embedding 검색</td></tr>
+        <tr><td><code>retriever.py</code></td><td>local keyword, semantic, hybrid retrieval</td></tr>
         <tr><td><code>answerer.py</code></td><td>답변과 citation 생성</td></tr>
-        <tr><td><code>adapters.py</code></td><td>config에 맞는 구현체 선택</td></tr>
+        <tr><td><code>adapters.py</code></td><td>local fallback용 구현체 선택</td></tr>
         <tr><td><code>pipeline.py</code></td><td>ingest, retrieve, chat, evaluate 연결</td></tr>
         <tr><td><code>validation.py</code></td><td>RAG config와 입력 경로 점검</td></tr>
       </tbody>

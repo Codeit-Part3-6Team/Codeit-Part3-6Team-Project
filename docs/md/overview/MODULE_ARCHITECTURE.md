@@ -38,12 +38,11 @@ experiments/{experiment.name}/
 ```mermaid
 flowchart LR
   A["raw docs"] --> B["document_loader"]
-  B --> C["chunker"]
-  C --> D["embedding adapter"]
-  D --> E["embeddings / vector store"]
-  E --> F["retriever"]
-  C --> F
-  F --> G["answerer"]
+  B --> C["rag engine"]
+  C --> D["chunks"]
+  C --> E["embeddings / vector store"]
+  C --> F["retrieval rows"]
+  F --> G["answer payload"]
   G --> H["answers + citations"]
   H --> I["evaluation"]
 ```
@@ -53,12 +52,13 @@ flowchart LR
 | 모듈 | 책임 |
 | --- | --- |
 | `document_loader.py` | 원본 문서를 document row로 변환 |
-| `chunker.py` | document row를 검색 가능한 chunk로 변환 |
-| `embedder.py` | chunk 또는 질문을 vector로 변환 |
-| `vector_store.py` | embedding 기반 top-k 검색 |
-| `retriever.py` | keyword/semantic/hybrid 검색 |
+| `engines/` | LangChain 기본 엔진과 local fallback 엔진 |
+| `chunker.py` | local fallback에서 document row를 검색 가능한 chunk로 변환 |
+| `embedder.py` | local fallback에서 chunk 또는 질문을 vector로 변환 |
+| `vector_store.py` | local fallback에서 embedding 기반 top-k 검색 |
+| `retriever.py` | local keyword/semantic/hybrid 검색 |
 | `answerer.py` | 검색된 근거로 답변과 citation 생성 |
-| `adapters.py` | config에 따라 구현체 선택 |
+| `adapters.py` | local fallback용 구현체 선택 |
 | `pipeline.py` | ingest, retrieve, chat, evaluate 오케스트레이션 |
 | `validation.py` | config와 입력 경로 검증 |
 | `comparison.py` | retriever 비교 결과 생성 |
@@ -67,8 +67,9 @@ flowchart LR
 
 | 영역 | config |
 | --- | --- |
+| RAG 엔진 | `rag.engine` |
 | 문서 확장자 | `rag.loader.file_types` |
-| chunk 크기 | `rag.chunk.size`, `rag.chunk.overlap` |
+| chunk 크기 | `rag.splitter.chunk_size`, `rag.splitter.chunk_overlap` |
 | embedding | `rag.embedding.provider`, `rag.embedding.model_name` |
 | vector store | `rag.vector_store.type` |
 | 검색 방식 | `rag.retriever.method`, `rag.retriever.top_k` |

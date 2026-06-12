@@ -25,12 +25,13 @@ src/
 | 모듈 | 책임 |
 | --- | --- |
 | `src/rag/document_loader.py` | txt, pdf, docx, hwpx, hwp 문서 로딩 |
+| `src/rag/engines/` | LangChain 기본 엔진과 local fallback 엔진 |
 | `src/rag/chunker.py` | 문서를 검색 가능한 chunk로 분할 |
 | `src/rag/embedder.py` | chunk text를 embedding vector로 변환 |
 | `src/rag/vector_store.py` | embedding 기반 검색 |
 | `src/rag/retriever.py` | keyword, semantic, hybrid retrieval |
 | `src/rag/answerer.py` | 검색된 근거 기반 답변과 citation 생성 |
-| `src/rag/adapters.py` | provider별 embedding/retriever/answerer 선택 |
+| `src/rag/adapters.py` | local fallback용 provider 선택 |
 | `src/rag/pipeline.py` | ingest, retrieve, chat, evaluate 실행 흐름 |
 | `src/rag/validation.py` | RAG config와 입력 경로 검증 |
 | `src/rag/comparison.py` | retriever 비교 리포트 생성 |
@@ -50,19 +51,19 @@ src/
 ```text
 run_rag_ingest.py
   -> document_loader.py
-  -> chunker.py
-  -> adapters.py
+  -> engines/base.py
+  -> engines/langchain.py 또는 engines/local.py
   -> embeddings.jsonl
   -> rag_ingest_checkpoint.json
 
 run_rag_retrieve.py
   -> pipeline.py
-  -> retriever.py / vector_store.py
+  -> engines/*
   -> retrieval_results.jsonl
 
 run_rag_chat.py
   -> retrieve
-  -> answerer.py
+  -> engines/*
   -> answers.jsonl
 
 run_rag_chat.py --evaluate

@@ -55,9 +55,9 @@ Experiment Lead / Model Engineer의 핵심은 코드를 계속 바꾸는 것이 
 
 | 옵션 | 보는 이유 |
 | --- | --- |
-| `rag.chunk.size` | 문서 조각 길이가 검색 품질에 주는 영향 |
-| `rag.chunk.overlap` | 앞뒤 문맥을 얼마나 겹칠지 |
-| `rag.retriever.method` | keyword, semantic, hybrid 후보 비교 |
+| `rag.splitter.chunk_size` | 문서 조각 길이가 검색 품질에 주는 영향 |
+| `rag.splitter.chunk_overlap` | 앞뒤 문맥을 얼마나 겹칠지 |
+| `rag.retriever.method` | similarity, keyword, semantic, hybrid 후보 비교 |
 | `rag.retriever.top_k` | 답변에 넣을 근거 개수 |
 | `rag.answerer.mode` | extractive 답변과 LLM 답변 후보 비교 |
 

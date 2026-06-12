@@ -11,6 +11,7 @@ mindmap
     RAG
       config validation
       document loader
+      engines
       ingest
       retrieve
       chat
@@ -38,8 +39,9 @@ mindmap
 tests/
 |-- test_rag_validation.py       # RAG config validation
 |-- test_rag_document_loader.py  # PDF/DOCX/HWPX 등 문서 loader
+|-- test_rag_engines.py          # LangChain/local engine artifact 계약
 |-- test_rag_pipeline.py         # ingest/retrieve/chat 흐름
-|-- test_rag_adapters.py         # loader/retriever/answerer adapter 선택
+|-- test_rag_adapters.py         # local fallback adapter 선택
 |-- test_notebooks.py            # RAG 노트북 구조
 |-- test_docs_structure.py       # 문서 디렉터리 구조
 |-- test_scripts.py              # 실행 스크립트 진입점
@@ -77,20 +79,20 @@ python -m pytest \
 ```bash
 python scripts/check_rag_pipeline.py \
   --project-root . \
-  --config configs/experiments/rag/rag_semantic.yaml
+  --config configs/experiments/rag/rag_langchain.yaml
 
 python scripts/run_rag_ingest.py \
   --project-root . \
-  --config configs/experiments/rag/rag_semantic.yaml
+  --config configs/experiments/rag/rag_langchain.yaml
 
 python scripts/run_rag_retrieve.py \
   --project-root . \
-  --config configs/experiments/rag/rag_semantic.yaml \
-  --query "제안 마감일은 언제인가?"
+  --config configs/experiments/rag/rag_langchain.yaml \
+  --question "제안 마감일은 언제인가?"
 
 python scripts/run_rag_chat.py \
   --project-root . \
-  --config configs/experiments/rag/rag_semantic.yaml \
+  --config configs/experiments/rag/rag_langchain.yaml \
   --question "입찰 참가 자격은 무엇인가?"
 ```
 

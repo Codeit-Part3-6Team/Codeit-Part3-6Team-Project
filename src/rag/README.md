@@ -30,9 +30,9 @@ mindmap
       answerer.py
       citation
       extractive answer
-      HuggingFace LLM answer
+      LangChain LLM answer
     Orchestration
-      adapters.py
+      engines
       pipeline.py
       validation.py
       comparison.py
@@ -49,13 +49,13 @@ mindmap
 ```text
 src/rag/
 |-- document_loader.py  # txt/pdf/docx/hwpx/hwp 문서 로딩
-|-- chunker.py          # document row를 chunk row로 분리
-|-- embedder.py         # local hashing embedding 구현
-|-- vector_store.py     # vector store 기본 도구
 |-- engines/            # local/LangChain RAG 엔진
-|-- retriever.py        # keyword/semantic/hybrid 검색
+|-- chunker.py          # local fallback chunk 분리
+|-- embedder.py         # local fallback hashing embedding 구현
+|-- vector_store.py     # local fallback vector store 도구
+|-- retriever.py        # local keyword/semantic/hybrid 검색
 |-- answerer.py         # 답변과 citation 생성
-|-- adapters.py         # config 기반 구현체 선택
+|-- adapters.py         # local fallback 구현체 선택
 |-- pipeline.py         # ingest/retrieve/chat/evaluate 실행
 |-- validation.py       # RAG config 계약 검증
 `-- comparison.py       # retriever 비교 실행
@@ -88,11 +88,11 @@ LangChain은 splitter, embedding, vector store, retriever, LLM 호출을 맡는 
 - `document_loader.py`: txt/pdf/docx/hwpx/hwp 문서를 표준 document row로 변환
 - `engines/local.py`: 기존 lightweight local 엔진
 - `engines/langchain.py`: LangChain splitter/embedding/vector store/LLM 기반 엔진
-- `chunker.py`: document row를 검색 가능한 chunk row로 분리
-- `embedder.py`: local hashing embedding 구현
-- `retriever.py`: keyword 검색과 score 계산
+- `chunker.py`: local fallback에서 document row를 검색 가능한 chunk row로 분리
+- `embedder.py`: local fallback용 hashing embedding 구현
+- `retriever.py`: local fallback용 keyword/semantic/hybrid 검색
 - `answerer.py`: 검색된 chunk에서 답변과 citation 생성
-- `adapters.py`: config에 맞는 embedding/retriever/answerer 구현체 선택
+- `adapters.py`: local fallback에 맞는 embedding/retriever/answerer 구현체 선택
 - `pipeline.py`: ingest, retrieve, chat, evaluation 실행
 - `validation.py`: RAG config와 계약 검증
 - `comparison.py`: retriever 비교 실행

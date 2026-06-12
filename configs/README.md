@@ -160,7 +160,7 @@ rag:
   vector_store:
     type: memory
     path:
-    collection_name: rag_semantic
+    collection_name: rag_langchain
 ```
 
 현재 기본 구현은 `memory`입니다. LangChain 엔진에서는 `chroma`도 사용할 수 있고, FAISS/Elasticsearch는 추후 확장 후보입니다.
@@ -257,7 +257,7 @@ backup:
   enabled: true
   on_finish: true
   on_failure: true
-  backup_dir: /content/drive/MyDrive/codeit_rag_project/backups/rag_semantic
+  backup_dir: /content/drive/MyDrive/codeit_rag_project/backups/rag_langchain
   include_logs: true
   include_checkpoints: true
 ```

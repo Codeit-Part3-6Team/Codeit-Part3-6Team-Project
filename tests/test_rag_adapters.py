@@ -19,17 +19,22 @@ def test_rag_adapter_registry_describes_implemented_and_contract_only_options():
     implemented = {(item["type"], item["key"]) for item in registry["implemented"]}
     contract_only = {(item["type"], item["key"]) for item in registry["contract_only"]}
 
+    assert ("engine", "langchain") in implemented
+    assert ("engine", "local") in implemented
     assert ("embedding", "local") in implemented
+    assert ("embedding", "ollama") in implemented
     assert ("vector_store", "memory") in implemented
+    assert ("vector_store", "chroma") in implemented
+    assert ("retriever", "similarity") in implemented
     assert ("retriever", "keyword") in implemented
     assert ("retriever", "semantic") in implemented
     assert ("retriever", "hybrid") in implemented
     assert ("answerer", "extractive/local") in implemented
+    assert ("answerer", "llm/openai") in implemented
+    assert ("answerer", "llm/ollama") in implemented
     assert ("answerer", "llm/huggingface") in implemented
     assert ("embedding", "huggingface") in implemented
     assert ("vector_store", "faiss") in contract_only
-    assert ("answerer", "llm/openai") in contract_only
-    assert ("answerer", "llm/ollama") in contract_only
 
 
 def test_local_embedding_adapter_embeds_chunks():

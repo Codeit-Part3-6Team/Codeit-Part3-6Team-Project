@@ -322,25 +322,30 @@ def build_answerer_adapter(config: dict[str, Any]) -> RagAnswererAdapter:
 
 
 def describe_rag_implementations() -> dict[str, list[dict[str, str]]]:
-    """현재 registry 기준으로 실제 구현/계약만 존재하는 RAG 옵션을 분류합니다."""
+    """현재 RAG 엔진과 local adapter 기준으로 구현/확장 후보 옵션을 분류합니다."""
     return {
         "implemented": [
+            {"type": "engine", "key": "langchain", "description": "LangChain-based RAG engine"},
+            {"type": "engine", "key": "local", "description": "dependency-free smoke/fallback engine"},
             {"type": "embedding", "key": "local", "description": "hashing-char-ngram smoke embedding"},
             {"type": "embedding", "key": "huggingface", "description": "transformers mean-pooling embedding"},
+            {"type": "embedding", "key": "ollama", "description": "LangChain OllamaEmbeddings"},
+            {"type": "embedding", "key": "openai", "description": "validated LangChain embedding provider"},
             {"type": "vector_store", "key": "memory", "description": "embeddings.jsonl in-memory retrieval"},
+            {"type": "vector_store", "key": "chroma", "description": "LangChain Chroma vector store"},
+            {"type": "retriever", "key": "similarity", "description": "LangChain/vector similarity search"},
             {"type": "retriever", "key": "keyword", "description": "token overlap keyword search"},
             {"type": "retriever", "key": "semantic", "description": "local hashing vector semantic search"},
             {"type": "retriever", "key": "hybrid", "description": "weighted keyword + semantic search"},
             {"type": "answerer", "key": "extractive/local", "description": "chunk sentence extraction"},
             {"type": "answerer", "key": "llm/huggingface", "description": "transformers generation pipeline"},
+            {"type": "answerer", "key": "llm/openai", "description": "LangChain ChatOpenAI answerer"},
+            {"type": "answerer", "key": "llm/ollama", "description": "LangChain ChatOllama answerer"},
         ],
         "contract_only": [
             {"type": "vector_store", "key": "faiss", "description": "validated config contract only"},
-            {"type": "vector_store", "key": "chroma", "description": "validated config contract only"},
             {"type": "vector_store", "key": "elasticsearch", "description": "validated config contract only"},
             {"type": "reranker", "key": "enabled", "description": "validated config contract only"},
-            {"type": "answerer", "key": "llm/openai", "description": "validated config contract only"},
-            {"type": "answerer", "key": "llm/ollama", "description": "validated config contract only"},
         ],
     }
 

@@ -26,8 +26,8 @@
 | `experiment.name` | 실험 산출물 폴더 이름 |
 | `paths.raw_docs_dir` | 읽을 원본 문서 위치 |
 | `paths.output_dir` | 결과가 저장될 위치 |
-| `rag.chunk.size` | chunk 하나의 최대 길이 |
-| `rag.chunk.overlap` | chunk 사이에 겹쳐 남길 길이 |
+| `rag.splitter.chunk_size` | chunk 하나의 최대 길이 |
+| `rag.splitter.chunk_overlap` | chunk 사이에 겹쳐 남길 길이 |
 | `rag.embedding.provider` | embedding 구현체 |
 | `rag.retriever.method` | keyword, semantic, hybrid 검색 방식 |
 | `rag.retriever.top_k` | 검색 결과 개수 |

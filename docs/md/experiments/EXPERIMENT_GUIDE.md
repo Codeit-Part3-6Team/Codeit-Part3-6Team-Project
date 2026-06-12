@@ -152,9 +152,9 @@ RAG에서는 답변 문장만 보지 않습니다. 아래 순서로 봅니다.
 
 | 옵션 | 실험 질문 |
 | --- | --- |
-| `rag.chunk.size` | chunk를 크게/작게 하면 근거 검색이 좋아지는가? |
-| `rag.chunk.overlap` | 앞뒤 문맥을 더 겹치면 답변 근거가 안정적인가? |
-| `rag.retriever.method` | keyword, semantic, hybrid 중 어떤 방식이 맞는가? |
+| `rag.splitter.chunk_size` | chunk를 크게/작게 하면 근거 검색이 좋아지는가? |
+| `rag.splitter.chunk_overlap` | 앞뒤 문맥을 더 겹치면 답변 근거가 안정적인가? |
+| `rag.retriever.method` | similarity, keyword, semantic, hybrid 중 어떤 방식이 맞는가? |
 | `rag.retriever.top_k` | 근거 개수를 늘리면 답변 품질이 좋아지는가? |
 | `rag.embedding.provider` | local과 HuggingFace embedding 차이가 있는가? |
 | `rag.reranker.enabled` | 재정렬을 붙일 가치가 있는가? |
@@ -198,7 +198,7 @@ backup:
   enabled: true
   on_finish: true
   on_failure: true
-  backup_dir: /content/drive/MyDrive/codeit_rag_project/backups/rag_semantic
+  backup_dir: /content/drive/MyDrive/codeit_rag_project/backups/rag_langchain
   include_logs: true
   include_checkpoints: true
 ```

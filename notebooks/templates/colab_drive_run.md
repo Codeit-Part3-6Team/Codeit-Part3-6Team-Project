@@ -1,4 +1,4 @@
-# Colab / Drive RAG 실행 템플릿
+﻿# Colab / Drive RAG 실행 템플릿
 
 Colab에서 RAG 실험을 돌릴 때 아래 순서를 셀 단위로 옮겨 사용합니다.
 자세한 설명은 `docs/md/experiments/COLAB_GUIDE.md`를 기준으로 합니다.
@@ -48,22 +48,22 @@ print(DRIVE_ROOT)
 ```bash
 python scripts/check_rag_pipeline.py \
   --project-root . \
-  --config configs/experiments/rag/rag_semantic.yaml
+  --config configs/experiments/rag/rag_langchain.yaml
 ```
 
 Drive 문서로 실험할 때는 아래 값이 들어간 별도 config를 만들어 사용합니다.
 
-- `paths.input_dir`: `/content/drive/MyDrive/codeit_rag_project/data/raw`
+- `paths.raw_docs_dir`: `/content/drive/MyDrive/codeit_rag_project/data/raw`
 - `paths.output_dir`: `/content/drive/MyDrive/codeit_rag_project/experiments/<run-name>`
-- `artifact_policy.backup_dir`: `/content/drive/MyDrive/codeit_rag_project/backups/<run-name>`
-- `rag.evaluation.questions_path`: 평가 질문 CSV 경로
+- `backup.backup_dir`: `/content/drive/MyDrive/codeit_rag_project/backups/<run-name>`
+- `evaluation.questions_path`: 평가 질문 CSV 경로
 
 ## 5. 문서 적재
 
 ```bash
 python scripts/run_rag_ingest.py \
   --project-root . \
-  --config configs/experiments/rag/rag_semantic.yaml
+  --config configs/experiments/rag/rag_langchain.yaml
 ```
 
 확인할 것:
@@ -77,8 +77,8 @@ python scripts/run_rag_ingest.py \
 ```bash
 python scripts/run_rag_retrieve.py \
   --project-root . \
-  --config configs/experiments/rag/rag_semantic.yaml \
-  --query "제안 마감일은 언제인가?"
+  --config configs/experiments/rag/rag_langchain.yaml \
+  --question "제안 마감일은 언제인가?"
 ```
 
 확인할 것:
@@ -92,14 +92,14 @@ python scripts/run_rag_retrieve.py \
 ```bash
 python scripts/run_rag_chat.py \
   --project-root . \
-  --config configs/experiments/rag/rag_semantic.yaml \
+  --config configs/experiments/rag/rag_langchain.yaml \
   --question "입찰 참가 자격은 무엇인가?"
 ```
 
 ```bash
 python scripts/run_rag_chat.py \
   --project-root . \
-  --config configs/experiments/rag/rag_semantic.yaml \
+  --config configs/experiments/rag/rag_langchain.yaml \
   --evaluate
 ```
 
@@ -117,6 +117,7 @@ python scripts/compare_rag_retrievers.py \
   --configs \
     configs/experiments/rag/rag_keyword.yaml \
     configs/experiments/rag/rag_semantic.yaml \
+    configs/experiments/rag/rag_langchain.yaml \
     configs/experiments/rag/rag_hybrid.yaml
 ```
 
