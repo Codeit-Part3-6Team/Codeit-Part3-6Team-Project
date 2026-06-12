@@ -279,6 +279,22 @@ def test_check_rag_pipeline_accepts_langchain_ollama_config(isolated_project: Pa
     assert not any("not implemented in smoke runtime" in warning for warning in result["warnings"])
 
 
+def test_check_rag_pipeline_accepts_langchain_default_config(isolated_project: Path):
+    result = check_rag_pipeline(
+        "configs/experiments/rag/rag_langchain.yaml",
+        isolated_project,
+    )
+
+    assert result["ok"], result["errors"]
+    assert result["summary"]["experiment"] == "rag_langchain"
+    assert result["summary"]["engine"] == "langchain"
+    assert result["summary"]["chunk_size"] == 500
+    assert result["summary"]["chunk_overlap"] == 80
+    assert result["summary"]["retriever_method"] == "similarity"
+    assert result["summary"]["embedding_provider"] == "local"
+    assert result["summary"]["answerer_provider"] == "local"
+
+
 def test_check_rag_pipeline_script_uses_exit_code(isolated_project: Path, repo_root: Path):
     ok_result = subprocess.run(
         [

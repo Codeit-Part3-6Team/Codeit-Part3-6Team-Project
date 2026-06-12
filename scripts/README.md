@@ -17,18 +17,18 @@
 ## 기본 실행 순서
 
 ```bash
-python scripts/check_rag_pipeline.py --config configs/experiments/rag/rag_semantic.yaml --project-root .
-python scripts/run_rag_ingest.py --config configs/experiments/rag/rag_semantic.yaml --project-root .
-python scripts/run_rag_retrieve.py --config configs/experiments/rag/rag_semantic.yaml --project-root . --question "예산은 얼마야?"
-python scripts/run_rag_chat.py --config configs/experiments/rag/rag_semantic.yaml --project-root . --question "예산은 얼마야?"
-python scripts/run_rag_chat.py --config configs/experiments/rag/rag_semantic.yaml --project-root . --evaluate
+python scripts/check_rag_pipeline.py --config configs/experiments/rag/rag_langchain.yaml --project-root .
+python scripts/run_rag_ingest.py --config configs/experiments/rag/rag_langchain.yaml --project-root .
+python scripts/run_rag_retrieve.py --config configs/experiments/rag/rag_langchain.yaml --project-root . --question "예산은 얼마야?"
+python scripts/run_rag_chat.py --config configs/experiments/rag/rag_langchain.yaml --project-root . --question "예산은 얼마야?"
+python scripts/run_rag_chat.py --config configs/experiments/rag/rag_langchain.yaml --project-root . --evaluate
 python scripts/compare_rag_retrievers.py --project-root .
 ```
 
 ## RAG 산출물
 
 ```text
-experiments/rag_semantic/
+experiments/rag_langchain/
 |-- config.yaml
 |-- parsed_documents.csv
 |-- chunks.csv

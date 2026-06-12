@@ -101,10 +101,11 @@ LangChain은 splitter, embedding, vector store, retriever, LLM 호출을 맡는 
 ## 현재 구현된 옵션
 
 - engine: `local`, `langchain`
-- embedding: `local`, `huggingface`
+- embedding: `local`, `huggingface`, `ollama`, `openai`
 - vector store: `memory`, `chroma`
-- retriever: `keyword`, `semantic`, `hybrid`
-- answerer: `extractive/local`, `llm/huggingface`
+- retriever: `similarity`, `keyword`, `semantic`, `hybrid`
+- answerer: `extractive/local`, `llm/huggingface`, `llm/ollama`, `llm/openai`
 
-LangChain 엔진에서는 RecursiveCharacterTextSplitter, HuggingFace/Ollama embedding, Chroma, Ollama/OpenAI answerer를 config로 선택하는 방향을 사용합니다.
+LangChain 엔진에서는 RecursiveCharacterTextSplitter, local/HuggingFace/Ollama/OpenAI embedding, Chroma, Ollama/OpenAI answerer를 config로 선택합니다.
+LangChain 패키지가 아직 설치되지 않은 환경에서도 `local` embedding, `memory` vector store, `local` answerer 조합은 dependency-free fallback으로 산출물 계약을 검증할 수 있습니다.
 local 엔진은 빠른 테스트와 fallback 용도로 유지합니다.

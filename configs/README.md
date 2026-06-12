@@ -8,7 +8,8 @@
 
 | 목적 | config |
 | --- | --- |
-| semantic retriever 기본 실행 | `configs/experiments/rag/rag_semantic.yaml` |
+| LangChain 엔진 기본 실행 | `configs/experiments/rag/rag_langchain.yaml` |
+| local semantic retriever 비교 | `configs/experiments/rag/rag_semantic.yaml` |
 | keyword retriever 비교 | `configs/experiments/rag/rag_keyword.yaml` |
 | keyword + semantic hybrid 비교 | `configs/experiments/rag/rag_hybrid.yaml` |
 | HuggingFace LLM answerer 예시 | `configs/examples/rag/rag_hf_llm_answerer.yaml` |
@@ -64,11 +65,11 @@ mindmap
 ## 기본 실행
 
 ```bash
-python scripts/check_rag_pipeline.py --config configs/experiments/rag/rag_semantic.yaml --project-root .
-python scripts/run_rag_ingest.py --config configs/experiments/rag/rag_semantic.yaml --project-root .
-python scripts/run_rag_retrieve.py --config configs/experiments/rag/rag_semantic.yaml --project-root . --question "예산은 얼마야?"
-python scripts/run_rag_chat.py --config configs/experiments/rag/rag_semantic.yaml --project-root . --question "예산은 얼마야?"
-python scripts/run_rag_chat.py --config configs/experiments/rag/rag_semantic.yaml --project-root . --evaluate
+python scripts/check_rag_pipeline.py --config configs/experiments/rag/rag_langchain.yaml --project-root .
+python scripts/run_rag_ingest.py --config configs/experiments/rag/rag_langchain.yaml --project-root .
+python scripts/run_rag_retrieve.py --config configs/experiments/rag/rag_langchain.yaml --project-root . --question "예산은 얼마야?"
+python scripts/run_rag_chat.py --config configs/experiments/rag/rag_langchain.yaml --project-root . --question "예산은 얼마야?"
+python scripts/run_rag_chat.py --config configs/experiments/rag/rag_langchain.yaml --project-root . --evaluate
 ```
 
 ## 새 RAG 실험 만들기
@@ -76,7 +77,7 @@ python scripts/run_rag_chat.py --config configs/experiments/rag/rag_semantic.yam
 기존 RAG config를 복사해서 시작합니다.
 
 ```text
-configs/experiments/rag/rag_semantic.yaml
+configs/experiments/rag/rag_langchain.yaml
 -> configs/experiments/rag/rag_top5_chunk800.yaml
 ```
 
@@ -125,7 +126,7 @@ rag:
 
 chunk가 너무 작으면 문맥이 사라지고, 너무 크면 검색 정확도가 떨어질 수 있습니다.
 
-LangChain 엔진에서는 아래처럼 splitter 옵션을 사용합니다.
+LangChain 엔진에서는 아래처럼 splitter 옵션을 사용합니다. 현재 기본 RAG 실험은 이 방식을 우선 사용합니다.
 
 ```yaml
 rag:
@@ -150,6 +151,7 @@ rag:
 
 - `local`: 빠른 동작 확인용 hashing embedding
 - `huggingface`: transformers 기반 mean pooling embedding
+- `ollama`, `openai`: LangChain 엔진에서 실제 운영 후보로 사용할 embedding provider
 
 ### Vector Store
 
@@ -161,7 +163,7 @@ rag:
     collection_name: rag_semantic
 ```
 
-현재 기본 구현은 `memory`입니다. FAISS, Chroma, Elasticsearch는 config 계약을 먼저 잡아둔 확장 후보입니다.
+현재 기본 구현은 `memory`입니다. LangChain 엔진에서는 `chroma`도 사용할 수 있고, FAISS/Elasticsearch는 추후 확장 후보입니다.
 
 ### Retriever
 
@@ -218,7 +220,7 @@ rag:
     require_citations: true
 ```
 
-OpenAI/Ollama도 config 계약은 준비할 수 있지만, 실제 answerer 구현체를 붙인 뒤 사용하는 것이 안전합니다.
+LangChain 엔진에서는 Ollama/OpenAI answerer를 사용할 수 있습니다. 팀원 PC에서 바로 검증할 때는 `local` answerer를 쓰고, 실제 생성형 답변 실험에서 Ollama/OpenAI로 바꿉니다.
 
 ### Checkpoint / Resume
 

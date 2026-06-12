@@ -5,4 +5,4 @@
 - `rag_hf_llm_answerer.yaml`: HuggingFace `transformers.pipeline` 기반 LLM answerer 예시
 - `rag_langchain_ollama.yaml`: LangChain splitter/embedding/retriever/answerer 기반 Ollama 실행 예시
 
-주의: HuggingFace LLM answerer는 실제 실행 시 모델 다운로드와 추론 시간이 필요합니다. 빠른 파이프라인 검증은 `configs/experiments/rag/`의 local extractive config를 먼저 사용합니다.
+주의: HuggingFace LLM answerer는 실제 실행 시 모델 다운로드와 추론 시간이 필요합니다. 빠른 파이프라인 검증은 `configs/experiments/rag/rag_langchain.yaml`처럼 local embedding/local answerer를 쓰는 config를 먼저 사용합니다.

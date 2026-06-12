@@ -103,13 +103,13 @@ scripts/
 
 ## 현재 구현된 config 기반 pipeline
 
-현재 구현은 외부 모델이나 vector DB 없이 RAG 운영 흐름을 먼저 검증하는 버전입니다.
-embedding은 문자 n-gram 기반 hashing vector를 사용하고, 검색은 cosine similarity에 keyword 보정을 더해 수행합니다.
+현재 구현은 LangChain 엔진을 기본으로 두고, 외부 모델이나 vector DB 없이도 RAG 운영 흐름을 검증할 수 있게 구성되어 있습니다.
+기본 config는 local hashing embedding과 local extractive answerer를 사용하므로 팀원 PC에서도 빠르게 산출물 계약을 확인할 수 있습니다.
 
 실행 config:
 
 ```text
-configs/experiments/rag/rag_semantic.yaml
+configs/experiments/rag/rag_langchain.yaml
 ```
 
 샘플 데이터:
@@ -123,26 +123,28 @@ data/rag_sample/
 실행 명령:
 
 ```bash
-python scripts/run_rag_ingest.py --config configs/experiments/rag/rag_semantic.yaml --project-root .
-python scripts/run_rag_retrieve.py --config configs/experiments/rag/rag_semantic.yaml --project-root . --question "예산이 얼마야?"
-python scripts/run_rag_chat.py --config configs/experiments/rag/rag_semantic.yaml --project-root . --question "예산이 얼마야?"
-python scripts/run_rag_chat.py --config configs/experiments/rag/rag_semantic.yaml --project-root . --evaluate
+python scripts/run_rag_ingest.py --config configs/experiments/rag/rag_langchain.yaml --project-root .
+python scripts/run_rag_retrieve.py --config configs/experiments/rag/rag_langchain.yaml --project-root . --question "예산이 얼마야?"
+python scripts/run_rag_chat.py --config configs/experiments/rag/rag_langchain.yaml --project-root . --question "예산이 얼마야?"
+python scripts/run_rag_chat.py --config configs/experiments/rag/rag_langchain.yaml --project-root . --evaluate
 ```
 
 현재 구현된 단계:
 
 - `document_loader.py`: txt/pdf/docx/hwpx/hwp 문서를 document row로 변환
-- `chunker.py`: document row를 검색 가능한 chunk row로 변환
-- `embedder.py`: chunk text를 hashing embedding으로 변환
-- `vector_store.py`: 질문 embedding과 chunk embedding을 비교해 top-k 검색
-- `retriever.py`: keyword fallback 검색
+- `engines/langchain.py`: LangChain 기반 chunking, embedding, retrieval, answer 실행과 표준 artifact 변환
+- `engines/local.py`: dependency-free smoke/fallback 실행
+- `chunker.py`: local fallback에서 document row를 검색 가능한 chunk row로 변환
+- `embedder.py`: local hashing embedding으로 smoke/fallback embedding 생성
+- `vector_store.py`: local fallback에서 질문 embedding과 chunk embedding을 비교해 top-k 검색
+- `retriever.py`: local keyword/semantic/hybrid 검색
 - `answerer.py`: 검색된 chunk에서 답변 문장 추출 및 citation 생성
 - `pipeline.py`: ingest/retrieve/chat/evaluation 실행과 산출물 저장
 
 현재 산출물:
 
 ```text
-experiments/rag_semantic/
+experiments/rag_langchain/
 |-- parsed_documents.csv
 |-- chunks.csv
 |-- embeddings.jsonl
@@ -172,7 +174,7 @@ experiments/rag_semantic/
 python scripts/compare_rag_retrievers.py --project-root .
 ```
 
-기본 비교 대상은 `configs/experiments/rag/rag_keyword.yaml`와 `configs/experiments/rag/rag_semantic.yaml`입니다.
+기본 비교 대상은 `rag_keyword.yaml`, `rag_semantic.yaml`, `rag_hybrid.yaml`, `rag_langchain.yaml`입니다.
 비교 결과는 `reports/rag_retriever_comparison.csv`와 `reports/rag_retriever_comparison.json`에 저장됩니다.
 
 이 구현의 목적은 성능이 아니라, RAG 프로젝트에서도 config 기반 실행, embedding 산출물 저장, citation 추적, 평가 산출물 저장, 실험 요약이 끝까지 이어지는지 확인하는 것입니다.
@@ -254,7 +256,7 @@ chunk를 embedding으로 바꾼 뒤에는 vector와 metadata가 함께 관리되
 파일 예시:
 
 ```text
-experiments/rag_semantic/
+experiments/rag_langchain/
 |-- chunks.csv
 |-- embeddings.jsonl
 `-- vector_index/
@@ -434,14 +436,14 @@ RAG에서는 “답변이 그럴듯한가”보다 “문서 근거로 지지되
 
 ```yaml
 experiment:
-  name: rag_semantic
+  name: rag_langchain
   seed: 42
 
 paths:
   raw_docs_dir: data/rag_sample
   processed_docs_dir: data/processed_docs/rag_sample
-  output_dir: experiments/rag_semantic
-  index_dir: experiments/rag_semantic/vector_index
+  output_dir: experiments/rag_langchain
+  index_dir: experiments/rag_langchain/vector_index
 
 artifact_policy:
   run_id:
@@ -504,7 +506,7 @@ metric:
 
 ## 11. 구현 순서
 
-1. `configs/experiments/rag/rag_semantic.yaml` 작성
+1. `configs/experiments/rag/rag_langchain.yaml` 작성
 2. `data/rag_sample/rfp_sample.txt` 작성
 3. `src/rag/document_loader.py` 작성
 4. `src/rag/chunker.py` 작성
@@ -517,13 +519,13 @@ metric:
 11. RAG config 실행 검증 추가
 12. 실험 summary에 RAG metric 연결
 
-현재는 hashing embedding과 in-memory cosine retrieval까지 구현되어 있습니다.
-그 다음 단계에서 sentence-transformers, FAISS/Chroma 등을 붙이면 됩니다.
+현재는 LangChain 엔진, local fallback, in-memory retrieval, Chroma 후보, local extractive answerer까지 구현되어 있습니다.
+그 다음 단계에서 실제 운영 embedding/LLM provider와 reranker를 선택해 붙이면 됩니다.
 ## 실전형 RAG Config 계약
 
-현재 기본 runtime은 `local` embedding, `memory` vector store, `keyword/semantic` retriever,
-`extractive` answerer를 실제 실행합니다. 아래 값들은 실전 구현을 붙이기 위한 config 계약으로
-validation에서 먼저 검사합니다.
+현재 기본 runtime은 `langchain` engine, `local` embedding, `memory` vector store,
+`similarity` retriever, `extractive/local` answerer를 실제 실행합니다.
+Ollama/OpenAI 같은 생성형 답변은 LangChain 엔진에서 config로 선택할 수 있습니다.
 
 ```yaml
 rag:
@@ -535,8 +537,8 @@ rag:
     normalize: true
 
   vector_store:
-    type: faiss
-    path: indexes/rfp_faiss
+    type: chroma
+    path: indexes/rfp_chroma
     collection_name: rfp_docs
 
   retriever:
@@ -563,9 +565,10 @@ rag:
 
 지원 후보:
 
-- `rag.embedding.provider`: `local`, `huggingface`
-- `rag.vector_store.type`: `memory`, `faiss`, `chroma`, `elasticsearch`
-- `rag.retriever.method`: `keyword`, `semantic`, `hybrid`
+- `rag.engine`: `langchain`, `local`
+- `rag.embedding.provider`: `local`, `huggingface`, `ollama`, `openai`
+- `rag.vector_store.type`: `memory`, `chroma`
+- `rag.retriever.method`: `similarity`, `keyword`, `semantic`, `hybrid`
 - `rag.reranker.provider`: `local`, `huggingface`
 - `rag.answerer.mode`: `extractive`, `llm`
 - `rag.answerer.provider`: `local`, `openai`, `huggingface`, `ollama`
@@ -584,36 +587,37 @@ rag:
     require_citations: true
 ```
 
-주의: `faiss`, `chroma`, `elasticsearch`, `reranker`, `llm answerer`는
-config 계약과 validation은 준비되어 있지만 기본 runtime의 실제 구현은 아직 붙이지 않았습니다.
-`hybrid` retriever는 현재 local keyword + semantic 점수 결합 방식으로 동작합니다.
+주의: `faiss`, `elasticsearch`, `reranker`는 아직 확장 후보입니다.
+`hybrid` retriever는 local fallback에서 keyword + semantic 점수 결합 방식으로 동작합니다.
 
 ## RAG Adapter 구현 상태
 
-RAG runtime은 adapter registry를 통해 config에 맞는 구현체를 선택합니다.
+RAG runtime은 engine registry를 통해 config에 맞는 구현체를 선택합니다.
 
 실제 구현된 adapter:
 
+- `rag.engine: langchain`: LangChain 기반 splitter/embedding/vector store/answerer 실행
+- `rag.engine: local`: dependency-free smoke/fallback 실행
 - `embedding.provider: local`: hashing-char-ngram 기반 local embedding
 - `embedding.provider: huggingface`: transformers mean pooling embedding
 - `vector_store.type: memory`: `embeddings.jsonl`을 읽어 in-memory retrieval 수행
+- `vector_store.type: chroma`: LangChain 엔진에서 Chroma vector store 사용
+- `retriever.method: similarity`: LangChain/vector 기반 similarity 검색
 - `retriever.method: keyword`: token overlap 기반 검색
 - `retriever.method: semantic`: local hashing vector 기반 의미 검색
 - `retriever.method: hybrid`: keyword 점수와 semantic 점수의 weighted merge
 - `answerer.mode: extractive`, `answerer.provider: local`: 검색 chunk에서 문장 추출
+- `answerer.mode: llm`, `answerer.provider: ollama/openai`: LangChain 엔진에서 생성형 답변 호출
 
 계약만 있고 아직 runtime 구현은 없는 adapter:
 
 - `vector_store.type: faiss`
-- `vector_store.type: chroma`
 - `vector_store.type: elasticsearch`
 - `reranker.enabled: true`
-- `answerer.mode: llm`, `answerer.provider: openai`
 - `answerer.mode: llm`, `answerer.provider: huggingface`
-- `answerer.mode: llm`, `answerer.provider: ollama`
 
-새 구현체를 붙일 때는 `src/rag/adapters.py`의 builder에 adapter를 추가하고,
-`scripts/check_rag_pipeline.py` validation 계약을 함께 갱신합니다.
+새 구현체를 붙일 때는 `src/rag/engines/` 또는 `src/rag/adapters.py`의 builder를 갱신하고,
+`scripts/check_rag_pipeline.py` validation 계약과 artifact 변환 테스트를 함께 갱신합니다.
 
 ## RAG Ingest Checkpoint / Resume
 

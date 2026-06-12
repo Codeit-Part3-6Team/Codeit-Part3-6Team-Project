@@ -73,7 +73,7 @@ pip install -r requirements.txt
 Colab 전용 config는 기존 RAG config를 복사해서 경로만 Drive 기준으로 바꿉니다.
 
 ```text
-configs/experiments/rag/rag_semantic.yaml
+configs/experiments/rag/rag_langchain.yaml
 -> configs/experiments/rag/rag_colab_drive.yaml
 ```
 

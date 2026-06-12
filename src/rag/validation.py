@@ -18,7 +18,7 @@ SUPPORTED_RERANKER_PROVIDERS = {"local", "huggingface"}
 SUPPORTED_ANSWERERS = {"extractive", "llm"}
 SUPPORTED_ANSWERER_PROVIDERS = {"local", "openai", "huggingface", "ollama"}
 SUPPORTED_RAG_ENGINES = {"local", "langchain"}
-SUPPORTED_LANGCHAIN_EMBEDDING_PROVIDERS = {"huggingface", "ollama", "openai"}
+SUPPORTED_LANGCHAIN_EMBEDDING_PROVIDERS = {"local", "huggingface", "ollama", "openai"}
 SUPPORTED_LANGCHAIN_VECTOR_STORES = {"memory", "chroma"}
 SUPPORTED_LANGCHAIN_ANSWERERS = {"local", "ollama", "openai"}
 
@@ -66,7 +66,7 @@ def _build_summary(
     rag = config.get("rag", {})
     engine = str(rag.get("engine", "local") or "local")
     loader = rag.get("loader", {})
-    chunk = rag.get("chunk", {})
+    chunk = rag.get("splitter", rag.get("chunk", {}))
     checkpoint = rag.get("checkpoint", {})
     embedding = rag.get("embedding", {})
     vector_store = rag.get("vector_store", {})
@@ -106,8 +106,8 @@ def _build_summary(
         "document_counts": dict(sorted(document_counts.items())),
         "retriever_method": retriever.get("method", "keyword"),
         "engine": engine,
-        "chunk_size": chunk.get("size"),
-        "chunk_overlap": chunk.get("overlap"),
+        "chunk_size": chunk.get("size", chunk.get("chunk_size")),
+        "chunk_overlap": chunk.get("overlap", chunk.get("chunk_overlap")),
         "checkpoint_enabled": checkpoint.get("enabled", True) if isinstance(checkpoint, dict) else True,
         "checkpoint_resume": checkpoint.get("resume", True) if isinstance(checkpoint, dict) else True,
         "embedding_provider": embedding.get("provider", ""),

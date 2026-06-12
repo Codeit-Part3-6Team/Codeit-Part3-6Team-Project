@@ -8,7 +8,8 @@
 
 | config | 목적 | 먼저 바꿔볼 옵션 |
 | --- | --- | --- |
-| `rag_semantic.yaml` | semantic retriever 기반 기본 RAG 실험 | `rag.chunk`, `rag.retriever.top_k` |
+| `rag_langchain.yaml` | LangChain 엔진 기반 기본 RAG 실험 | `rag.splitter`, `rag.embedding`, `rag.retriever.top_k` |
+| `rag_semantic.yaml` | local semantic retriever 비교 실험 | `rag.chunk`, `rag.retriever.top_k` |
 | `rag_keyword.yaml` | keyword retriever 비교 | `rag.retriever.method` |
 | `rag_hybrid.yaml` | keyword + semantic hybrid 비교 | `rag.retriever.keyword_weight`, `rag.retriever.semantic_weight` |
 
@@ -17,7 +18,7 @@
 새 실험은 기존 config를 복사하고 이름과 출력 경로를 먼저 바꿉니다.
 
 ```text
-rag_semantic.yaml
+rag_langchain.yaml
 -> rag_top5_chunk800.yaml
 ```
 
@@ -41,14 +42,16 @@ artifact_policy:
 
 ```yaml
 rag:
-  chunk:
-    size: 500
-    overlap: 80
+  engine: langchain
+  splitter:
+    type: recursive_character
+    chunk_size: 500
+    chunk_overlap: 80
   embedding:
     provider: local
     model_name: hashing-char-ngram-v1
   retriever:
-    method: semantic
+    method: similarity
     top_k: 3
   answerer:
     mode: extractive
@@ -57,9 +60,9 @@ rag:
 
 | 영역 | 바꾸는 이유 |
 | --- | --- |
-| `rag.chunk` | 문서 조각 크기와 문맥 유지 정도 비교 |
-| `rag.embedding` | local hashing과 외부 embedding 후보 비교 |
-| `rag.retriever` | keyword, semantic, hybrid 검색 방식 비교 |
+| `rag.splitter` 또는 `rag.chunk` | 문서 조각 크기와 문맥 유지 정도 비교 |
+| `rag.embedding` | local hashing과 LangChain embedding 후보 비교 |
+| `rag.retriever` | similarity, keyword, semantic, hybrid 검색 방식 비교 |
 | `rag.reranker` | 검색 결과 재정렬 후보 실험 |
 | `rag.answerer` | extractive 답변과 LLM 답변 후보 비교 |
 | `evaluation.questions_path` | 평가 질문 세트 교체 |
@@ -68,10 +71,10 @@ rag:
 ## 실행 순서
 
 ```bash
-python scripts/check_rag_pipeline.py --config configs/experiments/rag/rag_semantic.yaml --project-root .
-python scripts/run_rag_ingest.py --config configs/experiments/rag/rag_semantic.yaml --project-root .
-python scripts/run_rag_retrieve.py --config configs/experiments/rag/rag_semantic.yaml --project-root . --question "예산은 얼마야?"
-python scripts/run_rag_chat.py --config configs/experiments/rag/rag_semantic.yaml --project-root . --evaluate
+python scripts/check_rag_pipeline.py --config configs/experiments/rag/rag_langchain.yaml --project-root .
+python scripts/run_rag_ingest.py --config configs/experiments/rag/rag_langchain.yaml --project-root .
+python scripts/run_rag_retrieve.py --config configs/experiments/rag/rag_langchain.yaml --project-root . --question "예산은 얼마야?"
+python scripts/run_rag_chat.py --config configs/experiments/rag/rag_langchain.yaml --project-root . --evaluate
 ```
 
 ## 결과 확인
@@ -79,7 +82,7 @@ python scripts/run_rag_chat.py --config configs/experiments/rag/rag_semantic.yam
 RAG 실험 결과는 `paths.output_dir` 아래에 남습니다.
 
 ```text
-experiments/rag_semantic/
+experiments/rag_langchain/
 |-- config.yaml
 |-- parsed_documents.csv
 |-- chunks.csv
@@ -107,5 +110,6 @@ experiments/rag_semantic/
 외부 모델이나 무거운 구현체 후보는 `configs/examples/rag/`에 둡니다.
 
 - `configs/examples/rag/rag_hf_llm_answerer.yaml`: HuggingFace LLM answerer 예시
+- `configs/examples/rag/rag_langchain_ollama.yaml`: Ollama embedding/answerer 기반 LangChain 예시
 
 분류/HuggingFace fine-tuning 예시는 `configs/examples/classification/`에만 보관합니다.

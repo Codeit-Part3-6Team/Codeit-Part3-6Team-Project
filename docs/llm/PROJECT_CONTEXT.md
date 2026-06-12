@@ -23,11 +23,11 @@
 | 영역 | 구현 상태 |
 | --- | --- |
 | 문서 로딩 | `txt`, `pdf`, `docx`, `hwpx`, `hwp` loader |
-| Engine | local fallback, LangChain 운영 후보 |
+| Engine | LangChain 기본 실행, local fallback |
 | Chunking | local splitter, LangChain RecursiveCharacterTextSplitter |
-| Embedding | local hashing, HuggingFace/Ollama 등 LangChain embedding 후보 |
-| Retrieval | local keyword/semantic/hybrid, LangChain similarity 후보 |
-| Answering | local extractive answer, LangChain Ollama/OpenAI 후보 |
+| Embedding | local hashing, HuggingFace/Ollama/OpenAI LangChain embedding 후보 |
+| Retrieval | LangChain similarity, local keyword/semantic/hybrid |
+| Answering | local extractive answer, LangChain Ollama/OpenAI |
 | Evaluation | retrieval hit rate, citation correctness, answer contains expected |
 | Config validation | RAG 실행 전 config와 경로 점검 |
 | Checkpoint/Resume | RAG ingest stage 단위 artifact 재사용 |
@@ -41,10 +41,10 @@
 
 | 후보 | 상태 | 우선순위 판단 |
 | --- | --- | --- |
-| FAISS/Chroma/Elasticsearch adapter | 계약만 있음 | 실제 데이터 규모가 커지면 필요 |
-| OpenAI/Ollama answerer | config 계약과 validation 있음 | API 사용 가능 여부와 비용 확인 후 runtime 구현 |
+| FAISS/Elasticsearch adapter | 계약만 있음 | 실제 데이터 규모가 커지면 필요 |
+| OpenAI/Ollama answerer | LangChain 엔진에서 사용 가능 | API/로컬 서버 사용 가능 여부와 비용 확인 후 본 실험에 적용 |
 | reranker | 계약만 있음 | retrieval 품질 병목 확인 후 필요 |
-| vector index 저장/로드 | 일부 후보 | 검색 비용이 커지면 필요 |
+| vector index 저장/로드 | Chroma 후보 있음 | 검색 비용이 커지면 필요 |
 | fine-grained resume | 미구현 | 대량 문서 처리 중단 문제가 생기면 필요 |
 | 실제 외부 RFP PDF/HWP E2E | 대기 | 실제 공고 원문 확보 후 PDF/HWP/HWPX 품질 재검증 |
 | 웹앱/데모 | 예비 구조 | 담당자와 범위 확정 후 구현 |
@@ -53,7 +53,7 @@
 
 1. 실제 외부 RFP 원문을 확보하면 PDF/HWP/HWPX E2E를 다시 검증합니다.
 2. 검색 품질을 비교할 수 있도록 retriever config와 metric을 정리합니다.
-3. OpenAI/Ollama answerer 또는 UI는 팀 범위, API 사용 가능 여부, 비용을 확인한 뒤 붙입니다.
+3. OpenAI/Ollama answerer 또는 UI는 팀 범위, API 사용 가능 여부, 비용을 확인한 뒤 실제 실험 config로 승격합니다.
 4. 문서와 README는 팀원이 이해하기 쉬운 수준을 유지합니다.
 
 ## 중요한 설계 판단

@@ -23,6 +23,17 @@ def test_load_config_reads_rag_file_types(repo_root):
     assert config["rag"]["answerer"]["provider"] == "local"
 
 
+def test_load_config_reads_langchain_rag_default(repo_root):
+    config = load_config(repo_root / "configs" / "experiments" / "rag" / "rag_langchain.yaml")
+
+    assert config["experiment"]["name"] == "rag_langchain"
+    assert config["rag"]["engine"] == "langchain"
+    assert config["rag"]["splitter"]["type"] == "recursive_character"
+    assert config["rag"]["embedding"]["provider"] == "local"
+    assert config["rag"]["retriever"]["method"] == "similarity"
+    assert config["rag"]["answerer"]["provider"] == "local"
+
+
 def test_load_config_reads_rag_hybrid_config(repo_root):
     config = load_config(repo_root / "configs" / "experiments" / "rag" / "rag_hybrid.yaml")
 

@@ -23,11 +23,11 @@ raw docs -> chunk -> embedding/index -> retrieve -> answer -> citation/evaluate
 | 영역 | 상태 |
 | --- | --- |
 | 문서 로딩 | `txt`, `pdf`, `docx`, `hwpx`, `hwp` |
-| Engine | local fallback, LangChain 운영 후보 |
+| Engine | LangChain 기본 실행, local fallback |
 | Chunking | local splitter, LangChain RecursiveCharacterTextSplitter |
-| Embedding | local hashing, HuggingFace/Ollama 등 LangChain embedding 후보 |
-| Retrieval | local keyword/semantic/hybrid, LangChain similarity 후보 |
-| Answer | local extractive answer, LangChain Ollama/OpenAI 후보 |
+| Embedding | local hashing, HuggingFace/Ollama/OpenAI LangChain embedding 후보 |
+| Retrieval | LangChain similarity, local keyword/semantic/hybrid |
+| Answer | local extractive answer, LangChain Ollama/OpenAI |
 | Evaluation | retrieval hit rate, citation correctness, 실패 질문 CSV |
 | Resume | parsed/chunks/embeddings 단계별 재사용 |
 | Config Validation | RAG 실행 전 config와 입력 경로 점검 |
@@ -84,24 +84,24 @@ python -m pytest
 기본 config:
 
 ```text
-configs/experiments/rag/rag_semantic.yaml
+configs/experiments/rag/rag_langchain.yaml
 ```
 
 실행:
 
 ```bash
-python scripts/check_rag_pipeline.py --config configs/experiments/rag/rag_semantic.yaml --project-root .
-python scripts/run_rag_ingest.py --config configs/experiments/rag/rag_semantic.yaml --project-root .
-python scripts/run_rag_retrieve.py --config configs/experiments/rag/rag_semantic.yaml --project-root . --question "예산은 얼마야?"
-python scripts/run_rag_chat.py --config configs/experiments/rag/rag_semantic.yaml --project-root . --question "예산은 얼마야?"
-python scripts/run_rag_chat.py --config configs/experiments/rag/rag_semantic.yaml --project-root . --evaluate
+python scripts/check_rag_pipeline.py --config configs/experiments/rag/rag_langchain.yaml --project-root .
+python scripts/run_rag_ingest.py --config configs/experiments/rag/rag_langchain.yaml --project-root .
+python scripts/run_rag_retrieve.py --config configs/experiments/rag/rag_langchain.yaml --project-root . --question "예산은 얼마야?"
+python scripts/run_rag_chat.py --config configs/experiments/rag/rag_langchain.yaml --project-root . --question "예산은 얼마야?"
+python scripts/run_rag_chat.py --config configs/experiments/rag/rag_langchain.yaml --project-root . --evaluate
 python scripts/compare_rag_retrievers.py --project-root .
 ```
 
 ## RAG 산출물
 
 ```text
-experiments/rag_semantic/
+experiments/rag_langchain/
 |-- config.yaml
 |-- parsed_documents.csv
 |-- chunks.csv
@@ -125,15 +125,16 @@ LangChain을 쓰더라도 이 산출물 구조는 유지합니다. 즉, 계산 �
 
 ```yaml
 rag:
-  engine: local
-  chunk:
-    size: 500
-    overlap: 80
+  engine: langchain
+  splitter:
+    type: recursive_character
+    chunk_size: 500
+    chunk_overlap: 80
   embedding:
     provider: local
     model_name: hashing-char-ngram-v1
   retriever:
-    method: hybrid
+    method: similarity
     top_k: 3
   answerer:
     mode: extractive
@@ -143,7 +144,7 @@ rag:
     resume: true
 ```
 
-LangChain 기반 실행 후보는 `configs/examples/rag/rag_langchain_ollama.yaml`에서 확인합니다.
+Ollama/OpenAI 같은 생성형 답변 후보는 `configs/examples/rag/rag_langchain_ollama.yaml`에서 확인합니다.
 
 자세한 config 설명은 [configs/README.md](configs/README.md)를 봅니다.
 

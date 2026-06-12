@@ -15,7 +15,7 @@ from src.rag.pipeline import run_rag_chat, run_rag_evaluation
 def main() -> None:
     """RAG 답변을 생성하거나 평가 질문 세트를 실행합니다."""
     parser = argparse.ArgumentParser()
-    parser.add_argument("--config", default="configs/experiments/rag/rag_semantic.yaml")
+    parser.add_argument("--config", default="configs/experiments/rag/rag_langchain.yaml")
     parser.add_argument("--project-root", default=".")
     parser.add_argument("--question")
     parser.add_argument("--evaluate", action="store_true")

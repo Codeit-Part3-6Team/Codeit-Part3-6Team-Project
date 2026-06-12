@@ -131,6 +131,7 @@ def test_compare_rag_retrievers_writes_report(isolated_project: Path, repo_root:
     )
 
     assert [row["retriever_method"] for row in rows] == ["keyword", "semantic", "hybrid"]
+    assert [row["engine"] for row in rows] == ["local", "local", "local"]
     assert rows[0]["retrieval_hit_rate"] == 1.0
     assert (isolated_project / "reports" / "rag_retriever_comparison.csv").exists()
 
@@ -146,7 +147,18 @@ def test_compare_rag_retrievers_writes_report(isolated_project: Path, repo_root:
         text=True,
     )
 
-    assert "wrote reports/rag_retriever_comparison.csv (3 retrievers)" in result.stdout
+    assert "wrote reports/rag_retriever_comparison.csv (4 retrievers)" in result.stdout
+    assert "rag_langchain,langchain,similarity,local,local" in result.stdout
+
+
+def test_rag_langchain_default_config_runs_pipeline(isolated_project: Path):
+    config = isolated_project / "configs" / "experiments" / "rag" / "rag_langchain.yaml"
+
+    metrics = run_rag_evaluation(config, isolated_project)
+
+    assert metrics["retrieval_hit_rate"] == 1.0
+    assert metrics["citation_correct_rate"] == 1.0
+    assert (isolated_project / "experiments" / "rag_langchain" / "metrics.json").exists()
 
 
 def test_rag_hybrid_retriever_config_runs_pipeline(isolated_project: Path):

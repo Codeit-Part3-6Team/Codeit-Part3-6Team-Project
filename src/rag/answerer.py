@@ -20,8 +20,7 @@ def build_answer(
             "status": "not_found",
         }
 
-    best_chunk = retrieved_chunks[0]
-    answer_text = _select_sentence(question, str(best_chunk["text"])) or str(best_chunk["text"])
+    best_chunk, answer_text = _select_best_evidence(question, retrieved_chunks)
     citations = [
         {
             "chunk_id": best_chunk["chunk_id"],
@@ -39,27 +38,49 @@ def build_answer(
     }
 
 
+def _select_best_evidence(question: str, retrieved_chunks: list[dict[str, Any]]) -> tuple[dict[str, Any], str]:
+    """top-k 검색 결과 전체에서 질문과 가장 잘 맞는 chunk와 문장을 고릅니다."""
+    best_chunk = retrieved_chunks[0]
+    best_sentence = _select_sentence(question, str(best_chunk["text"])) or str(best_chunk["text"])
+    best_score = _sentence_score(question, best_sentence)
+
+    for chunk in retrieved_chunks:
+        sentence = _select_sentence(question, str(chunk["text"])) or str(chunk["text"])
+        score = _sentence_score(question, sentence)
+        if score > best_score:
+            best_chunk = chunk
+            best_sentence = sentence
+            best_score = score
+    return best_chunk, best_sentence
+
+
 def _select_sentence(question: str, text: str) -> str:
     """chunk 안에서 질문 token과 가장 많이 겹치는 문장을 고릅니다."""
     sentences = _split_sentences(text)
     if not sentences:
         return text.strip()
 
-    query_tokens = _tokenize(question)
     best_sentence = sentences[0]
     best_score = -1
     for sentence in sentences:
-        score = len(query_tokens & _tokenize(sentence))
-        if "얼마" in question and "예산" in sentence:
-            score += 2
-        if "언제" in question and "마감" in sentence:
-            score += 2
-        if "자격" in question and "자격" in sentence:
-            score += 2
+        score = _sentence_score(question, sentence)
         if score > best_score:
             best_sentence = sentence
             best_score = score
     return best_sentence
+
+
+def _sentence_score(question: str, sentence: str) -> int:
+    """질문 의도와 문장 token이 겹치는 정도를 간단한 점수로 계산합니다."""
+    query_tokens = _tokenize(question)
+    score = len(query_tokens & _tokenize(sentence))
+    if "얼마" in question and "예산" in sentence:
+        score += 2
+    if "언제" in question and "마감" in sentence:
+        score += 2
+    if "자격" in question and "자격" in sentence:
+        score += 2
+    return score
 
 
 def _split_sentences(text: str) -> list[str]:

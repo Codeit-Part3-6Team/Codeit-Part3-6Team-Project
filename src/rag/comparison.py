@@ -12,7 +12,10 @@ from src.utils.paths import ensure_dir
 
 COMPARISON_COLUMNS = [
     "experiment",
+    "engine",
     "retriever_method",
+    "embedding_provider",
+    "answerer_provider",
     "retrieval_hit_rate",
     "answer_contains_expected_rate",
     "citation_correct_rate",
@@ -36,11 +39,17 @@ def compare_rag_retrievers(
         metrics = run_rag_evaluation(resolved_config_path, root)
         output_dir = resolve_experiment_dir(root, config)
         experiment = config.get("experiment", {})
-        retriever = config.get("rag", {}).get("retriever", {})
+        rag = config.get("rag", {})
+        retriever = rag.get("retriever", {})
+        embedding = rag.get("embedding", {})
+        answerer = rag.get("answerer", {})
         rows.append(
             {
                 "experiment": experiment.get("name", output_dir.name),
+                "engine": rag.get("engine", "local"),
                 "retriever_method": retriever.get("method", "keyword"),
+                "embedding_provider": embedding.get("provider", ""),
+                "answerer_provider": answerer.get("provider", "local"),
                 "retrieval_hit_rate": metrics.get("retrieval_hit_rate", ""),
                 "answer_contains_expected_rate": metrics.get("answer_contains_expected_rate", ""),
                 "citation_correct_rate": metrics.get("citation_correct_rate", ""),

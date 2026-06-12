@@ -5,6 +5,8 @@ from pathlib import Path
 from typing import Any
 
 from src.rag.answerer import build_answer
+from src.rag.chunker import chunk_documents as local_chunk_documents
+from src.rag.embedder import DEFAULT_EMBEDDING_MODEL, embed_text
 
 
 @dataclass
@@ -23,17 +25,19 @@ class LangChainRagEngine:
         splitter_type = splitter_cfg.get("type", splitter_cfg.get("provider", "recursive_character"))
         if splitter_type not in {"recursive_character", "langchain", "recursive"}:
             raise NotImplementedError(f"unsupported LangChain splitter type: {splitter_type}")
+        chunk_size = int(splitter_cfg.get("chunk_size", splitter_cfg.get("size", 500)))
+        chunk_overlap = int(splitter_cfg.get("chunk_overlap", splitter_cfg.get("overlap", 80)))
         try:
             from langchain_core.documents import Document
             from langchain_text_splitters import RecursiveCharacterTextSplitter
         except ImportError as exc:
+            if self._can_use_dependency_free_fallback():
+                return local_chunk_documents(documents, chunk_size=chunk_size, overlap=chunk_overlap)
             raise ImportError(
                 "LangChain splitter를 사용하려면 langchain-core와 langchain-text-splitters가 필요합니다. "
                 "`pip install -r requirements.txt`를 실행하세요."
             ) from exc
 
-        chunk_size = int(splitter_cfg.get("chunk_size", splitter_cfg.get("size", 500)))
-        chunk_overlap = int(splitter_cfg.get("chunk_overlap", splitter_cfg.get("overlap", 80)))
         splitter = RecursiveCharacterTextSplitter(chunk_size=chunk_size, chunk_overlap=chunk_overlap)
         lc_docs = [
             Document(
@@ -129,6 +133,11 @@ class LangChainRagEngine:
         embedding_cfg = self.rag_config.get("embedding", {})
         provider = str(embedding_cfg.get("provider", embedding_cfg.get("type", "huggingface")) or "huggingface")
         model_name = str(embedding_cfg.get("model_name", "") or "")
+        if provider == "local":
+            return LocalLangChainEmbeddings(
+                dimension=int(embedding_cfg.get("dimension", 64)),
+                model_name=model_name or DEFAULT_EMBEDDING_MODEL,
+            )
         if provider == "huggingface":
             try:
                 from langchain_huggingface import HuggingFaceEmbeddings
@@ -196,6 +205,26 @@ class LangChainRagEngine:
         path = vector_store_cfg.get("path") or vector_store_cfg.get("persist_dir") or "vector_store"
         candidate = Path(path)
         return candidate if candidate.is_absolute() else self.output_dir / candidate
+
+    def _can_use_dependency_free_fallback(self) -> bool:
+        embedding_provider = self.rag_config.get("embedding", {}).get("provider", "local")
+        answerer_provider = self.rag_config.get("answerer", {}).get("provider", "local")
+        vector_store_type = self.rag_config.get("vector_store", {}).get("type", "memory")
+        return embedding_provider == "local" and answerer_provider == "local" and vector_store_type == "memory"
+
+
+@dataclass
+class LocalLangChainEmbeddings:
+    """외부 모델 없이 LangChain 엔진을 검증하기 위한 local embedding wrapper입니다."""
+
+    dimension: int = 64
+    model_name: str = DEFAULT_EMBEDDING_MODEL
+
+    def embed_documents(self, texts: list[str]) -> list[list[float]]:
+        return [embed_text(text, dimension=self.dimension) for text in texts]
+
+    def embed_query(self, text: str) -> list[float]:
+        return embed_text(text, dimension=self.dimension)
 
 
 def _document_from_chunk(chunk: dict[str, str]) -> Any:

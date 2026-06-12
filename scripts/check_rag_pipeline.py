@@ -15,7 +15,7 @@ from src.rag.validation import check_rag_pipeline
 def main() -> None:
     """RAG pipeline 실행 전 config와 입력 경로를 점검합니다."""
     parser = argparse.ArgumentParser()
-    parser.add_argument("--config", default="configs/experiments/rag/rag_semantic.yaml")
+    parser.add_argument("--config", default="configs/experiments/rag/rag_langchain.yaml")
     parser.add_argument("--project-root", default=".")
     args = parser.parse_args()
 

@@ -23,6 +23,7 @@ def main() -> None:
             "configs/experiments/rag/rag_keyword.yaml",
             "configs/experiments/rag/rag_semantic.yaml",
             "configs/experiments/rag/rag_hybrid.yaml",
+            "configs/experiments/rag/rag_langchain.yaml",
         ],
     )
     parser.add_argument("--output", default="reports/rag_retriever_comparison.csv")
