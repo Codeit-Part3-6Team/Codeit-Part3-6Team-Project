@@ -1,0 +1,96 @@
+title: "[데일리 리포트] "
+labels: ["daily"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        오늘 진행 상황, 막힌 점, 다음 액션을 짧게 공유합니다.
+        감시용 문서가 아니라 팀의 막힘을 빨리 발견하기 위한 기록입니다.
+
+  - type: input
+    id: date
+    attributes:
+      label: 날짜
+      description: 작성 기준 날짜를 적어주세요.
+      placeholder: "2026-06-13"
+    validations:
+      required: true
+
+  - type: input
+    id: author
+    attributes:
+      label: 작성자
+      description: 이름 또는 GitHub ID를 적어주세요.
+      placeholder: "홍길동 / @github-id"
+    validations:
+      required: true
+
+  - type: dropdown
+    id: role
+    attributes:
+      label: 역할
+      description: 오늘 작업 기준으로 가장 가까운 역할을 선택해주세요.
+      options:
+        - PM
+        - Data Engineer
+        - Experiment Lead / Model Engineer
+        - Application Engineer
+        - Presentation Lead
+        - 공통 / 기타
+    validations:
+      required: true
+
+  - type: textarea
+    id: done
+    attributes:
+      label: 오늘 한 일
+      description: 완료했거나 확인한 내용을 bullet로 적어주세요.
+      value: |
+        -
+        -
+    validations:
+      required: true
+
+  - type: textarea
+    id: evidence
+    attributes:
+      label: 확인한 산출물 / 링크
+      description: Issue, PR, config, notebook, experiment 경로, metrics 등을 남겨주세요.
+      placeholder: |
+        - Issue:
+        - PR:
+        - config:
+        - notebook:
+        - experiment:
+    validations:
+      required: false
+
+  - type: textarea
+    id: blockers
+    attributes:
+      label: 막힌 점 / 도움이 필요한 점
+      description: 막힌 점이 없으면 "없음"이라고 적어주세요.
+      placeholder: "없음"
+    validations:
+      required: true
+
+  - type: textarea
+    id: next
+    attributes:
+      label: 다음 액션
+      description: 다음에 바로 할 작업을 작게 쪼개서 적어주세요.
+      value: |
+        - [ ]
+        - [ ]
+    validations:
+      required: true
+
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: 작성 전 확인
+      options:
+        - label: 필요한 경우 Issue/PR/실험 산출물 링크를 남겼습니다.
+          required: false
+        - label: 막힌 점이 있다면 도움을 요청할 사람이나 필요한 결정을 적었습니다.
+          required: false
