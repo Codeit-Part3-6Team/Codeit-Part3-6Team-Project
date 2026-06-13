@@ -1,35 +1,18 @@
-title: "[데일리 리포트] "
-labels: ["daily"]
+title: "[데일리 리포트] 이름 - 2026년 0월 0일"
+labels: ["daily-report"]
 body:
   - type: markdown
     attributes:
       value: |
-        오늘 진행 상황, 막힌 점, 다음 액션을 짧게 공유합니다.
-        감시용 문서가 아니라 팀의 막힘을 빨리 발견하기 위한 기록입니다.
-
-  - type: input
-    id: date
-    attributes:
-      label: 날짜
-      description: 작성 기준 날짜를 적어주세요.
-      placeholder: "2026-06-13"
-    validations:
-      required: true
-
-  - type: input
-    id: author
-    attributes:
-      label: 작성자
-      description: 이름 또는 GitHub ID를 적어주세요.
-      placeholder: "홍길동 / @github-id"
-    validations:
-      required: true
+        ## 데일리 리포트
+        오늘 진행한 일, 막힌 점, 다음 액션을 짧게 공유합니다.
+        제목의 이름과 날짜는 직접 바꿔 주세요.
 
   - type: dropdown
     id: role
     attributes:
-      label: 역할
-      description: 오늘 작업 기준으로 가장 가까운 역할을 선택해주세요.
+      label: 오늘의 역할
+      description: 오늘 작업 기준으로 가장 가까운 역할을 선택해 주세요.
       options:
         - PM
         - Data Engineer
@@ -41,56 +24,60 @@ body:
       required: true
 
   - type: textarea
-    id: done
+    id: progress
     attributes:
-      label: 오늘 한 일
-      description: 완료했거나 확인한 내용을 bullet로 적어주세요.
+      label: 진행 내용과 완료도
+      description: 작업 항목별 진행률과 간단한 메모를 남겨 주세요. 행은 자유롭게 추가하거나 삭제해도 됩니다.
       value: |
-        -
-        -
+        | 작업 항목 | 진행률 | 메모 |
+        | --- | --- | --- |
+        |  | 0% |  |
+        |  | 0% |  |
     validations:
       required: true
 
   - type: textarea
     id: evidence
     attributes:
-      label: 확인한 산출물 / 링크
-      description: Issue, PR, config, notebook, experiment 경로, metrics 등을 남겨주세요.
+      label: 공유할 링크 / 산출물
+      description: 관련 Issue, PR, config, notebook, experiment, 문서 링크가 있으면 남겨 주세요.
       placeholder: |
         - Issue:
         - PR:
         - config:
         - notebook:
         - experiment:
+        - docs:
     validations:
       required: false
 
   - type: textarea
     id: blockers
     attributes:
-      label: 막힌 점 / 도움이 필요한 점
-      description: 막힌 점이 없으면 "없음"이라고 적어주세요.
-      placeholder: "없음"
+      label: 막힌 점 / 협업 이슈
+      description: 의존성, 결정 필요 사항, 커뮤니케이션 이슈가 있으면 적어 주세요. 없으면 "없음"이라고 적어 주세요.
+      placeholder: |
+        - 없음
     validations:
       required: true
+
+  - type: textarea
+    id: insight
+    attributes:
+      label: 인사이트 / 발견한 점
+      description: 작업하면서 알게 된 점, 개선 아이디어, 주의해야 할 점을 적어 주세요.
+      placeholder: |
+        - 없음
+    validations:
+      required: false
 
   - type: textarea
     id: next
     attributes:
       label: 다음 액션
-      description: 다음에 바로 할 작업을 작게 쪼개서 적어주세요.
+      description: 다음 작업을 바로 시작할 수 있을 정도로 작게 적어 주세요.
       value: |
         - [ ]
         - [ ]
     validations:
       required: true
-
-  - type: checkboxes
-    id: checks
-    attributes:
-      label: 작성 전 확인
-      options:
-        - label: 필요한 경우 Issue/PR/실험 산출물 링크를 남겼습니다.
-          required: false
-        - label: 막힌 점이 있다면 도움을 요청할 사람이나 필요한 결정을 적었습니다.
-          required: false
