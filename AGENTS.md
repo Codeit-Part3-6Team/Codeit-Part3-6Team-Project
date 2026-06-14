@@ -59,12 +59,6 @@ tests/                   단위 테스트와 smoke test
 python -m pytest
 ```
 
-작은 문서 변경만 했을 때는 최소한 아래 테스트를 확인합니다.
-
-```bash
-python -m pytest tests/test_docs_structure.py
-```
-
 RAG 파이프라인을 건드렸다면 아래 테스트를 우선 확인합니다.
 
 ```bash

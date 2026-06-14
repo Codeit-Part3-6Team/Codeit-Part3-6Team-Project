@@ -88,10 +88,10 @@ run_rag_chat.py
 | RAG CLI 추가 | `scripts/` | `scripts/README.md`, `tests/test_scripts.py` |
 | 참고용 분류 CLI 수정 | `scripts/examples/classification/` | `scripts/examples/classification/README.md`, `tests/test_scripts.py` |
 | 노트북 변경 | `notebooks/` | `tests/test_notebooks.py` |
-| 문서 구조 변경 | `docs/` | `tests/test_docs_structure.py` |
+| 문서 구조 변경 | `docs/` | 관련 README와 링크를 함께 확인 |
 | 실제 포맷 점검 추가 | `data/rag_realistic/`, `configs/experiments/rag/*.yaml`, `tests/test_rag_quality_gate.py` | `docs/team/rehearsal.md`, `docs/md/overview/RAG_QUALITY_CHECKLIST.md` |
-| HTML 설명 자료 정리 | `docs/html/`, `tests/test_docs_structure.py` | `docs/html/README.md`, `docs/team/kickoff.md` |
-| LLM 문서 최신화 | `docs/llm/`, `tests/test_docs_structure.py` | `AGENTS.md`, `docs/team/README.md` |
+| HTML 설명 자료 정리 | `docs/html/` | `docs/html/README.md`, `docs/team/kickoff.md` |
+| LLM 문서 최신화 | `docs/llm/` | `AGENTS.md`, `docs/team/README.md` |
 
 ## Engine 판단 기준
 
