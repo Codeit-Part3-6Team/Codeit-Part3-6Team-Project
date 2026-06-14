@@ -8,7 +8,7 @@
 
 | 순서 | 문서 | 목적 |
 | --- | --- | --- |
-| 1 | [kickoff.md](kickoff.md) | 프로젝트가 무엇이고 어떻게 설명할지 |
+| 1 | [kickoff.md](kickoff.md) | 프로젝트 목표, 운영 방식, 역할, 리스크 합의 |
 | 2 | [timeline.md](timeline.md) | 공식 프로젝트 기간과 평일 기준 작업 흐름 |
 | 3 | [operations.md](operations.md) | Issue, PR, Daily Report를 어떻게 쓸지 |
 | 4 | [workflow.md](workflow.md) | Data 준비부터 발표까지 어떻게 이어지는지 |
