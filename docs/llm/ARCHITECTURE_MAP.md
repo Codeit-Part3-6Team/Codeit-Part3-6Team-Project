@@ -30,7 +30,8 @@ experiments/ + reports/
 | `experiments/` | 실험 결과 | 자동 생성 산출물은 보통 커밋하지 않음 |
 | `reports/` | 공유용 요약 | 필요한 결과만 선별 |
 | `docs/md/` | 관리용 Markdown | 문서 원본 |
-| `docs/html/` | 공유/설명용 HTML | 발표나 킥오프용 |
+| `docs/html/` | 공유/설명용 HTML | Markdown 백업본이 아니라 킥오프와 설명에 직접 쓰는 자료만 유지 |
+| `docs/llm/` | LLM 작업용 컨텍스트 | 실제 코드/문서 구조가 바뀌면 함께 갱신 |
 | `tests/` | 회귀 방지 테스트 | 기능 변경 시 함께 갱신 |
 
 ## RAG 실행 흐름
@@ -67,7 +68,7 @@ run_rag_chat.py
 | config | 데이터 | 확인 범위 |
 | --- | --- | --- |
 | `configs/experiments/rag/rag_langchain.yaml` | `data/rag_sample/` | TXT 샘플 기준 기본 RAG 흐름 |
-| `configs/experiments/rag/rag_realistic_docs.yaml` | `data/rag_realistic/` | DOCX/HWPX loader, chunk, retrieval, answer, evaluation E2E |
+| `configs/experiments/rag/rag_realistic_docs.yaml` | `data/rag_realistic/` | DOCX/HWPX loader, chunk, retrieval, answer, evaluation 점검 |
 | `configs/experiments/rag/rag_keyword.yaml` | `data/rag_sample/` | local keyword retriever 비교 |
 | `configs/experiments/rag/rag_semantic.yaml` | `data/rag_sample/` | local semantic retriever 비교 |
 | `configs/experiments/rag/rag_hybrid.yaml` | `data/rag_sample/` | local hybrid retriever 비교 |
@@ -88,7 +89,9 @@ run_rag_chat.py
 | 참고용 분류 CLI 수정 | `scripts/examples/classification/` | `scripts/examples/classification/README.md`, `tests/test_scripts.py` |
 | 노트북 변경 | `notebooks/` | `tests/test_notebooks.py` |
 | 문서 구조 변경 | `docs/` | `tests/test_docs_structure.py` |
-| 실제 포맷 E2E 검증 추가 | `data/rag_realistic/`, `configs/experiments/rag/*.yaml`, `tests/test_rag_quality_gate.py` | `docs/md/overview/RAG_QUALITY_CHECKLIST.md` |
+| 실제 포맷 점검 추가 | `data/rag_realistic/`, `configs/experiments/rag/*.yaml`, `tests/test_rag_quality_gate.py` | `docs/team/rehearsal.md`, `docs/md/overview/RAG_QUALITY_CHECKLIST.md` |
+| HTML 설명 자료 정리 | `docs/html/`, `tests/test_docs_structure.py` | `docs/html/README.md`, `docs/team/kickoff.md` |
+| LLM 문서 최신화 | `docs/llm/`, `tests/test_docs_structure.py` | `AGENTS.md`, `docs/team/README.md` |
 
 ## Engine 판단 기준
 

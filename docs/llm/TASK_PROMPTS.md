@@ -52,14 +52,15 @@ validation, 예시 config, 테스트, 문서까지 같이 맞춰줘.
 필요한 테스트를 추가하고, 마지막에 어떤 리스크가 테스트로 고정됐는지 정리해줘.
 ```
 
-## 실제 문서 포맷 E2E 검증 요청
+## 실제 문서 포맷과 산출물 점검 요청
 
 ```text
 AGENTS.md, docs/llm/PROJECT_CONTEXT.md, docs/md/overview/RAG_QUALITY_CHECKLIST.md를 읽고 진행해줘.
-DOCX/HWPX/PDF 같은 실제 문서 포맷이 RAG pipeline에서 check -> ingest -> chat --evaluate 순서로 동작하는지 검증해줘.
+DOCX/HWPX/PDF 같은 실제 문서 포맷과 RAG artifact가 설명 가능한 상태인지 점검해줘.
 저장소 fixture는 configs/experiments/rag/rag_realistic_docs.yaml과 data/rag_realistic/을 먼저 사용해줘.
 실제 외부 원문을 추가로 쓰는 경우 원본 데이터나 큰 파일은 Git에 넣지 말고, 재현 가능한 작은 fixture와 config만 남겨줘.
 검증 결과는 documents/chunks/embeddings count, metrics.json 값, 실패 CSV 여부 중심으로 정리해줘.
+팀 공유 문서에 반영할 내용이 있으면 docs/team/rehearsal.md를 갱신해줘.
 ```
 
 ## LLM Answerer 도입 검토 요청
@@ -104,6 +105,7 @@ RAG 프로젝트 기준으로 Data Engineer, Experiment Lead, Application Engine
 ```text
 notebooks/README.md와 docs/md/experiments/EXPERIMENT_GUIDE.md를 읽고 진행해줘.
 처음 보는 팀원이 노트북에서 어떤 config 값을 바꿔야 하는지 이해할 수 있는지 점검해줘.
+로컬 RAG 노트북은 config 하나를 선택해 실행하는 흐름으로 유지하고, 비교 실험이나 문서 포맷 점검을 같은 노트북에 섞지 말아줘.
 설명 셀, metric 확인, 그래프 확인, 산출물 경로 설명이 부족하면 보강해줘.
 JSON을 그대로 보여주는 셀은 사람이 읽기 좋은 표나 요약 출력으로 바꿀 수 있는지 확인해줘.
 ```
@@ -116,4 +118,13 @@ docs/README.md와 docs/team/README.md를 읽고 진행해줘.
 팀원이 처음 볼 문서와 세부 참고 문서가 섞이지 않게 정리해줘.
 HTML은 모든 Markdown의 백업본이 아니라 설명에 직접 쓰는 자료만 유지해줘.
 문서 삭제나 이동이 있으면 링크와 테스트도 함께 갱신해줘.
+```
+
+## HTML 설명 자료 정리 요청
+
+```text
+docs/html/README.md와 docs/team/kickoff.md를 읽고 진행해줘.
+HTML은 Markdown 백업본으로 늘리지 말고, 킥오프나 설명에 직접 쓰는 3개 자료만 유지해줘.
+HTML 본문이 현재 역할명, config 키, LangChain 기반 RAG harness 방향과 맞는지 확인해줘.
+낡은 표현이 있으면 HTML과 README를 함께 고치고, tests/test_docs_structure.py로 허용 HTML 목록과 금지 표현을 검증해줘.
 ```

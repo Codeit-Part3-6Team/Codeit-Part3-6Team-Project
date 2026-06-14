@@ -31,8 +31,7 @@ docs/md/
 |-- rag/          RAG 입력/출력, 검색, 답변, 평가 계약
 |-- data/         데이터 제공 형식과 원본 데이터 관리 기준
 |-- experiments/  실험 실행, Colab, 노트북 사용법
-|-- overview/     전체 구조, 모듈 관계, 인프라 체크리스트
-`-- rag/          RAG 입력/출력, 검색, 답변, 평가 계약
+`-- overview/     전체 구조, 모듈 관계, 인프라 체크리스트
 ```
 
 ## 역할별로 찾을 참고 문서
@@ -40,7 +39,7 @@ docs/md/
 | 역할 | 참고 문서 |
 | --- | --- |
 | Data Engineer | [data/DATA_CONTRACT.md](data/DATA_CONTRACT.md), [rag/RAG_PIPELINE_SPEC.md](rag/RAG_PIPELINE_SPEC.md) |
-| Experiment Lead / Model Engineer | [experiments/EXPERIMENT_GUIDE.md](experiments/EXPERIMENT_GUIDE.md), [overview/RAG_QUALITY_CHECKLIST.md](overview/RAG_QUALITY_CHECKLIST.md) |
+| Experiment Lead | [experiments/EXPERIMENT_GUIDE.md](experiments/EXPERIMENT_GUIDE.md), [overview/RAG_QUALITY_CHECKLIST.md](overview/RAG_QUALITY_CHECKLIST.md) |
 | Application Engineer | [rag/RAG_PIPELINE_SPEC.md](rag/RAG_PIPELINE_SPEC.md), [overview/MODULE_ARCHITECTURE.md](overview/MODULE_ARCHITECTURE.md) |
 | Presentation Lead | [overview/PIPELINE_OVERVIEW.md](overview/PIPELINE_OVERVIEW.md), [../html/overview/pipeline_explainer.html](../html/overview/pipeline_explainer.html) |
 

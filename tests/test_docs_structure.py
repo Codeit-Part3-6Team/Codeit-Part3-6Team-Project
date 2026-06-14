@@ -79,6 +79,40 @@ def test_html_docs_are_curated_explainers_only() -> None:
     assert html_docs == ALLOWED_HTML_DOCS
 
 
+def test_team_facing_docs_do_not_reintroduce_stale_onboarding_terms() -> None:
+    """팀 공유/LLM/HTML 안내 문서에 예전 온보딩 표현이 다시 들어오지 않는지 확인합니다."""
+    paths = [
+        ROOT / "README.md",
+        ROOT / "notebooks" / "README.md",
+        ROOT / "docs" / "README.md",
+        ROOT / "docs" / "team",
+        ROOT / "docs" / "html",
+        ROOT / "docs" / "llm",
+        ROOT / "docs" / "md" / "README.md",
+    ]
+    forbidden_phrases = [
+        "비전공자",
+        "팀 공유 전 리허설",
+        "마지막 리허설 섹션",
+        "Experiment Lead / Model Engineer",
+        "데일리-리포트.yml",
+        "RAG_REALISTIC",
+    ]
+
+    offenders: list[str] = []
+    for path in paths:
+        files = path.rglob("*") if path.is_dir() else [path]
+        for file_path in files:
+            if file_path.suffix.lower() not in {".md", ".html"}:
+                continue
+            text = file_path.read_text(encoding="utf-8")
+            for phrase in forbidden_phrases:
+                if phrase in text:
+                    offenders.append(f"{file_path.relative_to(ROOT)}: {phrase}")
+
+    assert not offenders, f"오래된 온보딩 표현이 남아 있습니다: {offenders}"
+
+
 def test_llm_prompts_preserve_langchain_harness_boundary() -> None:
     """LLM 요청 프롬프트가 LangChain 전환 후에도 산출물 계약을 먼저 설명하는지 확인합니다."""
     text = (ROOT / "docs" / "llm" / "TASK_PROMPTS.md").read_text(encoding="utf-8")
@@ -90,6 +124,8 @@ def test_llm_prompts_preserve_langchain_harness_boundary() -> None:
         "answers.jsonl",
         "metrics.json",
         "HTML은 모든 Markdown의 백업본이 아니라",
+        "로컬 RAG 노트북은 config 하나를 선택해 실행하는 흐름",
+        "HTML 설명 자료 정리 요청",
     ]
 
     missing = [phrase for phrase in required_phrases if phrase not in text]

@@ -40,7 +40,7 @@ docs/
 
 HTML은 모든 Markdown의 변환본이 아닙니다. 발표나 설명에 직접 도움이 되는 시각 자료만 남깁니다.
 
-- [html/overview/pipeline_explainer.html](html/overview/pipeline_explainer.html): 비전공자에게 설명하기 쉬운 파이프라인 소개
+- [html/overview/pipeline_explainer.html](html/overview/pipeline_explainer.html): 팀원에게 RAG 흐름을 빠르게 보여주는 파이프라인 소개
 - [html/overview/module_architecture.html](html/overview/module_architecture.html): 모듈 관계와 RAG 구조 다이어그램
 - [html/kickoff/kickoff.html](html/kickoff/kickoff.html): 킥오프 공유용 HTML 문서
 
