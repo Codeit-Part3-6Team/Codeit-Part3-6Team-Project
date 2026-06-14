@@ -107,6 +107,27 @@ def test_llm_context_mentions_realistic_rag_e2e_config() -> None:
         assert "DOCX/HWPX" in text
 
 
+def test_llm_docs_describe_rag_first_examples_boundary() -> None:
+    """LLM 문서가 RAG 메인 경로와 참고용 examples 경계를 설명하는지 확인합니다."""
+    context = (ROOT / "docs" / "llm" / "PROJECT_CONTEXT.md").read_text(encoding="utf-8")
+    architecture = (ROOT / "docs" / "llm" / "ARCHITECTURE_MAP.md").read_text(encoding="utf-8")
+    checklist = (ROOT / "docs" / "llm" / "WORKFLOW_CHECKLIST.md").read_text(encoding="utf-8")
+
+    required = [
+        (context, "configs/examples/classification/"),
+        (context, "data/examples/classification/"),
+        (context, "scripts/examples/classification/"),
+        (architecture, "configs/experiments/rag/"),
+        (architecture, "scripts/run_rag_*.py"),
+        (architecture, "scripts/examples/classification/"),
+        (checklist, "루트 `scripts/`에는 RAG 공식 CLI"),
+        (checklist, "분류/HuggingFace 참고 script"),
+    ]
+    missing = [phrase for text, phrase in required if phrase not in text]
+
+    assert not missing, f"LLM 문서에 RAG/examples 경계 설명이 없습니다: {missing}"
+
+
 def test_data_contract_is_rag_first() -> None:
     """데이터 계약 문서가 RAG 원본 문서와 평가 질문을 먼저 설명하는지 확인합니다."""
     text = (ROOT / "docs" / "md" / "data" / "DATA_CONTRACT.md").read_text(encoding="utf-8")

@@ -3,10 +3,10 @@
 ## 전체 흐름
 
 ```text
-configs/*.yaml
+configs/experiments/rag/*.yaml
     |
     v
-scripts/*.py
+scripts/run_rag_*.py
     |
     v
 src/
@@ -19,8 +19,12 @@ experiments/ + reports/
 
 | 경로 | 책임 | 주의 |
 | --- | --- | --- |
-| `configs/` | 실험 조건과 실행 정책 | 새 실험은 기존 config 복사로 시작 |
-| `scripts/` | 사람이 실행하는 CLI 진입점 | 로직을 많이 넣지 않음 |
+| `configs/experiments/rag/` | 실제 RAG 실험 조건과 실행 정책 | 새 RAG 실험은 기존 config 복사로 시작 |
+| `configs/examples/` | 참고용 config | 분류/HF/smoke/preprocess는 메인 실험이 아님 |
+| `scripts/` | RAG 공식 CLI 진입점 | 루트에는 RAG 실행 script를 우선 둠 |
+| `scripts/examples/classification/` | 기존 분류/HF 참고 script | 새 팀원에게 기본 실행 경로로 안내하지 않음 |
+| `data/rag_sample/`, `data/rag_realistic/` | RAG 샘플 문서와 평가 질문 | Git에 남기는 작은 fixture |
+| `data/examples/classification/` | 기존 분류/HF 참고 fixture | RAG 메인 데이터가 아님 |
 | `src/` | 재사용 가능한 구현 코드 | 테스트와 docstring 갱신 |
 | `src/rag/` | RAG 구현체 | 입력/출력 계약 유지 |
 | `experiments/` | 실험 결과 | 자동 생성 산출물은 보통 커밋하지 않음 |
@@ -80,7 +84,8 @@ run_rag_chat.py
 | answerer 구현 추가 | `src/rag/engines/langchain.py`, `src/rag/answerer.py` | `tests/test_rag_pipeline.py` |
 | LLM answerer provider 추가 | `src/rag/engines/langchain.py`, `src/rag/validation.py` | `configs/README.md`, `tests/test_rag_validation.py` |
 | artifact 정책 변경 | `src/artifacts.py` | `tests/test_experiments.py` |
-| CLI 추가 | `scripts/` | `scripts/README.md`, `tests/test_scripts.py` |
+| RAG CLI 추가 | `scripts/` | `scripts/README.md`, `tests/test_scripts.py` |
+| 참고용 분류 CLI 수정 | `scripts/examples/classification/` | `scripts/examples/classification/README.md`, `tests/test_scripts.py` |
 | 노트북 변경 | `notebooks/` | `tests/test_notebooks.py` |
 | 문서 구조 변경 | `docs/` | `tests/test_docs_structure.py` |
 | 실제 포맷 E2E 검증 추가 | `data/rag_realistic/`, `configs/experiments/rag/*.yaml`, `tests/test_rag_quality_gate.py` | `docs/md/overview/RAG_QUALITY_CHECKLIST.md` |

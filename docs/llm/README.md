@@ -50,6 +50,7 @@ LLM에게 작업을 맡길 때는 먼저 루트 `AGENTS.md`를 읽게 합니다.
 
 - 실제 코드 구조가 바뀌면 `ARCHITECTURE_MAP.md`를 함께 갱신합니다.
 - 구현 상태가 바뀌면 `PROJECT_CONTEXT.md`의 구현/미구현 목록을 갱신합니다.
+- data/config/scripts 구조를 바꾸면 RAG 메인 경로와 `examples/` 참고 경로가 섞이지 않는지 확인합니다.
 - LLM에게 자주 맡길 작업이 생기면 `TASK_PROMPTS.md`에 요청 예시를 추가합니다.
 - 운영 방식이나 첫 주 태스크가 바뀌면 `docs/team/` 문서를 먼저 확인합니다.
 - 팀원이 처음 볼 문서와 LLM용 내부 문서는 섞지 않습니다.

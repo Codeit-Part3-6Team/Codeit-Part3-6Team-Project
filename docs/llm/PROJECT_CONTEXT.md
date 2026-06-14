@@ -16,7 +16,13 @@
 
 현재 프로젝트의 중심은 RAG입니다.
 
-분류 모델, HuggingFace fine-tuning, 이미지/text 동작 확인는 파이프라인 구조 검증과 참고용 예제로 남아 있습니다. 새 기능을 추가할 때 기본 판단 기준은 RAG 실험에 도움이 되는지입니다.
+분류 모델, HuggingFace fine-tuning, 이미지/text 동작 확인은 파이프라인 구조 검증과 참고용 예제로 남아 있습니다. 새 기능을 추가할 때 기본 판단 기준은 RAG 실험에 도움이 되는지입니다.
+
+참고용 분류 자산은 메인 경로에서 분리되어 있습니다.
+
+- config: `configs/examples/classification/`
+- data fixture: `data/examples/classification/`
+- script: `scripts/examples/classification/`
 
 ## 현재 구현된 기능
 
@@ -54,7 +60,8 @@
 1. 실제 외부 RFP 원문을 확보하면 PDF/HWP/HWPX E2E를 다시 검증합니다.
 2. 검색 품질을 비교할 수 있도록 retriever config와 metric을 정리합니다.
 3. OpenAI/Ollama answerer 또는 UI는 팀 범위, API 사용 가능 여부, 비용을 확인한 뒤 실제 실험 config로 승격합니다.
-4. 문서와 README는 팀원이 이해하기 쉬운 수준을 유지합니다.
+4. RAG와 무관한 참고 자산은 `examples/` 하위에 유지해 메인 흐름과 섞이지 않게 합니다.
+5. 문서와 README는 팀원이 이해하기 쉬운 수준을 유지합니다.
 
 ## 기준 검증 Config
 
