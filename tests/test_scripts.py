@@ -10,7 +10,7 @@ def test_run_validate_script_accepts_project_root(isolated_project: Path, repo_r
     result = subprocess.run(
         [
             sys.executable,
-            str(repo_root / "scripts" / "run_validate.py"),
+            str(repo_root / "scripts" / "examples" / "classification" / "run_validate.py"),
             "--project-root",
             str(isolated_project),
             "--data-dir",
@@ -33,7 +33,7 @@ def test_run_train_and_predict_scripts_write_experiment_artifacts(
     subprocess.run(
         [
             sys.executable,
-            str(repo_root / "scripts" / "run_train.py"),
+            str(repo_root / "scripts" / "examples" / "classification" / "run_train.py"),
             "--project-root",
             str(isolated_project),
             "--config",
@@ -46,7 +46,7 @@ def test_run_train_and_predict_scripts_write_experiment_artifacts(
     result = subprocess.run(
         [
             sys.executable,
-            str(repo_root / "scripts" / "run_predict.py"),
+            str(repo_root / "scripts" / "examples" / "classification" / "run_predict.py"),
             "--project-root",
             str(isolated_project),
             "--config",
@@ -77,7 +77,7 @@ def test_run_train_script_resolves_config_from_project_root(
     result = subprocess.run(
         [
             sys.executable,
-            str(repo_root / "scripts" / "run_train.py"),
+            str(repo_root / "scripts" / "examples" / "classification" / "run_train.py"),
             "--project-root",
             str(isolated_project),
             "--config",
@@ -101,7 +101,7 @@ def test_run_predict_script_resolves_config_from_project_root(
     subprocess.run(
         [
             sys.executable,
-            str(repo_root / "scripts" / "run_train.py"),
+            str(repo_root / "scripts" / "examples" / "classification" / "run_train.py"),
             "--project-root",
             str(isolated_project),
             "--config",
@@ -116,7 +116,7 @@ def test_run_predict_script_resolves_config_from_project_root(
     result = subprocess.run(
         [
             sys.executable,
-            str(repo_root / "scripts" / "run_predict.py"),
+            str(repo_root / "scripts" / "examples" / "classification" / "run_predict.py"),
             "--project-root",
             str(isolated_project),
             "--config",
@@ -138,7 +138,7 @@ def test_run_predict_script_writes_failure_artifacts(isolated_project: Path, rep
     subprocess.run(
         [
             sys.executable,
-            str(repo_root / "scripts" / "run_train.py"),
+            str(repo_root / "scripts" / "examples" / "classification" / "run_train.py"),
             "--project-root",
             str(isolated_project),
             "--config",
@@ -154,7 +154,7 @@ def test_run_predict_script_writes_failure_artifacts(isolated_project: Path, rep
     result = subprocess.run(
         [
             sys.executable,
-            str(repo_root / "scripts" / "run_predict.py"),
+            str(repo_root / "scripts" / "examples" / "classification" / "run_predict.py"),
             "--project-root",
             str(isolated_project),
             "--config",

@@ -52,6 +52,8 @@ def test_key_directories_have_readme() -> None:
         "outputs",
         "reports",
         "scripts",
+        "scripts/examples",
+        "scripts/examples/classification",
         "src",
         "src/models",
         "src/rag",

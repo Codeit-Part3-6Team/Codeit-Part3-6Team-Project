@@ -46,7 +46,7 @@ src/models/
 
 ## HuggingFace 모델
 
-`huggingface_sequence_classifier`는 config 기반으로 동작합니다. base model 이름, label mapping, max length 같은 값이 필요하기 때문에 `build_model()`에서 바로 만들지 않고 `scripts/run_train.py` 실행 중 전용 경로로 처리합니다.
+`huggingface_sequence_classifier`는 config 기반으로 동작합니다. base model 이름, label mapping, max length 같은 값이 필요하기 때문에 `build_model()`에서 바로 만들지 않고 `scripts/examples/classification/run_train.py` 실행 중 전용 경로로 처리합니다.
 
 예시 config:
 
