@@ -87,7 +87,7 @@ run_rag_chat.py
 | RAG CLI 추가 | `scripts/` | `scripts/README.md`, `tests/test_scripts.py` |
 | 참고용 분류 CLI 수정 | `scripts/examples/classification/` | `scripts/examples/classification/README.md`, `tests/test_scripts.py` |
 | 노트북 변경 | `notebooks/` | `tests/test_notebooks.py` |
-| 문서 구조 변경 | `docs/` | `tests/test_docs_structure.py` |
+| 문서 구조 변경 | `docs/` | 관련 README와 링크를 함께 확인 |
 | 실제 포맷 E2E 검증 추가 | `data/rag_realistic/`, `configs/experiments/rag/*.yaml`, `tests/test_rag_quality_gate.py` | `docs/md/overview/RAG_QUALITY_CHECKLIST.md` |
 
 ## Engine 판단 기준

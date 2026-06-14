@@ -17,9 +17,8 @@ mindmap
       chat
       adapters
     Docs
-      team docs
-      markdown structure
       notebook structure
+      README/link review
     Scripts
       entrypoint
       path resolution
@@ -43,7 +42,6 @@ tests/
 |-- test_rag_pipeline.py         # ingest/retrieve/chat 흐름
 |-- test_rag_adapters.py         # local fallback adapter 선택
 |-- test_notebooks.py            # RAG 노트북 구조
-|-- test_docs_structure.py       # 문서 디렉터리 구조
 |-- test_scripts.py              # 실행 스크립트 진입점
 |-- test_config.py               # config 로딩과 경로 규칙
 |-- test_pipeline_smoke.py       # 참고용 분류 config 기반 pipeline
@@ -66,12 +64,10 @@ python -m pytest \
   tests/test_rag_adapters.py
 ```
 
-## 문서와 노트북 작업 후 확인
+## 노트북 작업 후 확인
 
 ```bash
-python -m pytest \
-  tests/test_docs_structure.py \
-  tests/test_notebooks.py
+python -m pytest tests/test_notebooks.py
 ```
 
 ## 직접 RAG 실행

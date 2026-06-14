@@ -35,10 +35,10 @@
 
 | 변경 범위 | 권장 테스트 |
 | --- | --- |
-| 문서만 변경 | `python -m pytest tests/test_docs_structure.py` |
+| 문서만 변경 | 링크와 경로를 눈으로 확인하고, 관련 기능 테스트가 있으면 함께 실행 |
 | config 경로/계약 | `python -m pytest tests/test_config.py tests/test_rag_validation.py` |
 | scripts 변경 | `python -m pytest tests/test_scripts.py` |
-| data/config/scripts 구조 변경 | `python -m pytest tests/test_config.py tests/test_scripts.py tests/test_validate_data.py tests/test_docs_structure.py` |
+| data/config/scripts 구조 변경 | `python -m pytest tests/test_config.py tests/test_scripts.py tests/test_validate_data.py` |
 | RAG 구현 변경 | `python -m pytest tests/test_rag_pipeline.py tests/test_rag_adapters.py tests/test_rag_document_loader.py` |
 | 실제 문서 포맷 E2E | `python -m pytest tests/test_rag_quality_gate.py` |
 | 모델/학습 변경 | `python -m pytest tests/test_models.py tests/test_pipeline_smoke.py` |
