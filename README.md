@@ -75,7 +75,7 @@ python scripts/run_rag_chat.py --config configs/experiments/rag/rag_langchain.ya
 python scripts/run_rag_chat.py --config configs/experiments/rag/rag_langchain.yaml --project-root . --evaluate
 ```
 
-DOCX/HWPX 준실제 문서 fixture까지 확인하려면:
+DOCX/HWPX 준실제 문서 fixture는 기본 실행 흐름이 아니라, 문서 포맷을 따로 점검할 때 사용합니다. 점검 기준은 [docs/team/rehearsal.md](docs/team/rehearsal.md)를 봅니다.
 
 ```bash
 python scripts/check_rag_pipeline.py --config configs/experiments/rag/rag_realistic_docs.yaml --project-root .
@@ -83,13 +83,13 @@ python scripts/run_rag_ingest.py --config configs/experiments/rag/rag_realistic_
 python scripts/run_rag_chat.py --config configs/experiments/rag/rag_realistic_docs.yaml --project-root . --evaluate
 ```
 
-retriever 비교:
+retriever 비교가 필요할 때:
 
 ```bash
 python scripts/compare_rag_retrievers.py --project-root .
 ```
 
-팀원에게 화면으로 설명할 때는 `notebooks/rag/rag_config_run.ipynb`를 열고 마지막 리허설 섹션을 함께 확인합니다.
+팀원에게 화면으로 설명할 때는 `notebooks/rag/rag_config_run.ipynb`에서 config 하나를 선택해 `check -> ingest -> retrieve/chat -> evaluate` 흐름과 산출물을 확인합니다. 비교 실험과 문서 포맷 점검은 별도 config, 별도 Issue에서 다룹니다.
 
 ## RAG 산출물 계약
 
@@ -187,7 +187,7 @@ Ollama/OpenAI 같은 생성형 답변 후보는 `configs/examples/rag/rag_langch
 | 문서 | 용도 |
 | --- | --- |
 | [docs/team/README.md](docs/team/README.md) | 팀원이 처음 볼 문서 입구 |
-| [docs/team/rehearsal.md](docs/team/rehearsal.md) | 팀 공유 전 RAG 파이프라인 리허설 |
+| [docs/team/rehearsal.md](docs/team/rehearsal.md) | RAG 산출물 점검 체크리스트 |
 | [docs/md/rag/RAG_PIPELINE_SPEC.md](docs/md/rag/RAG_PIPELINE_SPEC.md) | RAG 입력, chunk, 검색, 답변, 평가 계약 |
 | [docs/md/data/DATA_CONTRACT.md](docs/md/data/DATA_CONTRACT.md) | RAG 원본 문서, chunk metadata, 평가 질문 계약 |
 | [docs/md/experiments/EXPERIMENT_GUIDE.md](docs/md/experiments/EXPERIMENT_GUIDE.md) | RAG 실험 실행과 결과 확인 |

@@ -51,15 +51,48 @@
     <h2>작업 흐름</h2>
     <pre>Data 준비 -> RAG config 실험 -> 검색/답변 평가 -> 데모 형태 정리 -> 시연/발표</pre>
 
+    <h2>프로젝트 기간</h2>
+    <table>
+      <thead><tr><th>구분</th><th>날짜</th><th>확인할 일</th></tr></thead>
+      <tbody>
+        <tr><td>프로젝트 설명</td><td>2026-06-17</td><td>목표, 역할, 보드 사용 방식을 맞춥니다.</td></tr>
+        <tr><td>실질 진행</td><td>2026-06-18 ~ 2026-07-07</td><td>평일 기준으로 데이터, RAG 실험, 산출물, 발표 자료를 준비합니다.</td></tr>
+        <tr><td>발표</td><td>2026-07-08</td><td>결과, 한계, 개선 방향을 설명합니다.</td></tr>
+      </tbody>
+    </table>
+
     <h2>역할별 첫 책임</h2>
     <table>
       <thead><tr><th>역할</th><th>처음 집중할 일</th><th>주요 산출물</th></tr></thead>
       <tbody>
         <tr><td>PM</td><td>역할, 보드, 일정, 막힘 관리</td><td>Issue, Kanban, 결정 로그</td></tr>
         <tr><td>Data Engineer</td><td>문서 확보, 로딩 확인, 평가 질문 준비</td><td>문서 목록, 로딩 결과, 질문 CSV</td></tr>
-        <tr><td>Experiment Lead / Model Engineer</td><td>chunk, retriever, top_k, answerer config 비교</td><td>metrics, retrieval 결과, 실패 사례</td></tr>
+        <tr><td>Experiment Lead</td><td>retriever, answerer, LangChain config, evaluation 비교</td><td>metrics, retrieval 결과, 실패 사례</td></tr>
         <tr><td>Application Engineer</td><td>질문/답변/citation 입출력 형태 정리</td><td>데모 후보, response 예시</td></tr>
         <tr><td>Presentation Lead</td><td>문제, 방법, 결과, 한계를 쉬운 말로 정리</td><td>발표 흐름, 캡처, 용어집</td></tr>
+      </tbody>
+    </table>
+
+    <h2>팀 문서 소개 순서</h2>
+    <table>
+      <thead><tr><th>순서</th><th>문서</th><th>설명할 질문</th></tr></thead>
+      <tbody>
+        <tr><td>1</td><td><code>docs/team/kickoff.md</code></td><td>무엇을 만들고 무엇을 남길 것인가?</td></tr>
+        <tr><td>2</td><td><code>docs/team/timeline.md</code></td><td>발표일까지 어떤 순서로 움직일 것인가?</td></tr>
+        <tr><td>3</td><td><code>docs/team/operations.md</code></td><td>Issue, PR, Daily Report는 어떻게 쓸 것인가?</td></tr>
+        <tr><td>4</td><td><code>docs/team/workflow.md</code></td><td>데이터, 실험, 데모, 발표는 어떻게 이어지는가?</td></tr>
+        <tr><td>5</td><td><code>docs/team/roles.md</code></td><td>각 역할은 어디까지 책임지는가?</td></tr>
+        <tr><td>6</td><td><code>docs/team/first-week.md</code></td><td>첫 주에 어떤 카드를 Ready로 옮길 것인가?</td></tr>
+      </tbody>
+    </table>
+
+    <h2>주의할 리스크</h2>
+    <table>
+      <thead><tr><th>리스크</th><th>대응</th></tr></thead>
+      <tbody>
+        <tr><td>답변만 보고 검색 근거를 놓침</td><td>retrieval 결과, citation, failure artifact를 함께 확인합니다.</td></tr>
+        <tr><td>config와 코드 변경이 섞임</td><td>실험 조건은 config에 두고 코드 변경은 별도 PR로 관리합니다.</td></tr>
+        <tr><td>PR 책임이 섞임</td><td>문서, 노트북, 운영 템플릿, 구현 변경을 분리합니다.</td></tr>
       </tbody>
     </table>
 

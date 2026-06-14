@@ -39,11 +39,10 @@ flowchart TD
 - 단일 질문 retrieval
 - 답변 생성과 citation 확인
 - 평가 질문 CSV 기반 evaluate
-- retriever config 비교
-- 팀 공유 전 리허설 요약
-- DOCX/HWPX 준실제 샘플 산출물 확인
 
-팀원에게 파이프라인을 보여줄 때는 이 노트북을 기본 화면으로 사용합니다. 노트북 안에서 `check -> ingest -> retrieve/chat -> evaluate` 명령을 직접 보여주기 때문에 실행 흐름을 설명하기 쉽습니다.
+팀원에게 파이프라인을 보여줄 때는 이 노트북을 기본 화면으로 사용합니다. 노트북 안에서는 config 하나를 선택해 `check -> ingest -> retrieve/chat -> evaluate` 명령과 산출물 확인 흐름을 보여줍니다.
+
+retriever 비교, DOCX/HWPX fixture 점검, Colab 실행은 별도 config, 별도 노트북, 별도 Issue에서 다룹니다.
 
 ## Colab 실행 노트북
 

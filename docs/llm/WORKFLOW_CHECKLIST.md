@@ -24,7 +24,9 @@
 
 - [ ] 관련 테스트를 실행합니다.
 - [ ] README 또는 `docs/md/` 갱신이 필요한지 확인합니다.
-- [ ] HTML 설명 문서와 대응되는 내용이면 `docs/html/`도 확인합니다.
+- [ ] 팀 공유 문서가 바뀌면 `docs/team/README.md`의 소개 흐름도 확인합니다.
+- [ ] HTML 설명 문서와 대응되는 내용이면 `docs/html/`과 허용 HTML 목록 테스트도 확인합니다.
+- [ ] LLM이 읽는 작업 문맥이 바뀌면 `docs/llm/PROJECT_CONTEXT.md`, `ARCHITECTURE_MAP.md`, `TASK_PROMPTS.md`도 확인합니다.
 - [ ] 실험 산출물, 모델 weight, 원본 데이터가 Git에 들어가지 않았는지 확인합니다.
 - [ ] 변경 내용을 커밋 단위로 분리할 수 있는지 확인합니다.
 - [ ] RAG 작업이라면 `retrieval_results.jsonl`, `answers.jsonl`, `metrics.json`, 실패 CSV가 생성되는지 확인합니다.
@@ -62,7 +64,7 @@ python scripts/check_rag_pipeline.py --config configs/experiments/rag/rag_langch
 python scripts/run_rag_chat.py --config configs/experiments/rag/rag_langchain.yaml --project-root . --evaluate
 ```
 
-DOCX/HWPX 준실제 샘플:
+DOCX/HWPX 준실제 샘플은 기본 흐름이 아니라 문서 포맷과 산출물 점검이 필요할 때만 실행합니다.
 
 ```bash
 python scripts/check_rag_pipeline.py --config configs/experiments/rag/rag_realistic_docs.yaml --project-root .
