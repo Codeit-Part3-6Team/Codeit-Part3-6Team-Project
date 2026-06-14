@@ -55,21 +55,27 @@ data/
 |       `-- sample_003.docx
 |-- interim/
 |   `-- README.md
-|-- processed/
+|-- external/
 |   `-- README.md
-`-- rag_sample/
-    |-- documents/
-    `-- questions.csv
+|-- rag_sample/
+|   |-- rfp_sample.txt
+|   `-- eval_questions.csv
+|-- rag_realistic/
+|   |-- rfp_realistic_sample.docx
+|   |-- rfp_realistic_sample.hwpx
+|   `-- eval_questions.csv
+`-- examples/
+    `-- classification/
 ```
 
 실험 config에서는 보통 아래 경로를 지정합니다.
 
 ```yaml
 paths:
-  raw_docs_dir: data/rag_sample/documents
+  raw_docs_dir: data/rag_sample
 
 evaluation:
-  questions_path: data/rag_sample/questions.csv
+  questions_path: data/rag_sample/eval_questions.csv
 ```
 
 ## Raw Document 규칙
@@ -181,6 +187,6 @@ Data Contract를 바꿀 때는 아래 내용을 기록합니다.
 
 ## 참고: 기존 분류 데이터 계약
 
-예전 ML 파이프라인 검증용으로 `data/processed/train.csv`, `valid.csv`, `test.csv`, `class_map.json`, `dataset_info.json` 구조를 사용할 수 있습니다.
+예전 ML 파이프라인 검증용으로 `data/examples/classification/image_processed/train.csv`, `valid.csv`, `test.csv`, `class_map.json`, `dataset_info.json` 구조를 사용할 수 있습니다.
 
 이 구조는 RAG 본 실험의 기본 계약이 아닙니다. 분류/HuggingFace fine-tuning 예제는 `configs/examples/classification/` 아래의 참고 config와 함께 봅니다.

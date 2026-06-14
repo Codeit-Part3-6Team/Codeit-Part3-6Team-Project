@@ -14,7 +14,7 @@
 | config 기반 실행 | 있음 | `configs/*.yaml`, `scripts/run_*.py` |
 | 프로젝트 루트 기준 경로 처리 | RAG는 있음 | RAG config path와 내부 경로를 `project_root` 기준으로 처리 |
 | 데이터 검증 | 있음 | `scripts/run_validate.py`, `src/validate_data.py` |
-| 예전 ML smoke test | 참고용 | `configs/smoke/` 아래 이미지/text/HF smoke config |
+| 예전 ML smoke test | 참고용 | `configs/examples/classification/` 아래 이미지/text/HF smoke config |
 | RAG config 실행 | 있음 | `configs/experiments/rag/rag_langchain.yaml`, `scripts/run_rag_*.py` |
 | 다중 문서 loader | 있음 | txt/pdf/docx/hwpx/hwp 대상 loader |
 | RAG embedding 산출물 | 있음 | `embeddings.jsonl` |

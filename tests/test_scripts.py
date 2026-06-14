@@ -14,7 +14,7 @@ def test_run_validate_script_accepts_project_root(isolated_project: Path, repo_r
             "--project-root",
             str(isolated_project),
             "--data-dir",
-            "data/text_processed",
+            "data/examples/classification/text_processed",
         ],
         check=True,
         capture_output=True,
@@ -28,7 +28,7 @@ def test_run_train_and_predict_scripts_write_experiment_artifacts(
     isolated_project: Path,
     repo_root: Path,
 ):
-    config = isolated_project / "configs" / "smoke" / "smoke_test_text.yaml"
+    config = isolated_project / "configs" / "examples" / "classification" / "smoke_test_text.yaml"
 
     subprocess.run(
         [
@@ -52,7 +52,7 @@ def test_run_train_and_predict_scripts_write_experiment_artifacts(
             "--config",
             str(config),
             "--input",
-            "data/text_processed/sample_positive.txt",
+            "data/examples/classification/text_processed/sample_positive.txt",
         ],
         check=True,
         capture_output=True,
@@ -81,7 +81,7 @@ def test_run_train_script_resolves_config_from_project_root(
             "--project-root",
             str(isolated_project),
             "--config",
-            "configs/smoke/smoke_test_text.yaml",
+            "configs/examples/classification/smoke_test_text.yaml",
         ],
         check=True,
         capture_output=True,
@@ -105,7 +105,7 @@ def test_run_predict_script_resolves_config_from_project_root(
             "--project-root",
             str(isolated_project),
             "--config",
-            "configs/smoke/smoke_test_text.yaml",
+            "configs/examples/classification/smoke_test_text.yaml",
         ],
         check=True,
         capture_output=True,
@@ -120,9 +120,9 @@ def test_run_predict_script_resolves_config_from_project_root(
             "--project-root",
             str(isolated_project),
             "--config",
-            "configs/smoke/smoke_test_text.yaml",
+            "configs/examples/classification/smoke_test_text.yaml",
             "--input",
-            "data/text_processed/sample_positive.txt",
+            "data/examples/classification/text_processed/sample_positive.txt",
         ],
         check=True,
         capture_output=True,
@@ -134,7 +134,7 @@ def test_run_predict_script_resolves_config_from_project_root(
 
 
 def test_run_predict_script_writes_failure_artifacts(isolated_project: Path, repo_root: Path):
-    config = isolated_project / "configs" / "smoke" / "smoke_test_text.yaml"
+    config = isolated_project / "configs" / "examples" / "classification" / "smoke_test_text.yaml"
     subprocess.run(
         [
             sys.executable,
@@ -160,7 +160,7 @@ def test_run_predict_script_writes_failure_artifacts(isolated_project: Path, rep
             "--config",
             str(config),
             "--input",
-            "data/text_processed/sample_positive.txt",
+            "data/examples/classification/text_processed/sample_positive.txt",
         ],
         capture_output=True,
         text=True,
@@ -175,4 +175,3 @@ def test_run_predict_script_writes_failure_artifacts(isolated_project: Path, rep
     assert run_status["status"] == "failed"
     assert run_status["error"]["type"] == "ValueError"
     assert "Unsupported model artifact" in failure_log
-

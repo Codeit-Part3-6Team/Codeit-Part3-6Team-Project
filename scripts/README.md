@@ -65,9 +65,9 @@ reports/experiment_summary.json
 아래 명령은 현재 RAG 프로젝트의 기본 흐름이 아니라, 기존 분류/HuggingFace 파이프라인 검증용입니다.
 
 ```bash
-python scripts/run_validate.py --data-dir data/text_processed
-python scripts/run_train.py --config configs/smoke/smoke_test_text.yaml --project-root .
-python scripts/run_predict.py --config configs/smoke/smoke_test_text.yaml --project-root . --input data/text_processed/sample_positive.txt
+python scripts/run_validate.py --data-dir data/examples/classification/text_processed
+python scripts/run_train.py --config configs/examples/classification/smoke_test_text.yaml --project-root .
+python scripts/run_predict.py --config configs/examples/classification/smoke_test_text.yaml --project-root . --input data/examples/classification/text_processed/sample_positive.txt
 ```
 
 새 팀원에게는 우선 RAG 명령만 안내합니다.

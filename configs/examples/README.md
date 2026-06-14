@@ -2,7 +2,7 @@
 
 `configs/examples/`는 메인 실험이 아니라 참고용 config를 보관하는 곳입니다.
 
-현재 프로젝트의 기본 실험은 `configs/experiments/rag/`에서 시작합니다. 이 디렉터리는 외부 모델 후보, 분류 파이프라인 예시, Colab 경로 예시처럼 당장 본 실험은 아니지만 나중에 참고할 수 있는 설정을 둡니다.
+현재 프로젝트의 기본 실험은 `configs/experiments/rag/`에서 시작합니다. 이 디렉터리는 외부 모델 후보, 분류 파이프라인 예시, Colab 경로 예시, 예전 smoke/preprocess config처럼 당장 본 실험은 아니지만 테스트나 참고용으로 남길 설정을 둡니다.
 
 ## 구성
 
@@ -22,7 +22,7 @@ configs/examples/
 
 ## 분류/HuggingFace 참고 예제
 
-`classification/` 아래의 config는 예전 ML 파이프라인과 HuggingFace fine-tuning 구조를 설명하기 위한 참고 자료입니다.
+`classification/` 아래의 config는 예전 ML 파이프라인, smoke test, preprocess, HuggingFace fine-tuning 구조를 설명하기 위한 참고 자료입니다.
 
 RAG 프로젝트에서 HuggingFace를 쓰고 싶다면 우선 아래 RAG 옵션을 봅니다.
 

@@ -5,7 +5,7 @@ experiment:
   contract_version: v1.0
 
 paths:
-  data_dir: data/text_processed
+  data_dir: data/examples/classification/text_processed
   output_dir: experiments/exp002_hf_text_finetune
   backup_dir:
 

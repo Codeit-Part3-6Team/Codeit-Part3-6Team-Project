@@ -24,9 +24,7 @@ configs/
 |   `-- rag/                    # 실제 프로젝트 RAG 실험 config
 |-- examples/
 |   |-- rag/                    # RAG 구현체/외부 모델 참고 config
-|   `-- classification/         # 분류/HF 파인튜닝 참고 예제
-|-- smoke/                      # 예전 ML 파이프라인 검증용 작은 config
-|-- preprocess/                 # 데이터 전처리 버전 config
+|   `-- classification/         # 분류/HF 파인튜닝과 smoke/preprocess 참고 예제
 `-- README.md
 ```
 

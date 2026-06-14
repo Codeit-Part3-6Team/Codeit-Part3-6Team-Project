@@ -201,7 +201,7 @@ Ollama/OpenAI 같은 생성형 답변 후보는 `configs/examples/rag/rag_langch
 
 ```text
 configs/examples/classification/
-configs/smoke/
+configs/examples/classification/
 src/models/
 scripts/run_train.py
 scripts/run_predict.py
