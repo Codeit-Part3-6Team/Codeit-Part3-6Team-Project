@@ -5,7 +5,7 @@ experiment:
   contract_version: v1.0
 
 paths:
-  data_dir: data/processed
+  data_dir: data/examples/classification/image_processed
   output_dir: experiments/exp001_baseline
   backup_dir:
 

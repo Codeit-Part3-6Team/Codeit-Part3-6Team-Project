@@ -11,7 +11,7 @@ from src.train import _huggingface_train_config, run_training
 
 def test_image_smoke_training_writes_artifacts(isolated_project: Path):
     metrics = run_training(
-        isolated_project / "configs" / "smoke" / "smoke_test.yaml",
+        isolated_project / "configs" / "examples" / "classification" / "smoke_test.yaml",
         isolated_project,
     )
     output_dir = isolated_project / "experiments" / "smoke_test"
@@ -34,13 +34,13 @@ def test_image_smoke_training_writes_artifacts(isolated_project: Path):
 
 
 def test_text_smoke_training_and_prediction(isolated_project: Path):
-    config = isolated_project / "configs" / "smoke" / "smoke_test_text.yaml"
+    config = isolated_project / "configs" / "examples" / "classification" / "smoke_test_text.yaml"
     metrics = run_training(config, isolated_project)
 
     prediction = predict_one(
         config,
         isolated_project,
-        "data/text_processed/sample_positive.txt",
+        "data/examples/classification/text_processed/sample_positive.txt",
     )
 
     assert metrics == {"valid_accuracy": 1.0, "test_accuracy": 1.0}
@@ -94,7 +94,7 @@ experiment:
   name: smoke_test_text_run_id
   seed: 42
 paths:
-  data_dir: data/text_processed
+  data_dir: data/examples/classification/text_processed
   output_dir: experiments/smoke_test_text_run_id
 data:
   task: text_classification
@@ -111,7 +111,7 @@ artifact_policy:
     )
 
     metrics = run_training(config, isolated_project)
-    prediction = predict_one(config, isolated_project, "data/text_processed/sample_positive.txt")
+    prediction = predict_one(config, isolated_project, "data/examples/classification/text_processed/sample_positive.txt")
     output_dir = isolated_project / "experiments" / "smoke_test_text_run_id" / "unit_run_001"
 
     assert metrics["valid_accuracy"] == 1.0
@@ -128,7 +128,7 @@ experiment:
   name: smoke_test_text_fail_existing
   seed: 42
 paths:
-  data_dir: data/text_processed
+  data_dir: data/examples/classification/text_processed
   output_dir: experiments/smoke_test_text_fail_existing
 data:
   task: text_classification

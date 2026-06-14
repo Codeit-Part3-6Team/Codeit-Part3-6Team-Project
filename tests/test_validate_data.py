@@ -8,7 +8,7 @@ from src.validate_data import validate_data
 
 
 def test_validate_image_data_contract_passes(repo_root):
-    result = validate_data(repo_root / "data" / "processed")
+    result = validate_data(repo_root / "data" / "examples" / "classification" / "image_processed")
 
     assert result["ok"] is True
     assert result["errors"] == []
@@ -16,7 +16,7 @@ def test_validate_image_data_contract_passes(repo_root):
 
 
 def test_validate_text_data_contract_passes(repo_root):
-    result = validate_data(repo_root / "data" / "text_processed")
+    result = validate_data(repo_root / "data" / "examples" / "classification" / "text_processed")
 
     assert result["ok"] is True
     assert result["errors"] == []
@@ -24,7 +24,7 @@ def test_validate_text_data_contract_passes(repo_root):
 
 
 def test_validate_text_data_contract_rejects_empty_text(tmp_path: Path, repo_root: Path):
-    source = repo_root / "data" / "text_processed"
+    source = repo_root / "data" / "examples" / "classification" / "text_processed"
     target = tmp_path / "text_processed"
     shutil.copytree(source, target)
 
@@ -43,7 +43,7 @@ def test_validate_text_data_contract_rejects_empty_text(tmp_path: Path, repo_roo
 
 
 def test_validate_text_data_contract_accepts_utf8_bom_csv(tmp_path: Path, repo_root: Path):
-    source = repo_root / "data" / "text_processed"
+    source = repo_root / "data" / "examples" / "classification" / "text_processed"
     target = tmp_path / "text_processed"
     shutil.copytree(source, target)
 

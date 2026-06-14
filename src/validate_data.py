@@ -87,7 +87,7 @@ def validate_data(data_dir: str | Path) -> dict[str, object]:
 def main() -> None:
     """`python src/...` 방식 실행을 위한 보조 CLI 진입점입니다."""
     parser = argparse.ArgumentParser()
-    parser.add_argument("--data-dir", default="data/processed")
+    parser.add_argument("--data-dir", default="data/examples/classification/image_processed")
     args = parser.parse_args()
     result = validate_data(args.data_dir)
     print(result)

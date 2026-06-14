@@ -1,12 +1,12 @@
 experiment:
-  name: smoke_test
+  name: smoke_test_hf_tiny
   author: team
   seed: 42
   contract_version: v1.0
 
 paths:
-  data_dir: data/processed
-  output_dir: experiments/smoke_test
+  data_dir: data/examples/classification/text_processed
+  output_dir: experiments/smoke_test_hf_tiny
   backup_dir:
 
 artifact_policy:
@@ -14,28 +14,36 @@ artifact_policy:
   on_existing: overwrite
 
 data:
-  task: image_classification
+  task: text_classification
   train_csv: train.csv
   valid_csv: valid.csv
   test_csv: test.csv
-  image_col: image_path
+  text_col: text
   label_col: label
   class_map: class_map.json
   dataset_info: dataset_info.json
+  max_length: 64
 
 model:
-  name: mean_rgb_centroid
+  name: huggingface_sequence_classifier
+  model_name: hf-internal-testing/tiny-random-distilbert
   num_classes: auto
 
 train:
   epochs: 1
+  batch_size: 2
+  loss: cross_entropy
+  optimizer:
+    name: adamw
+    lr: 0.00002
+    weight_decay: 0.01
 
 metric:
   monitor: valid_accuracy
   mode: max
 
 checkpoint:
-  enabled: false
+  enabled: true
   dir: checkpoints
   save_best: true
   save_last: true
@@ -48,7 +56,7 @@ early_stopping:
   min_delta: 0.0
 
 scheduler:
-  enabled: false
+  enabled: true
   name: linear
   warmup_ratio: 0.0
   warmup_steps:
@@ -58,8 +66,8 @@ report:
 
 backup:
   enabled: false
-  on_best: false
-  on_finish: false
-  on_failure: false
+  on_best: true
+  on_finish: true
+  on_failure: true
   include_logs: true
   include_checkpoints: true

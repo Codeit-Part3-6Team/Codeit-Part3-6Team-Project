@@ -4,7 +4,7 @@ from src.config import _parse_simple_yaml, load_config
 
 
 def test_load_config_reads_text_smoke_config(repo_root):
-    config = load_config(repo_root / "configs" / "smoke" / "smoke_test_text.yaml")
+    config = load_config(repo_root / "configs" / "examples" / "classification" / "smoke_test_text.yaml")
 
     assert config["experiment"]["name"] == "smoke_test_text"
     assert config["data"]["task"] == "text_classification"
@@ -74,7 +74,7 @@ def test_load_config_reads_huggingface_text_config(repo_root):
 
 
 def test_load_config_reads_tiny_huggingface_smoke_config(repo_root):
-    config = load_config(repo_root / "configs" / "smoke" / "smoke_test_hf_tiny.yaml")
+    config = load_config(repo_root / "configs" / "examples" / "classification" / "smoke_test_hf_tiny.yaml")
 
     assert config["experiment"]["name"] == "smoke_test_hf_tiny"
     assert config["model"]["name"] == "huggingface_sequence_classifier"
