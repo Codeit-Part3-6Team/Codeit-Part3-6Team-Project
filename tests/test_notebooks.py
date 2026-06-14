@@ -37,12 +37,18 @@ def test_rag_config_run_notebook_structure() -> None:
         "data/rag_sample/eval_questions.csv",
     ]
     expected_texts = [
+        "find_project_root",
+        "AGENTS.md",
+        "sys.executable",
+        "shlex.quote",
+        "PYTHON",
         "display_metrics",
         "display_answers",
         "display_failure_tables",
         "display_artifact_check",
         "REALISTIC_OUTPUT_DIR",
         "source_path",
+        "OPENAI_API_KEY",
     ]
     for ref in expected_file_refs:
         assert ref in source
@@ -66,6 +72,12 @@ def test_colab_drive_run_notebook_structure() -> None:
         "pip install -r requirements.txt",
         "/content/drive/MyDrive/codeit_rag_project",
         "configs/experiments/rag/rag_colab_drive.yaml",
+        "find_project_root",
+        "AGENTS.md",
+        "sys.executable",
+        "shlex.quote",
+        "PYTHON",
+        "OPENAI_API_KEY",
         "scripts/run_rag_ingest.py",
         "scripts/run_rag_chat.py",
         "display_metrics",
