@@ -126,5 +126,5 @@ HTML은 모든 Markdown의 백업본이 아니라 설명에 직접 쓰는 자료
 docs/html/README.md와 docs/team/kickoff.md를 읽고 진행해줘.
 HTML은 Markdown 백업본으로 늘리지 말고, 킥오프나 설명에 직접 쓰는 3개 자료만 유지해줘.
 HTML 본문이 현재 역할명, config 키, LangChain 기반 RAG harness 방향과 맞는지 확인해줘.
-낡은 표현이 있으면 HTML과 README를 함께 고치고, tests/test_docs_structure.py로 허용 HTML 목록과 금지 표현을 검증해줘.
+낡은 표현이 있으면 HTML과 README를 함께 고치고, 실제 링크와 설명 흐름을 확인해줘.
 ```

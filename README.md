@@ -4,6 +4,18 @@
 
 이 저장소의 목표는 완성된 앱을 바로 만드는 것이 아니라, 팀이 같은 방식으로 RAG 실험을 실행하고 결과를 비교할 수 있는 **config 기반 실험 파이프라인**을 준비하는 것입니다.
 
+## 팀 문서 바로가기
+
+처음 보는 팀원은 [docs/team/README.md](docs/team/README.md)에서 시작합니다.
+
+| 목적 | 문서 |
+| --- | --- |
+| 킥오프와 팀 문서 소개 순서 | [docs/team/README.md](docs/team/README.md) |
+| 프로젝트 목표와 역할 합의 | [docs/team/kickoff.md](docs/team/kickoff.md) |
+| 일정 확인 | [docs/team/timeline.md](docs/team/timeline.md) |
+| Issue, PR, Kanban, Daily Report 운영 | [docs/team/operations.md](docs/team/operations.md) |
+| 역할별 첫 작업 | [docs/team/roles.md](docs/team/roles.md) |
+
 ```text
 raw docs -> chunk -> embedding/index -> retrieve -> answer -> citation/evaluate
 ```

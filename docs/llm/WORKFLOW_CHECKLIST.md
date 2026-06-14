@@ -27,7 +27,7 @@
 - [ ] 관련 테스트를 실행합니다.
 - [ ] README 또는 `docs/md/` 갱신이 필요한지 확인합니다.
 - [ ] 팀 공유 문서가 바뀌면 `docs/team/README.md`의 소개 흐름도 확인합니다.
-- [ ] HTML 설명 문서와 대응되는 내용이면 `docs/html/`과 허용 HTML 목록 테스트도 확인합니다.
+- [ ] HTML 설명 문서와 대응되는 내용이면 `docs/html/README.md`와 실제 HTML 링크를 확인합니다.
 - [ ] LLM이 읽는 작업 문맥이 바뀌면 `docs/llm/PROJECT_CONTEXT.md`, `ARCHITECTURE_MAP.md`, `TASK_PROMPTS.md`도 확인합니다.
 - [ ] 실험 산출물, 모델 weight, 원본 데이터가 Git에 들어가지 않았는지 확인합니다.
 - [ ] 변경 내용을 커밋 단위로 분리할 수 있는지 확인합니다.
@@ -37,10 +37,10 @@
 
 | 변경 범위 | 권장 테스트 |
 | --- | --- |
-| 문서만 변경 | `python -m pytest tests/test_docs_structure.py` |
+| 문서만 변경 | 링크와 경로를 눈으로 확인하고, 관련 기능 테스트가 있으면 함께 실행 |
 | config 경로/계약 | `python -m pytest tests/test_config.py tests/test_rag_validation.py` |
 | scripts 변경 | `python -m pytest tests/test_scripts.py` |
-| data/config/scripts 구조 변경 | `python -m pytest tests/test_config.py tests/test_scripts.py tests/test_validate_data.py tests/test_docs_structure.py` |
+| data/config/scripts 구조 변경 | `python -m pytest tests/test_config.py tests/test_scripts.py tests/test_validate_data.py` |
 | RAG 구현 변경 | `python -m pytest tests/test_rag_pipeline.py tests/test_rag_adapters.py tests/test_rag_document_loader.py` |
 | 실제 문서 포맷 E2E | `python -m pytest tests/test_rag_quality_gate.py` |
 | 모델/학습 변경 | `python -m pytest tests/test_models.py tests/test_pipeline_smoke.py` |
