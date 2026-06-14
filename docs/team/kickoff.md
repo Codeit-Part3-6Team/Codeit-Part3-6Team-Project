@@ -4,10 +4,20 @@
 
 ## 설명 목표
 
-- 비전공자도 RAG 프로젝트의 목적을 이해합니다.
+- 팀원이 RAG 프로젝트의 목적과 진행 방식을 같은 그림으로 이해합니다.
 - 팀원이 자신이 맡을 역할과 첫 작업을 이해합니다.
 - 파이프라인, 문서, 실험 산출물이 왜 필요한지 납득합니다.
 - 킥오프 이후 바로 Issue와 Kanban으로 작업을 시작할 수 있습니다.
+
+## 프로젝트 기간
+
+| 구분 | 날짜 | 의미 |
+| --- | --- | --- |
+| 프로젝트 설명 | 2026-06-17 | 강사님께 프로젝트 설명을 듣고 팀 운영 기준을 맞춥니다. |
+| 실질 진행 | 2026-06-18 ~ 2026-07-07 | 평일 기준으로 데이터, RAG 실험, 산출물, 발표 자료를 준비합니다. |
+| 발표 | 2026-07-08 | 최종 결과와 한계, 개선 방향을 발표합니다. |
+
+공식 일정은 평일 기준으로 관리합니다. 주말 작업은 필요할 때 따로 논의하고, 기본 일정표에는 넣지 않습니다.
 
 ## 설명 순서
 
@@ -37,7 +47,7 @@
 5. 역할별 첫 책임
    - PM: 일정, 보드, 의사결정, merge 기준
    - Data Engineer: 실제 데이터 후보, 데이터 계약, 평가 질문
-   - Experiment Lead: config 실험, metric 해석, 결과 비교
+   - Experiment Lead: retriever, answerer, LangChain config, evaluation 관리
    - Application Engineer: 입출력 계약, 데모/API 후보
    - Presentation Lead: 설명 자료, 용어 정리, 발표 흐름
    - 자세한 설명은 전체 문서 목록이 아니라 `docs/team/roles.md`에서 역할별로 확인합니다.
@@ -48,18 +58,12 @@
    - 막힌 점은 Daily Report에 남깁니다.
    - PR에는 테스트 결과와 산출물 경로를 남깁니다.
 
-## 설명할 때 피할 것
-
-- 처음부터 모델 성능 수치만 강조하지 않습니다.
-- FastAPI나 앱 구현을 최종 목표처럼 설명하지 않습니다.
-- RAG 용어를 정의 없이 계속 사용하지 않습니다.
-- 실제 데이터가 없는 상태에서 parser 품질을 확정된 것처럼 말하지 않습니다.
-
 ## 함께 열어두면 좋은 문서
 
 - `docs/html/overview/pipeline_explainer.html`
 - `docs/html/overview/module_architecture.html`
 - `docs/team/roles.md`
+- `docs/team/timeline.md`
 - `docs/team/first-week.md`
 - `docs/team/operations.md`
 - `docs/md/rag/RAG_PIPELINE_SPEC.md`

@@ -9,6 +9,8 @@
 - 역할별 첫 책임 범위를 작게 나누고, 막힘을 빠르게 공유합니다.
 - 발표/문서/실험 기록이 동시에 흩어지지 않게 합니다.
 
+첫 주 기준은 2026-06-18 ~ 2026-06-19입니다. 2026-06-17은 프로젝트 설명을 듣고 운영 기준을 맞추는 날로 봅니다.
+
 ## 보드 초기 세팅
 
 ```text
@@ -19,7 +21,7 @@ Review
 Done
 ```
 
-시작 전에는 아래 카드를 `Ready`에 넣고, 담당자가 정해지지 않은 카드는 PM이 임시 담당자로 둡니다.
+초기에는 아래 카드들을 `Backlog`에 두고, 킥오프 후 담당자와 완료 기준이 분명해진 카드만 `Ready`로 옮깁니다.
 
 ## 공통 온보딩
 
@@ -53,8 +55,8 @@ Done
 | 카드 | 완료 기준 |
 | --- | --- |
 | RAG config 기반 pipeline 실행 | ingest, retrieve, chat, evaluate 명령 결과를 공유합니다. |
-| retriever 비교 결과 확인 | keyword, semantic, hybrid 비교 결과를 읽고 차이를 설명합니다. |
-| config 변경 실험 1회 수행 | `top_k`, `chunk.size`, `retriever.method` 중 하나를 바꿔 결과를 비교합니다. |
+| retriever/answerer 설정 확인 | 검색 방식과 답변 방식이 config에서 어디에 있는지 설명합니다. |
+| config 변경 실험 1회 수행 | `top_k`, `chunk_size`, `retriever`, `answerer` 중 하나를 바꿔 결과를 비교합니다. |
 | metric 해석 메모 작성 | `retrieval_hit_rate`, `citation_correct_rate`, `not_found_rate`의 의미를 설명합니다. |
 
 ## Application Engineer
@@ -70,7 +72,7 @@ Done
 
 | 카드 | 완료 기준 |
 | --- | --- |
-| 비전공자 설명 흐름 점검 | 문제, RAG 구조, 실험 산출물, 역할 분배 순서로 설명할 수 있습니다. |
+| 킥오프 설명 흐름 점검 | 문제, RAG 구조, 실험 산출물, 역할 분배 순서로 설명할 수 있습니다. |
 | 킥오프 HTML 확인 | 화면에서 읽기 어려운 부분이나 빠진 내용을 기록합니다. |
 | 발표용 용어 목록 작성 | RAG, chunk, embedding, retrieval, citation을 쉬운 말로 정리합니다. |
 | 진행 상황 공유 템플릿 작성 | 주간 공유에 쓸 요약 형식을 만듭니다. |

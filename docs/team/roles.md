@@ -54,14 +54,14 @@ flowchart LR
 - `docs/md/data/DATA_CONTRACT.md`
 - `docs/md/rag/RAG_PIPELINE_SPEC.md`
 
-## Experiment Lead / Model Engineer
+## Experiment Lead
 
 ### 집중 질문
 
-- 어떤 config를 바꾸면 검색 결과가 달라지는가?
-- 검색 결과 top-k 안에 정답 근거가 들어오는가?
-- 답변이 검색된 근거를 기반으로 하는가?
-- 발표에서 설명할 수 있는 비교 포인트가 있는가?
+- 어떤 retriever 설정에서 정답 근거가 더 잘 검색되는가?
+- answerer가 검색된 근거를 벗어나지 않고 답하는가?
+- LangChain config에서 바꾼 조건이 산출물에 어떻게 남는가?
+- evaluation 결과를 보고 다음 실험 조건을 정할 수 있는가?
 
 ### 첫 작업
 
@@ -69,7 +69,7 @@ flowchart LR
 2. `retrieval_results.jsonl`에서 질문별 top-k chunk를 확인합니다.
 3. `answers.jsonl`에서 답변과 citation을 확인합니다.
 4. `metrics.json`과 실패 분석 CSV를 봅니다.
-5. `splitter.chunk_size`, `retriever.method`, `top_k` 중 하나씩 바꿔 비교합니다.
+5. `splitter.chunk_size`, `retriever`, `answerer`, `top_k` 중 하나씩 바꿔 비교합니다.
 
 ### 먼저 바꿔볼 옵션
 
@@ -79,11 +79,12 @@ flowchart LR
 | `rag.splitter.chunk_overlap` | 조각 사이의 겹침 |
 | `rag.retriever.method` | similarity, keyword, semantic, hybrid 검색 방식 |
 | `rag.retriever.top_k` | 답변에 참고할 근거 개수 |
-| `rag.answerer.mode` | extractive 또는 LLM 답변 방식 |
+| `rag.answerer.provider` | local, openai, ollama 같은 답변 생성 방식 |
+| `rag.engine` | LangChain 기반 실행 엔진 사용 여부 |
 
 ### 산출물
 
-- 실행한 config
+- 실행한 LangChain config
 - metric 결과
 - 실패 질문 목록
 - 발표에서 설명할 비교 포인트
@@ -129,7 +130,7 @@ flowchart LR
 ### 집중 질문
 
 - 이 프로젝트가 어떤 문제를 해결하는지 쉽게 말할 수 있는가?
-- RAG 흐름을 비전공자에게 설명할 수 있는가?
+- RAG 흐름을 팀원이 이해할 수 있는 말로 설명할 수 있는가?
 - metric보다 먼저 보여줄 근거와 예시는 무엇인가?
 - 역할별 산출물을 하나의 발표 이야기로 묶을 수 있는가?
 

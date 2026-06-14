@@ -19,8 +19,8 @@ flowchart LR
 | 단계 | 주 담당 | 입력 | 출력 | 완료 기준 |
 | --- | --- | --- | --- | --- |
 | Data 준비 | Data Engineer | 원본 RFP 문서 | 로딩 가능한 문서, 평가 질문 초안, 데이터 이슈 목록 | pipeline이 문서를 읽고 chunk를 만들 수 있음 |
-| 검색/답변 실험 | Experiment Lead / Model Engineer | 문서, 질문, config | retrieval 결과, answer, citation, metric | 질문별 근거 chunk와 답변을 확인할 수 있음 |
-| 파라미터 조정 | Experiment Lead / Model Engineer | baseline 결과 | 비교 실험 결과, best config/index 후보, 실패 사례 | 어떤 설정이 왜 나은지 설명 가능함 |
+| 검색/답변 실험 | Experiment Lead | 문서, 질문, config | retrieval 결과, answer, citation, metric | 질문별 근거 chunk와 답변을 확인할 수 있음 |
+| 파라미터 조정 | Experiment Lead | baseline 결과 | 비교 실험 결과, config 후보, 실패 사례 | 어떤 설정이 왜 나은지 설명 가능함 |
 | 데모 형태 정리 | Application Engineer | RAG 입출력 예시 | 간단한 실행 흐름, 화면/API 후보, citation 표시 방식 | 사용자가 질문을 넣고 답변 근거를 볼 수 있음 |
 | 시연/발표 | Presentation Lead / PM | 실험 결과, 데모, 실패 사례 | 발표 흐름, 쉬운 용어, 결과 캡처 | 문제-방법-결과-한계를 연결해서 설명 가능함 |
 
@@ -47,9 +47,9 @@ Data Engineer의 핵심은 모델 성능을 올리는 전처리가 아니라, **
 | 평가 가능 | 최소한 질문, 기대 답변, 기대 근거 후보가 있음 |
 | 이슈 기록 | 깨진 인코딩, 표 누락, 읽기 실패를 기록함 |
 
-## Experiment Lead / Model Engineer가 진행할 것
+## Experiment Lead가 진행할 것
 
-Experiment Lead / Model Engineer의 핵심은 코드를 계속 바꾸는 것이 아니라, **config를 바꿔가며 검색과 답변 품질을 비교하는 것**입니다.
+Experiment Lead의 핵심은 코드를 계속 바꾸는 것이 아니라, **retriever, answerer, LangChain config, evaluation 결과를 보면서 검색과 답변 품질을 비교하는 것**입니다.
 
 ### 먼저 바꿔볼 옵션
 
@@ -59,7 +59,8 @@ Experiment Lead / Model Engineer의 핵심은 코드를 계속 바꾸는 것이 
 | `rag.splitter.chunk_overlap` | 앞뒤 문맥을 얼마나 겹칠지 |
 | `rag.retriever.method` | similarity, keyword, semantic, hybrid 후보 비교 |
 | `rag.retriever.top_k` | 답변에 넣을 근거 개수 |
-| `rag.answerer.mode` | extractive 답변과 LLM 답변 후보 비교 |
+| `rag.answerer.provider` | local, openai, ollama 답변 후보 비교 |
+| `rag.engine` | LangChain 실행 엔진 사용 여부 |
 
 ### 기록해야 하는 것
 
