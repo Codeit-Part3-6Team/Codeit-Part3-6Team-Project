@@ -30,10 +30,7 @@ def test_rag_config_run_notebook_structure() -> None:
         "scripts/run_rag_ingest.py",
         "scripts/run_rag_retrieve.py",
         "scripts/run_rag_chat.py",
-        "scripts/compare_rag_retrievers.py",
         "configs/experiments/rag/rag_langchain.yaml",
-        "configs/experiments/rag/rag_realistic_docs.yaml",
-        "configs/experiments/rag/rag_hybrid.yaml",
         "data/rag_sample/eval_questions.csv",
     ]
     expected_texts = [
@@ -46,7 +43,8 @@ def test_rag_config_run_notebook_structure() -> None:
         "display_answers",
         "display_failure_tables",
         "display_artifact_check",
-        "REALISTIC_OUTPUT_DIR",
+        "CONFIG_ROOT",
+        "EXP_NAME",
         "source_path",
         "OPENAI_API_KEY",
     ]
