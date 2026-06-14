@@ -32,9 +32,9 @@ def test_key_directories_have_readme() -> None:
         "configs/examples/classification",
         "configs/experiments",
         "configs/experiments/rag",
-        "configs/preprocess",
-        "configs/smoke",
         "data",
+        "data/examples",
+        "data/examples/classification",
         "docs",
         "docs/team",
         "docs/html",
@@ -52,6 +52,8 @@ def test_key_directories_have_readme() -> None:
         "outputs",
         "reports",
         "scripts",
+        "scripts/examples",
+        "scripts/examples/classification",
         "src",
         "src/models",
         "src/rag",
@@ -141,25 +143,25 @@ def test_llm_context_mentions_realistic_rag_e2e_config() -> None:
         assert "DOCX/HWPX" in text
 
 
-def test_llm_docs_match_current_team_doc_flow() -> None:
-    """LLM 문서가 현재 팀 공유 문서 소개 흐름과 HTML 관리 원칙을 설명하는지 확인합니다."""
+def test_llm_docs_describe_rag_first_examples_boundary() -> None:
+    """LLM 문서가 RAG 메인 경로와 참고용 examples 경계를 설명하는지 확인합니다."""
     context = (ROOT / "docs" / "llm" / "PROJECT_CONTEXT.md").read_text(encoding="utf-8")
     architecture = (ROOT / "docs" / "llm" / "ARCHITECTURE_MAP.md").read_text(encoding="utf-8")
     checklist = (ROOT / "docs" / "llm" / "WORKFLOW_CHECKLIST.md").read_text(encoding="utf-8")
-    html_readme = (ROOT / "docs" / "html" / "README.md").read_text(encoding="utf-8")
 
-    required_pairs = [
-        (context, "README -> timeline -> operations -> workflow -> roles -> first-week"),
-        (context, "HTML은 Markdown 백업본이 아니라"),
-        (architecture, "HTML 설명 자료 정리"),
-        (architecture, "LLM 문서 최신화"),
-        (checklist, "docs/team/README.md"),
-        (checklist, "docs/llm/PROJECT_CONTEXT.md"),
-        (html_readme, "Markdown 문서를 HTML로 전부 백업하지 않습니다"),
+    required = [
+        (context, "configs/examples/classification/"),
+        (context, "data/examples/classification/"),
+        (context, "scripts/examples/classification/"),
+        (architecture, "configs/experiments/rag/"),
+        (architecture, "scripts/run_rag_*.py"),
+        (architecture, "scripts/examples/classification/"),
+        (checklist, "루트 `scripts/`에는 RAG 공식 CLI"),
+        (checklist, "분류/HuggingFace 참고 script"),
     ]
-    missing = [phrase for text, phrase in required_pairs if phrase not in text]
+    missing = [phrase for text, phrase in required if phrase not in text]
 
-    assert not missing, f"LLM/HTML 문서에 현행 문서 운영 기준이 없습니다: {missing}"
+    assert not missing, f"LLM 문서에 RAG/examples 경계 설명이 없습니다: {missing}"
 
 
 def test_data_contract_is_rag_first() -> None:

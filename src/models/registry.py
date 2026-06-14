@@ -19,7 +19,7 @@ def build_model(name: str) -> MeanRgbCentroidClassifier | KeywordTextClassifier:
     if is_huggingface_model(name):
         raise ValueError(
             "HuggingFace models need config values such as model.model_name and labels. "
-            "Use scripts/run_train.py with a HuggingFace config instead."
+            "Use scripts/examples/classification/run_train.py with a HuggingFace config instead."
         )
     raise ValueError(
         f"Unsupported model '{name}'. Add it to src/models/registry.py."

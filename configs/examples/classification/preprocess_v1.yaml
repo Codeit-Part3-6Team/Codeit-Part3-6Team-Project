@@ -1,11 +1,10 @@
 preprocess:
   version: v1.0
   source_dir: data/raw
-  output_dir: data/processed
+  output_dir: data/examples/classification/image_processed
   rules:
     - preserve_original_files
     - create_train_valid_test_csv
     - create_class_map_json
     - create_dataset_info_json
     - validate_processed_contract
-

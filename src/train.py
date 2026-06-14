@@ -102,7 +102,10 @@ def run_training(config_path: str | Path, project_root: str | Path) -> dict[str,
         }
         history = [{"epoch": 1, **metrics}]
 
-        command = f"python scripts/run_train.py --config {Path(config_path).as_posix()} --project-root {root.as_posix()}"
+        command = (
+            "python scripts/examples/classification/run_train.py "
+            f"--config {Path(config_path).as_posix()} --project-root {root.as_posix()}"
+        )
         # 아래 파일들이 실험 재현과 팀원 간 결과 공유의 최소 단위입니다.
         write_config_copy(config_path, output_dir)
         write_json(output_dir / "best_model.json", model.to_dict())
@@ -213,7 +216,7 @@ def _run_huggingface_training(
     }
 
     command = (
-        f"python scripts/run_train.py --config {Path(config_path).as_posix()} "
+        f"python scripts/examples/classification/run_train.py --config {Path(config_path).as_posix()} "
         f"--project-root {project_root.as_posix()}"
     )
     write_config_copy(config_path, output_dir)

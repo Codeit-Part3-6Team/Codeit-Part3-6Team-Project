@@ -201,10 +201,10 @@ Ollama/OpenAI 같은 생성형 답변 후보는 `configs/examples/rag/rag_langch
 
 ```text
 configs/examples/classification/
-configs/smoke/
+configs/examples/classification/
 src/models/
-scripts/run_train.py
-scripts/run_predict.py
+scripts/examples/classification/run_train.py
+scripts/examples/classification/run_predict.py
 ```
 
 새 RAG 작업을 시작할 때는 위 경로가 아니라 아래 경로를 먼저 봅니다.
