@@ -33,6 +33,38 @@
 | `rag.answerer.memory.enabled` | 멀티턴 대화 | true / false | true→이전 대화 기억 |
 | `evaluation.questions_path` | 평가 질문 CSV 경로 | data/rag_sample/eval_questions.csv | 다른 평가셋으로 변경 |
 
+## Config 전체 스펙 (한 장 요약)
+
+| 키 | 필수 | 기본값 | 설명 | 유효한 값 |
+| --- | --- | --- | --- | --- |
+| `experiment.name` | ✅ | - | 실험 폴더 이름으로 사용됨. 한글 가능 | 문자열 |
+| `experiment.seed` | - | 42 | 결과 재현을 위한 시드값 | 정수 |
+| `paths.raw_docs_dir` | ✅ | - | 읽을 RFP 문서가 있는 폴더 경로. VM: /shared/data/raw_docs, 로컬: data/rag_sample | 프로젝트 루트 기준 상대/절대 경로 |
+| `paths.output_dir` | ✅ | - | 실험 결과 저장 폴더. 보통 experiments/실험이름 | 상대 경로 |
+| `rag.engine` | - | langchain | 사용할 엔진. langchain=전체 기능, local=의존성 없는 경량 | `langchain`, `local` |
+| `rag.loader.file_types` | - | [txt] | 읽을 파일 확장자 목록 | `txt`, `pdf`, `docx`, `hwpx`, `hwp` |
+| `rag.splitter.type` | - | recursive_character | 문서 분할 알고리즘. 보통 recursive_character | `recursive_character` |
+| `rag.splitter.chunk_size` | - | 500 | 한 chunk의 최대 글자 수. 200~1000 범위에서 실험 | 정수 |
+| `rag.splitter.chunk_overlap` | - | 80 | 앞뒤 chunk가 겹치는 글자 수. 정보가 chunk 경계에 잘리는 걸 방지 | 정수 |
+| `rag.embedding.provider` | - | local | 임베딩 생성 방식 | `local`, `huggingface`, `ollama`, `openai` |
+| `rag.embedding.model_name` | provider=local 이외에 필요 | - | provider=huggingface면 HF 모델명, ollama면 ollama 모델명, openai면 openai 모델명 | 모델명 문자열 |
+| `rag.vector_store.type` | - | memory | 벡터 저장소. memory=휘발성(빠름), chroma=영구 저장 | `memory`, `chroma` |
+| `rag.retriever.method` | - | similarity (eng=langchain) / keyword (eng=local) | 검색 방식. 키워드 일치 / 의미 유사도 / 혼합 | `keyword`, `semantic`, `hybrid`, `similarity` |
+| `rag.retriever.top_k` | - | 3 | 질문당 검색할 chunk 개수. 늘리면 근거가 풍부해지고 줄면 노이즈가 감소 | 정수 (1~20) |
+| `rag.reranker.enabled` | - | false | 1차 검색 후 Cross-Encoder로 재정렬할지 여부. sentence-transformers 필요 | `true`, `false` |
+| `rag.reranker.model_name` | enabled=true일 때 필요 | BAAI/bge-reranker-v2-m3 | 재정렬 모델 | HuggingFace 모델명 |
+| `rag.reranker.top_k` | - | 3 | 재정렬 후 최종 반환할 결과 개수 | 정수 |
+| `rag.answerer.provider` | - | local | 답변 생성 방식. local=추출형(의존성 없음), ollama=로컬LLM, openai=API | `local`, `ollama`, `openai`, `huggingface` |
+| `rag.answerer.mode` | - | extractive | 답변 모드. extractive=청크에서 추출, llm=LLM 생성 | `extractive`, `llm` |
+| `rag.answerer.model_name` | provider=local 이외에 필요 | - | provider=ollama면 ollama 모델명, openai면 gpt 모델명 | 모델명 문자열 |
+| `rag.answerer.temperature` | - | 0.2 | LLM 응답 다양성. 0에 가까울수록 일관적, 1에 가까울수록 창의적 | 0.0 ~ 1.0 |
+| `rag.answerer.fallback_message` | - | 문서에서 확인하지 못했습니다. | 검색 결과가 없거나 답변 불가할 때 출력할 메시지 | 문자열 |
+| `rag.answerer.memory.enabled` | - | false | 멀티턴 대화 활성화. true면 thread_id로 대화 맥락 유지 | `true`, `false` |
+| `rag.checkpoint.enabled` | - | true | ingest 중간 결과 저장. true면 실패 시 재개 가능 | `true`, `false` |
+| `evaluation.questions_path` | ✅ | - | 평가 질문 CSV 파일 경로. BM 형식: question,expected_answer,expected_chunk_ids | 상대/절대 경로 |
+| `metric.monitor` | - | retrieval_hit_rate | 실험 비교 시 기준이 되는 주요 지표 | `retrieval_hit_rate`, `answer_contains_expected_rate`, `citation_correct_rate`, `not_found_rate` |
+| `artifact_policy.on_existing` | - | overwrite | 같은 실험 폴더가 이미 있을 때 처리. overwrite=덮어쓰기 | `overwrite` |
+
 ## 디렉터리 구조
 
 ```text
