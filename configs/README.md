@@ -17,6 +17,22 @@
 | LangChain + Ollama 실행 예시 | `configs/examples/rag/rag_langchain_ollama.yaml` |
 | LangChain + OpenAI 실행 예시 | `configs/examples/rag/rag_langchain_openai.yaml` |
 
+## 자주 바꾸는 Config 옵션
+
+이 항목들만 바꾸면 대부분의 RAG 실험이 가능합니다.
+
+| Config 경로 | 설명 | 예시 값 | 바꾸면 달라지는 것 |
+| --- | --- | --- | --- |
+| `rag.splitter.chunk_size` | chunk 하나의 최대 글자 수 | 200 / 500 / 800 | 작게→정밀↑, 크게→문맥↑ |
+| `rag.splitter.chunk_overlap` | 앞뒤 chunk 중복 글자 수 | 0 / 80 / 150 | 크게→정보잘림 방지, 중복↑ |
+| `rag.retriever.method` | 검색 방식 | keyword / semantic / hybrid | keyword=단어매칭, semantic=의미매칭 |
+| `rag.retriever.top_k` | 검색 결과 개수 | 3 / 5 / 10 | 늘리면→근거 풍부, 노이즈↑ |
+| `rag.answerer.provider` | 답변 생성 방식 | local / ollama / openai | local=추출형(무료), ollama=로컬LLM, openai=API |
+| `rag.embedding.provider` | 임베딩 방식 | local / huggingface / openai | local=해시기반(빠름), huggingface=정확 |
+| `rag.reranker.enabled` | 검색 재정렬 사용 | true / false | true→Cross-Encoder로 정밀 재정렬 |
+| `rag.answerer.memory.enabled` | 멀티턴 대화 | true / false | true→이전 대화 기억 |
+| `evaluation.questions_path` | 평가 질문 CSV 경로 | data/rag_sample/eval_questions.csv | 다른 평가셋으로 변경 |
+
 ## 디렉터리 구조
 
 ```text
