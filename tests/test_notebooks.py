@@ -31,6 +31,8 @@ def test_rag_config_run_notebook_structure() -> None:
         "scripts/run_rag_retrieve.py",
         "scripts/run_rag_chat.py",
         "configs/experiments/rag/rag_langchain.yaml",
+        "configs/experiments/rag/rag_realistic_docs.yaml",
+        "configs/experiments/rag/rag_hybrid.yaml",
         "data/rag_sample/eval_questions.csv",
     ]
     expected_texts = [
@@ -43,8 +45,13 @@ def test_rag_config_run_notebook_structure() -> None:
         "display_answers",
         "display_failure_tables",
         "display_artifact_check",
-        "CONFIG_ROOT",
-        "EXP_NAME",
+        "display_chunk_summary",
+        "plot_metric_bar",
+        "plot_failure_counts",
+        "matplotlib",
+        "RUN_CHECK",
+        "RUN_INGEST",
+        "RUN_EVALUATE",
         "source_path",
         "OPENAI_API_KEY",
     ]
@@ -81,6 +88,7 @@ def test_colab_drive_run_notebook_structure() -> None:
         "display_metrics",
         "display_answers",
         "display_failure_tables",
+        "source_path",
     ]
     for text in expected_texts:
         assert text in source
