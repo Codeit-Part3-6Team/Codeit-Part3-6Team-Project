@@ -4,7 +4,7 @@
 
 현재 프로젝트의 기본 실행 대상은 RAG입니다. 분류 학습용 script는 `scripts/examples/classification/` 아래에 참고용으로 분리합니다.
 
-## RAG 실행 명령
+## RAG Python 스크립트
 
 | script | 용도 |
 | --- | --- |
@@ -14,6 +14,14 @@
 | `run_rag_chat.py` | 답변 생성 또는 평가 실행 |
 | `compare_rag_retrievers.py` | retriever config 비교 리포트 생성 |
 | `summarize_experiments.py` | RAG 실험 metric/config/run info 요약 |
+
+## Shell 스크립트 (GCP VM)
+
+| script | 용도 |
+| --- | --- |
+| `setup_vm.sh` | VM 초기 환경 구성 (Miniconda, Ollama, Jupyter 커널) |
+| `sync_data.sh` | Drive ↔ VM 데이터 동기화 (pull/push) |
+| `backup_experiments.sh` | 실험 결과 Google Drive 백업 |
 
 ## 기본 실행 순서
 
@@ -31,6 +39,7 @@ python scripts/compare_rag_retrievers.py --project-root .
 ```text
 experiments/rag_langchain/
 |-- config.yaml
+|-- run_info.json
 |-- parsed_documents.csv
 |-- chunks.csv
 |-- embeddings.jsonl

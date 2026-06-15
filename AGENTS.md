@@ -31,12 +31,14 @@ configs/experiments/rag/ RAG 실험 config
 configs/examples/        분류/HuggingFace 참고 config
 scripts/                 사람이 실행하는 공식 명령
 src/                     실제 구현 코드
-src/rag/                 RAG 문서 처리, 검색, 답변, 평가
+src/rag/                 RAG 문서 처리, 검색, 답변, 평가 (README 참조)
 experiments/             실험 산출물
 reports/                 실험 요약과 팀 공유 자료
 notebooks/               로컬/Colab 실험 템플릿
 docs/team/               팀원이 처음 볼 킥오프, 운영, 역할 문서
 docs/md/                 세부 참고 Markdown 문서
+docs/html/               공유/설명용 HTML 문서
+docs/llm/                LLM 작업용 컨텍스트 문서 (PROJECT_CONTEXT, ARCHITECTURE_MAP, TASK_PROMPTS, WORKFLOW_CHECKLIST)
 docs/html/               공유/설명용 HTML 문서
 docs/llm/                LLM 작업용 컨텍스트 문서
 tests/                   단위 테스트와 smoke test

@@ -9,6 +9,7 @@
 | 목적 | config |
 | --- | --- |
 | LangChain 엔진 기본 실행 | `configs/experiments/rag/rag_langchain.yaml` |
+| DOCX/HWPX 문서 형식 검증 | `configs/experiments/rag/rag_realistic_docs.yaml` |
 | local semantic retriever 비교 | `configs/experiments/rag/rag_semantic.yaml` |
 | keyword retriever 비교 | `configs/experiments/rag/rag_keyword.yaml` |
 | keyword + semantic hybrid 비교 | `configs/experiments/rag/rag_hybrid.yaml` |
