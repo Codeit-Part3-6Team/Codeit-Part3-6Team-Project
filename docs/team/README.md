@@ -52,6 +52,7 @@ flowchart LR
 
 | 필요 상황 | 참고 문서 |
 | --- | --- |
+| 파이프라인이 내부적으로 어떻게 동작하는지 이해가 안 될 때 | [pipeline_walkthrough.md](pipeline_walkthrough.md) |
 | RAG 입력/출력 계약이 필요할 때 | [../md/rag/RAG_PIPELINE_SPEC.md](../md/rag/RAG_PIPELINE_SPEC.md) |
 | 데이터 형식을 맞춰야 할 때 | [../md/data/DATA_CONTRACT.md](../md/data/DATA_CONTRACT.md) |
 | 실험 실행 방법이 필요할 때 | [../md/experiments/EXPERIMENT_GUIDE.md](../md/experiments/EXPERIMENT_GUIDE.md) |
