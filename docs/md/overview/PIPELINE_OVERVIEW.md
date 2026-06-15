@@ -1,7 +1,7 @@
 # 파이프라인 설명서
 
 이 문서는 팀원에게 현재 프로젝트 파이프라인을 설명하기 위한 개요 문서입니다.
-세부 명령어는 루트 `README.md`, 실험 규칙은 `../experiments/EXPERIMENT_GUIDE.md`, Colab 실행은 `../experiments/COLAB_GUIDE.md`를 참고합니다.
+세부 명령어는 루트 `README.md`, 실험 규칙은 `../experiments/EXPERIMENT_GUIDE.md`를 참고합니다.
 운영 기능의 현재 상태와 남은 보강 항목은 `PIPELINE_INFRA_CHECKLIST.md`에서 관리합니다.
 
 ## 한 줄 요약

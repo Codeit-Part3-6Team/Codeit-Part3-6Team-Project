@@ -191,7 +191,7 @@ reports/rag_retriever_comparison.json
 
 ## 백업
 
-Colab이나 Drive 백업이 필요하면 config의 `backup` 블록을 사용합니다.
+백업이 필요하면 config의 `backup` 블록과 `scripts/sync_data.sh push`를 사용합니다.
 
 ```yaml
 backup:

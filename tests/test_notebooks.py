@@ -33,6 +33,7 @@ def test_rag_config_run_notebook_structure() -> None:
         "configs/experiments/rag/rag_langchain.yaml",
         "configs/experiments/rag/rag_realistic_docs.yaml",
         "configs/experiments/rag/rag_hybrid.yaml",
+        "configs/experiments/rag/rag_keyword.yaml",
         "data/rag_sample/eval_questions.csv",
     ]
     expected_texts = [
@@ -62,41 +63,8 @@ def test_rag_config_run_notebook_structure() -> None:
         assert text in source
 
 
-def test_colab_drive_run_notebook_structure() -> None:
-    notebook = _load_notebook("notebooks/rag/rag_colab_drive_run.ipynb")
-
-    assert notebook["nbformat"] == 4
-    source = _joined_source(notebook)
-
-    expected_texts = [
-        "Colab에서 RAG 실험을 돌릴 때",
-        "from google.colab import drive",
-        "drive.mount",
-        "REPO_URL",
-        "git clone",
-        "pip install -r requirements.txt",
-        "/content/drive/MyDrive/codeit_rag_project",
-        "configs/experiments/rag/rag_colab_drive.yaml",
-        "find_project_root",
-        "AGENTS.md",
-        "sys.executable",
-        "shlex.quote",
-        "PYTHON",
-        "OPENAI_API_KEY",
-        "scripts/run_rag_ingest.py",
-        "scripts/run_rag_chat.py",
-        "display_metrics",
-        "display_answers",
-        "display_failure_tables",
-        "source_path",
-    ]
-    for text in expected_texts:
-        assert text in source
-
-
 def test_notebook_readme_points_to_templates() -> None:
     readme = (ROOT / "notebooks/README.md").read_text(encoding="utf-8")
 
     assert "rag/rag_config_run.ipynb" in readme
-    assert "rag/rag_colab_drive_run.ipynb" in readme
-    assert "templates/colab_drive_run.md" in readme
+    assert "rag/rag_compare_results.ipynb" in readme
