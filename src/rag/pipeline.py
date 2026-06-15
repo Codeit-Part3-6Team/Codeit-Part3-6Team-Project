@@ -170,6 +170,58 @@ def run_rag_chat(config_path: str | Path, project_root: str | Path, question: st
         raise
 
 
+# ===== 멀티턴 대화 지원 =====
+_CHAT_HISTORY: dict[str, list[dict[str, str]]] = {}
+
+
+def run_rag_chat_with_history(
+    config_path: str | Path,
+    project_root: str | Path,
+    question: str,
+    thread_id: str = "default",
+) -> dict[str, Any]:
+    """이전 대화 맥락을 유지하며 답변을 생성합니다."""
+    root = Path(project_root)
+    config_path = _resolve_path(root, config_path)
+    config = load_config(config_path)
+    output_dir = resolve_experiment_dir(root, config)
+    ensure_dir(output_dir)
+
+    memory_cfg = config.get("rag", {}).get("answerer", {}).get("memory", {})
+    memory_enabled = bool(memory_cfg.get("enabled", False))
+
+    if not memory_enabled:
+        return run_rag_chat(config_path, root, question)
+
+    _write_run_status(output_dir, "rag_chat", "running")
+    try:
+        history = _CHAT_HISTORY.setdefault(thread_id, [])
+
+        # 이전 대화를 컨텍스트로 포함하여 검색
+        context_question = question
+        if history:
+            prev = "\n".join(
+                f"Q: {h['question']}\nA: {h.get('answer', '')[:200]}"
+                for h in history[-3:]
+            )
+            context_question = f"이전 대화:\n{prev}\n\n현재 질문: {question}"
+
+        retrieval = run_rag_retrieve(config_path, root, context_question)
+        answer = build_rag_engine(config, output_dir).answer(question, retrieval["retrieved_chunks"])
+
+        # 대화 기록 저장
+        history.append({"question": question, "answer": answer.get("answer", "")})
+        if len(history) > 10:
+            history.pop(0)
+
+        _append_jsonl(output_dir / "answers.jsonl", answer)
+        _write_run_status(output_dir, "rag_chat", "success", result={"status": answer["status"], "thread": thread_id})
+        return answer
+    except Exception as exc:
+        _write_failure_artifact(output_dir, "rag_chat", exc)
+        raise
+
+
 def run_rag_evaluation(config_path: str | Path, project_root: str | Path = ".") -> dict[str, float]:
     """작은 평가 질문 세트로 retrieval/answer/citation metric을 계산합니다."""
     root = Path(project_root)

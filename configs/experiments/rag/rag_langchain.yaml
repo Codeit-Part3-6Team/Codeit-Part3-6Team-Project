@@ -38,13 +38,16 @@ rag:
   reranker:
     enabled: false
     provider: huggingface
-    model_name:
+    model_name: BAAI/bge-reranker-v2-m3
     top_k: 3
   answerer:
     mode: extractive
     provider: local
     model_name:
     fallback_message: 문서에서 확인하지 못했습니다.
+    memory:
+      enabled: false
+    temperature: 0.2
 
 evaluation:
   questions_path: data/rag_sample/eval_questions.csv
