@@ -62,6 +62,8 @@ Config의 `paths.raw_docs_dir`가 Drive에서 pull한 경로를 가리키는지 
 [golden_dataset_guide.md](golden_dataset_guide.md)를 보고 평가 질문 CSV를 작성합니다.
 완성된 CSV는 Drive에 올리고, 다시 `sync_data.sh pull`로 VM에 반영합니다.
 
+CSV의 정확한 컬럼명과 형식은 [docs/md/data/DATA_CONTRACT.md](../md/data/DATA_CONTRACT.md)를 참고하세요.
+
 ## 자주 하는 명령어
 
 ```bash
