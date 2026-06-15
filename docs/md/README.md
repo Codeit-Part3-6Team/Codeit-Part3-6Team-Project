@@ -30,7 +30,7 @@ mindmap
 docs/md/
 |-- rag/          RAG 입력/출력, 검색, 답변, 평가 계약
 |-- data/         데이터 제공 형식과 원본 데이터 관리 기준
-|-- experiments/  실험 실행, Colab, 노트북 사용법
+|-- experiments/  실험 실행, 노트북 사용법
 `-- overview/     전체 구조, 모듈 관계, 인프라 체크리스트
 ```
 

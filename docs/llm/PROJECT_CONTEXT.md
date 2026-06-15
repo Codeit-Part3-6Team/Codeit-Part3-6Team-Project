@@ -39,7 +39,7 @@
 | Checkpoint/Resume | RAG ingest stage 단위 artifact 재사용 |
 | Failure artifact | `run_status.json`, `failure.log`, 실패 분석 CSV |
 | Experiment summary | 여러 실험의 metric/config/run info 요약 |
-| Notebook | 로컬 RAG walkthrough, Colab/Drive 실행 템플릿 |
+| Notebook | 로컬 RAG walkthrough, 분석 노트북 |
 | Docs | Markdown 원본, HTML 설명 문서, README 지도 |
 | 실제 포맷 점검 | `configs/experiments/rag/rag_realistic_docs.yaml` 기준 DOCX/HWPX 준실제 샘플 확인, PDF loader 단위 검증 통과 |
 

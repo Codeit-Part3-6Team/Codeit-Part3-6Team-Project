@@ -64,4 +64,4 @@ rag_ingest_checkpoint.json
 
 단일 실험 실행은 `notebooks/rag/rag_config_run.ipynb`에서 `EXP_NAME`을 선택해 진행합니다.
 
-비교 실험, DOCX/HWPX fixture 점검, Colab 실행은 각각 별도 config, 별도 노트북, 별도 Issue에서 다룹니다.
+비교 실험, DOCX/HWPX fixture 점검은 각각 별도 config, 별도 Issue에서 다룹니다.
