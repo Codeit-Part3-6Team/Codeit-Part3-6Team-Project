@@ -11,9 +11,15 @@ PROJECT_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 CONDA_ENV_NAME="codeit-ml-pipeline"
 
 # ===== 1. 시스템 패키지 =====
-echo "[1/8] 시스템 패키지 설치..."
+echo "[1/9] 시스템 패키지 설치..."
 sudo apt-get update -qq
 sudo apt-get install -y -qq curl zstd python3-pip python3-venv nodejs npm
+
+# ===== 1.5. 공유 데이터 디렉터리 생성 =====
+echo "[1.5/9] 공유 데이터 디렉터리 생성..."
+sudo mkdir -p /shared/data/raw_docs
+sudo chmod -R 755 /shared
+echo "  공유 데이터 경로: /shared/data/raw_docs"
 
 # ===== 2. Miniconda 설치 =====
 echo "[2/8] Miniconda 설치..."
