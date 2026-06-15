@@ -1,6 +1,16 @@
-# Google Drive 백업 설정
+# Google Drive 데이터 동기화 및 백업
 
-실험 결과와 리포트를 Google Drive에 자동 백업하는 방법입니다.
+실험 데이터를 Drive에서 VM으로 가져오고, 실험 결과를 Drive에 백업하는 방법입니다.
+
+## 빠른 사용법
+
+```bash
+# Drive -> VM: 원본 문서 가져오기
+bash scripts/sync_data.sh pull
+
+# VM -> Drive: 실험 결과 백업
+bash scripts/sync_data.sh push
+```
 
 ## 1회 설정 (VM에서 한 번만)
 

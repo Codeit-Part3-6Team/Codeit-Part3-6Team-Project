@@ -45,7 +45,6 @@ flowchart LR
 | PM | 일정, 보드, 역할 배정, 막힘 관리 | [roles.md](roles.md)의 PM |
 | Data Engineer | 문서 확보, 로딩 확인, 평가 질문 준비 | [roles.md](roles.md)의 Data Engineer |
 | Experiment Lead | retriever, answerer, LangChain config, evaluation 관리 | [roles.md](roles.md)의 Experiment Lead |
-| Application Engineer | 데모/API 후보, 입출력 형태, citation 표시 방식 | [roles.md](roles.md)의 Application Engineer |
 | Presentation Lead | 문제 설명, 쉬운 용어, 발표 흐름과 시각 자료 | [roles.md](roles.md)의 Presentation Lead |
 
 ## 세부 문서는 언제 보는가
@@ -53,6 +52,9 @@ flowchart LR
 | 필요 상황 | 참고 문서 |
 | --- | --- |
 | RAG 입력/출력 계약이 필요할 때 | [../md/rag/RAG_PIPELINE_SPEC.md](../md/rag/RAG_PIPELINE_SPEC.md) |
+| 파이프라인이 어떻게 동작하는지 이해가 안 될 때 | [pipeline_walkthrough.md](pipeline_walkthrough.md) |
+| 데이터를 Drive에서 VM으로 가져오거나 백업할 때 | [backup_guide.md](backup_guide.md) |
+| Data Engineer — 문서 수집·정리 규칙 | [data_engineer_guide.md](data_engineer_guide.md) |
 | 데이터 형식을 맞춰야 할 때 | [../md/data/DATA_CONTRACT.md](../md/data/DATA_CONTRACT.md) |
 | 실험 실행 방법이 필요할 때 | [../md/experiments/EXPERIMENT_GUIDE.md](../md/experiments/EXPERIMENT_GUIDE.md) |
 | 노트북 설명을 보강할 때 | [../md/experiments/NOTEBOOK_USAGE_CHECKLIST.md](../md/experiments/NOTEBOOK_USAGE_CHECKLIST.md) |
