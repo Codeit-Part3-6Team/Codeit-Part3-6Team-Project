@@ -188,6 +188,7 @@ Ollama/OpenAI 같은 생성형 답변 후보는 `configs/examples/rag/rag_langch
 |   `-- llm/               # LLM 작업용 컨텍스트
 |-- experiments/           # RAG 실험 산출물
 |-- reports/               # 비교 리포트와 공유 자료
+|-- notebooks/             # RAG walkthrough 노트북
 |-- scripts/               # 실행 진입점
 |-- src/
 |   `-- rag/               # RAG 구현체

@@ -36,14 +36,18 @@ mindmap
 
 ```text
 tests/
+|-- conftest.py                  # pytest fixtures (isolated_project 등)
 |-- test_rag_validation.py       # RAG config validation
 |-- test_rag_document_loader.py  # PDF/DOCX/HWPX 등 문서 loader
 |-- test_rag_engines.py          # LangChain/local engine artifact 계약
 |-- test_rag_pipeline.py         # ingest/retrieve/chat 흐름
 |-- test_rag_adapters.py         # local fallback adapter 선택
+|-- test_rag_quality_gate.py     # RAG 품질 게이트 (재현성, 계약, DOCX/HWPX E2E)
 |-- test_notebooks.py            # RAG 노트북 구조
 |-- test_scripts.py              # 실행 스크립트 진입점
 |-- test_config.py               # config 로딩과 경로 규칙
+|-- test_validate_data.py        # 데이터 validation
+|-- test_models.py               # 참고용 분류 모델 테스트
 |-- test_pipeline_smoke.py       # 참고용 분류 config 기반 pipeline
 `-- test_experiments.py          # 참고용 실험 artifact 정책
 ```
