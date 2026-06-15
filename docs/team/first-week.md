@@ -49,7 +49,7 @@ Done
 | --- | --- |
 | 실제 데이터 후보 조사 | RFP/PDF/HWP/HWPX 후보와 접근 방법을 정리합니다. |
 | 데이터 반입 규칙 확인 | 원본 데이터 저장 위치와 Git 제외 규칙을 확인합니다. |
-| 평가 질문 CSV 초안 작성 | `question`, `expected_answer`, `expected_chunk_ids` 형식을 이해하고 예시를 만듭니다. |
+| 평가 질문 CSV 초안 작성 | [golden_dataset_guide.md](golden_dataset_guide.md)를 읽고 `question`, `expected_answer`, `expected_chunk_ids` 형식으로 초안을 만듭니다. |
 | 문서 로더 검증 계획 작성 | 실제 PDF/HWP/HWPX가 들어오면 확인할 항목을 정리합니다. |
 
 ## Experiment Lead

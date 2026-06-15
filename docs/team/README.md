@@ -55,6 +55,7 @@ flowchart LR
 | RAG 입력/출력 계약이 필요할 때 | [../md/rag/RAG_PIPELINE_SPEC.md](../md/rag/RAG_PIPELINE_SPEC.md) |
 | 데이터 형식을 맞춰야 할 때 | [../md/data/DATA_CONTRACT.md](../md/data/DATA_CONTRACT.md) |
 | 실험 실행 방법이 필요할 때 | [../md/experiments/EXPERIMENT_GUIDE.md](../md/experiments/EXPERIMENT_GUIDE.md) |
+| 평가 질문과 정답 데이터를 만들어야 할 때 | [golden_dataset_guide.md](golden_dataset_guide.md) |
 | 노트북 설명을 보강할 때 | [../md/experiments/NOTEBOOK_USAGE_CHECKLIST.md](../md/experiments/NOTEBOOK_USAGE_CHECKLIST.md) |
 | 파이프라인 산출물을 따로 점검할 때 | [rehearsal.md](rehearsal.md) |
 | LLM에게 작업을 맡길 때 | [../llm/README.md](../llm/README.md) |
