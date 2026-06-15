@@ -9,9 +9,9 @@ set -e
 RCLONE_REMOTE="gdrive"
 DRIVE_DIR="codeit_rag_project"
 
-# VM에 데이터를 둘 경로
-VM_DATA_DIR="data/raw_docs"
-VM_EVAL_DIR="data"
+# VM에 데이터를 둘 경로 (모든 계정 공유)
+VM_DATA_DIR="/shared/data/raw_docs"
+VM_EVAL_DIR="/shared/data"
 
 # Drive 경로
 DRIVE_DATA="codeit_rag_project/data/raw_docs"
