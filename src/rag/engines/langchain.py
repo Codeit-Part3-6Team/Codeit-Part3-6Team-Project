@@ -95,11 +95,60 @@ class LangChainRagEngine:
         store = self._load_vector_store()
         retriever_cfg = self.rag_config.get("retriever", {})
         top_k = int(retriever_cfg.get("top_k", retriever_cfg.get("k", 3)))
+        reranker_cfg = self.rag_config.get("reranker", {})
+        rerank_enabled = bool(reranker_cfg.get("enabled", False))
+
+        # 1차 검색 (reranker 있으면 더 많은 후보를 가져옴)
+        fetch_k = top_k * 3 if rerank_enabled else top_k
         if store is not None:
-            rows = store.similarity_search_with_score(question, k=top_k)
-            return _retrieval_rows_from_documents(rows)
-        query_vector = self._build_embeddings().embed_query(question)
-        return _retrieve_from_artifact(question, chunks, embeddings, query_vector, top_k)
+            rows = store.similarity_search_with_score(question, k=fetch_k)
+            results = _retrieval_rows_from_documents(rows)
+        else:
+            query_vector = self._build_embeddings().embed_query(question)
+            results = _retrieve_from_artifact(question, chunks, embeddings, query_vector, fetch_k)
+
+        # 2차 재정렬 (Re-rank)
+        if rerank_enabled and results:
+            results = self._rerank(question, results, reranker_cfg, top_k)
+
+        return results[:top_k]
+
+    def _rerank(
+        self,
+        question: str,
+        results: list[dict[str, str | float | int]],
+        reranker_cfg: dict[str, Any],
+        top_k: int,
+    ) -> list[dict[str, str | float | int]]:
+        provider = str(reranker_cfg.get("provider", "huggingface") or "huggingface")
+        model_name = str(reranker_cfg.get("model_name", "") or "")
+        if provider == "huggingface":
+            try:
+                from sentence_transformers import CrossEncoder  # type: ignore
+            except ImportError:
+                import warnings
+                warnings.warn("sentence-transformers not installed, skipping re-rank")
+                return results
+
+            rerank_model = CrossEncoder(
+                model_name or "BAAI/bge-reranker-v2-m3",
+                max_length=512,
+            )
+            pairs = [[question, str(r.get("text", ""))[:400]] for r in results]
+            scores = rerank_model.predict(pairs, show_progress_bar=False)
+            scored = sorted(
+                [(float(s), r) for s, r in zip(scores, results)],
+                key=lambda x: (-x[0], str(x[1].get("chunk_id", ""))),
+            )
+            reranked = []
+            for rank, (score, row) in enumerate(scored[:top_k], start=1):
+                row_copy = dict(row)
+                row_copy["rank"] = rank
+                row_copy["score"] = round(score, 4)
+                reranked.append(row_copy)
+            return reranked
+
+        return results
 
     def answer(self, question: str, retrieved_chunks: list[dict[str, Any]]) -> dict[str, Any]:
         answerer_cfg = self.rag_config.get("answerer", self.rag_config.get("llm", {}))

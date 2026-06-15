@@ -26,3 +26,4 @@ langchain-text-splitters==1.0.0
 langchain-chroma==1.0.0
 langchain-ollama==1.0.0
 langchain-openai==1.1.0
+sentence-transformers>=3.0.0     # Re-rank (Cross-Encoder), 선택 설치

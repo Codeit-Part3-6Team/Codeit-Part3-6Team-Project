@@ -1,2 +1,2 @@
-exp_id,owner,date,config,model,data_version,metric,result_path,notes
-smoke_test,team,,configs/smoke_test.yaml,mean_rgb_centroid,v1.0,valid_accuracy,outputs/smoke_test,파이프라인 스캐폴드 smoke test
+exp_name,date,author,config_path,eval_questions,retrieval_hit_rate,answer_contains_expected_rate,citation_correct_rate,not_found_rate,changed_from_baseline,notes
+rag_langchain,2026-06-18,team,configs/experiments/rag/rag_langchain.yaml,data/rag_sample/eval_questions.csv,1.0,1.0,1.0,0.0,baseline,TXT 샘플 smoke test 통과

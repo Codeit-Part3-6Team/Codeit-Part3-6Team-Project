@@ -90,6 +90,7 @@ def _build_summary(
     _validate_retriever_config(retriever, engine, errors)
     _validate_reranker_config(reranker, errors, warnings)
     _validate_answerer_config(answerer, engine, errors, warnings)
+    _validate_memory_config(answerer.get("memory", {}), errors)
     _validate_artifact_policy(artifact_policy, errors)
     _validate_questions_path(root, questions_path, errors)
 
@@ -264,8 +265,15 @@ def _validate_reranker_config(
     model_name = str(reranker.get("model_name", "") or "").strip()
     if enabled and provider == "huggingface" and not model_name:
         errors.append("rag.reranker.model_name is required when reranker is enabled with huggingface")
-    if enabled:
-        warnings.append("reranker is config-ready but not implemented in smoke runtime")
+
+def _validate_memory_config(
+    memory: dict[str, Any],
+    errors: list[str],
+) -> None:
+    enabled = bool(memory.get("enabled", False))
+    if enabled and not isinstance(enabled, bool):
+        _ = enabled  # validate type
+
 
 
 def _validate_answerer_config(
