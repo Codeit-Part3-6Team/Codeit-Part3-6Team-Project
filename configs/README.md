@@ -179,7 +179,7 @@ rag:
 
 | 파라미터 | 기본값 | 설명 |
 | --- | --- | --- |
-| `type` | recursive_character | 분할 알고리즘. 문단→문장→단어 순으로 최적 크기를 찾음 |
+| `type` | recursive_character | 분할 알고리즘. `recursive_character`=문단→문장→단어 순으로 최적 크기 찾기, `langchain`/`recursive`도 동일하게 동작 | `recursive_character`, `langchain`, `recursive` |
 | `chunk_size` | 500 | 한 chunk의 최대 글자 수. 작게=정밀도↑/문맥↓, 크게=반대 |
 | `chunk_overlap` | 80 | 앞뒤 chunk가 겹치는 글자 수. 정보가 chunk 경계에서 잘리는 걸 방지 |
 
@@ -231,7 +231,7 @@ rag:
 
 | 파라미터 | 기본값 | 설명 |
 | --- | --- | --- |
-| `method` | similarity (langchain) / keyword (local) | `keyword`=단어 일치 개수, `semantic`=벡터 유사도, `hybrid`=keyword+semantic 가중평균, `similarity`=LangChain 기본 검색 |
+| `method` | similarity (langchain) / keyword (local) | `keyword`=단어 일치 개수, `semantic`=벡터 유사도, `hybrid`=keyword+semantic 가중평균, `similarity`=LangChain 기본 검색 | `keyword`, `semantic`, `hybrid`, `similarity` |
 | `top_k` | 3 | 검색 결과 개수. 늘리면 근거 풍부, 줄이면 노이즈 감소 |
 | `score_threshold` | 0.0 | 이 점수 미만인 결과는 버림. 노이즈 필터링 |
 
