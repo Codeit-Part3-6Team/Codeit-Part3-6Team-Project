@@ -5,7 +5,7 @@ experiment:
   contract_version: rag-v0.2
 
 paths:
-  raw_docs_dir: data/rag_sample
+  raw_docs_dir: /shared/data/raw_docs   # VM 공유 데이터 경로. 로컬 실행 시 data/rag_sample 로 변경
   output_dir: experiments/rag_langchain
 
 artifact_policy:
