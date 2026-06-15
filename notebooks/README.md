@@ -10,24 +10,19 @@ notebooks/
 |-- README.md
 |-- rag/
 |   |-- rag_config_run.ipynb           # 실험 실행 노트북
-|   |-- rag_compare_results.ipynb      # 결과 비교/분석 노트북 (실행 X)
-|   `-- rag_colab_drive_run.ipynb      # Colab/Drive 실행 노트북
-`-- templates/
-    `-- colab_drive_run.md             # Colab 노트북 작성용 텍스트 템플릿
+|   `-- rag_compare_results.ipynb      # 결과 비교/분석 노트북 (실행 X)
 ```
 
 ## 노트북 사용 기준
+
+실험은 VM에서 진행하므로 별도 Colab 노트북은 사용하지 않습니다.
 
 ```mermaid
 flowchart TD
     A["RAG 실험을 시작한다"] --> B{"목적이 무엇인가?"}
     B -->|파이프라인 동작 확인| C["rag_config_run.ipynb"]
-    B -->|검색 품질/답변/citation 확인| C
     B -->|실험 결과 비교/분석| G["rag_compare_results.ipynb"]
-    B -->|Drive에 원본 문서와 결과를 둔다| D["rag_colab_drive_run.ipynb"]
-    B -->|HF embedding/reranker/LLM 실험| D
     C --> E["로컬 config 실행 결과 확인"]
-    D --> F["Colab/Drive 결과 확인"]
 ```
 
 ## 기본 노트북
@@ -45,20 +40,6 @@ flowchart TD
 팀원에게 파이프라인을 보여줄 때는 이 노트북을 기본 화면으로 사용합니다. 노트북 안에서는 config 하나를 선택해 `check -> ingest -> retrieve/chat -> evaluate` 명령과 산출물 확인 흐름을 보여줍니다.
 
 retriever 비교, DOCX/HWPX fixture 점검, Colab 실행은 별도 config, 별도 노트북, 별도 Issue에서 다룹니다.
-
-## Colab 실행 노트북
-
-`rag/rag_colab_drive_run.ipynb`는 Colab에서 실험을 돌릴 사람을 위한 실행 노트북입니다.
-아래 상황이면 이 노트북을 사용합니다.
-
-- 팀원이 같은 Drive 경로로 원본 문서와 산출물을 공유해야 할 때
-- 로컬 환경 세팅이 불안정해서 Colab에서 재현하고 싶을 때
-- HuggingFace embedding, reranker, LLM answerer처럼 다운로드와 추론 자원이 더 필요한 옵션을 실험할 때
-- 실험 결과를 Drive에 자동 백업하는 흐름을 보여주고 싶을 때
-
-CPU 기반 local provider, 작은 샘플 문서, 키워드/간단 vector 검색만 확인한다면 로컬 노트북으로 충분합니다.
-
-텍스트 템플릿으로 먼저 흐름을 확인하고 싶다면 `templates/colab_drive_run.md`를 봅니다.
 
 ## 분석 노트북
 
