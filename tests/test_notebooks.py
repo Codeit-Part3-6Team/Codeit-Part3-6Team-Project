@@ -33,6 +33,7 @@ def test_rag_config_run_notebook_structure() -> None:
         "configs/experiments/rag/rag_langchain.yaml",
         "configs/experiments/rag/rag_realistic_docs.yaml",
         "configs/experiments/rag/rag_hybrid.yaml",
+        "configs/experiments/rag/rag_keyword.yaml",
         "data/rag_sample/eval_questions.csv",
     ]
     expected_texts = [
