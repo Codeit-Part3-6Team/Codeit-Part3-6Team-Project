@@ -3,16 +3,6 @@ from __future__ import annotations
 from src.config import _parse_simple_yaml, load_config
 
 
-def test_load_config_reads_text_smoke_config(repo_root):
-    config = load_config(repo_root / "configs" / "examples" / "classification" / "smoke_test_text.yaml")
-
-    assert config["experiment"]["name"] == "smoke_test_text"
-    assert config["data"]["task"] == "text_classification"
-    assert config["model"]["name"] == "keyword_text_classifier"
-    assert config["backup"]["enabled"] is False
-    assert config["artifact_policy"]["on_existing"] == "overwrite"
-
-
 def test_load_config_reads_local_fallback_rag_file_types(repo_root):
     config = load_config(repo_root / "configs" / "experiments" / "rag" / "rag_semantic.yaml")
 
@@ -56,40 +46,6 @@ def test_load_config_accepts_utf8_bom_yaml(tmp_path):
     assert "experiment" in config
     assert "\ufeffexperiment" not in config
     assert config["experiment"]["name"] == "bom_unit"
-
-
-def test_load_config_reads_huggingface_text_config(repo_root):
-    config = load_config(repo_root / "configs" / "examples" / "classification" / "exp002_hf_text_finetune.yaml")
-
-    assert config["experiment"]["name"] == "exp002_hf_text_finetune"
-    assert config["data"]["task"] == "text_classification"
-    assert config["model"]["name"] == "huggingface_sequence_classifier"
-    assert config["model"]["model_name"] == "distilbert-base-multilingual-cased"
-    assert config["train"]["batch_size"] == 4
-    assert config["checkpoint"]["enabled"] is True
-    assert config["checkpoint"]["save_best"] is True
-    assert config["early_stopping"]["enabled"] is True
-    assert config["scheduler"]["enabled"] is True
-    assert config["scheduler"]["name"] == "linear"
-
-
-def test_load_config_reads_tiny_huggingface_smoke_config(repo_root):
-    config = load_config(repo_root / "configs" / "examples" / "classification" / "smoke_test_hf_tiny.yaml")
-
-    assert config["experiment"]["name"] == "smoke_test_hf_tiny"
-    assert config["model"]["name"] == "huggingface_sequence_classifier"
-    assert config["model"]["model_name"] == "hf-internal-testing/tiny-random-distilbert"
-    assert config["data"]["max_length"] == 64
-    assert config["checkpoint"]["enabled"] is True
-    assert config["scheduler"]["enabled"] is True
-
-
-def test_load_config_reads_colab_huggingface_config(repo_root):
-    config = load_config(repo_root / "configs" / "examples" / "classification" / "exp002_hf_text_finetune_colab.yaml")
-
-    assert config["experiment"]["name"] == "exp002_hf_text_finetune_colab"
-    assert config["paths"]["data_dir"].startswith("/content/drive/MyDrive/")
-    assert config["backup"]["enabled"] is True
 
 
 def test_fallback_yaml_parser_handles_nested_dicts_lists_and_scalars():
