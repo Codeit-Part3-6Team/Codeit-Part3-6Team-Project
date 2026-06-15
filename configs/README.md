@@ -339,7 +339,7 @@ artifact_policy:
 | 파라미터 | 기본값 | 설명 |
 | --- | --- | --- |
 | `run_id` | - | 같은 실험을 여러 번 돌릴 때 구분자 (예: run_001) |
-| `on_existing` | overwrite | 이미 결과 폴더가 있을 때 `overwrite`=덮어쓰기 |
+| `on_existing` | overwrite | 이미 결과 폴더가 있을 때 `overwrite`=덮어쓰기, `fail`=에러 발생 |
 
 ## 평가 옵션
 
