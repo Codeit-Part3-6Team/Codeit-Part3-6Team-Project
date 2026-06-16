@@ -1,13 +1,1 @@
-* text=auto
-
-*.py text eol=lf
-*.md text eol=lf
-*.yaml text eol=lf
-*.yml text eol=lf
-*.json text eol=lf
-*.csv text eol=lf
-*.html text eol=lf
-*.ini text eol=lf
-*.txt text eol=lf
-*.ppm text eol=lf
-
+*.sh text eol=lf
