@@ -156,7 +156,7 @@ rag:
 ```yaml
 rag:
   loader:
-    file_types: [txt, pdf, docx, hwpx, hwp]
+    file_types: [txt, pdf, docx, hwpx, hwp, csv]
 ```
 
 | 파라미터 | 기본값 | 설명 |
