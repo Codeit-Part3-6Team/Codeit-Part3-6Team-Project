@@ -13,9 +13,9 @@ DRIVE_DIR="codeit_rag_project"
 VM_DATA_DIR="/shared/data/raw_docs"
 VM_EVAL_DIR="/shared/data"
 
-# Drive 경로
-DRIVE_DATA="codeit_rag_project/data/raw_docs"
-DRIVE_EVAL="codeit_rag_project/data"
+# Drive 경로 (Codeit 제공 공유 폴더)
+DRIVE_DATA="AI 10기/프로젝트/중급 프로젝트/원본 데이터"
+DRIVE_EVAL="AI 10기/프로젝트/중급 프로젝트/원본 데이터"
 
 PROJECT_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$PROJECT_ROOT"

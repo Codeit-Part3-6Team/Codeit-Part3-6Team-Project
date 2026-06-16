@@ -41,7 +41,7 @@ Codeit 공유 Drive에서 데이터를 확인합니다:
 ### 2. VM에 데이터 가져오기
 
 ```bash
-# Codeit Drive → VM으로 복사 (rclone config 필요)
+# rclone config 시 위 공유 폴더로 설정
 bash scripts/sync_data.sh pull
 ```
 
