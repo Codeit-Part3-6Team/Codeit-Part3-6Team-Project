@@ -33,14 +33,15 @@ Codeit 제공 Drive                     우리 Drive (백업)
 
 ### 1. 데이터 확인 (Codeit 제공 Drive)
 
-코드잇에서 제공한 원본데이터 폴더를 확인합니다:
-- 문서 총 개수, 포맷별 분포 (PDF/HWP/HWPX)
+Codeit 공유 Drive에서 데이터를 확인합니다:
+- 경로: `AI 10기/프로젝트/중급 프로젝트/원본 데이터`
+- 문서 총 개수, 포맷별 분포 (PDF/HWP/HWPX) 확인
 - `data_list.csv` 컬럼 확인 (발주기관, 사업명, 예산 등)
 
 ### 2. VM에 데이터 가져오기
 
 ```bash
-# Codeit Drive → VM으로 복사 (rclone config 필요)
+# rclone config 시 위 공유 폴더로 설정
 bash scripts/sync_data.sh pull
 ```
 
