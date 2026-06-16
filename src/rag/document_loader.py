@@ -8,7 +8,7 @@ from typing import Callable
 from xml.etree import ElementTree
 
 
-SUPPORTED_FILE_TYPES = {"txt", "pdf", "docx", "hwpx", "hwp"}
+SUPPORTED_FILE_TYPES = {"txt", "pdf", "docx", "hwpx", "hwp", "csv"}
 
 
 def load_documents(
@@ -46,6 +46,7 @@ def _load_document_by_type(project_root: Path, path: Path, suffix: str) -> list[
         "docx": _parse_docx_document,
         "hwpx": _parse_hwpx_document,
         "hwp": _parse_hwp_document,
+        "csv": _parse_csv_document,
     }
     loader = loaders.get(suffix)
     if loader is None:
@@ -95,6 +96,41 @@ def _parse_hwpx_document(project_root: Path, path: Path) -> list[dict[str, str]]
             if name.lower().endswith(".xml"):
                 paragraphs.extend(_extract_xml_paragraphs(archive.read(name)))
     return _rows_from_paragraphs(project_root, path, paragraphs)
+
+
+def _parse_csv_document(project_root: Path, path: Path) -> list[dict[str, str]]:
+    """CSV 메타데이터 파일을 읽어 각 행을 document row로 변환합니다.
+    data_list.csv 컬럼 매핑:
+      공고 번호 -> document_id
+      사업명 -> title
+      텍스트 -> text
+      사업 금액, 발주 기관 등 -> 추가 metadata 컬럼
+    """
+    import csv
+
+    rows: list[dict[str, str]] = []
+    with path.open(encoding="utf-8-sig") as f:
+        reader = csv.DictReader(f)
+        for entry in reader:
+            doc_id = entry.get("공고 번호", "").strip()
+            title = entry.get("사업명", "").strip()
+            text = entry.get("텍스트", "").strip()
+            if not doc_id or not text:
+                continue
+            row: dict[str, str] = {
+                "document_id": doc_id,
+                "title": title or doc_id,
+                "source_path": _relative_path(project_root, path),
+                "page": "1",
+                "section": "본문",
+                "text": _normalize_text(text),
+            }
+            for meta_key in ("사업 금액", "발주 기관", "공고 차수", "파일형식", "파일명", "사업 요약"):
+                value = entry.get(meta_key, "").strip()
+                if value:
+                    row[f"meta_{meta_key}"] = value
+            rows.append(row)
+    return rows
 
 
 def _parse_hwp_document(project_root: Path, path: Path) -> list[dict[str, str]]:

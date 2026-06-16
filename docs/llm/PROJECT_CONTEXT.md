@@ -28,7 +28,7 @@
 
 | 영역 | 구현 상태 |
 | --- | --- |
-| 문서 로딩 | `txt`, `pdf`, `docx`, `hwpx`, `hwp` loader |
+| 문서 로딩 | `txt`, `pdf`, `docx`, `hwpx`, `hwp`, `csv` loader |
 | Engine | LangChain 기본 실행, local fallback |
 | Chunking | local splitter, LangChain RecursiveCharacterTextSplitter |
 | Embedding | local hashing, HuggingFace/Ollama/OpenAI LangChain embedding 후보 |

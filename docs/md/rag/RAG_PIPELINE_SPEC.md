@@ -14,7 +14,7 @@ mindmap
   root((RAG Contract))
     Document Input
       raw_docs
-      txt/pdf/docx/hwpx/hwp
+      txt/pdf/docx/hwpx/hwp/csv
       source metadata
     Chunk Output
       chunk_id
@@ -99,7 +99,7 @@ scripts/
 `-- run_rag_chat.py
 ```
 
-처음 sample 데이터는 작은 `.txt` 문서이지만, loader 자체는 `txt`, `pdf`, `docx`, `hwpx`, `hwp`를 대상으로 합니다.
+처음 sample 데이터는 작은 `.txt` 문서이지만, loader 자체는 `txt`, `pdf`, `docx`, `hwpx`, `hwp`, `csv`를 대상으로 합니다.
 
 ## 현재 구현된 config 기반 pipeline
 
@@ -215,6 +215,7 @@ rfp_sample,샘플 RFP,data/rag_sample/rfp_sample.txt,1,사업 개요,"본 사업
 | docx | zip 내부 `word/document.xml`에서 paragraph 추출 |
 | hwpx | zip 내부 XML에서 paragraph 추출 |
 | hwp | `olefile`로 BodyText section을 best-effort 추출 |
+| csv | 각 행을 하나의 document로 읽고 공고번/사업명/텍스트 등 컬럼 매핑, 나머지 컬럼은 `meta_*`로 보존 |
 
 ## 2. Chunk Output
 
@@ -457,7 +458,7 @@ artifact_policy:
 rag:
   engine: langchain
   loader:
-    file_types: [txt, pdf, docx, hwpx, hwp]
+    file_types: [txt, pdf, docx, hwpx, hwp, csv]
   splitter:
     type: recursive_character
     chunk_size: 500

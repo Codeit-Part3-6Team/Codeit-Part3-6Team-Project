@@ -15,7 +15,7 @@ artifact_policy:
 rag:
   engine: local
   loader:
-    file_types: [txt, pdf, docx, hwpx, hwp]
+    file_types: [txt, pdf, docx, hwpx, hwp, csv]
   chunk:
     size: 500
     overlap: 80

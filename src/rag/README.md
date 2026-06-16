@@ -15,6 +15,7 @@ mindmap
       docx
       hwpx
       hwp
+      csv
     Processing
       engines
       langchain
