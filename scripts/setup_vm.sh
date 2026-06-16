@@ -13,7 +13,7 @@ CONDA_ENV_NAME="codeit-ml-pipeline"
 # ===== 1. 시스템 패키지 =====
 echo "[1/9] 시스템 패키지 설치..."
 sudo apt-get update -qq
-sudo apt-get install -y -qq curl zstd python3-pip python3-venv nodejs npm
+sudo apt-get install -y -qq curl zstd python3-pip python3-venv nodejs npm git
 
 # ===== 1.5. 공유 데이터 디렉터리 생성 =====
 echo "[1.5/9] 공유 데이터 디렉터리 생성..."
@@ -22,7 +22,7 @@ sudo chmod -R 755 /shared
 echo "  공유 데이터 경로: /shared/data/raw_docs"
 
 # ===== 2. Miniconda 설치 =====
-echo "[2/8] Miniconda 설치..."
+echo "[2/9] Miniconda 설치..."
 if ! command -v conda &> /dev/null; then
     MINICONDA_URL="https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh"
     MINICONDA_SCRIPT="/tmp/miniconda_install.sh"
@@ -38,7 +38,7 @@ fi
 export PATH="$HOME/miniconda3/bin:$PATH"
 
 # ===== 3. Conda 환경 생성 =====
-echo "[3/8] Conda 환경 생성 ($CONDA_ENV_NAME)..."
+echo "[3/9] Conda 환경 생성 ($CONDA_ENV_NAME)..."
 cd "$PROJECT_ROOT"
 if conda env list | grep -q "$CONDA_ENV_NAME"; then
     echo "  환경이 이미 존재합니다. 업데이트합니다..."
@@ -48,13 +48,13 @@ else
 fi
 
 # ===== 4. Conda 환경을 Jupyter 커널로 등록 =====
-echo "[4/8] Conda 환경을 Jupyter 커널로 등록..."
+echo "[4/9] Conda 환경을 Jupyter 커널로 등록..."
 source "$HOME/miniconda3/bin/activate" "$CONDA_ENV_NAME"
 python -m ipykernel install --user --name "$CONDA_ENV_NAME" --display-name "Python ($CONDA_ENV_NAME)"
 pip install ipykernel jupyterlab-git --quiet
 
 # ===== 5. Ollama 설치 =====
-echo "[5/8] Ollama 설치..."
+echo "[5/9] Ollama 설치..."
 if ! command -v ollama &> /dev/null; then
     curl -fsSL https://ollama.com/install.sh | sh
 else
@@ -62,7 +62,7 @@ else
 fi
 
 # ===== 6. Ollama 서버 시작 + 모델 다운로드 =====
-echo "[6/8] Ollama 서버 시작 및 모델 다운로드..."
+echo "[6/9] Ollama 서버 시작 및 모델 다운로드..."
 if ! pgrep -x "ollama" > /dev/null; then
     ollama serve &
     sleep 5
@@ -70,7 +70,7 @@ fi
 ollama pull gemma4:e2b
 
 # ===== 7. rclone 설정 안내 =====
-echo "[7/8] rclone 설정 안내"
+echo "[7/9] rclone 설정 안내"
 if ! command -v rclone &> /dev/null; then
     sudo apt-get install -y -qq rclone
 fi
@@ -84,7 +84,7 @@ echo "    → 이후 Enter로 기본값, 브라우저에서 인증"
 echo ""
 
 # ===== 8. 데이터 가져오기 =====
-echo "[8/8] Drive에서 데이터 가져오기"
+echo "[8/9] Drive에서 데이터 가져오기"
 echo "  rclone 설정 완료 후 아래 명령어로 데이터를 가져오세요:"
 echo "    bash scripts/sync_data.sh pull"
 echo ""
@@ -101,8 +101,7 @@ echo "  2. bash scripts/sync_data.sh pull (데이터 가져오기)"
 echo "  3. python scripts/check_rag_pipeline.py --config configs/experiments/rag/rag_langchain.yaml --project-root ."
 echo "  4. 백업 자동화: crontab -e → 0 3 * * * bash $PROJECT_ROOT/scripts/sync_data.sh push"
 echo ""
-echo "=== 팀원별 프로젝트 클론 ==="
-echo "  각자 JupyterHub 터미널에서 실행:"
-echo "    git clone https://github.com/Codeit-Part3-6Team/Codeit-Part3-6Team-Project.git ~/project"
-echo "    cd ~/project"
-echo "    conda activate $CONDA_ENV_NAME"
+echo "=== 팀원별 초기 셋업 ==="
+echo "  각자 JupyterHub 터미널에서 한 번만 실행:"
+echo "    wget https://raw.githubusercontent.com/Codeit-Part3-6Team/Codeit-Part3-6Team-Project/main/scripts/setup_user.sh"
+echo "    bash setup_user.sh"
