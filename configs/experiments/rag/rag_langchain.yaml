@@ -15,7 +15,7 @@ artifact_policy:
 rag:
   engine: langchain
   loader:
-    file_types: [txt, pdf, docx, hwpx, hwp]
+    file_types: [txt, pdf, docx, hwpx, hwp, csv]
   splitter:
     type: recursive_character
     chunk_size: 500
