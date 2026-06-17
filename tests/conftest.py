@@ -22,5 +22,13 @@ def repo_root() -> Path:
 def isolated_project(tmp_path: Path, repo_root: Path) -> Path:
     for dirname in ["configs", "data"]:
         shutil.copytree(repo_root / dirname, tmp_path / dirname)
+    # VM 절대경로를 테스트용 상대경로로 덮어씁니다
+    for yaml_file in tmp_path.glob("configs/**/*.yaml"):
+        content = yaml_file.read_text(encoding="utf-8")
+        if "/shared/data/raw_docs" in content:
+            yaml_file.write_text(
+                content.replace("/shared/data/raw_docs", "data/rag_sample"),
+                encoding="utf-8",
+            )
     return tmp_path
 

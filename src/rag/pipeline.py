@@ -358,14 +358,16 @@ def _write_rag_ingest_checkpoint(output_dir: str | Path, stage: str, **counts: i
 
 
 def _read_csv(path: str | Path) -> list[dict[str, str]]:
-    # Windows/Excel에서 저장한 CSV는 UTF-8 BOM을 포함할 수 있으므로 utf-8-sig로 읽습니다.
+    import csv as _csv
+    _csv.field_size_limit(int(1e9))
     with Path(path).open("r", encoding="utf-8-sig", newline="") as f:
-        return list(csv.DictReader(f))
+        return list(_csv.DictReader(f))
 
 
 def _write_csv(path: str | Path, rows: list[dict[str, Any]], columns: list[str]) -> None:
+    all_columns = columns + [k for k in sorted(rows[0]) if k not in columns] if rows else columns
     with Path(path).open("w", encoding="utf-8", newline="") as f:
-        writer = csv.DictWriter(f, fieldnames=columns)
+        writer = csv.DictWriter(f, fieldnames=all_columns, extrasaction="ignore")
         writer.writeheader()
         writer.writerows(rows)
 
