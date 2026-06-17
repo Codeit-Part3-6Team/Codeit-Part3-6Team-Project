@@ -24,7 +24,7 @@ def load_documents(
         raise FileNotFoundError(f"RAG document directory not found: {docs_dir}")
 
     rows: list[dict[str, str]] = []
-    for path in sorted(item for item in docs_dir.iterdir() if item.is_file()):
+    for path in sorted(item for item in docs_dir.rglob("*") if item.is_file()):
         suffix = path.suffix.lower().lstrip(".")
         if suffix not in allowed_types:
             continue
