@@ -7,15 +7,15 @@
 set -e
 
 RCLONE_REMOTE="gdrive"
-DRIVE_DIR="codeit_rag_project"
+DRIVE_DIR="codeit-project2"
 
 # VM에 데이터를 둘 경로 (모든 계정 공유)
 VM_DATA_DIR="/shared/data/raw_docs"
 VM_EVAL_DIR="/shared/data"
 
-# Drive 경로 (Codeit 제공 공유 폴더)
-DRIVE_DATA="AI 10기/프로젝트/중급 프로젝트/원본 데이터"
-DRIVE_EVAL="AI 10기/프로젝트/중급 프로젝트/원본 데이터"
+# Drive 경로 (PM Google Drive)
+DRIVE_DATA="codeit-project2/data"
+DRIVE_EVAL="codeit-project2/data"
 
 PROJECT_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$PROJECT_ROOT"
