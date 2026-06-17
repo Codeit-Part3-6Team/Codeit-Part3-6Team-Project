@@ -365,7 +365,7 @@ def _read_csv(path: str | Path) -> list[dict[str, str]]:
 
 def _write_csv(path: str | Path, rows: list[dict[str, Any]], columns: list[str]) -> None:
     with Path(path).open("w", encoding="utf-8", newline="") as f:
-        writer = csv.DictWriter(f, fieldnames=columns)
+        writer = csv.DictWriter(f, fieldnames=columns, extrasaction="ignore")
         writer.writeheader()
         writer.writerows(rows)
 
