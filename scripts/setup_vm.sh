@@ -1,6 +1,6 @@
 #!/bin/bash
 # GCP VM 초기 셋업 스크립트
-# 사용법: bash scripts/setup_vm.sh
+# 사용법: sudo bash scripts/setup_vm.sh
 # VM 생성 직후 한 번만 실행하면 모든 환경이 자동 구성됩니다.
 
 set -e
@@ -9,33 +9,36 @@ echo ""
 
 PROJECT_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 CONDA_ENV_NAME="codeit-ml-pipeline"
+CONDA_DIR="/opt/conda"
 
 # ===== 1. 시스템 패키지 =====
 echo "[1/9] 시스템 패키지 설치..."
 sudo apt-get update -qq
 sudo apt-get install -y -qq curl zstd python3-pip python3-venv nodejs npm git
 
-# ===== 1.5. 공유 데이터 디렉터리 생성 =====
-echo "[1.5/9] 공유 데이터 디렉터리 생성..."
+# ===== 1.5. 공유 디렉터리 생성 =====
+echo "[1.5/9] 공유 디렉터리 생성..."
 sudo mkdir -p /shared/data/raw_docs
+sudo mkdir -p /shared/cache/huggingface
+sudo mkdir -p /shared/cache/sentence-transformers
 sudo chmod -R 775 /shared
 echo "  공유 데이터 경로: /shared/data/raw_docs"
+echo "  공유 캐시 경로: /shared/cache/"
 
-# ===== 2. Miniconda 설치 =====
-echo "[2/9] Miniconda 설치..."
-if ! command -v conda &> /dev/null; then
+# ===== 2. Miniconda 설치 (공용 /opt/conda) =====
+echo "[2/9] Miniconda 설치 ($CONDA_DIR)..."
+if [ ! -d "$CONDA_DIR" ]; then
     MINICONDA_URL="https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh"
     MINICONDA_SCRIPT="/tmp/miniconda_install.sh"
     curl -fsSL "$MINICONDA_URL" -o "$MINICONDA_SCRIPT"
-    bash "$MINICONDA_SCRIPT" -b -p "$HOME/miniconda3"
+    sudo bash "$MINICONDA_SCRIPT" -b -p "$CONDA_DIR"
     rm "$MINICONDA_SCRIPT"
-    "$HOME/miniconda3/bin/conda" init bash
-    source "$HOME/.bashrc"
+    sudo chmod -R 775 "$CONDA_DIR"
 else
     echo "  이미 설치됨"
 fi
 
-export PATH="$HOME/miniconda3/bin:$PATH"
+export PATH="$CONDA_DIR/bin:$PATH"
 
 # ===== 3. Conda 환경 생성 =====
 echo "[3/9] Conda 환경 생성 ($CONDA_ENV_NAME)..."
@@ -47,9 +50,21 @@ else
     conda env create -f environment.yml
 fi
 
+# ===== 3.5. HF 캐시 환경변수 설정 =====
+echo "[3.5/9] HuggingFace 캐시 공유 세팅..."
+ACTIVATE_D="$CONDA_DIR/envs/$CONDA_ENV_NAME/etc/conda/activate.d"
+sudo mkdir -p "$ACTIVATE_D"
+sudo tee "$ACTIVATE_D/env_vars.sh" > /dev/null << 'EOF'
+export HF_HOME=/shared/cache/huggingface
+export SENTENCE_TRANSFORMERS_HOME=/shared/cache/sentence-transformers
+export TORCH_HOME=/shared/cache/torch
+EOF
+sudo chmod 775 "$ACTIVATE_D/env_vars.sh"
+echo "  HF 캐시: /shared/cache/huggingface"
+
 # ===== 4. Conda 환경을 Jupyter 커널로 등록 =====
 echo "[4/9] Conda 환경을 Jupyter 커널로 등록..."
-source "$HOME/miniconda3/bin/activate" "$CONDA_ENV_NAME"
+source "$CONDA_DIR/bin/activate" "$CONDA_ENV_NAME"
 python -m ipykernel install --user --name "$CONDA_ENV_NAME" --display-name "Python ($CONDA_ENV_NAME)"
 pip install ipykernel jupyterlab-git --quiet
 
@@ -92,16 +107,17 @@ echo ""
 echo "=== 셋업 완료 ==="
 echo ""
 echo "공유 데이터 경로: /shared/data/raw_docs"
-echo "Conda 환경: conda activate $CONDA_ENV_NAME"
+echo "공유 캐시 경로: /shared/cache/"
+echo "Conda 환경 (공용): $CONDA_DIR/envs/$CONDA_ENV_NAME"
 echo "Jupyter 커널: Python ($CONDA_ENV_NAME)"
 echo ""
 echo "다음 단계:"
-echo "  1. rclone config (Google Drive 연동)"
-echo "  2. bash scripts/sync_data.sh pull (데이터 가져오기)"
-echo "  3. python scripts/check_rag_pipeline.py --config configs/experiments/rag/rag_langchain.yaml --project-root ."
-echo "  4. 백업 자동화: crontab -e → 0 3 * * * bash $PROJECT_ROOT/scripts/sync_data.sh push"
+echo "  1. bash scripts/add_user.sh <계정명> <ssh-pubkey> (팀원 추가)"
+echo "  2. rclone config (Google Drive 연동)"
+echo "  3. bash scripts/sync_data.sh pull (데이터 가져오기)"
+echo "  4. python scripts/check_rag_pipeline.py --config configs/experiments/rag/rag_langchain.yaml --project-root ."
 echo ""
 echo "=== 팀원별 초기 셋업 ==="
-echo "  각자 JupyterHub 터미널에서 한 번만 실행:"
+echo "  각자 SSH 접속 후 한 번만 실행:"
 echo "    wget https://raw.githubusercontent.com/Codeit-Part3-6Team/Codeit-Part3-6Team-Project/main/scripts/setup_user.sh"
 echo "    bash setup_user.sh"

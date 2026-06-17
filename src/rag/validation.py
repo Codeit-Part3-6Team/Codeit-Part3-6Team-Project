@@ -147,7 +147,7 @@ def _count_documents(
     if not raw_docs_dir.exists():
         errors.append(f"raw_docs_dir not found: {raw_docs_dir}")
         return counts
-    for path in raw_docs_dir.iterdir():
+    for path in raw_docs_dir.rglob("*"):
         if not path.is_file():
             continue
         suffix = path.suffix.lower().lstrip(".")
@@ -157,7 +157,7 @@ def _count_documents(
         errors.append(f"no input documents found in {raw_docs_dir} for file types {sorted(file_types)}")
     ignored = [
         path.name
-        for path in raw_docs_dir.iterdir()
+        for path in raw_docs_dir.rglob("*")
         if path.is_file() and path.suffix.lower().lstrip(".") not in file_types
     ]
     if ignored:
