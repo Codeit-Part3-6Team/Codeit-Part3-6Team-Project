@@ -18,12 +18,16 @@ sudo apt-get install -y -qq curl zstd python3-pip python3-venv nodejs npm git
 
 # ===== 1.5. 공유 디렉터리 생성 =====
 echo "[1.5/9] 공유 디렉터리 생성..."
+sudo groupadd -f shared
+sudo usermod -aG shared "$USER"
 sudo mkdir -p /shared/data/raw_docs
 sudo mkdir -p /shared/cache/huggingface
 sudo mkdir -p /shared/cache/sentence-transformers
+sudo chgrp -R shared /shared
 sudo chmod -R 775 /shared
 echo "  공유 데이터 경로: /shared/data/raw_docs"
 echo "  공유 캐시 경로: /shared/cache/"
+echo "  팀원 추가 시: sudo usermod -aG shared 계정명"
 
 # ===== 2. Miniconda 설치 (공용 /opt/conda) =====
 echo "[2/9] Miniconda 설치 ($CONDA_DIR)..."
