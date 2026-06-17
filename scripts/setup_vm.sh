@@ -65,8 +65,8 @@ echo "  HF 캐시: /shared/cache/huggingface"
 # ===== 4. Conda 환경을 Jupyter 커널로 등록 =====
 echo "[4/9] Conda 환경을 Jupyter 커널로 등록..."
 source "$CONDA_DIR/bin/activate" "$CONDA_ENV_NAME"
-python -m ipykernel install --user --name "$CONDA_ENV_NAME" --display-name "Python ($CONDA_ENV_NAME)"
 pip install ipykernel jupyterlab-git --quiet
+python -m ipykernel install --user --name "$CONDA_ENV_NAME" --display-name "Python ($CONDA_ENV_NAME)"
 
 # ===== 5. Ollama 설치 =====
 echo "[5/9] Ollama 설치..."
