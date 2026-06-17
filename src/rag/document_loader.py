@@ -107,6 +107,7 @@ def _parse_csv_document(project_root: Path, path: Path) -> list[dict[str, str]]:
       사업 금액, 발주 기관 등 -> 추가 metadata 컬럼
     """
     import csv
+    csv.field_size_limit(int(1e9))
 
     rows: list[dict[str, str]] = []
     with path.open(encoding="utf-8-sig") as f:
