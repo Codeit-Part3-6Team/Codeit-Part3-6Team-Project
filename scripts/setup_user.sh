@@ -20,14 +20,13 @@ if [ ! -d "$CONDA_DIR" ]; then
     exit 1
 fi
 
-if ! grep -q "$CONDA_DIR/bin" "$HOME/.bashrc" 2>/dev/null; then
-    cat >> "$HOME/.bashrc" << 'BASH_SETUP'
-export PATH="/opt/conda/bin:$PATH"
-conda activate codeit-ml-pipeline 2>/dev/null || true
+if ! grep -q "conda activate $CONDA_ENV_NAME" "$HOME/.bashrc" 2>/dev/null; then
+    cat >> "$HOME/.bashrc" << BASH_SETUP
+export PATH="$CONDA_DIR/bin:\$PATH"
+conda activate $CONDA_ENV_NAME
 alias cdproj="cd ~/project"
 BASH_SETUP
 fi
-"$CONDA_DIR/bin/conda" init bash --no-user
 export PATH="$CONDA_DIR/bin:$PATH"
 echo "  conda 경로: $CONDA_DIR"
 
