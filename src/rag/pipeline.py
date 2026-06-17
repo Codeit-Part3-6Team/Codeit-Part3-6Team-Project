@@ -364,8 +364,9 @@ def _read_csv(path: str | Path) -> list[dict[str, str]]:
 
 
 def _write_csv(path: str | Path, rows: list[dict[str, Any]], columns: list[str]) -> None:
+    all_columns = columns + [k for k in sorted(rows[0]) if k not in columns] if rows else columns
     with Path(path).open("w", encoding="utf-8", newline="") as f:
-        writer = csv.DictWriter(f, fieldnames=columns, extrasaction="ignore")
+        writer = csv.DictWriter(f, fieldnames=all_columns, extrasaction="ignore")
         writer.writeheader()
         writer.writerows(rows)
 
