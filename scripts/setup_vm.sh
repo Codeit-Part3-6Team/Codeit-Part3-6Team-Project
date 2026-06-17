@@ -50,11 +50,12 @@ ENV_DIR="$CONDA_DIR/envs/$CONDA_ENV_NAME"
 cd "$PROJECT_ROOT"
 if [ -d "$ENV_DIR" ]; then
     echo "  환경이 이미 존재합니다. 업데이트합니다..."
-    conda env update -f environment.yml -p "$ENV_DIR" --prune
+    sudo "$CONDA_DIR/bin/conda" env update -f environment.yml -p "$ENV_DIR" --prune
 else
     sudo "$CONDA_DIR/bin/conda" env create -f environment.yml -p "$ENV_DIR"
 fi
 sudo chmod -R 775 "$ENV_DIR"
+sudo chgrp -R shared "$ENV_DIR"
 
 # ===== 3.5. HF 캐시 환경변수 설정 =====
 echo "[3.5/9] HuggingFace 캐시 공유 세팅..."
