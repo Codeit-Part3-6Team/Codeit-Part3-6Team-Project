@@ -55,6 +55,7 @@ else
     sudo "$CONDA_DIR/bin/conda" env create -f environment.yml -p "$ENV_DIR"
 fi
 sudo chmod -R 775 "$ENV_DIR"
+sudo chgrp -R shared "$ENV_DIR"
 
 # ===== 3.5. HF 캐시 환경변수 설정 =====
 echo "[3.5/9] HuggingFace 캐시 공유 세팅..."
