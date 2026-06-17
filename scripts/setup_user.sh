@@ -23,6 +23,7 @@ fi
 if ! grep -q "$CONDA_DIR/bin" "$HOME/.bashrc" 2>/dev/null; then
     echo "export PATH=\"$CONDA_DIR/bin:\$PATH\"" >> "$HOME/.bashrc"
 fi
+"$CONDA_DIR/bin/conda" init bash --no-user
 export PATH="$CONDA_DIR/bin:$PATH"
 echo "  conda 경로: $CONDA_DIR"
 
