@@ -14,6 +14,7 @@
 | `run_rag_chat.py` | 답변 생성 또는 평가 실행 |
 | `compare_rag_retrievers.py` | retriever config 비교 리포트 생성 |
 | `summarize_experiments.py` | RAG 실험 metric/config/run info 요약 |
+| `diagnose_hwp_extraction.py` | HWP/PDF 직접 파서로 텍스트 추출 진단 (CSV vs 직접 파싱 비교) |
 
 ## Shell 스크립트 (GCP VM)
 
