@@ -42,12 +42,12 @@ def main() -> None:
         description="문제 HWP/PDF 문서를 파이프라인 직접 파서로 추출 테스트합니다."
     )
     parser.add_argument(
-        "--csv", default="/shared/data/raw/data_list.csv",
-        help="data_list.csv 경로 (기본: /shared/data/raw/data_list.csv)",
+        "--csv", default="/shared/data/raw_docs/data_list.csv",
+        help="data_list.csv 경로 (기본: /shared/data/raw_docs/data_list.csv)",
     )
     parser.add_argument(
-        "--files-dir", default="/shared/data/raw/files",
-        help="원본 HWP/PDF 파일 디렉터리 (기본: /shared/data/raw/files)",
+        "--files-dir", default="/shared/data/raw_docs/files",
+        help="원본 HWP/PDF 파일 디렉터리 (기본: /shared/data/raw_docs/files)",
     )
     parser.add_argument("--project-root", default=".")
     parser.add_argument(
