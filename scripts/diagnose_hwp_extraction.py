@@ -32,7 +32,7 @@ def _find_file(files_dir: Path, doc_id: str, title: str, filename: str) -> Path 
             return candidate
     title_slug = title.replace(" ", "").replace("/", "").replace("·", "")
     for path in sorted(files_dir.rglob("*")):
-        if path.is_file() and (doc_id in path.stem or title_slug[:10] in path.stem.replace(" ", "")):
+        if path.is_file() and ((doc_id and doc_id in path.stem) or title_slug[:10] in path.stem.replace(" ", "")):
             return path
     return None
 
