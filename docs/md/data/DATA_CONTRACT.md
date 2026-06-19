@@ -36,8 +36,8 @@ mindmap
       text
     Evaluation
       question
-      expected_chunk_id
-      expected_answer_contains
+      expected_chunk_ids
+      expected_answer
     Rules
       원본 보존
       metadata 유지
@@ -146,8 +146,8 @@ question,expected_answer,expected_chunk_ids
 | 컬럼 | 의미 |
 | --- | --- |
 | `question` | 사용자가 물어볼 질문 |
-| `expected_chunk_id` | 검색 결과 top-k 안에 들어와야 하는 기대 chunk |
-| `expected_answer_contains` | 답변에 포함되면 좋은 핵심 표현 |
+| `expected_chunk_ids` | 검색 결과 top-k 안에 들어와야 하는 기대 chunk |
+| `expected_answer` | 답변에 포함되면 좋은 핵심 표현 |
 | `category` | 예산, 자격, 일정, 제출 서류 같은 질문 유형 |
 | `note` | 사람이 검토할 때 필요한 메모 |
 
@@ -159,7 +159,7 @@ RAG 데이터 준비가 끝났다면 아래를 확인합니다.
 - 원본 문서 확장자가 loader 지원 범위에 들어간다.
 - 평가 질문 CSV가 존재한다.
 - 평가 질문에 `question` 컬럼이 있다.
-- 기대 chunk를 쓰는 경우 `expected_chunk_id`가 실제 chunk와 연결된다.
+- 기대 chunk를 쓰는 경우 `expected_chunk_ids`가 실제 chunk와 연결된다.
 - chunk metadata가 citation에 필요한 정보를 포함한다.
 
 실행 전 점검:
