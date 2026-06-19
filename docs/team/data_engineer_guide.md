@@ -84,5 +84,22 @@ find /shared/data/raw_docs -type f | sed 's/.*\.//' | sort | uniq -c
 
 - 원본 문서는 절대 VM에서 직접 수정하지 않습니다. 수정본이 필요하면 별도 폴더에 복사
 - Drive 용량 확인: PDF 100건이어도 500MB 이하
-- 파일명에 한글/공백/특수문자 있어도 됨 (pipeline이 처리)
+- 파일명에 한글/공간/특수문자 있어도 됨 (pipeline이 처리)
 - 깨진 문서(읽기 실패)가 있다면 Issue로 기록하고 공유
+
+## 평가 질문 CSV 양식
+
+`/shared/data/eval_questions.csv`:
+
+```csv
+question,expected_answer,expected_chunk_ids
+"이 사업의 예산은 얼마인가?","130,000,000원",
+"발주 기관은 어디인가?","한영대학",
+```
+
+- `question`: RFP 문서에서 답을 찾을 수 있는 질문
+- `expected_answer`: 기대하는 정답 텍스트 (부분 일치로 평가됨)
+- `expected_chunk_ids`: **나중에 채움** (config 확정 후 정확한 chunk ID를 알 수 있으므로, 처음엔 비워두세요)
+- 목표: **50~100개** 질문
+- 발주기관/예산/사업요약 등 다양한 컬럼을 골고루 커버
+- `answer_contains_expected`만 있어도 실험 가능
