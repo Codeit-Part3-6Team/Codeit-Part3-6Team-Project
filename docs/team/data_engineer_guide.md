@@ -1,85 +1,51 @@
 # Data Engineer — 데이터 작업 가이드
 
-DE는 VM에 있는 실제 RFP 문서를 확인하고, 평가용 질문셋을 만드는 역할입니다.
+DE는 RFP 문서의 메타데이터를 검증하고, 평가용 질문셋을 만드는 역할입니다.
+모든 작업은 **로컬 PC에서** 진행하며, 최종 결과물만 Drive로 공유합니다.
 
-## 준비물 확인
+## 준비물
 
-- [ ] VM에 VS Code SSH로 접속할 수 있나요?
-- [ ] `/shared/data/raw_docs/` 에 파일이 들어있나요?
-- [ ] `conda activate codeit-ml-pipeline` 이 되나요?
-
-하나라도 안 되면 PM에게 문의하세요.
+- [ ] PM에게 공유받은 Google Drive 폴더에 접근할 수 있나요?
+- [ ] `data_list.csv` 를 로컬에 다운로드했나요?
 
 ## 데이터가 어디에 있는가
 
 ```
-내 Google Drive                 VM (모든 팀원 공유)
-┌────────────────────┐          ┌─────────────────────────────┐
-│ codeit-project2/   │  rclone  │ /shared/data/raw_docs/      │
-│ └── data/          │ ──pull──→│ ├── files/                   │
-│     ├── files/     │          │ │   ├── 한영대학_xxx.hwp    │
-│     │   ├── *.hwp  │          │ │   └── ... (46개 HWP)      │
-│     │   └── *.pdf  │          │ ├── data_list.csv            │
-│     └── data_list.  │          │ └── ... (4개 PDF)           │
-│         csv         │          └─────────────────────────────┘
-└────────────────────┘
-
-~/project/                        ← 개인 git repo (코드)
-└── notebooks/rag/                ← EDA/분석 노트북 여기에 만듦
+내 Google Drive (PM 계정)
+└── codeit-project2/
+    └── data/
+        ├── files/              ← RFP 원본 문서 (HWP/PDF)
+        └── data_list.csv       ← 메타데이터 (DE가 볼 메인 파일)
 ```
 
 **핵심:**
-- `/shared/data/raw_docs/` 는 읽기 전용. 원본 절대 수정 금지
-- `data_list.csv` 에 문서별 메타데이터(발주기관, 예산, 사업명 등)가 들어있음
-- VS Code에서 `File > Add Folder to Workspace` → `/shared/data/raw_docs` 추가하면 사이드바에서 바로 탐색 가능
+- `data_list.csv` 를 로컬에 다운로드해서 작업합니다
+- 작업이 끝나면 최종 CSV만 Drive에 다시 업로드
+- VM에서 `sync_data.sh pull` 로 가져가서 실험에 사용
 
 ## DE가 해야 할 일
 
 ```
-1. 데이터 현황 파악 (10분)
+1. data_list.csv 다운로드 + 메타데이터 검증
    ↓
-2. data_list.csv 메타데이터 검증 (20분)
+2. 문서 본문 품질 확인
    ↓
-3. 문서 본문 품질 확인 (20분)
+3. 평가 질문 CSV 작성 (집중 작업)
    ↓
-4. 평가 질문 CSV 작성 (집중 작업)
+4. 완성된 CSV를 Drive에 업로드
 ```
 
-### 1. 데이터 현황 파악
+### 1. data_list.csv 검증
 
-VM 터미널에서 기본 통계 확인:
-
-```bash
-cd ~/project
-conda activate codeit-ml-pipeline
-
-# 전체 파일 개수
-find /shared/data/raw_docs -type f | wc -l
-
-# 포맷별 분포
-find /shared/data/raw_docs -type f | sed 's/.*\.//' | sort | uniq -c | sort -rn
-
-# 예상 출력:
-#   46 hwp
-#    4 pdf
-#    1 csv
-```
-
-### 2. data_list.csv 검증
-
-VS Code에서 새 노트북(`~/project/notebooks/rag/de_eda.ipynb`)을 만들어 확인:
+로컬에서 Python이나 Excel로 `data_list.csv`를 열어 확인:
 
 ```python
 import pandas as pd
 
-# CSV 읽기 (메타데이터)
-df = pd.read_csv("/shared/data/raw_docs/data_list.csv", encoding="utf-8-sig")
+df = pd.read_csv("data_list.csv", encoding="utf-8-sig")
 
 # 기본 정보
 df.info()
-df.head()
-
-# 컬럼 목록
 print(df.columns.tolist())
 # ['공고 번호', '공고 차수', '사업명', '사업 금액', '발주 기관', ...]
 
@@ -90,14 +56,12 @@ df["텍스트"].str.len().describe()    # 본문 길이 분포 (너무 짧으면
 df[df["텍스트"].str.len() < 100]     # 본문이 거의 없는 문서 (깨졌을 가능성)
 ```
 
-### 3. 문서 품질 확인
+### 2. 문서 품질 확인
 
 ```python
 # 깨진 문서 의심 기준
 short_docs = df[df["텍스트"].str.len() < 100]
 print(f"본문 100자 미만: {len(short_docs)}건")
-if len(short_docs) > 0:
-    print(short_docs[["공고 번호", "사업명", "파일명"]])
 
 # 빈 텍스트
 empty_docs = df[df["텍스트"].isna() | (df["텍스트"].str.strip() == "")]
@@ -116,9 +80,9 @@ print(f"중복 공고번호: {len(dupes)}건")
 - 2024yyyy: 특수문자만 있음
 ```
 
-### 4. 평가 질문 CSV 작성
+### 3. 평가 질문 CSV 작성
 
-**위치:** `/shared/data/eval_questions.csv`
+**최종 파일명:** `eval_questions.csv`
 
 **양식:**
 ```csv
@@ -145,37 +109,25 @@ question,expected_answer,expected_chunk_ids
 - 다양한 발주기관에서 골고루 질문을 만드세요
 - 정답이 명확한 질문이 좋습니다 (예/아니오보다 구체적인 정보)
 - 질문은 RFP 본문에서 찾을 수 있는 것만 만드세요 (외부 지식 X)
-- VS Code에서 CSV 파일을 직접 열어서 편집할 수 있습니다 (`File > Open File`)
+- Excel이나 VS Code에서 직접 CSV를 편집할 수 있습니다
 
-## CSV 저장 및 공유
+### 4. 완성된 CSV 공유
 
-```bash
-# 작성이 끝나면 모든 팀원이 읽을 수 있게 권한 설정
-chmod 644 /shared/data/eval_questions.csv
+완성된 `eval_questions.csv`를 PM의 Google Drive에 업로드:
+- 경로: `codeit-project2/data/`
+- PM이 VM에서 `bash scripts/sync_data.sh pull` 로 가져갑니다
 
-# EL이 실험할 때 이 파일을 config에서 가리킴:
-# evaluation:
-#   questions_path: /shared/data/eval_questions.csv
-```
-
-## 자주 하는 명령어
-
-```bash
-# 최신 데이터 가져오기 (PM이 Drive에 새로 올렸을 때)
-bash ~/project/scripts/sync_data.sh pull
-
-# 문서 개수 확인
-find /shared/data/raw_docs -type f | wc -l
-
-# 한글 깨짐 없이 CSV 미리보기
-head -3 /shared/data/eval_questions.csv
+EL이 실험할 때 config에서 이 경로를 사용합니다:
+```yaml
+evaluation:
+  questions_path: /shared/data/eval_questions.csv
 ```
 
 ## 문제가 생겼을 때
 
 | 증상 | 확인/조치 |
 |---|---|
-| `/shared/data/raw_docs/` 비어있음 | PM에게 데이터 pull 요청 |
-| CSV 읽기 실패 (Permission denied) | `chmod 644 /shared/data/eval_questions.csv` |
+| Google Drive 접근 불가 | PM에게 공유 권한 요청 |
+| CSV 인코딩 깨짐 | UTF-8(BOM)으로 저장 (`utf-8-sig`) |
 | 한글 깨짐 | VS Code에서 `Reopen with Encoding > UTF-8` |
 | 문서 일부만 보임 | HWP 파싱 한계. 깨진 파일은 Issue에 기록만 하고 넘어감 |
