@@ -1,88 +1,149 @@
-# Data Engineer — 데이터 관리 규칙
+# Data Engineer — 데이터 작업 가이드
 
-이 문서는 Data Engineer가 원본 RFP 문서를 확인·검증·정리하는 기준을 정리합니다.
+DE는 RFP 문서의 메타데이터를 검증하고, 평가용 질문셋을 만드는 역할입니다.
+모든 작업은 **로컬 PC에서** 진행하며, 최종 결과물만 Drive로 공유합니다.
 
-## 데이터 보관 원칙
+## 준비물
 
-| 위치 | 용도 | 규칙 |
-|---|---|---|
-| **Codeit 제공 Drive** (`원본데이터/`) | **원본 정본**. 읽기 전용 | PDF/HWP/HWPX 100건 + data_list.csv |
-| **GCP VM** (`/shared/data/raw_docs/`) | 실험용 사본. `sync_data.sh pull`로 가져옴 | VM 초기화되면 다시 pull |
-| **우리 Drive** (PM 계정) | 실험 결과 백업 | `sync_data.sh push` (자동) |
-| **GitHub** | 코드, Config, 문서만 | 원본 데이터 절대 금지 |
+- [ ] PM에게 공유받은 Google Drive 폴더에 접근할 수 있나요?
+- [ ] `data_list.csv` 를 로컬에 다운로드했나요?
 
-## Google Drive 폴더 구조
+## 데이터가 어디에 있는가
 
 ```
-Codeit 제공 Drive                     우리 Drive (백업)
-┌──────────────────┐           ┌────────────────────────┐
-│ 원본데이터/      │           │ codeit_rag_project/    │
-│   data_list.csv  │           │ ├── experiments/       │
-│   *.pdf, *.hwp   │           │ └── reports/           │
-└──────┬───────────┘           └────────────────────────┘
-       │ rclone copy                  ▲
-       ▼                              │ rclone sync (crontab)
-┌──────────────────┐           ┌──────┴─────────────────┐
-│ /shared/data/    │           │ ~/project/             │
-│   raw_docs/      │           │   experiments/         │
-│ (VM 공유 사본)    │           │   reports/             │
-└──────────────────┘           └────────────────────────┘
+내 Google Drive (PM 계정)
+└── codeit-project2/
+    └── data/
+        ├── files/              ← RFP 원본 문서 (HWP/PDF)
+        └── data_list.csv       ← 메타데이터 (DE가 볼 메인 파일)
 ```
 
-## DE 첫 주 작업 흐름
+**핵심:**
+- `data_list.csv` 를 로컬에 다운로드해서 작업합니다
+- 작업이 끝나면 최종 CSV만 Drive에 다시 업로드
+- VM에서 `sync_data.sh pull` 로 가져가서 실험에 사용
 
-### 1. 데이터 확인 (Codeit 제공 Drive)
+## 데이터 흐름 (전체 그림)
 
-Codeit 공유 Drive에서 데이터를 확인합니다:
-- 경로: `AI 10기/프로젝트/중급 프로젝트/원본 데이터`
-- 문서 총 개수, 포맷별 분포 (PDF/HWP/HWPX) 확인
-- `data_list.csv` 컬럼 확인 (발주기관, 사업명, 예산 등)
+DE는 로컬에서 작업하지만, 최종 데이터가 어떻게 흘러가는지 이해해야 합니다:
 
-### 2. VM에 데이터 가져오기
-
-```bash
-# rclone config 시 위 공유 폴더로 설정
-bash scripts/sync_data.sh pull
+```
+[DE 로컬]                  [Google Drive]                [GCP VM]
+data_list.csv 다운로드 →  검증/질문 작성
+                               ↓
+                eval_questions.csv 업로드 →  codeit-project2/data/
+                                               ↓ rclone pull
+                                          /shared/data/raw_docs/
+                                          /shared/data/eval_questions.csv
+                                               ↓
+                                          EL이 실험에 사용
 ```
 
-VM의 `/shared/data/raw_docs/`에 모든 문서가 복사됩니다.
+## DE가 해야 할 일
 
-### 3. 문서 로딩 확인
-
-```bash
-python scripts/check_rag_pipeline.py \
-  --config configs/experiments/rag/rag_langchain.yaml \
-  --project-root .
+```
+1. data_list.csv 다운로드 + 메타데이터 검증
+   ↓
+2. 문서 본문 품질 확인
+   ↓
+3. 평가 질문 CSV 작성 (집중 작업)
+   ↓
+4. 완성된 CSV를 Drive에 업로드
 ```
 
-Config의 `paths.raw_docs_dir`가 `/shared/data/raw_docs`를 가리키는지 확인하세요.
+### 1. data_list.csv 검증
 
-### 4. 평가 질문 CSV 작성
+로컬에서 Python이나 Excel로 `data_list.csv`를 열어 확인:
 
-[golden_dataset_guide.md](golden_dataset_guide.md)를 보고 평가 질문 CSV를 작성합니다.
-완성된 CSV는 VM의 `/shared/data/eval_questions.csv`에 두고 Config에서 참조합니다.
+```python
+import pandas as pd
 
-CSV의 정확한 컬럼명과 형식은 [docs/md/data/DATA_CONTRACT.md](../md/data/DATA_CONTRACT.md)를 참고하세요.
+df = pd.read_csv("data_list.csv", encoding="utf-8-sig")
 
-## 자주 하는 명령어
+# 기본 정보
+df.info()
+print(df.columns.tolist())
+# ['공고 번호', '공고 차수', '사업명', '사업 금액', '발주 기관', ...]
 
-```bash
-# 새 문서 받아오기 (Drive → VM)
-bash scripts/sync_data.sh pull
-
-# 실험 결과 백업 (VM → Drive)
-bash scripts/sync_data.sh push
-
-# 문서 몇 개인지 확인
-find /shared/data/raw_docs -type f | wc -l
-
-# 어떤 파일 형식이 있는지 확인
-find /shared/data/raw_docs -type f | sed 's/.*\.//' | sort | uniq -c
+# 체크할 것들
+df["발주 기관"].value_counts()       # 어떤 기관이 많은가
+df["사업 금액"].describe()           # 예산 분포
+df["텍스트"].str.len().describe()    # 본문 길이 분포 (너무 짧으면 깨진 문서)
+df[df["텍스트"].str.len() < 100]     # 본문이 거의 없는 문서 (깨졌을 가능성)
 ```
 
-## 주의사항
+### 2. 문서 품질 확인
 
-- 원본 문서는 절대 VM에서 직접 수정하지 않습니다. 수정본이 필요하면 별도 폴더에 복사
-- Drive 용량 확인: PDF 100건이어도 500MB 이하
-- 파일명에 한글/공백/특수문자 있어도 됨 (pipeline이 처리)
-- 깨진 문서(읽기 실패)가 있다면 Issue로 기록하고 공유
+```python
+# 깨진 문서 의심 기준
+short_docs = df[df["텍스트"].str.len() < 100]
+print(f"본문 100자 미만: {len(short_docs)}건")
+
+# 빈 텍스트
+empty_docs = df[df["텍스트"].isna() | (df["텍스트"].str.strip() == "")]
+print(f"빈 문서: {len(empty_docs)}건")
+
+# 중복 확인
+dupes = df[df["공고 번호"].duplicated(keep=False)]
+print(f"중복 공고번호: {len(dupes)}건")
+```
+
+발견한 이슈는 GitHub Issue에 기록:
+```markdown
+제목: [데이터] 본문 누락 문서 3건 발견
+내용:
+- 2024xxxx: 텍스트 컬럼 0자 (파일 깨짐 의심)
+- 2024yyyy: 특수문자만 있음
+```
+
+### 3. 평가 질문 CSV 작성
+
+**최종 파일명:** `eval_questions.csv`
+
+**양식:**
+```csv
+question,expected_answer,expected_chunk_ids
+"이 사업의 예산은 얼마인가?","130,000,000원",
+"발주 기관은 어디인가?","한영대학",
+"사업 기간은 어떻게 되는가?","계약일로부터 3개월",
+```
+
+**작성 방법:**
+1. `data_list.csv`의 `사업 요약` 컬럼을 읽습니다
+2. 각 RFP에서 뽑을 수 있는 질문을 생각합니다:
+   - 예산은 얼마인가?
+   - 발주 기관은?
+   - 사업 기간은?
+   - 주요 사업 내용은?
+   - 입찰 방식은?
+3. `사업 요약` 텍스트에서 정답을 찾아 `expected_answer`에 넣습니다
+4. `expected_chunk_ids`는 **비워둡니다** (config 확정 전에는 정확한 chunk ID를 알 수 없음)
+
+**목표: 50~100개 질문**
+
+**팁:**
+- 다양한 발주기관에서 골고루 질문을 만드세요
+- 정답이 명확한 질문이 좋습니다 (예/아니오보다 구체적인 정보)
+- 질문은 RFP 본문에서 찾을 수 있는 것만 만드세요 (외부 지식 X)
+- Excel이나 VS Code에서 직접 CSV를 편집할 수 있습니다
+
+### 4. 완성된 CSV 공유
+
+완성된 `eval_questions.csv`를 PM의 Google Drive에 업로드:
+- 경로: `codeit-project2/data/`
+- PM이 VM에서 `bash scripts/sync_data.sh pull` 로 가져갑니다
+
+EL이 실험할 때 config에서 이 경로를 사용합니다:
+```yaml
+evaluation:
+  questions_path: /shared/data/eval_questions.csv
+```
+
+## 문제가 생겼을 때
+
+| 증상 | 확인/조치 |
+|---|---|
+| Google Drive 접근 불가 | PM에게 공유 권한 요청 |
+| CSV 인코딩 깨짐 | UTF-8(BOM)으로 저장 (`utf-8-sig`) |
+| 한글 깨짐 | VS Code에서 `Reopen with Encoding > UTF-8` |
+| 문서 일부만 보임 | HWP 파싱 한계. 깨진 파일은 Issue에 기록만 하고 넘어감 |
