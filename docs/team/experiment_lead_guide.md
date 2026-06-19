@@ -193,11 +193,10 @@ CLI가 익숙하지 않다면, 노트북으로도 실험 전체를 실행할 수
 이 노트북 하나로 config 검증부터 ingest, 검색, 평가까지 한 번에:
 
 ```bash
-# VS Code에서 열기 (추천)
+# VS Code에서 IPYNB 파일 열기 (Remote-SSH로 VM에 연결된 상태)
+# File > Open File > notebooks/rag/rag_config_run.ipynb
+# 또는 터미널에서:
 code notebooks/rag/rag_config_run.ipynb
-
-# 또는 VM 터미널에서 JupyterLab으로
-jupyter lab --no-browser --port=8888
 ```
 
 **노트북 실행 방법:**
