@@ -184,23 +184,93 @@ cp configs/experiments/rag/rag_langchain.yaml configs/experiments/rag/rag_keywor
 # 실행...
 ```
 
-## 5. 실험 결과 비교하기
+## 5. 노트북으로 실험하기 (CLI 대신)
 
-모든 실험이 끝나면, 노트북으로 결과를 비교합니다.
+CLI가 익숙하지 않다면, 노트북으로도 실험 전체를 실행할 수 있습니다.
+
+### 실험용 노트북: `rag_config_run.ipynb`
+
+이 노트북 하나로 config 검증부터 ingest, 검색, 평가까지 한 번에:
 
 ```bash
-# VM에서 JupyterLab 열기 (또는 VS Code에서 .ipynb 열기)
-# notebooks/rag/rag_compare_results.ipynb 파일을 열고
-# Shift+Enter로 셀을 순서대로 실행
+# VS Code에서 열기 (추천)
+code notebooks/rag/rag_config_run.ipynb
+
+# 또는 VM 터미널에서 JupyterLab으로
+jupyter lab --no-browser --port=8888
 ```
 
-노트북이 자동으로:
-- 모든 실험의 metrics를 한 그래프로 비교
-- config 간 차이점을 표로 보여줌
-- 어떤 질문이 어떤 실험에서 실패했는지 heatmap으로 보여줌
-- 실패 유형별로 분석
+**노트북 실행 방법:**
 
-## 6. Ollama 모델로 업그레이드하기
+1. 맨 위 `EXP_NAME` 셀에서 실험할 config 이름을 설정합니다:
+   ```python
+   EXP_NAME = "rag_langchain"    # configs/experiments/rag/ 디렉터리의 yaml 이름
+   ```
+
+2. 각 섹션에 있는 `RUN_*` 플래그로 실행 여부를 조절합니다:
+   ```python
+   RUN_CHECK = True      # config 검증만 (첫 실행 시)
+   RUN_INGEST = True     # 문서 읽기 + 청킹 + embedding
+   RUN_RETRIEVE = True   # 질문 하나로 검색 테스트
+   RUN_EVALUATE = True   # 평가셋 전체 실행
+   ```
+
+3. 위에서부터 순서대로 `Shift+Enter`로 셀을 실행합니다.
+
+**각 섹션에서 볼 수 있는 것:**
+
+| 섹션 | 내용 |
+|---|---|
+| Input Check | config 파일 존재 확인 + 평가 질문 미리보기 |
+| Config Validation | `check_rag_pipeline` 실행 결과 |
+| Ingest | 문서 개수, chunk 개수, chunk 길이 통계 |
+| Retrieve Check | 질문 하나에 대해 어떤 chunk가 검색됐는지 미리보기 |
+| Metrics & Failures | 4개 지표를 막대 그래프로, 실패 유형별 분석 |
+| Answers & Citations | 모든 질문의 답변 + 출처 표로 확인 |
+
+### 분석용 노트북: `rag_compare_results.ipynb`
+
+여러 실험 결과를 비교할 때 사용합니다. **이 노트북은 실험을 다시 실행하지 않고, 이미 저장된 결과만 읽어서 분석합니다.**
+
+```bash
+code notebooks/rag/rag_compare_results.ipynb
+```
+
+**실행 후 볼 수 있는 분석:**
+
+| 분석 | 설명 |
+|---|---|
+| grouped bar chart | 실험별 4개 지표를 한 번에 비교. 어느 config가 가장 좋은지 한눈에 보임 |
+| config diff | 실험 간 config 차이를 표로 비교. "뭘 바꿨길래 결과가 달라졌지?"를 바로 확인 |
+| answer text table | 같은 질문에 대해 각 실험이 어떤 답변을 했는지 나란히 비교 |
+| hit/miss heatmap | 질문×실험 행렬. "이 질문은 모든 실험에서 틀렸네" 같은 패턴 발견 |
+| failure analysis | 실패 유형(retrieval 실패 / 답변 부족 / 실행 오류)별로 집계 |
+
+**사용 흐름:**
+```
+rag_config_run.ipynb 로 실험 2~3개 실행
+         ↓
+rag_compare_results.ipynb 열어서 비교 분석
+         ↓
+가장 좋은 config 찾기
+         ↓
+다시 rag_config_run.ipynb 로 파라미터 변경해서 반복
+```
+
+## 6. 실험 결과 비교하기 (CLI)
+
+노트북 없이 빠르게 비교하고 싶다면:
+
+```bash
+# retriever 방식 3종 비교
+python scripts/compare_rag_retrievers.py \
+  --project-root . \
+  --output reports/rag_retriever_comparison.csv
+
+cat reports/rag_retriever_comparison.csv
+```
+
+## 7. Ollama 모델로 업그레이드하기
 
 기본 config는 local 모델을 써서 가볍지만 정확도가 낮습니다. Ollama를 쓰려면:
 
@@ -228,7 +298,7 @@ python scripts/run_rag_ingest.py --config configs/experiments/rag/rag_ollama.yam
 python scripts/run_rag_chat.py --config configs/experiments/rag/rag_ollama.yaml --project-root . --evaluate
 ```
 
-## 7. 수동 실험 로그 남기기
+## 8. 수동 실험 로그 남기기
 
 `reports/experiment_log.csv` 파일에 실험 기록을 남기면 나중에 한눈에 비교할 수 있습니다:
 
