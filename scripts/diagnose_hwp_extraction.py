@@ -145,9 +145,16 @@ def main() -> None:
 
     for r in results:
         print(f"문서: {r['title'][:60]}")
-        print(f"  공고번호: {r['doc_id']}")
-        print(f"  CSV 텍스트: {r['csv_len']}자 ({r['csv_status']})")
-        print(f"  직접 파싱:   {r['direct_len']}자 ({r.get('direct_parse', '-')})")
+
+        if r.get("error"):
+            print(f"  오류: {r['error']}")
+            print()
+            still_fail += 1
+            continue
+
+        print(f"  공고번호: {r.get('doc_id', '-')}")
+        print(f"  CSV 텍스트: {r.get('csv_len', 0)}자 ({r.get('csv_status', '-')})")
+        print(f"  직접 파싱:   {r.get('direct_len', 0)}자 ({r.get('direct_parse', '-')})")
         print()
 
         if r.get("direct_parse") in ("파일 없음",):
