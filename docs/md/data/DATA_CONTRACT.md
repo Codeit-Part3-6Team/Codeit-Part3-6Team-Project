@@ -136,9 +136,9 @@ chunk는 검색과 citation의 최소 단위입니다.
 평가 질문 CSV는 최소한 아래 컬럼을 사용합니다.
 
 ```csv
-question,expected_chunk_id,expected_answer_contains
-예산은 얼마인가요?,sample_001_chunk_0003,5천만 원
-참가 자격은 무엇인가요?,sample_001_chunk_0007,중소기업
+question,expected_answer,expected_chunk_ids
+예산은 얼마인가요?,,5천만 원
+참가 자격은 무엇인가요?,,중소기업
 ```
 
 권장 컬럼:
