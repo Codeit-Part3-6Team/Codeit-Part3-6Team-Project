@@ -1,0 +1,194 @@
+# RAG Agent 확장용 실험 config (참조용)
+# agent.enabled: false → 기존 단일 파이프라인. true → 에이전트 모드.
+# 모든 rag.* 설정은 agent 모드에서도 기본값으로 상속된다.
+# Tool별로 retriever/answerer를 개별 오버라이드할 수 있다.
+
+experiment:
+  name: rag_agent
+  author: team
+  seed: 42
+  contract_version: rag-v0.2
+
+paths:
+  raw_docs_dir: /shared/data/raw_docs
+  output_dir: experiments/rag_agent
+
+artifact_policy:
+  run_id:
+  on_existing: overwrite
+
+# ── 기존 RAG 설정 (에이전트에서도 기본값으로 상속) ──
+
+rag:
+  engine: langchain
+  loader:
+    file_types: [csv]
+  splitter:
+    type: recursive_character
+    chunk_size: 500
+    chunk_overlap: 80
+  checkpoint:
+    enabled: true
+    resume: true
+  embedding:
+    provider: local
+    model_name: hashing-char-ngram-v1
+    dimension: 64
+  vector_store:
+    type: memory
+    path:
+    collection_name: rag_agent
+  # ↓ agent 모드에서는 Tool별로 오버라이드 가능
+  retriever:
+    method: similarity
+    top_k: 3
+    score_threshold: 0.0
+  reranker:
+    enabled: false
+  answerer:
+    mode: extractive
+    provider: local
+    model_name:
+    fallback_message: 문서에서 확인하지 못했습니다.
+    temperature: 0.2
+
+evaluation:
+  questions_path: data/rag_sample/eval_questions.csv
+
+metric:
+  monitor: retrieval_hit_rate
+  mode: max
+
+# ── 에이전트 설정 (확장 영역) ──
+
+agent:
+  # false → 위 rag.* 설정으로 단일 파이프라인만 돈다 (지금과 동일)
+  # true  → agent.phases에 정의된 순서로 Tool을 실행하며
+  #         Tool별 retriever/answerer 오버라이드가 적용된다
+  enabled: false
+
+  max_steps: 15        # 전체 루프 제한 (무한 루프 방지)
+  verbose: false        # true → Tool 호출 로그 출력 (디버깅용)
+
+  # Phase 정의: 위에서 아래로 순차 실행
+  # depends_on: 지정된 Phase가 완료되어야 해당 Phase 시작
+  phases:
+    - name: extract
+      tools: [extract_facts, parse_bid_conditions]
+
+    - name: scan
+      tools: [scan_unfair_clauses, scan_liability_shift, rate_clause_severity]
+      depends_on: [extract]
+
+    - name: diagnose
+      tools: [check_schedule, check_budget, check_qualification_gap]
+      depends_on: [extract]
+
+    - name: compete
+      tools: [search_similar_bids, analyze_competitor, estimate_bid]
+      depends_on: [extract]
+
+    - name: decide
+      tools: [decide_participation, suggest_price, draft_checklist]
+      depends_on: [extract, scan, diagnose, compete]
+
+    - name: report
+      tools: [compile_report]
+      depends_on: [decide]
+
+  # Tool 정의: 각 Tool은 미니 RAG 파이프라인처럼 동작하며
+  # rag.retriever / rag.answerer를 기본값으로 상속받고
+  # 필요한 항목만 오버라이드한다
+  tools:
+    # ── Phase 1: 팩트 추출 ──
+    extract_facts:
+      description: "RFP에서 예산, 일정, 자격, 서류 등 핵심 정보 추출"
+      retriever:
+        top_k: 10          # 오버라이드: 문서 전체를 커버해야 하므로 더 많이 검색
+      answerer:
+        output_schema: facts_schema   # StructuredOutput 스키마 이름
+        temperature: 0.1   # 팩트 추출은 창의성 낮게
+
+    parse_bid_conditions:
+      description: "입찰방식(협상/적격심사), 공동도급 가능 여부 파악"
+      retriever:
+        top_k: 3
+
+    # ── Phase 2: 독소조항 탐지 ──
+    scan_unfair_clauses:
+      description: "과도한 지체상금, 일방적 계약해지 등 불리한 조항 탐지"
+      retriever:
+        top_k: 8
+      # Rule 엔진이 1차 필터링, LLM이 2차 확인
+      rules:
+        patterns:
+          - 지체상금 과도
+          - 계약해지 일방
+          - 손해배상 무제한
+
+    scan_liability_shift:
+      description: "하도급/재하도급 시 모든 책임을 수급자에게 전가하는 조항"
+      retriever:
+        top_k: 5
+      rules:
+        patterns:
+          - 하도급 책임 전가
+          - 수급자 비용 전액 부담
+
+    rate_clause_severity:
+      description: "발견된 독소조항별 위험도 1~5 산정"
+      answerer:
+        temperature: 0.0
+
+    # ── Phase 3: 리스크 진단 ──
+    check_schedule:
+      description: "기간 대비 서류량, 인력 투입 가능성 점검"
+      retriever:
+        top_k: 5
+
+    check_budget:
+      description: "예산 대비 요구사항 규모의 적정성 판단"
+      retriever:
+        top_k: 5
+
+    check_qualification_gap:
+      description: "우리 회사 보유 자격과 요구 자격 간 갭 분석"
+      # retriever 불필요. 자격은 Phase 1 extract_facts 결과 + 내부 체크리스트 비교
+
+    # ── Phase 4: 경쟁 분석 ──
+    search_similar_bids:
+      description: "과거 유사 입찰의 낙찰가, 참여사 검색 (외부 DB 필요)"
+      # 외부 API/DB 질의. RAG retriever가 아닌 외부 데이터 소스 사용
+
+    analyze_competitor:
+      description: "경쟁사 참여 패턴 분석"
+      # search_similar_bids 결과를 LLM이 해석
+
+    estimate_bid:
+      description: "예상 낙찰가 밴드 추정"
+      # 과거 데이터 통계 + LLM 근거 설명
+
+    # ── Phase 5: 전략 판단 ──
+    decide_participation:
+      description: "참여 O/X 판단 + 근거 제시"
+      answerer:
+        provider: openai        # 판단은 더 강력한 모델로
+        model_name: gpt-4o-mini
+        output_schema: decision_schema
+        temperature: 0.3
+
+    suggest_price:
+      description: "제안가 권장 범위 산정"
+      answerer:
+        temperature: 0.1
+
+    draft_checklist:
+      description: "제안서 목차 + 주의사항 초안"
+      answerer:
+        temperature: 0.4
+
+    # ── Phase 6: 리포트 종합 ──
+    compile_report:
+      description: "Phase 1~5의 모든 결과를 한 장짜리 의사결정 문서로"
+      answerer:
+        temperature: 0.2
