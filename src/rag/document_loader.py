@@ -246,7 +246,7 @@ def _extract_xml_paragraphs(xml_bytes: bytes) -> list[str]:
 
 
 def _extract_hwp_text(data: bytes) -> str:
-    for candidate in (data, _try_zlib_decompress(data)):
+    for candidate in (_try_zlib_decompress(data), data):
         if not candidate:
             continue
         text = _decode_hwp_text(candidate)
