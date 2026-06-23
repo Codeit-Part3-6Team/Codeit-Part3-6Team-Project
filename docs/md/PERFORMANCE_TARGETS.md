@@ -23,12 +23,13 @@ evaluation:
 
 ## 단계별 목표
 
-| Phase | 임베더 | answerer | retrieval_hit | judge_correct | answer_contains | citation_correct |
-|-------|--------|----------|--------------|-------------|-----------------|-----------------|
-| **0 현재** | hashing-ngram | extractive | 측정불가 | - | ~23% | 측정불가 |
-| **A 베이스라인** | text-embed-3 | gpt-5-mini | **≥ 60%** | **≥ 70%** | ≥ 50% | **≥ 50%** |
-| **B 튜닝 완료** | text-embed-3 | gpt-5-mini | **≥ 75%** | **≥ 85%** | ≥ 70% | **≥ 65%** |
-| **C 서비스 가능** | - | - | **≥ 80%** | **≥ 90%** | ≥ 80% | **≥ 75%** |
+| Phase | 임베더 | answerer | retrieval_hit | judge_correct | citation_correct |
+|-------|--------|----------|--------------|-------------|-----------------|
+| **A 베이스라인** | text-embed-3 | gpt-5-mini | **≥ 60%** | **≥ 70%** | **≥ 50%** |
+| **B 튜닝 완료** | text-embed-3 | gpt-5-mini | **≥ 75%** | **≥ 85%** | **≥ 65%** |
+| **C 서비스 가능** | - | - | **≥ 80%** | **≥ 90%** | **≥ 75%** |
+
+`answer_contains_expected_rate`(substring)는 보조 지표. Phase 통과 여부와 무관하게 참고만.
 
 ### Phase A — 베이스라인 진입 조건
 
