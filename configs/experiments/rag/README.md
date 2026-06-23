@@ -25,7 +25,7 @@
 experiment:
   name: rag-baseline
 paths:
-  output_dir: experiments/rag-baseline
+  output_dir: /shared/experiments/rag-baseline
 ```
 
 ### 2. 베이스라인 동결
@@ -65,12 +65,23 @@ rag-baseline-{변경항목1}-{변경항목2}-...
 experiment:
   name: rag-baseline-chunk800           # config명과 동일
 paths:
-  output_dir: experiments/rag-baseline-chunk800  # 실험명과 동일
+  output_dir: /shared/experiments/rag-baseline-chunk800  # 실험명과 동일
 ```
 
 `experiment.name`과 `paths.output_dir`은 항상 일치시킵니다.
 
-`evaluation.questions_path`는 기본값(`data/rag_sample/eval_questions.csv`)을 그대로 쓰거나, 평가셋을 바꿨을 때만 경로를 변경합니다.
+`evaluation.questions_path`는 VM 기준 `/shared/data/eval_questions.csv`를 기본으로 씁니다.
+
+## /shared 경로 참조 (VM)
+
+모든 실험 산출물과 데이터는 `/shared/` 아래에 둡니다.
+
+| 경로 | 용도 |
+|------|------|
+| `/shared/data/raw_docs/` | 원본 문서 + data_list.csv |
+| `/shared/data/eval_questions.csv` | 평가 질문 |
+| `/shared/experiments/` | 실험 산출물 (config별 하위 디렉터리) |
+| `/shared/cache/` | HuggingFace 모델 캐시 |
 
 ```yaml
 artifact_policy:
@@ -122,7 +133,7 @@ python scripts/run_rag_chat.py --config configs/experiments/rag/rag_langchain.ya
 RAG 실험 결과는 `paths.output_dir` 아래에 남습니다.
 
 ```text
-experiments/rag_langchain/
+/shared/experiments/rag_langchain/
 |-- config.yaml
 |-- parsed_documents.csv
 |-- chunks.csv
