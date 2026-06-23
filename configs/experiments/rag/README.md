@@ -8,6 +8,7 @@
 
 | config | 목적 | 먼저 바꿔볼 옵션 |
 | --- | --- | --- |
+| `rag-baseline.yaml` | **Phase A 베이스라인** (nomic-embed-text + gpt-5-mini) | `rag.retriever.top_k`, `rag.splitter.chunk_size` |
 | `rag_langchain.yaml` | LangChain 엔진 기반 기본 RAG 실험 | `rag.splitter`, `rag.embedding`, `rag.retriever.top_k` |
 | `rag_realistic_docs.yaml` | DOCX/HWPX 준실제 RFP fixture E2E 검증 | `rag.loader.file_types`, `rag.splitter`, `rag.retriever.top_k` |
 | `rag_semantic.yaml` | local semantic retriever 비교 실험 | `rag.chunk`, `rag.retriever.top_k` |
@@ -122,10 +123,10 @@ rag:
 ## 실행 순서
 
 ```bash
-python scripts/check_rag_pipeline.py --config configs/experiments/rag/rag_langchain.yaml --project-root .
-python scripts/run_rag_ingest.py --config configs/experiments/rag/rag_langchain.yaml --project-root .
-python scripts/run_rag_retrieve.py --config configs/experiments/rag/rag_langchain.yaml --project-root . --question "예산은 얼마야?"
-python scripts/run_rag_chat.py --config configs/experiments/rag/rag_langchain.yaml --project-root . --evaluate
+python scripts/check_rag_pipeline.py --config configs/experiments/rag/rag-baseline.yaml --project-root .
+python scripts/run_rag_ingest.py --config configs/experiments/rag/rag-baseline.yaml --project-root .
+python scripts/run_rag_retrieve.py --config configs/experiments/rag/rag-baseline.yaml --project-root . --question "예산은 얼마야?"
+python scripts/run_rag_chat.py --config configs/experiments/rag/rag-baseline.yaml --project-root . --evaluate
 ```
 
 ## 결과 확인
