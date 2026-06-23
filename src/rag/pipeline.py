@@ -316,7 +316,7 @@ def _judge_answer_with_llm(config: dict[str, Any], expected: str, actual: str) -
     exact match 대신 "2억원 = 200,000,000원" 같은 표현 차이를 잡습니다.
     """
     from langchain_openai import ChatOpenAI
-    from langchain.schema import HumanMessage
+    from langchain_core.messages import HumanMessage
     import os
 
     judge_cfg = config.get("evaluation", {}).get("llm_judge", {})
