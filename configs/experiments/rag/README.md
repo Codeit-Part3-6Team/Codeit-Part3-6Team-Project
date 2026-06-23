@@ -15,24 +15,62 @@
 | `rag_hybrid.yaml` | keyword + semantic hybrid 비교 | `rag.retriever.keyword_weight`, `rag.retriever.semantic_weight` |
 | `rag_agent.yaml` | Agent 확장 참조 템플릿 (`agent.enabled: false` 기본) | `agent.enabled`, `agent.phases`, `agent.tools.*` |
 
-## 실험 복사 규칙
+## 실험 명명 규칙
 
-새 실험은 기존 config를 복사하고 이름과 출력 경로를 먼저 바꿉니다.
+### 1. 베이스라인
 
-```text
-rag_langchain.yaml
--> rag_top5_chunk800.yaml
-```
+첫 번째 실험은 `rag-baseline.yaml`로 복사해 시작합니다.
 
 ```yaml
 experiment:
-  name: rag_top5_chunk800
-
+  name: rag-baseline
 paths:
-  output_dir: experiments/rag_top5_chunk800
+  output_dir: experiments/rag-baseline
 ```
 
-같은 실험 이름으로 여러 조건을 반복한다면 `artifact_policy.run_id`를 사용합니다.
+### 2. 베이스라인 동결
+
+베이스라인 Phase A 목표(→ `docs/md/PERFORMANCE_TARGETS.md`)를 충족하면 동결.
+이후 실험은 베이스라인을 복사하고 이름에 변경 내역을 요약해 붙입니다.
+
+### 3. 변경 실험 명명
+
+```
+rag-baseline-{변경항목1}-{변경항목2}-...
+```
+
+**예시**:
+
+| config 파일명 | 변경 내용 |
+|---|---|
+| `rag-baseline-ret60-ans50.yaml` | retriever top_k 조정, answerer temperature 조정 |
+| `rag-baseline-chunk800.yaml` | chunk_size 800 |
+| `rag-baseline-hybrid-top10.yaml` | hybrid retriever, top_k 10 |
+| `rag-baseline-openai-embed.yaml` | embedding OpenAI 교체 |
+
+**약어**:
+
+| 약어 | 의미 |
+|------|------|
+| `ret` | retriever (top_k 값 붙임) |
+| `ans` | answerer (temperature 등) |
+| `chunk` | chunk_size |
+| `emb` | embedding 모델 변경 |
+| `hyb` | hybrid retriever |
+| `rr` | reranker 도입 |
+
+### 4. 경로 규칙
+
+```yaml
+experiment:
+  name: rag-baseline-chunk800           # config명과 동일
+paths:
+  output_dir: experiments/rag-baseline-chunk800  # 실험명과 동일
+```
+
+`experiment.name`과 `paths.output_dir`은 항상 일치시킵니다.
+
+`evaluation.questions_path`는 기본값(`data/rag_sample/eval_questions.csv`)을 그대로 쓰거나, 평가셋을 바꿨을 때만 경로를 변경합니다.
 
 ```yaml
 artifact_policy:
