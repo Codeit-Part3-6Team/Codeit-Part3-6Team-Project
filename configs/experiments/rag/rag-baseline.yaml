@@ -18,7 +18,7 @@ artifact_policy:
 rag:
   engine: langchain
   loader:
-    file_types: [csv]          # data_list.csv (metadata + 텍스트)
+    file_types: [csv]          # data_list.csv (100건, metadata + 텍스트)
   splitter:
     type: recursive_character
     chunk_size: 500
