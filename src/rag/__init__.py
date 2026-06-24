@@ -6,6 +6,7 @@ from src.rag.adapters import (
     build_retriever_adapter,
     describe_rag_implementations,
 )
+from src.rag.agent import AgentRunner, run_rag_agent
 from src.rag.answerer import build_answer
 from src.rag.chunker import chunk_documents
 from src.rag.comparison import compare_rag_retrievers
@@ -21,6 +22,7 @@ from src.rag.validation import check_rag_pipeline
 from src.rag.vector_store import retrieve_chunks_by_vector
 
 __all__ = [
+    "AgentRunner",
     "build_answer",
     "build_answerer_adapter",
     "build_embedding_adapter",
@@ -39,6 +41,7 @@ __all__ = [
     "resolve_output_schema",
     "retrieve_chunks",
     "retrieve_chunks_by_vector",
+    "run_rag_agent",
     "run_rag_chat",
     "run_rag_evaluation",
     "run_rag_ingest",
