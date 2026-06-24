@@ -7,7 +7,8 @@ from typing import Any, Protocol
 from src.rag.answerer import build_answer
 from src.rag.embedder import DEFAULT_EMBEDDING_MODEL, embed_chunks
 from src.rag.embedder import embed_text as local_embed_text
-from src.rag.retriever import _score, _tokenize, retrieve_chunks
+from src.rag.retriever import retrieve_chunks
+from src.rag.scoring import score as _score, tokenize as _tokenize
 
 
 class RagEmbeddingAdapter(Protocol):
@@ -251,6 +252,144 @@ class HuggingFaceLLMAnswererAdapter:
         return self._pipeline
 
 
+@dataclass
+class OpenAIChatAnswererAdapter:
+    """LangChain ChatOpenAI 기반 답변 생성 adapter입니다.
+
+    config에서 rag.answerer.prompt로 프롬프트 템플릿을 오버라이드할 수 있습니다.
+    output_schema가 주어지면 with_structured_output()을 통해 Structured Output으로 응답받습니다.
+    """
+
+    model_name: str
+    temperature: float = 0.2
+    max_tokens: int | None = None
+    api_key_env: str = "OPENAI_API_KEY"
+    prompt_template: str | None = None
+    output_schema: Any = None  # Pydantic model (schema_parser로 생성)
+    fallback_message: str = "문서에서 확인하지 못했습니다."
+    _model: Any = field(default=None, init=False, repr=False)
+
+    def answer(self, question: str, retrieved_chunks: list[dict[str, Any]]) -> dict[str, Any]:
+        if not retrieved_chunks:
+            return {
+                "question": question,
+                "answer": self.fallback_message,
+                "citations": [],
+                "status": "not_found",
+            }
+
+        prompt = _build_answer_prompt(question, retrieved_chunks, self.prompt_template)
+        model = self._get_model()
+        if self.output_schema is not None:
+            response = model.with_structured_output(self.output_schema).invoke(prompt)
+            if isinstance(response, dict):
+                answer_text = "\n".join(f"{k}: {v}" for k, v in response.items())
+            else:
+                answer_text = str(response)
+        else:
+            response = model.invoke(prompt)
+            answer_text = getattr(response, "content", str(response)).strip()
+        if not answer_text:
+            answer_text = self.fallback_message
+
+        used_chunk_ids = _parse_used_chunks(answer_text)
+        is_fallback = "확인하지 못했습니다" in answer_text or "찾을 수 없습니다" in answer_text
+
+        return {
+            "question": question,
+            "answer": answer_text,
+            "citations": _citations_from_chunks(retrieved_chunks, used_chunk_ids),
+            "status": "not_found" if is_fallback else "answered",
+        }
+
+    def _get_model(self) -> Any:
+        if self._model is None:
+            import os
+
+            try:
+                from langchain_openai import ChatOpenAI
+            except ImportError as exc:
+                raise ImportError(
+                    "OpenAI answerer를 사용하려면 langchain-openai가 필요합니다. "
+                    "`pip install langchain-openai`를 먼저 실행하세요."
+                ) from exc
+            kwargs: dict[str, Any] = {"model": self.model_name, "temperature": self.temperature}
+            if self.max_tokens:
+                kwargs["max_tokens"] = self.max_tokens
+            api_key = os.environ.get(self.api_key_env)
+            if api_key:
+                kwargs["api_key"] = api_key
+            self._model = ChatOpenAI(**kwargs)
+        return self._model
+
+
+@dataclass
+class OllamaChatAnswererAdapter:
+    """LangChain ChatOllama 기반 답변 생성 adapter입니다.
+
+    OpenAI adapter와 동일한 인터페이스로, provider만 ollama로 교체합니다.
+    """
+
+    model_name: str
+    temperature: float = 0.2
+    max_tokens: int | None = None
+    base_url: str | None = None
+    prompt_template: str | None = None
+    output_schema: Any = None
+    fallback_message: str = "문서에서 확인하지 못했습니다."
+    _model: Any = field(default=None, init=False, repr=False)
+
+    def answer(self, question: str, retrieved_chunks: list[dict[str, Any]]) -> dict[str, Any]:
+        if not retrieved_chunks:
+            return {
+                "question": question,
+                "answer": self.fallback_message,
+                "citations": [],
+                "status": "not_found",
+            }
+
+        prompt = _build_answer_prompt(question, retrieved_chunks, self.prompt_template)
+        model = self._get_model()
+        if self.output_schema is not None:
+            response = model.with_structured_output(self.output_schema).invoke(prompt)
+            if isinstance(response, dict):
+                answer_text = "\n".join(f"{k}: {v}" for k, v in response.items())
+            else:
+                answer_text = str(response)
+        else:
+            response = model.invoke(prompt)
+            answer_text = getattr(response, "content", str(response)).strip()
+        if not answer_text:
+            answer_text = self.fallback_message
+
+        used_chunk_ids = _parse_used_chunks(answer_text)
+        is_fallback = "확인하지 못했습니다" in answer_text or "찾을 수 없습니다" in answer_text
+
+        return {
+            "question": question,
+            "answer": answer_text,
+            "citations": _citations_from_chunks(retrieved_chunks, used_chunk_ids),
+            "status": "not_found" if is_fallback else "answered",
+        }
+
+    def _get_model(self) -> Any:
+        if self._model is None:
+            try:
+                from langchain_ollama import ChatOllama
+            except ImportError as exc:
+                raise ImportError(
+                    "Ollama answerer를 사용하려면 langchain-ollama가 필요합니다. "
+                    "`pip install langchain-ollama`를 먼저 실행하세요."
+                ) from exc
+            kwargs: dict[str, Any] = {"model": self.model_name, "temperature": self.temperature}
+            if self.max_tokens:
+                kwargs["num_predict"] = self.max_tokens
+            if self.base_url:
+                kwargs["base_url"] = self.base_url
+            self._model = ChatOllama(**kwargs)
+        return self._model
+
+
 def build_embedding_adapter(config: dict[str, Any]) -> RagEmbeddingAdapter:
     """rag.embedding config에 맞는 embedding adapter를 반환합니다."""
     provider = config.get("provider", "local")
@@ -299,10 +438,9 @@ def build_answerer_adapter(config: dict[str, Any]) -> RagAnswererAdapter:
     """rag.answerer config에 맞는 answerer adapter를 반환합니다."""
     mode = config.get("mode", "extractive")
     provider = config.get("provider", "local")
+    fallback_msg = str(config.get("fallback_message", "문서에서 확인하지 못했습니다."))
     if mode == "extractive" and provider == "local":
-        return ExtractiveAnswererAdapter(
-            fallback_message=config.get("fallback_message", "문서에서 확인하지 못했습니다."),
-        )
+        return ExtractiveAnswererAdapter(fallback_message=fallback_msg)
     if mode == "llm" and provider == "huggingface":
         return HuggingFaceLLMAnswererAdapter(
             model_name=str(config["model_name"]),
@@ -311,13 +449,31 @@ def build_answerer_adapter(config: dict[str, Any]) -> RagAnswererAdapter:
             temperature=float(config.get("temperature", 0.2)),
             max_new_tokens=int(config.get("max_new_tokens", config.get("max_tokens", 256))),
             require_citations=bool(config.get("require_citations", True)),
-            fallback_message=str(config.get("fallback_message", "문서에서 확인하지 못했습니다.")),
+            fallback_message=fallback_msg,
         )
-    if mode == "llm" and provider in {"openai", "ollama"}:
-        raise NotImplementedError(
-            "RAG LLM answerer contract is validated, but runtime generation is not implemented yet: "
-            f"provider={provider}, model_name={config.get('model_name', '')}"
-        )
+    if provider in {"openai", "ollama"} and mode in {"llm", "generative", ""}:
+        model_name = str(config.get("model_name", "") or "")
+        temperature = float(config.get("temperature", 0.2))
+        max_tokens = int(config["max_tokens"]) if config.get("max_tokens") else None
+        prompt_template = config.get("prompt") or None
+        if provider == "openai":
+            return OpenAIChatAnswererAdapter(
+                model_name=model_name,
+                temperature=temperature,
+                max_tokens=max_tokens,
+                prompt_template=prompt_template,
+                fallback_message=fallback_msg,
+                api_key_env=str(config.get("api_key_env", "OPENAI_API_KEY") or "OPENAI_API_KEY"),
+            )
+        if provider == "ollama":
+            return OllamaChatAnswererAdapter(
+                model_name=model_name,
+                temperature=temperature,
+                max_tokens=max_tokens,
+                prompt_template=prompt_template,
+                fallback_message=fallback_msg,
+                base_url=config.get("base_url") or None,
+            )
     raise NotImplementedError(f"RAG answerer is not implemented yet: mode={mode}, provider={provider}")
 
 
@@ -501,6 +657,27 @@ def _citations_from_chunks(retrieved_chunks: list[dict[str, Any]]) -> list[dict[
             }
         )
     return citations
+
+
+def _parse_used_chunks(answer_text: str) -> set[str]:
+    """LLM 응답에서 [사용근거: 1,3] 표시를 파싱합니다."""
+    import re
+
+    match = re.search(r"\[사용근거:\s*([\d,\s]+)\]", answer_text)
+    if match:
+        return {n.strip() for n in match.group(1).split(",") if n.strip()}
+    return set()
+
+
+def _build_answer_prompt(
+    question: str,
+    retrieved_chunks: list[dict[str, Any]],
+    template: str | None = None,
+) -> str:
+    """prompt.py의 build_prompt를 호출하는 얇은 wrapper입니다."""
+    from src.rag.prompt import build_prompt
+
+    return build_prompt(question, retrieved_chunks, template)
 
 
 def _resolve_hf_pipeline_device(device: str) -> int:
