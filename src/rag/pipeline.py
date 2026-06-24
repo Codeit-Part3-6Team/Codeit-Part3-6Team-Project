@@ -247,7 +247,7 @@ def run_rag_evaluation(config_path: str | Path, project_root: str | Path = ".") 
             retrieved_ids = {str(item["chunk_id"]) for item in retrieval["retrieved_chunks"]}
             citation_ids = {str(item["chunk_id"]) for item in answer["citations"]}
             retrieval_hit = bool(expected_chunk_ids & retrieved_ids)
-            answer_contains_expected = row["expected_answer"] in answer["answer"]
+            answer_contains_expected = _normalize_for_match(row["expected_answer"]) in _normalize_for_match(answer["answer"])
             citation_correct = bool(expected_chunk_ids & citation_ids)
 
             judge_enabled = config.get("evaluation", {}).get("llm_judge", {}).get("enabled", False)
@@ -309,6 +309,15 @@ def _calculate_metrics(rows: list[dict[str, str]]) -> dict[str, float]:
         "judge_correct_rate": _ratio(rows, "judge_correct", total),
         "not_found_rate": sum(row["status"] == "not_found" for row in rows) / total,
     }
+
+
+def _normalize_for_match(text: str) -> str:
+    """쉼표·공백·따옴표 제거. substring 매칭 정확도 보정."""
+    import re
+
+    text = text.strip('"').strip("'")
+    text = re.sub(r"[\s,]+", "", text)
+    return text
 
 
 def _ratio(rows: list[dict[str, str]], column: str, total: int) -> float:
