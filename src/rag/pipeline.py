@@ -254,7 +254,8 @@ def run_rag_evaluation(config_path: str | Path, project_root: str | Path = ".") 
             judge_ok = False
             if judge_enabled:
                 try:
-                    judge_ok = _judge_answer_with_llm(config, row["expected_answer"], answer["answer"])
+                    from src.rag.judge import judge_binary_from_config
+                    judge_ok = judge_binary_from_config(config, row["expected_answer"], answer["answer"])
                 except Exception:
                     pass
 
@@ -308,33 +309,6 @@ def _calculate_metrics(rows: list[dict[str, str]]) -> dict[str, float]:
         "judge_correct_rate": _ratio(rows, "judge_correct", total),
         "not_found_rate": sum(row["status"] == "not_found" for row in rows) / total,
     }
-
-
-def _judge_answer_with_llm(config: dict[str, Any], expected: str, actual: str) -> bool:
-    """LLM으로 답변의 의미적 정확성을 판단 (gpt-5-nano).
-
-    exact match 대신 "2억원 = 200,000,000원" 같은 표현 차이를 잡습니다.
-    """
-    from langchain_openai import ChatOpenAI
-    from langchain_core.messages import HumanMessage
-    import os
-
-    judge_cfg = config.get("evaluation", {}).get("llm_judge", {})
-    model_name = judge_cfg.get("model_name", "gpt-5-mini")
-    api_key_env = judge_cfg.get("api_key_env", "OPENAI_API_KEY")
-    api_key = os.environ.get(api_key_env, "")
-
-    judge = ChatOpenAI(model=model_name, temperature=0, openai_api_key=api_key or None)
-    prompt = (
-        '다음 expected_answer와 actual_answer가 의미상 같은 내용이면 "true", '
-        '다른 내용이면 "false"라고만 답하세요.\n\n'
-        f"expected_answer: {expected}\n"
-        f"actual_answer: {actual}\n\n"
-        "같은 의미인가요? (true/false)"
-    )
-    result = judge.invoke([HumanMessage(content=prompt)])
-    result_text = getattr(result, "content", str(result)).strip().lower()
-    return "true" in result_text
 
 
 def _ratio(rows: list[dict[str, str]], column: str, total: int) -> float:

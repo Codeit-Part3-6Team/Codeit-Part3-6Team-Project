@@ -90,6 +90,42 @@ artifact_policy:
   on_existing: overwrite
 ```
 
+## LLM-as-Judge 평가
+
+`answer_contains_expected`(substring exact match)의 표현 차이로 인한 과소평가를 보완합니다.
+LLM이 의미 기반으로 "2억원 = 200,000,000원" 같은 표현 차이를 판단합니다.
+
+### 활성화
+
+```yaml
+evaluation:
+  questions_path: /shared/data/eval_questions.csv
+  llm_judge:
+    enabled: true
+    model_name: gpt-5-mini
+```
+
+### 산출물
+
+`metrics.json`에 `judge_correct_rate`가 추가됩니다.
+`evaluation_results.csv`에 `judge_correct` 컬럼이 추가됩니다.
+
+### 프롬프트 커스터마이징 (선택)
+
+```yaml
+evaluation:
+  llm_judge:
+    enabled: true
+    model_name: gpt-5-mini
+    prompt: |
+      expected와 actual이 의미상 같으면 true, 다르면 false. 숫자 단위 차이는 무시.
+      expected: {expected}
+      actual: {actual}
+      결과:
+```
+
+`prompt`를 생략하면 기본 binary template을 사용합니다.
+
 ## 실험자가 주로 만질 영역
 
 ```yaml
@@ -119,6 +155,7 @@ rag:
 | `rag.answerer` | extractive 답변과 LLM 답변 후보 비교 |
 | `evaluation.questions_path` | 평가 질문 세트 교체 |
 | `metric.monitor` | 대표 지표 지정 |
+| `evaluation.llm_judge` | LLM-as-Judge 의미 기반 평가 활성화 |
 
 ## 실행 순서
 
