@@ -175,7 +175,7 @@ class LangChainRagEngine:
             answer_text = fallback_msg
 
         used_chunk_ids = _parse_used_chunks(answer_text)
-        is_fallback = fallback_msg and fallback_msg in answer_text
+        is_fallback = "확인하지 못했습니다" in answer_text or "찾을 수 없습니다" in answer_text
 
         return {
             "question": question,
