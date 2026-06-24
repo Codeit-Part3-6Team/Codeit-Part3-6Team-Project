@@ -1,7 +1,7 @@
 """
 BidAI · RFP 입찰 분석 서비스 (데모)
 ====================================
-실행:  python -m streamlit run bidai_app.py
+실행:  python -m streamlit run bidai_app/app py (프로젝트 루트에서)
 
 이 파일은 '진입점'입니다. 하는 일은 3가지뿐:
   1) 페이지 공통 설정(set_page_config) + 전역 CSS 주입
