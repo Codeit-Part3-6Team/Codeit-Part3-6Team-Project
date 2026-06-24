@@ -106,13 +106,6 @@ def test_rag_quality_gate_realistic_docx_hwpx_e2e(isolated_project: Path):
         "citation_correct_rate": 1.0,
         "not_found_rate": 0.0,
         "judge_correct_rate": 0.0,
-        "diagnostic": {
-            "answer_contains_expected_rate": 1.0,
-            "judge_on_answered_rate": 0.0,
-            "retrieval_failure_rate": 0.0,
-            "answerer_gave_up_rate": 0.0,
-            "answerer_error_rate": 1.0,
-        },
     }
 
     documents = _read_csv(output_dir / "parsed_documents.csv")
