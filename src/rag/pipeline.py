@@ -172,7 +172,7 @@ def run_rag_chat(config_path: str | Path, project_root: str | Path, question: st
 
 
 def run_rag_agent(
-    config_path: str | Path,
+    config_path: str | Path | dict[str, Any],
     project_root: str | Path = ".",
     question: str | None = None,
 ) -> dict[str, Any]:
@@ -182,7 +182,7 @@ def run_rag_agent(
     agent.enabled가 True이면 AgentRunner를 통해 Phase DAG를 실행합니다.
 
     Args:
-        config_path: config 파일 경로
+        config_path: config 파일 경로(str/Path) 또는 config dict
         project_root: 프로젝트 루트
         question: 초기 질문
 
@@ -190,27 +190,35 @@ def run_rag_agent(
         AgentRunner.run() 결과 또는 run_rag_chat() 결과
     """
     root = Path(project_root)
-    config_path = _resolve_path(root, config_path)
-    config = load_config(config_path)
+    if isinstance(config_path, dict):
+        config = config_path
+    else:
+        config_path = _resolve_path(root, config_path)
+        config = load_config(config_path)
     agent_cfg = config.get("agent", {})
 
     if not agent_cfg.get("enabled", False):
         if question is None:
-            raise ValueError("question is required when agent.enabled is False")
+            return {"state": {}, "phase_results": [], "step_count": 0, "status": "disabled"}
+        if isinstance(config_path, dict):
+            raise ValueError("config_path as dict is not supported when agent.enabled is False")
         return run_rag_chat(config_path, root, question)
 
     from src.rag.agent import AgentRunner
 
-    output_dir = resolve_experiment_dir(root, config)
-    ensure_dir(output_dir)
-    _write_run_status(output_dir, "rag_agent", "running")
+    if isinstance(config_path, (str, Path)):
+        output_dir = resolve_experiment_dir(root, config)  # type: ignore[arg-type]
+        ensure_dir(output_dir)
+        _write_run_status(output_dir, "rag_agent", "running")
     try:
         runner = AgentRunner(config, root)
         result = runner.run(question)
-        _write_run_status(output_dir, "rag_agent", "success", result={"status": result.get("status", "ok")})
+        if isinstance(config_path, (str, Path)):
+            _write_run_status(output_dir, "rag_agent", "success", result={"status": result.get("status", "ok")})
         return result
     except Exception as exc:
-        _write_failure_artifact(output_dir, "rag_agent", exc)
+        if isinstance(config_path, (str, Path)):
+            _write_failure_artifact(output_dir, "rag_agent", exc)
         raise
 
 

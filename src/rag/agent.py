@@ -99,12 +99,14 @@ class AgentRunner:
 
             tool = self.tools.get(tool_name)
             if tool is None:
-                results[tool_name] = ToolResult(
+                tr = ToolResult(
                     tool_name=tool_name,
                     phase_name=phase_name,
                     status="failed",
                     errors=[f"Tool not found: {tool_name}"],
                 )
+                results[tool_name] = tr
+                self.state[tool_name] = tr
                 continue
 
             self.step_count += 1
