@@ -70,7 +70,7 @@ class FakeChatOllama:
 
     def invoke(self, prompt):
         self.__class__.last_prompt = prompt
-        return FakeChatResponse("answer from ollama")
+        return FakeChatResponse("answer from ollama [사용근거: 1]")
 
 
 class FakeChatOpenAI:
@@ -83,7 +83,7 @@ class FakeChatOpenAI:
 
     def invoke(self, prompt):
         self.__class__.last_prompt = prompt
-        return FakeChatResponse("answer from openai")
+        return FakeChatResponse("answer from openai [사용근거: 1]")
 
 
 def test_langchain_engine_uses_standard_artifact_contract(monkeypatch, tmp_path: Path):
@@ -238,7 +238,7 @@ def test_langchain_ollama_answerer_returns_standard_payload(monkeypatch, tmp_pat
 
     answer = engine.answer("What is the budget?", retrieved)
 
-    assert answer["answer"] == "answer from ollama"
+    assert answer["answer"] == "answer from ollama [사용근거: 1]"
     assert answer["status"] == "answered"
     assert answer["citations"][0]["chunk_id"] == "doc_chunk_0001"
     assert FakeChatOllama.calls[-1] == {
@@ -283,7 +283,7 @@ def test_langchain_openai_answerer_returns_standard_payload(monkeypatch, tmp_pat
 
     answer = engine.answer("What is required?", retrieved)
 
-    assert answer["answer"] == "answer from openai"
+    assert answer["answer"] == "answer from openai [사용근거: 1]"
     assert answer["status"] == "answered"
     assert answer["citations"][0] == {
         "chunk_id": "doc_chunk_0002",
