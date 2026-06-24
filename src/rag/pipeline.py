@@ -171,6 +171,49 @@ def run_rag_chat(config_path: str | Path, project_root: str | Path, question: st
         raise
 
 
+def run_rag_agent(
+    config_path: str | Path,
+    project_root: str | Path = ".",
+    question: str | None = None,
+) -> dict[str, Any]:
+    """agent.enabled config에 따라 Agent Loop를 실행합니다.
+
+    agent.enabled가 False이면 기존 run_rag_chat과 동일하게 동작합니다.
+    agent.enabled가 True이면 AgentRunner를 통해 Phase DAG를 실행합니다.
+
+    Args:
+        config_path: config 파일 경로
+        project_root: 프로젝트 루트
+        question: 초기 질문
+
+    Returns:
+        AgentRunner.run() 결과 또는 run_rag_chat() 결과
+    """
+    root = Path(project_root)
+    config_path = _resolve_path(root, config_path)
+    config = load_config(config_path)
+    agent_cfg = config.get("agent", {})
+
+    if not agent_cfg.get("enabled", False):
+        if question is None:
+            raise ValueError("question is required when agent.enabled is False")
+        return run_rag_chat(config_path, root, question)
+
+    from src.rag.agent import AgentRunner
+
+    output_dir = resolve_experiment_dir(root, config)
+    ensure_dir(output_dir)
+    _write_run_status(output_dir, "rag_agent", "running")
+    try:
+        runner = AgentRunner(config, root)
+        result = runner.run(question)
+        _write_run_status(output_dir, "rag_agent", "success", result={"status": result.get("status", "ok")})
+        return result
+    except Exception as exc:
+        _write_failure_artifact(output_dir, "rag_agent", exc)
+        raise
+
+
 # ===== 멀티턴 대화 지원 =====
 _CHAT_HISTORY: dict[str, list[dict[str, str]]] = {}
 
