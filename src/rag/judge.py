@@ -20,7 +20,8 @@ DEFAULT_BINARY_TEMPLATE = (
 def judge_binary(
     expected: str,
     actual: str,
-    model_name: str = "gpt-5-mini",
+    model_name: str = "gpt-4o-mini",
+    provider: str = "openai",
     api_key_env: str = "OPENAI_API_KEY",
     template: str | None = None,
 ) -> bool:
@@ -30,23 +31,34 @@ def judge_binary(
         expected: 정답 텍스트.
         actual: 모델이 생성한 답변.
         model_name: 판단에 사용할 LLM 모델.
+        provider: LLM provider (openai, ollama).
         api_key_env: API 키가 등록된 환경변수 이름.
         template: 판단 프롬프트 템플릿. None이면 기본 binary template 사용.
 
     Returns:
-        의미상 같으면 True.
+        의미상 같으면 True. 호출 실패 시 False.
     """
-    from langchain_openai import ChatOpenAI
     from langchain_core.messages import HumanMessage
 
     api_key = os.environ.get(api_key_env, "")
     prompt_template = template or DEFAULT_BINARY_TEMPLATE
     prompt = prompt_template.format(expected=expected, actual=actual)
 
-    judge = ChatOpenAI(model=model_name, temperature=0, openai_api_key=api_key or None)
-    result = judge.invoke([HumanMessage(content=prompt)])
-    result_text = getattr(result, "content", str(result)).strip().lower()
-    return "true" in result_text
+    try:
+        if provider == "ollama":
+            from langchain_ollama import ChatOllama
+
+            judge = ChatOllama(model=model_name, temperature=0)
+        else:
+            from langchain_openai import ChatOpenAI
+
+            judge = ChatOpenAI(model=model_name, temperature=0, openai_api_key=api_key or None)
+
+        result = judge.invoke([HumanMessage(content=prompt)])
+        result_text = getattr(result, "content", str(result)).strip().lower()
+        return "true" in result_text
+    except Exception:
+        return False
 
 
 def judge_binary_from_config(
@@ -68,7 +80,8 @@ def judge_binary_from_config(
     return judge_binary(
         expected=expected,
         actual=actual,
-        model_name=judge_cfg.get("model_name", "gpt-5-mini"),
+        model_name=judge_cfg.get("model_name", "gpt-4o-mini"),
+        provider=judge_cfg.get("provider", "openai"),
         api_key_env=judge_cfg.get("api_key_env", "OPENAI_API_KEY"),
         template=judge_cfg.get("prompt"),
     )
