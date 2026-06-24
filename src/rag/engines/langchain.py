@@ -153,16 +153,17 @@ class LangChainRagEngine:
     def answer(self, question: str, retrieved_chunks: list[dict[str, Any]]) -> dict[str, Any]:
         answerer_cfg = self.rag_config.get("answerer", self.rag_config.get("llm", {}))
         provider = str(answerer_cfg.get("provider", answerer_cfg.get("type", "local")) or "local")
+        fallback_msg = answerer_cfg.get("fallback_message", "문서에서 확인하지 못했습니다.")
         if provider == "local":
             return build_answer(
                 question,
                 retrieved_chunks,
-                fallback_message=answerer_cfg.get("fallback_message", "문서에서 확인하지 못했습니다."),
+                fallback_message=fallback_msg,
             )
         if not retrieved_chunks:
             return {
                 "question": question,
-                "answer": answerer_cfg.get("fallback_message", "문서에서 확인하지 못했습니다."),
+                "answer": fallback_msg,
                 "citations": [],
                 "status": "not_found",
             }
@@ -171,12 +172,16 @@ class LangChainRagEngine:
         response = model.invoke(prompt)
         answer_text = getattr(response, "content", str(response)).strip()
         if not answer_text:
-            answer_text = answerer_cfg.get("fallback_message", "문서에서 확인하지 못했습니다.")
+            answer_text = fallback_msg
+
+        used_chunk_ids = _parse_used_chunks(answer_text)
+        is_fallback = fallback_msg and fallback_msg in answer_text
+
         return {
             "question": question,
             "answer": answer_text,
-            "citations": _citations_from_chunks(retrieved_chunks),
-            "status": "answered" if retrieved_chunks else "not_found",
+            "citations": _citations_from_chunks(retrieved_chunks, used_chunk_ids),
+            "status": "not_found" if is_fallback else "answered",
         }
 
     def _build_embeddings(self) -> Any:
@@ -379,17 +384,22 @@ def _build_prompt(question: str, retrieved_chunks: list[dict[str, Any]]) -> str:
     )
     return (
         "너는 RFP 문서 분석 도우미다. 아래 근거에 있는 내용만 사용해서 한국어로 답하라.\n"
-        "근거에 없는 내용은 추측하지 말고 '문서에서 확인하지 못했습니다.'라고 답하라.\n\n"
+        "근거에 없는 내용은 추측하지 말고 '문서에서 확인하지 못했습니다.'라고 답하라.\n"
+        "답변 말미에는 반드시 사용한 근거 번호를 [사용근거: 1,3] 형식으로 표기하라.\n\n"
         f"{context}\n\n질문: {question}"
     )
 
 
-def _citations_from_chunks(retrieved_chunks: list[dict[str, Any]]) -> list[dict[str, Any]]:
+def _citations_from_chunks(
+    retrieved_chunks: list[dict[str, Any]], used_chunk_ids: set[str] | None = None
+) -> list[dict[str, Any]]:
     citations = []
     seen = set()
-    for chunk in retrieved_chunks:
+    for index, chunk in enumerate(retrieved_chunks, start=1):
         chunk_id = str(chunk.get("chunk_id", ""))
         if not chunk_id or chunk_id in seen:
+            continue
+        if used_chunk_ids is not None and str(index) not in used_chunk_ids:
             continue
         seen.add(chunk_id)
         citations.append(
@@ -402,3 +412,13 @@ def _citations_from_chunks(retrieved_chunks: list[dict[str, Any]]) -> list[dict[
             }
         )
     return citations
+
+
+def _parse_used_chunks(answer_text: str) -> set[str]:
+    """LLM 응답에서 [사용근거: 1,3] 같은 표시를 파싱."""
+    import re
+
+    match = re.search(r"\[사용근거:\s*([\d,\s]+)\]", answer_text)
+    if match:
+        return {n.strip() for n in match.group(1).split(",") if n.strip()}
+    return set()
