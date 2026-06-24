@@ -302,12 +302,27 @@ def run_rag_evaluation(config_path: str | Path, project_root: str | Path = ".") 
 
 def _calculate_metrics(rows: list[dict[str, str]]) -> dict[str, float]:
     total = len(rows) or 1
+    answered_rows = [r for r in rows if r["status"] != "not_found"]
+    answered_total = len(answered_rows) or 1
     return {
         "retrieval_hit_rate": _ratio(rows, "retrieval_hit", total),
-        "answer_contains_expected_rate": _ratio(rows, "answer_contains_expected", total),
         "citation_correct_rate": _ratio(rows, "citation_correct", total),
         "judge_correct_rate": _ratio(rows, "judge_correct", total),
         "not_found_rate": sum(row["status"] == "not_found" for row in rows) / total,
+        "diagnostic": {
+            "answer_contains_expected_rate": _ratio(rows, "answer_contains_expected", total),
+            "judge_on_answered_rate": _ratio(answered_rows, "judge_correct", answered_total),
+            "retrieval_failure_rate": sum(r["retrieval_hit"] == "false" for r in rows) / total,
+            "answerer_gave_up_rate": sum(
+                r["retrieval_hit"] == "true" and r["status"] == "not_found" for r in rows
+            ) / total,
+            "answerer_error_rate": sum(
+                r["retrieval_hit"] == "true"
+                and r["status"] == "answered"
+                and r["judge_correct"] == "false"
+                for r in rows
+            ) / total,
+        },
     }
 
 
