@@ -32,8 +32,7 @@ pip install streamlit
 > requirements.txt에 포함되어 있기 때문에 pip install -r requirements.txt로 설치해도 됩니다.
 
 ```bash
-cd app
-python -m streamlit run app.py
+python -m streamlit run app/app.py
 ```
 
 실행하면 브라우저에서 자동 실행됩니다.
