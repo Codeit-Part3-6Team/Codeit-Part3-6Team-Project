@@ -384,19 +384,9 @@ def _to_retrieval_row(rank: int, score: float, chunk: dict[str, str]) -> dict[st
 def _build_prompt(
     question: str, retrieved_chunks: list[dict[str, Any]], template: str | None = None
 ) -> str:
-    context = "\n\n".join(
-        f"[근거 {index}]\nchunk_id: {chunk.get('chunk_id', '')}\n{chunk.get('text', '')}"
-        for index, chunk in enumerate(retrieved_chunks, start=1)
-    )
-    if template:
-        return template.format(context=context, question=question)
+    from src.rag.prompt import build_prompt as _prompt_build
 
-    return (
-        "너는 RFP 문서 분석 도우미다. 아래 근거에 있는 내용만 사용해서 한국어로 답하라.\n"
-        "근거에 없는 내용은 추측하지 말고 '문서에서 확인하지 못했습니다.'라고 답하라.\n"
-        "답변 말미에는 반드시 사용한 근거 번호를 [사용근거: 1,3] 형식으로 표기하라.\n\n"
-        f"{context}\n\n질문: {question}"
-    )
+    return _prompt_build(question, retrieved_chunks, template)
 
 
 def _citations_from_chunks(
