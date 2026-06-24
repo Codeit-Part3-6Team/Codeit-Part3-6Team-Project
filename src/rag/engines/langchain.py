@@ -151,7 +151,15 @@ class LangChainRagEngine:
         return results
 
     def answer(self, question: str, retrieved_chunks: list[dict[str, Any]]) -> dict[str, Any]:
-        answerer_cfg = self.rag_config.get("answerer", self.rag_config.get("llm", {}))
+        answerer_cfg = self.rag_config.get("answerer", {})
+        if "llm" in self.rag_config:
+            import warnings
+
+            warnings.warn(
+                "rag.llm is deprecated. Use rag.answerer instead.",
+                DeprecationWarning,
+                stacklevel=2,
+            )
         provider = str(answerer_cfg.get("provider", answerer_cfg.get("type", "local")) or "local")
         fallback_msg = answerer_cfg.get("fallback_message", "문서에서 확인하지 못했습니다.")
         if provider == "local":
@@ -219,36 +227,6 @@ class LangChainRagEngine:
                 raise ImportError("OpenAIEmbeddings를 사용하려면 langchain-openai가 필요합니다.") from exc
             return OpenAIEmbeddings(model=model_name)
         raise NotImplementedError(f"unsupported LangChain embedding provider: {provider}")
-
-    def _build_chat_model(self, answerer_cfg: dict[str, Any]) -> Any:
-        provider = str(answerer_cfg.get("provider", answerer_cfg.get("type", "ollama")) or "ollama")
-        model_name = str(answerer_cfg.get("model_name", "") or "")
-        temperature = float(answerer_cfg.get("temperature", 0.2))
-        if provider == "ollama":
-            try:
-                from langchain_ollama import ChatOllama
-            except ImportError as exc:
-                raise ImportError("ChatOllama를 사용하려면 langchain-ollama가 필요합니다.") from exc
-            kwargs: dict[str, Any] = {"model": model_name, "temperature": temperature}
-            if answerer_cfg.get("base_url"):
-                kwargs["base_url"] = answerer_cfg["base_url"]
-            if answerer_cfg.get("max_tokens"):
-                kwargs["num_predict"] = int(answerer_cfg["max_tokens"])
-            return ChatOllama(**kwargs)
-        if provider == "openai":
-            try:
-                from langchain_openai import ChatOpenAI
-            except ImportError as exc:
-                raise ImportError("ChatOpenAI를 사용하려면 langchain-openai가 필요합니다.") from exc
-            kwargs = {"model": model_name, "temperature": temperature}
-            if answerer_cfg.get("max_tokens"):
-                kwargs["max_tokens"] = int(answerer_cfg["max_tokens"])
-            api_key_env = str(answerer_cfg.get("api_key_env", "OPENAI_API_KEY") or "OPENAI_API_KEY")
-            api_key = os.environ.get(api_key_env)
-            if api_key:
-                kwargs["api_key"] = api_key
-            return ChatOpenAI(**kwargs)
-        raise NotImplementedError(f"unsupported LangChain answerer provider: {provider}")
 
     def _embedding_model_name(self) -> str:
         embedding_cfg = self.rag_config.get("embedding", {})
@@ -379,45 +357,3 @@ def _to_retrieval_row(rank: int, score: float, chunk: dict[str, str]) -> dict[st
         "section": chunk["section"],
         "text": chunk["text"],
     }
-
-
-def _build_prompt(
-    question: str, retrieved_chunks: list[dict[str, Any]], template: str | None = None
-) -> str:
-    from src.rag.prompt import build_prompt as _prompt_build
-
-    return _prompt_build(question, retrieved_chunks, template)
-
-
-def _citations_from_chunks(
-    retrieved_chunks: list[dict[str, Any]], used_chunk_ids: set[str] | None = None
-) -> list[dict[str, Any]]:
-    citations = []
-    seen = set()
-    for index, chunk in enumerate(retrieved_chunks, start=1):
-        chunk_id = str(chunk.get("chunk_id", ""))
-        if not chunk_id or chunk_id in seen:
-            continue
-        if used_chunk_ids is not None and used_chunk_ids and str(index) not in used_chunk_ids:
-            continue
-        seen.add(chunk_id)
-        citations.append(
-            {
-                "chunk_id": chunk_id,
-                "document_id": chunk.get("document_id", ""),
-                "source_path": chunk.get("source_path", ""),
-                "page": chunk.get("page", ""),
-                "section": chunk.get("section", ""),
-            }
-        )
-    return citations
-
-
-def _parse_used_chunks(answer_text: str) -> set[str]:
-    """LLM 응답에서 [사용근거: 1,3] 같은 표시를 파싱."""
-    import re
-
-    match = re.search(r"\[사용근거:\s*([\d,\s]+)\]", answer_text)
-    if match:
-        return {n.strip() for n in match.group(1).split(",") if n.strip()}
-    return set()
