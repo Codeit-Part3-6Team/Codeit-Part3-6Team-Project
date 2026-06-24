@@ -149,6 +149,7 @@ rag:
 | 영역 | 바꾸는 이유 |
 | --- | --- |
 | `rag.splitter` 또는 `rag.chunk` | 문서 조각 크기와 문맥 유지 정도 비교 |
+| `rag.loader.csv_file` | 디렉터리 내 특정 CSV만 지정 (중복 방지. 예: `data_list.csv`) |
 | `rag.embedding` | local hashing과 LangChain embedding 후보 비교 |
 | `rag.retriever` | similarity, keyword, semantic, hybrid 검색 방식 비교 |
 | `rag.reranker` | 검색 결과 재정렬 후보 실험 |
