@@ -3,7 +3,7 @@ from __future__ import annotations
 import re
 from typing import Any
 
-from src.rag.retriever import _tokenize
+from src.rag.scoring import tokenize as _tokenize
 
 
 def build_answer(
