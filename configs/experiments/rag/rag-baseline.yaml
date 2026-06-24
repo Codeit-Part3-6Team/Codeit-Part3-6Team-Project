@@ -49,6 +49,7 @@ rag:
 evaluation:
   questions_path: /shared/data/eval_questions.csv
 
+# deprecated: metric 섹션은 아직 코드에서 참조되지 않습니다
 metric:
   monitor: judge_correct_rate
   mode: max
