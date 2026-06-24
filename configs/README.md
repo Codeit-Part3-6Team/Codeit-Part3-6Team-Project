@@ -372,6 +372,97 @@ backup:
 
 백업은 `scripts/sync_data.sh push` 또는 crontab으로 자동 실행합니다.
 
+## Agent 확장 설정 (실험적)
+
+`agent.enabled: true`로 설정하면 단일 파이프라인 대신 Phase 기반 Agent Loop가 동작합니다.
+Agent Loop는 `configs/experiments/rag/rag_agent.yaml`을 참고하세요.
+
+### Agent 설정 빠른 참조
+
+| 키 | 기본값 | 설명 |
+| --- | --- | --- |
+| `agent.enabled` | `false` | `true`로 설정하면 Agent Loop 활성화 |
+| `agent.max_steps` | `15` | 전체 루프 제한 (무한 루프 방지) |
+| `agent.verbose` | `false` | `true`이면 Phase/Tool 실행 로그 출력 |
+
+### Phase 정의
+
+```yaml
+agent:
+  phases:
+    - name: extract
+      tools: [extract_facts, parse_bid_conditions]
+      parallel: false          # Phase 내 Tool 병렬 실행 여부
+
+    - name: decide
+      tools: [decide_participation]
+      depends_on: [extract]    # 이 Phase가 완료되어야 시작
+```
+
+| 키 | 설명 |
+| --- | --- |
+| `phases[].name` | Phase 이름 (필수, 문자열) |
+| `phases[].tools` | 이 Phase에서 실행할 Tool 이름 목록 |
+| `phases[].depends_on` | 선행 Phase 이름 목록 (DAG 순서 결정) |
+| `phases[].parallel` | Phase 내 Tool 병렬 실행 여부 (기본 `false`) |
+
+### Tool 정의
+
+```yaml
+agent:
+  tools:
+    extract_facts:
+      description: "RFP에서 예산, 일정, 자격 등 핵심 정보 추출"
+      input_from: null         # 이전 Tool 결과 참조 (Tool 이름 목록)
+      retriever:
+        top_k: 10              # rag.retriever 오버라이드
+      answerer:
+        provider: openai       # rag.answerer 오버라이드
+        output_schema: facts_schema
+        prompt_template: |     # Tool별 프롬프트
+          너는 RFP에서 사실 정보만 추출하는 분석기다.
+        temperature: 0.1
+      on_failure: abort_phase  # skip | abort_phase | abort_agent
+      rules:                   # Rule 엔진 패턴 (XL 서비스)
+        patterns:
+          - 지체상금 과도
+```
+
+| 키 | 기본값 | 설명 |
+| --- | --- | --- |
+| `tools.*.description` | (필수) | Tool 설명. Agent가 자동 선택 시 참조 |
+| `tools.*.input_from` | `[]` | 이전 Tool 결과를 입력으로 받을 Tool 이름 목록 |
+| `tools.*.retriever` | `rag.retriever` 상속 | Tool별 retriever 설정 오버라이드 |
+| `tools.*.answerer` | `rag.answerer` 상속 | Tool별 answerer 설정 오버라이드 |
+| `tools.*.answerer.output_schema` | 없음 | Structured Output 스키마 이름 (`facts_schema`, `decision_schema`) |
+| `tools.*.answerer.prompt_template` | 없음 | Tool별 프롬프트 템플릿 (`{context}`, `{question}` 치환) |
+| `tools.*.on_failure` | `skip` | Tool 실패 시 처리: `skip` (계속), `abort_phase`, `abort_agent` |
+| `tools.*.rules` | 없음 | Rule 엔진 패턴 목록 (XL 서비스) |
+
+### Structured Output 스키마
+
+```yaml
+agent:
+  schemas:
+    facts_schema:
+      fields:
+        예산: str
+        일정: str
+        자격요건: list[str]
+    decision_schema:
+      fields:
+        참여여부: bool
+        근거: str
+```
+
+`agent.schemas`에 inline으로 정의하거나, `src/rag/schema_parser.py`의 `BUILTIN_SCHEMAS`에 등록된 이름을 `output_schema`에서 참조합니다.
+
+### 주의
+
+- `agent.enabled: false`이면 agent 설정은 무시되고 기존 단일 파이프라인이 동작합니다.
+- Agent 모드는 `answwer`/`citations` contract를 유지하므로 `run_rag_chat()` 대신 `run_rag_agent()`를 호출해도 동일한 형식의 결과를 받을 수 있습니다.
+- Phase가 많거나 Tool이 과도하면 `max_steps`를 늘리세요.
+
 ## HuggingFace와 분류 Config의 위치
 
 HuggingFace는 RAG에서도 사용할 수 있습니다. 다만 위치가 다릅니다.
