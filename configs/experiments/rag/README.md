@@ -126,6 +126,33 @@ evaluation:
 
 `prompt`를 생략하면 기본 binary template을 사용합니다.
 
+## Answerer 프롬프트 커스터마이징
+
+`rag.answerer.prompt`로 LLM에게 전달할 프롬프트를 오버라이드할 수 있습니다.
+`{context}`와 `{question}`이 자동 치환됩니다.
+생략 시 아래 기본값이 사용됩니다:
+
+```
+너는 RFP 문서 분석 도우미다. 아래 근거에 있는 내용만 사용해서 한국어로 답하라.
+근거에 없는 내용은 추측하지 말고 '문서에서 확인하지 못했습니다.'라고 답하라.
+답변 말미에는 반드시 사용한 근거 번호를 [사용근거: 1,3] 형식으로 표기하라.
+
+{context}
+
+질문: {question}
+```
+
+### 커스텀 예시
+
+```yaml
+rag:
+  answerer:
+    prompt: |
+      너는 입찰 제안서 작성 전문가다. 아래 근거를 참고해 자연스럽게 한국어로 답하라.
+      {context}
+      질문: {question}
+```
+
 ## 실험자가 주로 만질 영역
 
 ```yaml
@@ -154,6 +181,7 @@ rag:
 | `rag.retriever` | similarity, keyword, semantic, hybrid 검색 방식 비교 |
 | `rag.reranker` | 검색 결과 재정렬 후보 실험 |
 | `rag.answerer` | extractive 답변과 LLM 답변 후보 비교 |
+| `rag.answerer.prompt` | 답변 생성 프롬프트 오버라이드 (`{context}`, `{question}` 치환) |
 | `evaluation.questions_path` | 평가 질문 세트 교체 |
 | `metric.monitor` | 대표 지표 지정 |
 | `evaluation.llm_judge` | LLM-as-Judge 의미 기반 평가 활성화 |
