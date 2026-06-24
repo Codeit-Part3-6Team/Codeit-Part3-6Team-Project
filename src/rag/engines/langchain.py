@@ -167,7 +167,7 @@ class LangChainRagEngine:
                 "citations": [],
                 "status": "not_found",
             }
-        prompt = _build_prompt(question, retrieved_chunks)
+        prompt = _build_prompt(question, retrieved_chunks, answerer_cfg.get("prompt"))
         model = self._build_chat_model(answerer_cfg)
         response = model.invoke(prompt)
         answer_text = getattr(response, "content", str(response)).strip()
@@ -377,11 +377,16 @@ def _to_retrieval_row(rank: int, score: float, chunk: dict[str, str]) -> dict[st
     }
 
 
-def _build_prompt(question: str, retrieved_chunks: list[dict[str, Any]]) -> str:
+def _build_prompt(
+    question: str, retrieved_chunks: list[dict[str, Any]], template: str | None = None
+) -> str:
     context = "\n\n".join(
         f"[근거 {index}]\nchunk_id: {chunk.get('chunk_id', '')}\n{chunk.get('text', '')}"
         for index, chunk in enumerate(retrieved_chunks, start=1)
     )
+    if template:
+        return template.format(context=context, question=question)
+
     return (
         "너는 RFP 문서 분석 도우미다. 아래 근거에 있는 내용만 사용해서 한국어로 답하라.\n"
         "근거에 없는 내용은 추측하지 말고 '문서에서 확인하지 못했습니다.'라고 답하라.\n"
