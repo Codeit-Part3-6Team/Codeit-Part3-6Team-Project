@@ -404,7 +404,7 @@ def _citations_from_chunks(
         chunk_id = str(chunk.get("chunk_id", ""))
         if not chunk_id or chunk_id in seen:
             continue
-        if used_chunk_ids is not None and str(index) not in used_chunk_ids:
+        if used_chunk_ids is not None and used_chunk_ids and str(index) not in used_chunk_ids:
             continue
         seen.add(chunk_id)
         citations.append(
