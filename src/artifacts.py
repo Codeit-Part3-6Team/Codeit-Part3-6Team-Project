@@ -23,8 +23,8 @@ def resolve_experiment_dir(project_root: str | Path, config: dict[str, Any]) -> 
         raise ValueError("config.experiment.name is required")
     output_dir = config.get("paths", {}).get("output_dir")
     if output_dir:
-        # Colab/Drive처럼 절대경로나 명시 경로가 필요할 때는 config의 output_dir를 우선합니다.
-        base_dir = root / output_dir
+        candidate = Path(output_dir)
+        base_dir = candidate if candidate.is_absolute() else root / candidate
     else:
         # output_dir가 없으면 실험 이름을 기준으로 표준 experiments 폴더를 사용합니다.
         base_dir = root / "experiments" / str(experiment_name)

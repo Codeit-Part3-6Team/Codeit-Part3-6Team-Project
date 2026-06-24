@@ -1,0 +1,9 @@
+# LLM-as-Judge 평가 활성화 예시 config
+# 기존 config에 evaluation.llm_judge 섹션만 추가
+
+evaluation:
+  questions_path: /shared/data/eval_questions.csv
+  llm_judge:
+    enabled: true              # true → answer_contains 외 judge metric 추가
+    model_name: gpt-5-mini     # 평가에 쓸 모델 (gpt-5-nano도 가능)
+    api_key_env: OPENAI_API_KEY
