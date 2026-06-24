@@ -1,46 +1,42 @@
-# 데모 앱
+# It's mine - RFP 입찰 분석 서비스
 
-앱 영역은 사용자에게 보여줄 데모와 모델 추론 연결을 담당합니다.
+RAG 기반의 모델을 활용하여 RFP(정부제안서) 입찰 문서를 분석하는 웹 서비스의 프론트엔드 및 백엔드 파일입니다.
+RFP 문서를 업로드 하면 요약을 해주고 챗봇의 형태로 사용자가 질문도 할 수 있습니다.
 
-## 앱 연결 마인드맵
+## 폴더 구조
 
-```mermaid
-mindmap
-  root((app))
-    Input
-      사용자 질문
-      문서 선택
-      파일 경로
-    Pipeline
-      inference function
-      RAG chat
-      model artifact
-    Output
-      answer
-      citation
-      score
-      error message
-    확장 후보
-      Streamlit
-      FastAPI
-      Gradio
-      Colab demo
 ```
-
-## 텍스트 구조
-
-```text
 app/
-|-- main.py     # 데모 앱 진입점 후보
-`-- README.md   # 앱 입출력 계약과 확장 방향
+|-- app.py     # 실행 파일, 공통 설정 
+|-- README.md   # 앱 설명 파일
+|-- views/
+|   |-- home.py         # 홈 (랜딩페이지)
+|   |-- analyze.py      # 분석하기 
+|   |-- workspace.py    # 요약 + 채팅
+|   |-- pricing.py      # 요금제
+|
+|-- utils/
+|   |-- styles.py       # 전역 CSS (디자인, 색상)
+|   |-- components.py   # 상단 네비바 및 아이콘
+|   |-- mock_data.py    #  Mock 데이터 (RAG 연결 파일)
+|
+|-- .streamlit/
+    |-- config.toml     # 다크 테마 설정
 ```
 
-초기 목표:
+## 실행 방법
 
-```text
-input image path/file
--> src.predict 또는 공통 inference function 호출
--> predicted label과 필요한 설명 반환
+```bash
+pip install streamlit
+```
+> requirements.txt에 포함되어 있기 때문에 pip install -r requirements.txt로 설치해도 됩니다.
+
+```bash
+cd app
+python -m streamlit run app.py
 ```
 
-FastAPI로 확장할 때는 모델 입출력 계약을 이 문서에 기록하고, 최종 artifact 경로를 실험 로그와 연결합니다.
+실행하면 브라우저에서 자동 실행됩니다.
+(기본 주소: http://localhost:8501/workspace)
+
+
