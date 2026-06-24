@@ -67,7 +67,7 @@ def run_rag_ingest(config_path: str | Path, project_root: str | Path = ".") -> d
         if resume_enabled and documents_path.exists():
             documents = _read_csv(documents_path)
         else:
-            documents = load_documents(root, raw_docs_dir, loader_cfg.get("file_types", ["txt"]))
+            documents = load_documents(root, raw_docs_dir, loader_cfg.get("file_types", ["txt"]), csv_file=loader_cfg.get("csv_file"))
             _write_csv(documents_path, documents, DOCUMENT_COLUMNS)
         _write_rag_ingest_checkpoint(output_dir, "documents", documents=len(documents))
 
