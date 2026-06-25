@@ -82,7 +82,7 @@ class ChatbotRunner:
 
         tool = self.tools.get(tool_name)
         if tool is None:
-            available = ", ".join(self.tools)
+            available = ", ".join(self.tools.keys())
             reply = f"죄송합니다. '{tool_name}' 기능은 아직 준비되지 않았습니다.\n사용 가능한 기능: {available}"
             self._add_history("assistant", reply)
             return {"reply": reply, "tool_used": None, "tool_result": None}

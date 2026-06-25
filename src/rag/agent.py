@@ -10,7 +10,8 @@ from collections import deque
 from pathlib import Path
 from typing import Any
 
-from src.rag.tool import Tool, ToolResult, build_tool_from_config
+from src.config import write_json
+from src.rag.tool import OnFailure, Tool, ToolResult, build_tool_from_config
 
 
 class AgentRunner:
@@ -247,7 +248,7 @@ class AgentRunner:
 
             warnings.warn(
                 "Phase DAG에 순환 의존성이 감지되었습니다. "
-                "정렬되지 않은 Phase는 임의 순서로 실행됩니다: {}".format(sorted(remaining)),
+                "정렬되지 않은 Phase는 YAML 정의 순서로 실행됩니다: {}".format(sorted(remaining)),
                 RuntimeWarning,
             )
             for phase in self.phases:

@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 from src.rag.agent import AgentRunner
+from src.rag.tool import ToolResult
 
 
 def test_agent_runner_resolves_dag_simple():
@@ -197,3 +198,42 @@ def test_run_rag_agent_disabled_returns_disabled():
     assert result["status"] == "disabled"
     assert result["step_count"] == 0
     assert result["step_count"] == 0
+
+
+def test_agent_runner_abort_phase_failure_path_does_not_crash():
+    config = {
+        "rag": {
+            "embedding": {"provider": "local"},
+            "retriever": {"method": "keyword", "top_k": 3},
+            "answerer": {"provider": "local"},
+        },
+        "agent": {
+            "enabled": True,
+            "phases": [
+                {"name": "extract", "tools": ["fail_tool"]},
+            ],
+            "tools": {
+                "fail_tool": {"description": "fail", "on_failure": "abort_phase"},
+            },
+        },
+    }
+    runner = AgentRunner(config)
+
+    class FailingTool:
+        name = "fail_tool"
+        on_failure = runner.tools["fail_tool"].on_failure
+
+        def run(self, **kwargs):
+            return ToolResult(
+                tool_name="fail_tool",
+                phase_name="extract",
+                status="failed",
+                errors=["boom"],
+            )
+
+    runner.tools["fail_tool"] = FailingTool()
+
+    result = runner.run("질문")
+
+    assert result["status"] == "failed"
+    assert result["state"]["fail_tool"]["status"] == "failed"
