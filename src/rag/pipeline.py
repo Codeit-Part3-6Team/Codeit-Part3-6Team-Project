@@ -204,6 +204,16 @@ def run_rag_agent(
             raise ValueError("config_path as dict is not supported when agent.enabled is False")
         return run_rag_chat(config_path, root, question)
 
+    chatbot_cfg = agent_cfg.get("chatbot", {})
+    if chatbot_cfg.get("enabled", False):
+        from src.rag.chatbot import build_chatbot_from_config
+
+        bot = build_chatbot_from_config(config)
+        if question:
+            return bot.chat(question)
+        bot.run_cli_loop()
+        return {"status": "chatbot_session_ended"}
+
     from src.rag.agent import AgentRunner
 
     output_dir = None

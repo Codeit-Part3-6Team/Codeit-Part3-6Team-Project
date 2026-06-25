@@ -21,7 +21,7 @@ from src.rag.pipeline import run_rag_agent  # noqa: E402
 def main() -> None:
     parser = argparse.ArgumentParser(description="RAG Agent Loop 실행기")
     parser.add_argument("--config", required=True, help="실험 config 파일 경로")
-    parser.add_argument("--question", default=None, help="질문 (없으면 Tool 설명으로 대체)")
+    parser.add_argument("--question", default=None, help="질문 (비대화형 모드). 생략 시 챗봇/Phase DAG 모드")
     parser.add_argument("--dump-state", action="store_true", help="Phase별 State를 JSON으로 출력")
     args = parser.parse_args()
 
