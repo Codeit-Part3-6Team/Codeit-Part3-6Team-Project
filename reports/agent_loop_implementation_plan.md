@@ -840,4 +840,5 @@ agent:
 | v4 | 2026-06-24 | **기본값 정책 적용**. 위험도 전면 재측정 → 4개 브랜치 구조로 단순화. 3.2~3.3, 5절, 7절 갱신 |
 | v5 | 2026-06-25 | **리뷰 반영**: 4건 보완 (configs/README.md agent 문서화, dead config 정리, scoring.py config 연동, test_rag_agent.py 추가). **load_config base_config 상속** 구현. agent/ 디렉터리 예시 config 추가. |
 | v6 | 2026-06-25 | **2차 감사 버그 수정**: 5건 (inline schema 무시, Phase DAG cycle crash, prompt_template 키 불일치, scoring retriever 미연동, similarity/mmr 미지원). Agent 산출물 지표 추가. |
-| v7 | 2026-06-25 | **보류 3건 해소**: Phase 병렬 실행(ThreadPoolExecutor), scoring 고도화(semantic/hybrid 경로), Agent 평가(run_rag_agent_evaluation). tool_selection_accuracy/hallucination_avoidance_rate 실제 계산. 총평 A (96/100). |
+| v7 | 2026-06-25 | **보류 3건 해소**: Phase 병렬, scoring 고도화, Agent 평가. tool_selection_accuracy/hallucination_avoidance_rate 실제 계산. |
+| v8 | 2026-06-25 | **챗봇 지원**: ChatbotRunner(LLM 동적 Tool 선택), agent.chatbot.enabled, CLI 루프. 3차 리뷰 버그 5건 수정. A (96/100). |

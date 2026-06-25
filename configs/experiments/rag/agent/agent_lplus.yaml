@@ -51,6 +51,17 @@ agent:
       tools: [decide_participation]
       depends_on: [extract]
 
+  # 챗봇 모드 (Phase DAG 대신 대화형 Tool 선택)
+  # chatbot.enabled: true → agent.chatbot.enabled: true, agent.enabled: true
+  # 챗봇 모드는 Phase DAG를 무시하고 LLM이 동적으로 Tool을 선택합니다.
+  chatbot:
+    enabled: false
+    tool_selection_model: gpt-4o-mini
+    max_history: 10
+    system_prompt: |
+      너는 RFP 문서 분석 도우미 챗봇이다.
+      사용자의 질문에 가장 적합한 도구를 선택하여 분석 결과를 제공하라.
+
   tools:
     extract_facts:
       description: "RFP 문서에서 사업명, 발주기관, 예산, 기간, 마감일, 자격요건 등 핵심 사실 정보를 추출합니다."
