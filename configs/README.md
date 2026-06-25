@@ -13,9 +13,33 @@
 | local semantic retriever 비교 | `configs/experiments/rag/rag_semantic.yaml` |
 | keyword retriever 비교 | `configs/experiments/rag/rag_keyword.yaml` |
 | keyword + semantic hybrid 비교 | `configs/experiments/rag/rag_hybrid.yaml` |
+| Ollama + OpenAI 베이스라인 | `configs/experiments/rag/rag-baseline.yaml` |
+| Agent Loop 데모 (L+ 시나리오) | `configs/experiments/rag/agent/agent_lplus.yaml` |
 | HuggingFace LLM answerer 예시 | `configs/examples/rag/rag_hf_llm_answerer.yaml` |
 | LangChain + Ollama 실행 예시 | `configs/examples/rag/rag_langchain_ollama.yaml` |
 | LangChain + OpenAI 실행 예시 | `configs/examples/rag/rag_langchain_openai.yaml` |
+
+### Config 상속 (base_config)
+
+config 파일 최상위에 `base_config` 키를 사용하면 다른 config를 상속할 수 있습니다.
+상속받은 config의 모든 키 위에 현재 config의 값을 덧씌웁니다 (deep merge).
+
+```yaml
+# agent/agent_lplus.yaml — RAG 설정은 rag-baseline.yaml에서 상속
+experiment:
+  name: agent-lplus
+base_config: ../rag-baseline.yaml     # 상대 경로 (현재 config 파일 기준)
+paths:
+  output_dir: /shared/experiments/agent-lplus  # 오버라이드
+agent:
+  enabled: true
+  phases: [...]
+```
+
+이 방식을 사용하면:
+- RAG 검색 config(embedder, retriever 등)를 건들지 않고 Agent 확장만 분리 가능
+- Agent config 실험 시 `rag-baseline.yaml`의 실험 결과와 검색 품질이 동일함을 보장
+- `base_config`가 다시 `base_config`를 참조하는 연쇄 상속도 지원
 
 ## 디렉터리 구조
 
