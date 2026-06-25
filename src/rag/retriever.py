@@ -10,12 +10,14 @@ def retrieve_chunks(
     chunks: list[dict[str, str]],
     top_k: int = 3,
     score_threshold: float = 0.0,
+    scoring_kwargs: dict[str, Any] | None = None,
 ) -> list[dict[str, str | float | int]]:
     """질문과 chunk의 단어 겹침을 기준으로 top-k 검색 결과를 반환합니다."""
     query_tokens = _tokenize(question)
+    score_kw = scoring_kwargs or {}
     scored: list[tuple[float, dict[str, str]]] = []
     for chunk in chunks:
-        chunk_score = _score(query_tokens, question, chunk["text"])
+        chunk_score = _score(query_tokens, question, chunk["text"], **score_kw)
         if chunk_score > score_threshold:
             scored.append((chunk_score, chunk))
 

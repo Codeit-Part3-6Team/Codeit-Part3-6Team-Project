@@ -103,6 +103,8 @@ class Tool:
             answerer = build_answerer_adapter(self.answerer_cfg)
             if self.output_schema is not None and hasattr(answerer, "output_schema"):
                 answerer.output_schema = self.output_schema
+            if self.prompt_template and hasattr(answerer, "prompt_template"):
+                answerer.prompt_template = self.prompt_template
             answer_payload = answerer.answer(question, retrieved)
         except Exception as exc:
             errors.append(f"answer: {exc}")
@@ -132,6 +134,7 @@ def build_tool_from_config(
     tool_cfg: dict[str, Any],
     default_retriever: dict[str, Any] | None = None,
     default_answerer: dict[str, Any] | None = None,
+    agent_cfg: dict[str, Any] | None = None,
 ) -> Tool:
     """agent.tools.* config 항목으로 Tool 인스턴스를 생성합니다.
 
@@ -140,6 +143,7 @@ def build_tool_from_config(
         tool_cfg: tools.* 하위 설정
         default_retriever: rag.retriever 기본값
         default_answerer: rag.answerer 기본값
+        agent_cfg: agent 최상위 설정 (schemas 검색용)
 
     Returns:
         Tool 인스턴스
@@ -155,7 +159,8 @@ def build_tool_from_config(
     if schema_key:
         from src.rag.schema_parser import resolve_output_schema
 
-        output_schema = resolve_output_schema({}, schema_key)
+        schema_config = {"agent": agent_cfg} if agent_cfg else {}
+        output_schema = resolve_output_schema(schema_config, schema_key)
 
     on_failure_str = tool_cfg.get("on_failure", "skip")
     try:

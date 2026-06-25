@@ -69,8 +69,12 @@ def build_inline_schema(schema_name: str, fields: dict[str, Any]) -> type[BaseMo
 def resolve_output_schema(config: dict[str, Any], schema_key: str | None) -> type[BaseModel] | None:
     """config에서 output_schema 참조를 해석하여 Pydantic 모델을 반환합니다.
 
+    우선순위:
+    1. config.agent.schemas.{schema_key}.fields → inline 스키마
+    2. BUILTIN_SCHEMAS → 미리 정의된 스키마
+
     Args:
-        config: agent.tools.* 설정 또는 agent 최상위 설정
+        config: agent 최상위 config dict (agent.schemas 검색)
         schema_key: output_schema 값 (문자열 스키마 이름)
 
     Returns:
@@ -78,4 +82,12 @@ def resolve_output_schema(config: dict[str, Any], schema_key: str | None) -> typ
     """
     if not schema_key:
         return None
+
+    agent_cfg = config.get("agent", {})
+    schemas = agent_cfg.get("schemas", {})
+    if schema_key in schemas:
+        fields_def = schemas[schema_key].get("fields", {})
+        if fields_def:
+            return build_inline_schema(schema_key, fields_def)
+
     return build_output_schema(schema_key)

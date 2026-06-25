@@ -35,7 +35,7 @@ class AgentRunner:
         self.tools: dict[str, Tool] = {}
         for name, tool_cfg in raw_tools.items():
             self.tools[name] = build_tool_from_config(
-                name, tool_cfg, default_retriever, default_answerer
+                name, tool_cfg, default_retriever, default_answerer, agent_cfg
             )
 
         self.state: dict[str, ToolResult] = {}
@@ -160,7 +160,7 @@ class AgentRunner:
                     queue.append(neighbor)
 
         if len(order) != len(self.phases):
-            remaining = set(self.phases) - set(order)  # type: ignore[arg-type]
+            remaining = {p["name"] for p in self.phases} - set(order)
             # cycle detected — 남은 Phase는 의존 없이 뒤에 추가
             order.extend(p["name"] for p in self.phases if p["name"] in remaining)
 

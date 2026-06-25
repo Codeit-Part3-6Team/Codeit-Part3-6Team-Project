@@ -109,6 +109,7 @@ class KeywordRetrieverAdapter:
 
     top_k: int = 3
     score_threshold: float = 0.0
+    scoring_kwargs: dict[str, Any] = field(default_factory=dict)
 
     def retrieve(
         self,
@@ -116,7 +117,12 @@ class KeywordRetrieverAdapter:
         chunks: list[dict[str, str]],
         embeddings: list[dict[str, Any]],
     ) -> list[dict[str, str | float | int]]:
-        return retrieve_chunks(question, chunks, top_k=self.top_k, score_threshold=self.score_threshold)
+        return retrieve_chunks(
+            question, chunks,
+            top_k=self.top_k,
+            score_threshold=self.score_threshold,
+            scoring_kwargs=self.scoring_kwargs or None,
+        )
 
 
 @dataclass
@@ -416,14 +422,18 @@ def build_retriever_adapter(config: dict[str, Any], embedding_config: dict[str, 
     # semantic/hybrid 검색은 질문도 같은 embedding adapter로 벡터화해야 검색 기준이 맞습니다.
     embedding_adapter = build_embedding_adapter(embedding_config)
     if method == "keyword":
-        return KeywordRetrieverAdapter(top_k=top_k, score_threshold=score_threshold)
-    if method == "semantic":
+        return KeywordRetrieverAdapter(
+            top_k=top_k,
+            score_threshold=score_threshold,
+            scoring_kwargs=_build_scoring_kwargs_from_config(config),
+        )
+    if method in {"semantic", "similarity"}:
         return MemorySemanticRetrieverAdapter(
             top_k=top_k,
             score_threshold=score_threshold,
             embedding_adapter=embedding_adapter,
         )
-    if method == "hybrid":
+    if method in {"hybrid", "mmr"}:
         return HybridRetrieverAdapter(
             top_k=top_k,
             score_threshold=score_threshold,
@@ -455,7 +465,7 @@ def build_answerer_adapter(config: dict[str, Any]) -> RagAnswererAdapter:
         model_name = str(config.get("model_name", "") or "")
         temperature = float(config.get("temperature", 0.2))
         max_tokens = int(config["max_tokens"]) if config.get("max_tokens") else None
-        prompt_template = config.get("prompt") or None
+        prompt_template = config.get("prompt") or config.get("prompt_template") or None
         if provider == "openai":
             return OpenAIChatAnswererAdapter(
                 model_name=model_name,
@@ -678,6 +688,12 @@ def _build_answer_prompt(
     from src.rag.prompt import build_prompt
 
     return build_prompt(question, retrieved_chunks, template)
+
+
+def _build_scoring_kwargs_from_config(config: dict[str, Any]) -> dict[str, Any]:
+    from src.rag.scoring import build_scoring_kwargs
+
+    return build_scoring_kwargs({"rag": {"scoring": config}})
 
 
 def _resolve_hf_pipeline_device(device: str) -> int:
