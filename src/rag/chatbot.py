@@ -179,7 +179,7 @@ class ChatbotRunner:
     def run_cli_loop(self, exit_words: tuple[str, ...] = ("exit", "quit", "q")) -> None:
         """대화형 CLI 루프를 실행합니다."""
         print("챗봇 시작 (종료: exit, quit, q)")
-        print(f"사용 가능한 도구: {', '.join(self.tools)}")
+        print(f"사용 가능한 도구: {', '.join(self.tools.keys())}")
         while True:
             try:
                 user_input = input("\n> ").strip()

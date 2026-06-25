@@ -40,4 +40,10 @@ def build_prompt(
         for index, chunk in enumerate(retrieved_chunks, start=1)
     )
     fmt = template if template is not None else DEFAULT_PROMPT_TEMPLATE
-    return fmt.format(context=context, question=question)
+    try:
+        return fmt.format(context=context, question=question)
+    except KeyError as exc:
+        raise ValueError(
+            "Prompt template has unsupported placeholder: {}. "
+            "Use only {{context}} and {{question}}.".format(exc)
+        ) from exc

@@ -146,6 +146,7 @@ class AgentRunner:
         phase_failed = False
         lock = Lock()
 
+        # ThreadPoolExecutor 한계: abort 시 이미 실행 중인 future는 취소 불가. 결과는 버려짐.
         with ThreadPoolExecutor(max_workers=min(len(tool_names), 4)) as executor:
             future_map = {
                 executor.submit(
@@ -210,9 +211,9 @@ class AgentRunner:
 
         abort = False
         if tool_result.status == "failed":
-            if tool.on_failure.value == "abort_phase":
+            if tool.on_failure == OnFailure.ABORT_PHASE:
                 abort = True
-            elif tool.on_failure.value == "abort_agent":
+            elif tool.on_failure == OnFailure.ABORT_AGENT:
                 return tool_result, True  # [Agent] 중단
 
         return tool_result, abort
@@ -393,7 +394,6 @@ class AgentRunner:
                 fh.write(json.dumps(record, ensure_ascii=False) + "\n")
 
         # agent_metrics.json: 종합 지표
-        from src.config import write_json
 
         write_json(output_dir / "agent_metrics.json", self._calculate_metrics())
 
