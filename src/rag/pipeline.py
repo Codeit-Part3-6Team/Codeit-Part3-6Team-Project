@@ -36,6 +36,7 @@ EVALUATION_COLUMNS = [
     "citation_chunk_ids",
     "answer",
     "retrieval_hit",
+    "retrieval_rank",
     "answer_contains_expected",
     "citation_correct",
     "status",
@@ -246,7 +247,16 @@ def run_rag_evaluation(config_path: str | Path, project_root: str | Path = ".") 
             expected_chunk_ids = _split_expected_ids(row["expected_chunk_ids"])
             retrieved_ids = {str(item["chunk_id"]) for item in retrieval["retrieved_chunks"]}
             citation_ids = {str(item["chunk_id"]) for item in answer["citations"]}
-            retrieval_hit = bool(expected_chunk_ids & retrieved_ids)
+            retrieved_with_rank = [
+                (str(item["chunk_id"]), int(item.get("rank", 0)))
+                for item in retrieval["retrieved_chunks"]
+            ]
+            retrieval_rank = 0
+            for cid, rank in sorted(retrieved_with_rank, key=lambda x: x[1]):
+                if cid in expected_chunk_ids:
+                    retrieval_rank = rank
+                    break
+            retrieval_hit = retrieval_rank > 0
             answer_contains_expected = _normalize_for_match(row["expected_answer"]) in _normalize_for_match(answer["answer"])
             citation_correct = bool(expected_chunk_ids & citation_ids)
 
@@ -263,6 +273,7 @@ def run_rag_evaluation(config_path: str | Path, project_root: str | Path = ".") 
                 {
                     "question": row["question"],
                     "retrieval_hit": str(retrieval_hit).lower(),
+                    "retrieval_rank": str(retrieval_rank),
                     "answer_contains_expected": str(answer_contains_expected).lower(),
                     "citation_correct": str(citation_correct).lower(),
                     "judge_correct": str(judge_ok).lower(),
@@ -278,6 +289,7 @@ def run_rag_evaluation(config_path: str | Path, project_root: str | Path = ".") 
                     "citation_chunk_ids": _join_ids(citation_ids),
                     "answer": answer["answer"],
                     "retrieval_hit": str(retrieval_hit).lower(),
+                    "retrieval_rank": str(retrieval_rank),
                     "answer_contains_expected": str(answer_contains_expected).lower(),
                     "citation_correct": str(citation_correct).lower(),
                     "judge_correct": str(judge_ok).lower(),
@@ -289,7 +301,7 @@ def run_rag_evaluation(config_path: str | Path, project_root: str | Path = ".") 
         _write_csv(
             output_dir / "evaluation_results.csv",
             result_rows,
-            ["question", "retrieval_hit", "answer_contains_expected", "citation_correct", "judge_correct", "status"],
+            ["question", "retrieval_hit", "retrieval_rank", "answer_contains_expected", "citation_correct", "judge_correct", "status"],
         )
         _write_error_analysis(output_dir, analysis_rows)
         write_json(output_dir / "metrics.json", metrics)
@@ -304,8 +316,24 @@ def _calculate_metrics(rows: list[dict[str, str]]) -> dict[str, float]:
     total = len(rows) or 1
     answered_rows = [r for r in rows if r["status"] != "not_found"]
     answered_total = len(answered_rows) or 1
+    mrr = 0.0
+    hit_at_1 = hit_at_3 = hit_at_5 = 0
+    for r in rows:
+        rank = int(r.get("retrieval_rank", 0) or 0)
+        if rank > 0:
+            mrr += 1.0 / rank
+            if rank == 1:
+                hit_at_1 += 1
+            if rank <= 3:
+                hit_at_3 += 1
+            if rank <= 5:
+                hit_at_5 += 1
     return {
         "retrieval_hit_rate": _ratio(rows, "retrieval_hit", total),
+        "retrieval_mrr": round(mrr / total, 4),
+        "retrieval_hit_at_1": round(hit_at_1 / total, 4),
+        "retrieval_hit_at_3": round(hit_at_3 / total, 4),
+        "retrieval_hit_at_5": round(hit_at_5 / total, 4),
         "citation_correct_rate": _ratio(rows, "citation_correct", total),
         "judge_correct_rate": _ratio(rows, "judge_correct", total),
         "not_found_rate": sum(row["status"] == "not_found" for row in rows) / total,

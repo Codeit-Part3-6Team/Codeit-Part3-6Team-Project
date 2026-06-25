@@ -72,6 +72,7 @@ def test_rag_quality_gate_error_analysis_headers_exist(isolated_project: Path):
         "citation_chunk_ids",
         "answer",
         "retrieval_hit",
+        "retrieval_rank",
         "answer_contains_expected",
         "citation_correct",
         "status",
@@ -98,6 +99,10 @@ def test_rag_quality_gate_realistic_docx_hwpx_e2e(isolated_project: Path):
     assert ingest == {"documents": 6, "chunks": 6, "embeddings": 6}
     assert metrics == {
         "retrieval_hit_rate": 1.0,
+        "retrieval_mrr": 0.7778,
+        "retrieval_hit_at_1": 0.6667,
+        "retrieval_hit_at_3": 1.0,
+        "retrieval_hit_at_5": 1.0,
         "citation_correct_rate": 1.0,
         "not_found_rate": 0.0,
         "judge_correct_rate": 0.0,
