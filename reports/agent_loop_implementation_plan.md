@@ -635,6 +635,84 @@ agent:
 ### Adapter 통합 후 기대 효과
 
 | 항목 | 통합 전 | 통합 후 |
+
+---
+
+# 부록 F: 구현 평가 — 계획 대비 실적
+
+> 2026-06-25, 4개 브랜치 전수 평가.
+
+## 총평: A- (91/100)
+
+핵심 구현 100% 완료, 문서화 90% 완료, 지표 출력 추가. 보류 3건은 설계 의도.
+
+## 브랜치별 평가
+
+### ① feature/agent-foundation (밑작업) — ✅ 완료
+
+| 계획 항목 | 계획량 | 실제 | 판정 | 비고 |
+|---|---|---|---|---|
+| adapters.py OpenAI/Ollama | +120L | 197L 추가 | ✅ | `output_schema` 지원 포함 |
+| prompt.py 통일 | 신규 80L | 43L | ✅ | langchain 현재 프롬프트 기본값 |
+| schema_parser.py | 신규 60L | 81L | ✅ | BUILTIN_SCHEMAS 3종 + inline 지원 |
+| scoring.py 통합 | 신규 80L | 51L | ✅ | retriever/answerer/adapters/vector_store import 정리 |
+| tool.py | 신규 150L | 176L | ✅ | OnFailure Enum, build_tool_from_config |
+
+### ② feature/agent-answerer-unification (통합) — ✅ 완료
+
+| 계획 항목 | 계획량 | 실제 | 판정 | 비고 |
+|---|---|---|---|---|
+| langchain answer() → adapter | +30L | -64L (순삭감) | ✅ | provider=local 제외 전부 adapter 경로 |
+| _build_chat_model 제거 | - | 완료 | ✅ | adapter로 이관 |
+| _build_prompt 등 dead code 제거 | - | 완료 | ✅ | _citations_from_chunks, _parse_used_chunks 이관 |
+
+### ③ feature/agent-loop (에이전트 심장) — ✅ 완료
+
+| 계획 항목 | 계획량 | 실제 | 판정 | 비고 |
+|---|---|---|---|---|
+| agent.py Phase DAG + Tool dispatch | 신규 200L | 191L | ✅ | topological sort, State dict, `on_failure` 처리 |
+| pipeline.py agent.enabled 분기 | +30L | 43L | ✅ | `run_rag_agent()`, dict/config_path 모두 지원 |
+
+### ④ feature/agent-polish (마무리) — ✅ 완료
+
+| 계획 항목 | 계획량 | 실제 | 판정 | 비고 |
+|---|---|---|---|---|
+| validation.py agent 검증 | +40L | 71L | ✅ | phase/tool/schema/on_failure 전부 검증 |
+| judge.py provider 확장 | +30L | 완료 | ✅ | ollama/openai 분기 + try/except |
+| scripts/run_rag_agent.py | 신규 50L | 45L | ✅ | CLI 구현 |
+| langchain.py rag.llm deprecation | -3L | 완료 | ✅ | DeprecationWarning |
+| dead code 제거 | - | -73L | ✅ | langchain.py에서 _build_* 4종 제거 |
+| configs/README.md agent 문서화 | +50L | +91L | ✅ | 10종 키, base_config 상속 문서화 |
+| dead config 정리 | - | 7파일 | ✅ | metric.*, embedding.normalize deprecation 주석 |
+| scoring.py config 연동 | - | +77L | ✅ | keyword_weights, co_occurrence_bonus, substring_bonus |
+| tests/test_rag_agent.py | 신규 | 6건 | ✅ | DAG, 실행, max_steps, ToolNotFound, disabled |
+| load_config base_config 상속 | 신규 | +30L | ✅ | 연쇄 상속 + deep merge |
+| agent/agent_lplus.yaml | 신규 | 완료 | ✅ | L+ 시나리오 예시 config |
+| Agent 산출물 + 지표 | 신규 | +110L | ✅ | agent_state.jsonl, agent_metrics.json 7종 지표 |
+
+## 보류 항목 (설계 의도)
+
+| 항목 | 사유 | 시점 |
+|---|---|---|
+| Phase 병렬 실행 (`parallel: true`) | 검증 부담, XL 진입 시 | XL |
+| scoring 가중치 고도화 | config 연동만 완료, 튜닝은 EL 영역 | 실험 단계 |
+| D.3 Agent 전용 평가 | 평가셋 기반 judge 연동 | `evaluation.questions_path` 연동 후 |
+
+## 변경 통계
+
+```
+신규 파일: prompt.py, schema_parser.py, scoring.py, tool.py, agent.py
+           run_rag_agent.py, test_rag_agent.py,
+           agent/agent_lplus.yaml, rag_agent_demo.yaml
+           reports/agent_loop_implementation_plan.md
+수정 파일: adapters.py, langchain.py, pipeline.py, retriever.py,
+           answerer.py, vector_store.py, validation.py, judge.py,
+           __init__.py, config.py, configs/README.md,
+           configs/experiments/rag/*.yaml (7개),
+           test_rag_adapters.py, test_rag_quality_gate.py,
+           test_rag_engines.py
+테스트: 52 passed, 하위호환성 byte-level 검증 완료
+```
 |------|---------|---------|
 | answerer provider 추가 | 2곳 수정 필요 (adapters.py + langchain.py) | 1곳만 수정 (adapters.py) |
 | output_schema 적용 | langchain engine에서 불가 | 모든 engine에서 가능 |
