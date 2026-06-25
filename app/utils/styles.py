@@ -29,7 +29,7 @@ html, body, [class*="css"]{
   'Segoe UI',Roboto,'Apple SD Gothic Neo','Malgun Gothic',sans-serif;
   color:var(--text);
 }
-.block-container{ max-width:1240px; padding-top:0.6rem; padding-bottom:2rem; }
+.block-container{ max-width:1240px; padding-top:2.4rem; padding-bottom:2rem; }
 #MainMenu, footer{ visibility:hidden; height:0; }
 
 /* ── 상단 네비바 ───────────────────────────────────────────── */
@@ -45,6 +45,24 @@ html, body, [class*="css"]{
 }
 [data-testid="stPageLink"] a:hover{ color:var(--text) !important; background:transparent !important; }
 [data-testid="stPageLink"] a p{ font-size:.92rem !important; }
+
+/* 브랜드 링크(IT'S MINE) — 서비스 이름이라 크게 강조. 클릭하면 홈으로 이동.
+   topbar() 의 st.container(key="brandbar") 안에 있는 page_link 만 골라서 키운다. */
+.st-key-brandbar [data-testid="stPageLink"] a{
+  justify-content:flex-start !important; padding:4px 2px !important; }
+.st-key-brandbar [data-testid="stPageLink"] a p{
+  font-size:1.7rem !important; font-weight:800 !important;
+  color:var(--blue) !important; letter-spacing:-.02em; }
+.st-key-brandbar [data-testid="stPageLink"] a:hover p{ color:var(--blue-bright) !important; }
+
+/* 상단바 메뉴 링크 hover 효과 — 메뉴(navbar)에만 적용(요구사항 4).
+   밑줄은 빼고, 옅은 파란 배경 알약 + 글자색 강조 + 살짝 떠오르는 반응. */
+.st-key-navbar [data-testid="stPageLink"] a{
+  text-decoration:none !important;
+  transition:background .16s ease, color .16s ease, transform .16s ease; }
+.st-key-navbar [data-testid="stPageLink"] a:hover{
+  background:rgba(79,124,255,.12) !important; transform:translateY(-1px); }
+.st-key-navbar [data-testid="stPageLink"] a:hover p{ color:var(--blue-bright) !important; }
 
 /* ── 히어로 ───────────────────────────────────────────────── */
 .hero-pad{ padding-top:60px; }
@@ -119,9 +137,13 @@ html, body, [class*="css"]{
 [data-testid="stFileUploaderDropzone"]{ background:var(--panel); border:1px solid var(--border); border-radius:12px; }
 [data-testid="stFileUploaderDropzone"] *{ color:var(--text-2) !important; }
 
-/* ── 사이드바 ─────────────────────────────────────────────── */
-[data-testid="stSidebar"]{ background:var(--bg-soft); border-right:1px solid var(--border); }
-[data-testid="stSidebar"] *{ color:var(--text); }
+/* ── 사이드바 완전 숨김 (요구사항 5) ─────────────────────────
+   app.py 의 st.navigation(..., position="hidden") 으로 자동 메뉴를 끄고,
+   여기서 사이드바 영역과 펼침 버튼까지 화면에서 제거한다. */
+[data-testid="stSidebar"]{ display:none !important; }
+[data-testid="stSidebarCollapsedControl"]{ display:none !important; }
+[data-testid="collapsedControl"]{ display:none !important; }
+[data-testid="stSidebarCollapseButton"]{ display:none !important; }
 
 /* ── 패널/분석 카드 ──────────────────────────────────────── */
 .panel{ background:var(--panel); border:1px solid var(--border);
@@ -174,6 +196,46 @@ html, body, [class*="css"]{
 .price-feat{ font-size:.9rem; color:var(--text-2); padding:9px 0; border-bottom:1px solid var(--border-soft); }
 .pop-badge{ display:inline-block; background:var(--blue); color:#fff; font-size:.72rem;
   font-weight:700; padding:3px 10px; border-radius:999px; margin-bottom:14px; }
+
+/* ── 정부제안서 검색 (외부 링크 카드 · 4×2 그리드) ──────────── */
+.link-grid{ display:grid; grid-template-columns:repeat(4,1fr); gap:16px; margin-top:18px; }
+.link-card{ display:flex; flex-direction:column; text-decoration:none;
+  background:var(--panel); border:1px solid var(--border); border-radius:16px;
+  padding:24px 22px; min-height:184px;
+  transition:transform .18s ease, border-color .18s ease, box-shadow .18s ease, background .18s ease; }
+.link-card:hover{ transform:translateY(-4px); border-color:var(--blue);
+  background:var(--panel-2); box-shadow:0 18px 44px -22px rgba(79,124,255,.8); }
+.link-card-ico{ width:46px; height:46px; border-radius:12px; margin-bottom:auto;
+  display:flex; align-items:center; justify-content:center;
+  background:rgba(79,124,255,.1); border:1px solid rgba(79,124,255,.2); }
+.link-card-ico svg{ width:22px; height:22px; stroke:var(--blue-bright); }
+.link-card-name{ font-size:1.04rem; font-weight:700; color:var(--text); margin-top:18px; }
+.link-card-url{ font-size:.78rem; color:var(--blue); font-weight:600;
+  margin-top:6px; display:flex; align-items:center; gap:5px; }
+.link-card-url .arr{ transition:transform .18s ease; }
+.link-card:hover .link-card-url .arr{ transform:translate(3px,-3px); }
+@media (max-width:1000px){ .link-grid{ grid-template-columns:repeat(2,1fr); } }
+@media (max-width:560px){ .link-grid{ grid-template-columns:1fr; } }
+
+/* ── 서비스 소개 (about) ────────────────────────────────────── */
+.about-lead{ font-size:1.12rem; line-height:1.8; color:var(--text-2); max-width:680px; }
+.about-grid{ display:grid; grid-template-columns:repeat(3,1fr); gap:16px; margin-top:18px; }
+.about-card{ background:var(--panel); border:1px solid var(--border);
+  border-radius:14px; padding:24px 22px; }
+.about-ico{ width:44px; height:44px; border-radius:11px; margin-bottom:16px;
+  display:flex; align-items:center; justify-content:center;
+  background:rgba(79,124,255,.09); border:1px solid rgba(79,124,255,.18); }
+.about-ico svg{ width:21px; height:21px; stroke:var(--blue-bright); }
+.about-card-name{ font-size:1.04rem; font-weight:700; color:var(--text); margin-bottom:9px; }
+.about-card-desc{ font-size:.92rem; line-height:1.65; color:var(--text-2); }
+.about-step{ display:flex; gap:16px; padding:18px 0; border-bottom:1px solid var(--border-soft); }
+.about-step:last-child{ border-bottom:none; }
+.about-step-num{ flex-shrink:0; width:34px; height:34px; border-radius:10px;
+  display:flex; align-items:center; justify-content:center; font-weight:800;
+  color:var(--blue); background:rgba(79,124,255,.1); border:1px solid rgba(79,124,255,.2); }
+.about-step-t{ font-size:1rem; font-weight:700; color:var(--text); margin-bottom:4px; }
+.about-step-d{ font-size:.92rem; line-height:1.6; color:var(--text-2); }
+@media (max-width:760px){ .about-grid{ grid-template-columns:1fr; } }
 
 h1,h2,h3,h4{ color:var(--text); }
 hr{ border-color:var(--border-soft); }
