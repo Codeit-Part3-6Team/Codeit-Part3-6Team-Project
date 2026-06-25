@@ -314,7 +314,28 @@ def run_rag_agent_evaluation(
     )
     write_json(output_dir / "agent_metrics.json", metrics)
     return metrics
-_CHAT_HISTORY: dict[str, list[dict[str, str]]] = {}
+
+class _ChatMemory:
+    """멀티턴 대화 기록 저장소입니다.
+
+    Agent 모드는 AgentRunner 인스턴스의 State dict를 사용하므로
+    이 클래스는 agent.enabled: false + memory.enabled: true 경로 전용입니다.
+    """
+
+    _store: dict[str, list[dict[str, str]]] = {}
+
+    @classmethod
+    def get(cls, thread_id: str) -> list[dict[str, str]]:
+        if thread_id not in cls._store:
+            cls._store[thread_id] = []
+        return cls._store[thread_id]
+
+    @classmethod
+    def clear(cls, thread_id: str | None = None) -> None:
+        if thread_id:
+            cls._store.pop(thread_id, None)
+        else:
+            cls._store.clear()
 
 
 def run_rag_chat_with_history(
@@ -338,7 +359,7 @@ def run_rag_chat_with_history(
 
     _write_run_status(output_dir, "rag_chat", "running")
     try:
-        history = _CHAT_HISTORY.setdefault(thread_id, [])
+        history = _ChatMemory.get(thread_id)
 
         # 이전 대화를 컨텍스트로 포함하여 검색
         context_question = question

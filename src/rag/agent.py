@@ -237,8 +237,16 @@ class AgentRunner:
 
         if len(order) != len(self.phases):
             remaining = {p["name"] for p in self.phases} - set(order)
-            # cycle detected — 남은 Phase는 의존 없이 뒤에 추가
-            order.extend(p["name"] for p in self.phases if p["name"] in remaining)
+            import warnings
+
+            warnings.warn(
+                "Phase DAG에 순환 의존성이 감지되었습니다. "
+                "정렬되지 않은 Phase는 임의 순서로 실행됩니다: {}".format(sorted(remaining)),
+                RuntimeWarning,
+            )
+            for phase in self.phases:
+                if phase["name"] in remaining:
+                    order.append(phase["name"])
 
         return order
 
