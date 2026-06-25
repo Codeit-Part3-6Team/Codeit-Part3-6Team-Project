@@ -258,21 +258,23 @@ class AgentRunner:
         checkpoint가 활성화되어 있고 output_dir이 있으면 산출물에서 읽고,
         없으면 빈 리스트를 반환합니다 (Tool의 retriever가 자체 처리).
         """
-        if not self._checkpoint_enabled or self._output_dir is None:
+        if self._output_dir is None:
             return [], []
 
-        chunks_path = self._output_dir / "chunks.jsonl"
-        embeddings_path = self._output_dir / "embeddings.jsonl"
+        import csv
+        import json
+
         chunks: list[dict[str, str]] = []
         embeddings: list[dict[str, Any]] = []
 
-        import json
-
+        chunks_path = self._output_dir / "chunks.csv"
         if chunks_path.exists():
-            with open(chunks_path, "r", encoding="utf-8") as fh:
-                for line in fh:
-                    if line.strip():
-                        chunks.append(json.loads(line))
+            with open(chunks_path, "r", encoding="utf-8-sig") as fh:
+                reader = csv.DictReader(fh)
+                for row in reader:
+                    chunks.append(dict(row))
+
+        embeddings_path = self._output_dir / "embeddings.jsonl"
         if embeddings_path.exists():
             with open(embeddings_path, "r", encoding="utf-8") as fh:
                 for line in fh:
