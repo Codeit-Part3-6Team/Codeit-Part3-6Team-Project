@@ -83,58 +83,134 @@ class AgentRunner:
         chunks: list[dict[str, str]],
         embeddings: list[dict[str, Any]],
     ) -> dict[str, Any]:
-        """단일 Phase의 모든 Tool을 실행합니다."""
+        """단일 Phase의 모든 Tool을 실행합니다.
+
+        phase.parallel이 True이면 ThreadPoolExecutor로 Tool을 병렬 실행합니다.
+        """
         phase_name = phase["name"]
         tool_names: list[str] = phase.get("tools", [])
+        parallel = bool(phase.get("parallel", False))
 
         if self.verbose:
-            print(f"[Agent] Phase: {phase_name} | Tools: {tool_names}")
+            mode = "parallel" if parallel else "serial"
+            print(f"[Agent] Phase: {phase_name} | Tools: {tool_names} | Mode: {mode}")
 
+        if parallel:
+            return self._run_phase_parallel(phase_name, tool_names, question, chunks, embeddings)
+
+        return self._run_phase_serial(phase_name, tool_names, question, chunks, embeddings)
+
+    def _run_phase_serial(
+        self,
+        phase_name: str,
+        tool_names: list[str],
+        question: str | None,
+        chunks: list[dict[str, str]],
+        embeddings: list[dict[str, Any]],
+    ) -> dict[str, Any]:
         results: dict[str, ToolResult] = {}
         phase_failed = False
 
         for tool_name in tool_names:
             if self.step_count >= self.max_steps:
                 break
-
-            tool = self.tools.get(tool_name)
-            if tool is None:
-                tr = ToolResult(
-                    tool_name=tool_name,
-                    phase_name=phase_name,
-                    status="failed",
-                    errors=[f"Tool not found: {tool_name}"],
-                )
-                results[tool_name] = tr
-                self.state[tool_name] = tr
-                continue
-
-            self.step_count += 1
-            tool_result = tool.run(
-                question=question or tool.description,
-                chunks=chunks,
-                embeddings=embeddings,
-                state=self.state,
-            )
-            tool_result.phase_name = phase_name
-            self.state[tool_name] = tool_result
-            results[tool_name] = tool_result
-
-            if self.verbose:
-                status_icon = "OK" if tool_result.status in ("ok", "partial") else "FAIL"
-                print(f"  Tool {tool_name}: {status_icon} ({tool_result.duration_ms}ms)")
-
-            if tool_result.status == "failed" and tool.on_failure.value == "abort_phase":
+            result, abort = self._run_single_tool(phase_name, tool_name, question, chunks, embeddings)
+            results[tool_name] = result
+            if abort and not phase_failed:
                 phase_failed = True
                 break
-            if tool_result.status == "failed" and tool.on_failure.value == "abort_agent":
-                return {"phase_name": phase_name, "tools": results, "status": "failed"}
 
         return {
             "phase_name": phase_name,
             "tools": {name: r.__dict__ if isinstance(r, ToolResult) else r for name, r in results.items()},
             "status": "failed" if phase_failed else "ok",
         }
+
+    def _run_phase_parallel(
+        self,
+        phase_name: str,
+        tool_names: list[str],
+        question: str | None,
+        chunks: list[dict[str, str]],
+        embeddings: list[dict[str, Any]],
+    ) -> dict[str, Any]:
+        from concurrent.futures import ThreadPoolExecutor, as_completed
+        from threading import Lock
+
+        results: dict[str, ToolResult] = {}
+        phase_failed = False
+        lock = Lock()
+
+        with ThreadPoolExecutor(max_workers=min(len(tool_names), 4)) as executor:
+            future_map = {
+                executor.submit(
+                    self._run_single_tool, phase_name, tool_name, question, chunks, embeddings
+                ): tool_name
+                for tool_name in tool_names
+            }
+            for future in as_completed(future_map):
+                with lock:
+                    if phase_failed:
+                        future.cancel()
+                        continue
+                tool_name = future_map[future]
+                result, abort = future.result()
+                with lock:
+                    results[tool_name] = result
+                    if abort:
+                        phase_failed = True
+
+        return {
+            "phase_name": phase_name,
+            "tools": {name: r.__dict__ if isinstance(r, ToolResult) else r for name, r in results.items()},
+            "status": "failed" if phase_failed else "ok",
+        }
+
+    def _run_single_tool(
+        self,
+        phase_name: str,
+        tool_name: str,
+        question: str | None,
+        chunks: list[dict[str, str]],
+        embeddings: list[dict[str, Any]],
+    ) -> tuple[ToolResult, bool]:
+        """단일 Tool을 실행하고 (ToolResult, abort_flag)를 반환합니다."""
+        if self.step_count >= self.max_steps:
+            return ToolResult(tool_name=tool_name, phase_name=phase_name, status="skipped"), False
+
+        tool = self.tools.get(tool_name)
+        if tool is None:
+            tr = ToolResult(
+                tool_name=tool_name,
+                phase_name=phase_name,
+                status="failed",
+                errors=[f"Tool not found: {tool_name}"],
+            )
+            self.state[tool_name] = tr
+            return tr, False
+
+        self.step_count += 1
+        tool_result = tool.run(
+            question=question or tool.description,
+            chunks=chunks,
+            embeddings=embeddings,
+            state=self.state,
+        )
+        tool_result.phase_name = phase_name
+        self.state[tool_name] = tool_result
+
+        if self.verbose:
+            status_icon = "OK" if tool_result.status in ("ok", "partial") else "FAIL"
+            print(f"  Tool {tool_name}: {status_icon} ({tool_result.duration_ms}ms)")
+
+        abort = False
+        if tool_result.status == "failed":
+            if tool.on_failure.value == "abort_phase":
+                abort = True
+            elif tool.on_failure.value == "abort_agent":
+                return tool_result, True  # [Agent] 중단
+
+        return tool_result, abort
 
     def _resolve_dag(self) -> list[str]:
         """depends_on 기준으로 Phase 위상 정렬을 수행합니다."""

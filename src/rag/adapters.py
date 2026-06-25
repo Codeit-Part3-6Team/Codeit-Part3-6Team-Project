@@ -132,6 +132,7 @@ class MemorySemanticRetrieverAdapter:
     top_k: int = 3
     score_threshold: float = 0.0
     embedding_adapter: RagEmbeddingAdapter | None = None
+    scoring_kwargs: dict[str, Any] = field(default_factory=dict)
 
     def retrieve(
         self,
@@ -149,6 +150,7 @@ class MemorySemanticRetrieverAdapter:
             top_k=self.top_k,
             score_threshold=self.score_threshold,
             query_vector=query_vector,
+            scoring_kwargs=self.scoring_kwargs or None,
         )
 
 
@@ -161,6 +163,7 @@ class HybridRetrieverAdapter:
     embedding_adapter: RagEmbeddingAdapter | None = None
     keyword_weight: float = 0.4
     semantic_weight: float = 0.6
+    scoring_kwargs: dict[str, Any] = field(default_factory=dict)
 
     def retrieve(
         self,
@@ -170,7 +173,10 @@ class HybridRetrieverAdapter:
     ) -> list[dict[str, str | float | int]]:
         if self.embedding_adapter is None:
             raise ValueError("HybridRetrieverAdapter requires an embedding_adapter")
-        keyword_rows = retrieve_chunks(question, chunks, top_k=len(chunks), score_threshold=0.0)
+        keyword_rows = retrieve_chunks(
+            question, chunks, top_k=len(chunks), score_threshold=0.0,
+            scoring_kwargs=self.scoring_kwargs or None,
+        )
         semantic_rows = _retrieve_by_query_vector(
             question,
             chunks,
@@ -178,6 +184,7 @@ class HybridRetrieverAdapter:
             top_k=len(chunks),
             score_threshold=0.0,
             query_vector=self.embedding_adapter.embed_texts([question])[0],
+            scoring_kwargs=self.scoring_kwargs or None,
         )
         merged = _merge_retrieval_scores(
             keyword_rows,
@@ -432,6 +439,7 @@ def build_retriever_adapter(config: dict[str, Any], embedding_config: dict[str, 
             top_k=top_k,
             score_threshold=score_threshold,
             embedding_adapter=embedding_adapter,
+            scoring_kwargs=_build_scoring_kwargs_from_config(config),
         )
     if method in {"hybrid", "mmr"}:
         return HybridRetrieverAdapter(
@@ -440,6 +448,7 @@ def build_retriever_adapter(config: dict[str, Any], embedding_config: dict[str, 
             embedding_adapter=embedding_adapter,
             keyword_weight=float(config.get("keyword_weight", 0.4)),
             semantic_weight=float(config.get("semantic_weight", 0.6)),
+            scoring_kwargs=_build_scoring_kwargs_from_config(config),
         )
     raise NotImplementedError(f"RAG retriever method is not implemented yet: {method}")
 
@@ -540,15 +549,17 @@ def _retrieve_by_query_vector(
     top_k: int,
     score_threshold: float,
     query_vector: list[float],
+    scoring_kwargs: dict[str, Any] | None = None,
 ) -> list[dict[str, str | float | int]]:
     chunk_by_id = {chunk["chunk_id"]: chunk for chunk in chunks}
     scored: list[tuple[float, dict[str, str]]] = []
     query_tokens = _tokenize(question)
+    score_kw = scoring_kwargs or {}
     for row in embeddings:
         chunk = chunk_by_id.get(str(row["chunk_id"]))
         if not chunk:
             continue
-        score = _dot(query_vector, row["vector"]) + (_score(query_tokens, question, chunk["text"]) * 0.5)
+        score = _dot(query_vector, row["vector"]) + (_score(query_tokens, question, chunk["text"], **score_kw) * 0.5)
         if score > score_threshold:
             scored.append((score, chunk))
     scored.sort(key=lambda item: (-item[0], item[1]["chunk_id"]))
