@@ -211,6 +211,8 @@ def run_rag_agent(
         from src.rag.chatbot import build_chatbot_from_config
 
         bot = build_chatbot_from_config(config)
+        if output_dir:
+            bot.load_document_context(output_dir)
         if question:
             return bot.chat(question)
         bot.run_cli_loop()

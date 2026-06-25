@@ -56,7 +56,7 @@ def judge_binary(
 
         result = judge.invoke([HumanMessage(content=prompt)])
         result_text = getattr(result, "content", str(result)).strip().lower()
-        return "true" in result_text
+        return bool(re.search(r"\btrue\b", result_text))
     except Exception:
         return False
 

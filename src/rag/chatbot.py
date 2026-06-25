@@ -43,6 +43,27 @@ class ChatbotRunner:
         self.chunks: list[dict[str, str]] = []
         self.embeddings: list[dict[str, Any]] = []
 
+    def load_document_context(self, output_dir: str | Path | None) -> None:
+        """Agent와 동일한 방식으로 chunks.csv, embeddings.jsonl을 로딩합니다."""
+        if output_dir is None:
+            return
+        import csv
+        import json
+        from pathlib import Path
+
+        dir_path = Path(output_dir)
+        chunks_path = dir_path / "chunks.csv"
+        if chunks_path.exists():
+            with open(chunks_path, "r", encoding="utf-8-sig") as fh:
+                for row in csv.DictReader(fh):
+                    self.chunks.append(dict(row))
+        embeddings_path = dir_path / "embeddings.jsonl"
+        if embeddings_path.exists():
+            with open(embeddings_path, "r", encoding="utf-8") as fh:
+                for line in fh:
+                    if line.strip():
+                        self.embeddings.append(json.loads(line))
+
     def chat(self, user_input: str) -> dict[str, Any]:
         """사용자 입력을 받아 Tool 선택 → 실행 → 응답을 반환합니다.
 
@@ -141,7 +162,7 @@ class ChatbotRunner:
         for attempt in range(self.max_retries + 1):
             result = tool.run(question, self.chunks, self.embeddings, self.state)
             result.retry_count = attempt
-            if result.status != "failed":
+            if result.status not in ("failed", "partial"):
                 return result
             last_result = result
         return last_result or ToolResult(

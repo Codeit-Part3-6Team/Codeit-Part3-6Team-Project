@@ -87,7 +87,11 @@ class Tool:
         retrieved: list[dict[str, Any]] = []
         try:
             if self.retriever_cfg:
-                retriever = build_retriever_adapter(self.retriever_cfg, {}, self.full_rag_config)
+                retriever = build_retriever_adapter(
+                    self.retriever_cfg,
+                    self.full_rag_config.get("embedding", {}) if self.full_rag_config else {},
+                    self.full_rag_config,
+                )
                 retrieved = retriever.retrieve(enriched_question, chunks, embeddings or [])
         except Exception as exc:
             errors.append(f"retrieve: {exc}")
@@ -112,6 +116,15 @@ class Tool:
             answer_payload = answerer.answer(enriched_question, retrieved)
         except Exception as exc:
             errors.append(f"answer: {exc}")
+            if self.on_failure in (OnFailure.ABORT_PHASE, OnFailure.ABORT_AGENT):
+                return ToolResult(
+                    tool_name=self.name,
+                    status="failed",
+                    errors=errors,
+                    started_at=str(started_ms),
+                    finished_at=str(int(time.time() * 1000)),
+                    duration_ms=int(time.time() * 1000) - started_ms,
+                )
             answer_payload = {
                 "question": enriched_question,
                 "answer": self.answerer_cfg.get("fallback_message", "문서에서 확인하지 못했습니다."),
