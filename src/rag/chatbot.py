@@ -143,7 +143,9 @@ class ChatbotRunner:
             response = model.invoke(prompt)
             text = getattr(response, "content", str(response)).strip()
             parsed = _extract_json(text)
-        except Exception:
+        except Exception as exc:
+            import sys
+            print(f"[Chatbot] Tool selection failed ({type(exc).__name__}: {exc})", file=sys.stderr)
             return None, user_input
 
         tool_name = parsed.get("tool")
