@@ -46,11 +46,12 @@ class AgentRunner:
         self._checkpoint_enabled = bool(rag_cfg.get("checkpoint", {}).get("enabled", False))
         self._output_dir: Path | None = None
 
-    def run(self, question: str | None = None) -> dict[str, Any]:
+    def run(self, question: str | None = None, output_dir: str | Path | None = None) -> dict[str, Any]:
         """전체 Phase DAG를 실행하고 최종 State를 반환합니다.
 
         Args:
             question: 최초 질문. None이면 Phase 정의의 첫 Tool 설명으로 대체.
+            output_dir: 산출물 저장 디렉터리. 지정되면 agent_state.jsonl, agent_metrics.json 저장.
 
         Returns:
             최종 state dict (tool_name → ToolResult)
@@ -69,12 +70,11 @@ class AgentRunner:
             if result.get("status") == "failed":
                 break
 
-        return {
-            "state": {name: r.__dict__ if isinstance(r, ToolResult) else r for name, r in self.state.items()},
-            "phase_results": self.phase_results,
-            "step_count": self.step_count,
-            "status": self.phase_results[-1].get("status", "ok") if self.phase_results else "ok",
-        }
+        summary = self._build_summary()
+        if output_dir:
+            self._save_artifacts(Path(output_dir))
+
+        return summary
 
     def _run_phase(
         self,
@@ -165,6 +165,105 @@ class AgentRunner:
             order.extend(p["name"] for p in self.phases if p["name"] in remaining)
 
         return order
+
+    def _build_summary(self) -> dict[str, Any]:
+        """실행 결과 요약을 생성합니다."""
+        state_serialized: dict[str, Any] = {}
+        for name, result in self.state.items():
+            if isinstance(result, ToolResult):
+                state_serialized[name] = {
+                    "tool_name": result.tool_name,
+                    "phase_name": result.phase_name,
+                    "status": result.status,
+                    "answer": result.answer[:200] if result.answer else "",
+                    "citations_count": len(result.citations),
+                    "errors": result.errors,
+                    "duration_ms": result.duration_ms,
+                }
+            else:
+                state_serialized[name] = result
+
+        return {
+            "state": state_serialized,
+            "phase_results": self.phase_results,
+            "step_count": self.step_count,
+            "status": self.phase_results[-1].get("status", "ok") if self.phase_results else "ok",
+            "metrics": self._calculate_metrics(),
+        }
+
+    def _calculate_metrics(self) -> dict[str, Any]:
+        """Agent 실행 지표를 계산합니다.
+
+        챗봇 확장 시 tool_selection_accuracy, hallucination_rate 등 추가.
+        """
+        total_tools = len(self.state)
+        if total_tools == 0:
+            return {
+                "phase_count": len(self.phase_results),
+                "tool_count": 0,
+                "tool_success_rate": 0.0,
+                "tool_failure_rate": 0.0,
+                "phase_completion_rate": 0.0,
+                "agent_duration_ms": 0,
+            }
+
+        success_count = sum(1 for r in self.state.values() if getattr(r, "status", "failed") == "ok")
+        failed_count = total_tools - success_count
+        total_phases = len(self.phases)
+        completed_phases = sum(
+            1 for pr in self.phase_results if pr.get("status") in ("ok", "partial")
+        )
+        total_duration = sum(
+            getattr(r, "duration_ms", 0) for r in self.state.values()
+        )
+
+        return {
+            "phase_count": total_phases,
+            "completed_phase_count": completed_phases,
+            "tool_count": total_tools,
+            "tool_success_count": success_count,
+            "tool_failure_count": failed_count,
+            "tool_success_rate": round(success_count / total_tools, 4),
+            "tool_failure_rate": round(failed_count / total_tools, 4),
+            "phase_completion_rate": round(completed_phases / total_phases, 4) if total_phases else 0.0,
+            "agent_duration_ms": total_duration,
+            # 챗봇 확장 시 추가될 지표 (placeholder)
+            "tool_selection_accuracy": None,
+            "hallucination_rate": None,
+        }
+
+    def _save_artifacts(self, output_dir: Path) -> None:
+        """Phase별 ToolResult와 Agent 지표를 파일로 저장합니다."""
+        output_dir.mkdir(parents=True, exist_ok=True)
+
+        # agent_state.jsonl: Phase별 Tool 실행 결과
+        import json
+
+        state_path = output_dir / "agent_state.jsonl"
+        with open(state_path, "w", encoding="utf-8") as fh:
+            for phase_result in self.phase_results:
+                record = {
+                    "phase_name": phase_result.get("phase_name", ""),
+                    "phase_status": phase_result.get("status", ""),
+                    "tools": {},
+                }
+                for tname, tresult in phase_result.get("tools", {}).items():
+                    if isinstance(tresult, ToolResult):
+                        record["tools"][tname] = {
+                            "status": tresult.status,
+                            "answer": tresult.answer[:500] if tresult.answer else "",
+                            "citations_count": len(tresult.citations),
+                            "errors": tresult.errors,
+                            "duration_ms": tresult.duration_ms,
+                        }
+                    else:
+                        record["tools"][tname] = tresult
+                fh.write(json.dumps(record, ensure_ascii=False) + "\n")
+
+        # agent_metrics.json: 종합 지표
+        from src.config import write_json
+
+        write_json(output_dir / "agent_metrics.json", self._calculate_metrics())
 
 
 def run_rag_agent(

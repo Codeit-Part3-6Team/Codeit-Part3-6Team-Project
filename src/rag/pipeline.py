@@ -206,18 +206,19 @@ def run_rag_agent(
 
     from src.rag.agent import AgentRunner
 
+    output_dir = None
     if isinstance(config_path, (str, Path)):
         output_dir = resolve_experiment_dir(root, config)  # type: ignore[arg-type]
         ensure_dir(output_dir)
         _write_run_status(output_dir, "rag_agent", "running")
     try:
         runner = AgentRunner(config, root)
-        result = runner.run(question)
-        if isinstance(config_path, (str, Path)):
+        result = runner.run(question, output_dir=output_dir)
+        if output_dir:
             _write_run_status(output_dir, "rag_agent", "success", result={"status": result.get("status", "ok")})
         return result
     except Exception as exc:
-        if isinstance(config_path, (str, Path)):
+        if output_dir:
             _write_failure_artifact(output_dir, "rag_agent", exc)
         raise
 
