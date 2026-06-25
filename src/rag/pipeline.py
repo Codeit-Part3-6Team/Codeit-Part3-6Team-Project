@@ -204,6 +204,11 @@ def run_rag_agent(
             raise ValueError("config_path as dict is not supported when agent.enabled is False")
         return run_rag_chat(config_path, root, question)
 
+    output_dir = None
+    if isinstance(config_path, (str, Path)):
+        output_dir = resolve_experiment_dir(root, config)  # type: ignore[arg-type]
+        ensure_dir(output_dir)
+
     chatbot_cfg = agent_cfg.get("chatbot", {})
     if chatbot_cfg.get("enabled", False):
         # 챗봇 모드: Phase DAG를 건너뛰고 LLM이 동적으로 Tool 선택
@@ -220,10 +225,7 @@ def run_rag_agent(
 
     from src.rag.agent import AgentRunner
 
-    output_dir = None
-    if isinstance(config_path, (str, Path)):
-        output_dir = resolve_experiment_dir(root, config)  # type: ignore[arg-type]
-        ensure_dir(output_dir)
+    if output_dir:
         _write_run_status(output_dir, "rag_agent", "running")
     try:
         runner = AgentRunner(config, root)
