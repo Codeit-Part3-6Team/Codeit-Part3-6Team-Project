@@ -121,7 +121,7 @@ class Tool:
             tool_name=self.name,
             status="ok" if not errors else "partial",
             answer=str(answer_payload.get("answer", "")),
-            structured_output=None,
+            structured_output=answer_payload.get("structured_output"),
             citations=answer_payload.get("citations", []),
             errors=errors,
             started_at=str(started_ms),

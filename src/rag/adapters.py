@@ -293,9 +293,11 @@ class OpenAIChatAnswererAdapter:
 
         prompt = _build_answer_prompt(question, retrieved_chunks, self.prompt_template)
         model = self._get_model()
+        structured = None
         if self.output_schema is not None:
             response = model.with_structured_output(self.output_schema).invoke(prompt)
             if isinstance(response, dict):
+                structured = response
                 answer_text = "\n".join(f"{k}: {v}" for k, v in response.items())
             else:
                 answer_text = str(response)
@@ -313,6 +315,7 @@ class OpenAIChatAnswererAdapter:
             "answer": answer_text,
             "citations": _citations_from_chunks(retrieved_chunks, used_chunk_ids),
             "status": "not_found" if is_fallback else "answered",
+            "structured_output": structured,
         }
 
     def _get_model(self) -> Any:
@@ -363,9 +366,11 @@ class OllamaChatAnswererAdapter:
 
         prompt = _build_answer_prompt(question, retrieved_chunks, self.prompt_template)
         model = self._get_model()
+        structured = None
         if self.output_schema is not None:
             response = model.with_structured_output(self.output_schema).invoke(prompt)
             if isinstance(response, dict):
+                structured = response
                 answer_text = "\n".join(f"{k}: {v}" for k, v in response.items())
             else:
                 answer_text = str(response)
@@ -383,6 +388,7 @@ class OllamaChatAnswererAdapter:
             "answer": answer_text,
             "citations": _citations_from_chunks(retrieved_chunks, used_chunk_ids),
             "status": "not_found" if is_fallback else "answered",
+            "structured_output": structured,
         }
 
     def _get_model(self) -> Any:

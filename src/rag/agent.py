@@ -51,13 +51,15 @@ class AgentRunner:
 
         Args:
             question: 최초 질문. None이면 Phase 정의의 첫 Tool 설명으로 대체.
-            output_dir: 산출물 저장 디렉터리. 지정되면 agent_state.jsonl, agent_metrics.json 저장.
+            output_dir: 산출물 저장 디렉터리. 지정되면 chunks/embeddings 로딩 및
+                        agent_state.jsonl, agent_metrics.json 저장.
 
         Returns:
             최종 state dict (tool_name → ToolResult)
         """
-        chunks: list[dict[str, str]] = []
-        embeddings: list[dict[str, Any]] = []
+        if output_dir:
+            self._output_dir = Path(output_dir)
+        chunks, embeddings = self._load_document_context()
 
         for phase_name in self._phase_order:
             if self.step_count >= self.max_steps:
@@ -249,6 +251,34 @@ class AgentRunner:
                     order.append(phase["name"])
 
         return order
+
+    def _load_document_context(self) -> tuple[list[dict[str, str]], list[dict[str, Any]]]:
+        """문서 chunk와 embedding을 로딩합니다.
+
+        checkpoint가 활성화되어 있고 output_dir이 있으면 산출물에서 읽고,
+        없으면 빈 리스트를 반환합니다 (Tool의 retriever가 자체 처리).
+        """
+        if not self._checkpoint_enabled or self._output_dir is None:
+            return [], []
+
+        chunks_path = self._output_dir / "chunks.jsonl"
+        embeddings_path = self._output_dir / "embeddings.jsonl"
+        chunks: list[dict[str, str]] = []
+        embeddings: list[dict[str, Any]] = []
+
+        import json
+
+        if chunks_path.exists():
+            with open(chunks_path, "r", encoding="utf-8") as fh:
+                for line in fh:
+                    if line.strip():
+                        chunks.append(json.loads(line))
+        if embeddings_path.exists():
+            with open(embeddings_path, "r", encoding="utf-8") as fh:
+                for line in fh:
+                    if line.strip():
+                        embeddings.append(json.loads(line))
+        return chunks, embeddings
 
     def _build_summary(self) -> dict[str, Any]:
         """실행 결과 요약을 생성합니다."""
