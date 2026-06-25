@@ -642,9 +642,12 @@ agent:
 
 > 2026-06-25, 4개 브랜치 전수 평가.
 
-## 총평: A- (91/100)
+## 총평: A (94/100)
 
-핵심 구현 100% 완료, 문서화 90% 완료, 지표 출력 추가. 보류 3건은 설계 의도.
+핵심 구현 100% 완료, 문서화 완료, 지표 출력 완료. 2차 감사에서 발견된 버그 5건 전부 수정.
+보류 3건은 설계 의도.
+
+> v6 (2026-06-25): 2차 감사에서 발견된 버그 5건 수정. 계획 대비 구현 완전성 100%.
 
 ## 브랜치별 평가
 
@@ -655,8 +658,8 @@ agent:
 | adapters.py OpenAI/Ollama | +120L | 197L 추가 | ✅ | `output_schema` 지원 포함 |
 | prompt.py 통일 | 신규 80L | 43L | ✅ | langchain 현재 프롬프트 기본값 |
 | schema_parser.py | 신규 60L | 81L | ✅ | BUILTIN_SCHEMAS 3종 + inline 지원 |
-| scoring.py 통합 | 신규 80L | 51L | ✅ | retriever/answerer/adapters/vector_store import 정리 |
-| tool.py | 신규 150L | 176L | ✅ | OnFailure Enum, build_tool_from_config |
+| scoring.py 통합 | 신규 80L | 51L | ✅ | retriever/answerer/adapters/vector_store import 정리. v6: scoring_kwargs retriever 경로 연동 |
+| tool.py | 신규 150L | 176L | ✅ | OnFailure Enum, build_tool_from_config. v6: prompt_template answerer 주입 |
 
 ### ② feature/agent-answerer-unification (통합) — ✅ 완료
 
@@ -697,6 +700,21 @@ agent:
 | Phase 병렬 실행 (`parallel: true`) | 검증 부담, XL 진입 시 | XL |
 | scoring 가중치 고도화 | config 연동만 완료, 튜닝은 EL 영역 | 실험 단계 |
 | D.3 Agent 전용 평가 | 평가셋 기반 judge 연동 | `evaluation.questions_path` 연동 후 |
+
+## 2차 감사 — 발견 및 수정 (v6)
+
+| # | 버그 | 파일:라인 | 영향 | 판정 |
+|---|---|---|---|---|
+| BUG1 | `resolve_output_schema`가 config의 inline schemas 완전히 무시 | `schema_parser.py:69-81` | config에서 정의한 커스텀 스키마 필드가 BUILTIN으로 대체됨 | ✅ 수정 |
+| BUG2 | Phase DAG cycle 시 `set(self.phases)` TypeError crash | `agent.py:163` | dict unhashable → Agent 전체 중단 | ✅ 수정 |
+| BUG3 | `build_answerer_adapter`가 `prompt` 키만 읽고 `prompt_template` 무시. Tool의 `prompt_template`도 answerer 미주입 | `adapters.py:458`, `tool.py:171` | 커스텀 프롬프트 완전히 무시됨 | ✅ 수정 |
+| BUG4 | `build_scoring_kwargs()` retriever 경로 미호출 | `retriever.py:18` | `rag.scoring.*` config가 검색 점수에 반영 안 됨 | ✅ 수정 |
+| BUG5 | `build_retriever_adapter`가 `similarity`, `mmr` 미지원 | `adapters.py:436` | `rag-baseline.yaml` 상속 agent config에서 `NotImplementedError` crash | ✅ 수정 |
+
+**중간 우선순위 이슈 (보류)**:
+- `adapters.py` vs `prompt.py` 프롬프트 템플릿 내용 불일치 (짧게 누락, source_path 포함 여부) — `_build_rag_prompt`는 HuggingFace 전용, OpenAI/Ollama는 `_build_answer_prompt`(prompt.py) 사용. 분리 경로이므로 영향 없음.
+- `adapters.py` not_found 감지 로직 불일치 (부분문자열 vs 정확비교) — HuggingFace와 OpenAI/Ollama 경로 분리. 유지보수 시 혼란 가능성만 존재.
+- `run_rag_agent.py --verbose` dead flag — config의 `agent.verbose`로 대체. CLI 플래그 제거 예정.
 
 ## 변경 통계
 
@@ -820,3 +838,4 @@ agent:
 | v3 | 2026-06-24 | 부록 D~E 추가 (State 명세, CLI, 구현 순서 보정) |
 | v4 | 2026-06-24 | **기본값 정책 적용**. 위험도 전면 재측정 → 4개 브랜치 구조로 단순화. 3.2~3.3, 5절, 7절 갱신 |
 | v5 | 2026-06-25 | **리뷰 반영**: 4건 보완 (configs/README.md agent 문서화, dead config 정리, scoring.py config 연동, test_rag_agent.py 추가). **load_config base_config 상속** 구현. agent/ 디렉터리 예시 config 추가. |
+| v6 | 2026-06-25 | **2차 감사 버그 수정**: 5건 (inline schema 무시, Phase DAG cycle crash, prompt_template 키 불일치, scoring retriever 미연동, similarity/mmr 미지원). Agent 산출물 지표 추가. |
