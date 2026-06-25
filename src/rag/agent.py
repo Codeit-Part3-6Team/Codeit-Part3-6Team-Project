@@ -270,7 +270,9 @@ class AgentRunner:
     def _calculate_metrics(self) -> dict[str, Any]:
         """Agent 실행 지표를 계산합니다.
 
-        챗봇 확장 시 tool_selection_accuracy, hallucination_rate 등 추가.
+        Config-driven 모드: 정의된 Tool 대비 실행/성공 비율 측정.
+        챗봇 모드 확장 시 tool_selection_accuracy는 LLM의 Tool 선택 정확도,
+        hallucination_rate는 judge 기반 환각 비율로 대체됩니다.
         """
         total_tools = len(self.state)
         if total_tools == 0:
@@ -293,6 +295,17 @@ class AgentRunner:
             getattr(r, "duration_ms", 0) for r in self.state.values()
         )
 
+        # Config-driven 모드: 정의된 Tool 중 실제 실행된 비율
+        defined_tools = len(self.tools)
+        executed_tools = total_tools
+        tool_selection_accuracy = round(executed_tools / defined_tools, 4) if defined_tools else 1.0
+
+        # not_found 감지된 Tool 비율 (환각 회피율의 근사치)
+        not_found_count = sum(
+            1 for r in self.state.values() if getattr(r, "status", "") == "not_found"
+        )
+        hallucination_avoidance = round(not_found_count / total_tools, 4) if total_tools else 0.0
+
         return {
             "phase_count": total_phases,
             "completed_phase_count": completed_phases,
@@ -303,9 +316,8 @@ class AgentRunner:
             "tool_failure_rate": round(failed_count / total_tools, 4),
             "phase_completion_rate": round(completed_phases / total_phases, 4) if total_phases else 0.0,
             "agent_duration_ms": total_duration,
-            # 챗봇 확장 시 추가될 지표 (placeholder)
-            "tool_selection_accuracy": None,
-            "hallucination_rate": None,
+            "tool_selection_accuracy": tool_selection_accuracy,
+            "hallucination_avoidance_rate": hallucination_avoidance,
         }
 
     def _save_artifacts(self, output_dir: Path) -> None:
