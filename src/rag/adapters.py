@@ -421,25 +421,34 @@ def build_embedding_adapter(config: dict[str, Any]) -> RagEmbeddingAdapter:
     raise NotImplementedError(f"RAG embedding provider is not implemented yet: {provider}")
 
 
-def build_retriever_adapter(config: dict[str, Any], embedding_config: dict[str, Any]) -> RagRetrieverAdapter:
-    """rag.retriever config에 맞는 retriever adapter를 반환합니다."""
+def build_retriever_adapter(
+    config: dict[str, Any],
+    embedding_config: dict[str, Any],
+    full_rag_config: dict[str, Any] | None = None,
+) -> RagRetrieverAdapter:
+    """rag.retriever config에 맞는 retriever adapter를 반환합니다.
+
+    full_rag_config가 주어지면 rag.scoring을 추출하여 retriever에 주입합니다.
+    """
     method = config.get("method", "keyword")
     top_k = int(config.get("top_k", 3))
     score_threshold = float(config.get("score_threshold", 0.0))
-    # semantic/hybrid 검색은 질문도 같은 embedding adapter로 벡터화해야 검색 기준이 맞습니다.
     embedding_adapter = build_embedding_adapter(embedding_config)
+
+    scoring_kwargs = _extract_scoring_kwargs(full_rag_config)
+
     if method == "keyword":
         return KeywordRetrieverAdapter(
             top_k=top_k,
             score_threshold=score_threshold,
-            scoring_kwargs=_build_scoring_kwargs_from_config(config),
+            scoring_kwargs=scoring_kwargs or None,
         )
     if method in {"semantic", "similarity"}:
         return MemorySemanticRetrieverAdapter(
             top_k=top_k,
             score_threshold=score_threshold,
             embedding_adapter=embedding_adapter,
-            scoring_kwargs=_build_scoring_kwargs_from_config(config),
+            scoring_kwargs=scoring_kwargs or None,
         )
     if method in {"hybrid", "mmr"}:
         return HybridRetrieverAdapter(
@@ -448,7 +457,7 @@ def build_retriever_adapter(config: dict[str, Any], embedding_config: dict[str, 
             embedding_adapter=embedding_adapter,
             keyword_weight=float(config.get("keyword_weight", 0.4)),
             semantic_weight=float(config.get("semantic_weight", 0.6)),
-            scoring_kwargs=_build_scoring_kwargs_from_config(config),
+            scoring_kwargs=scoring_kwargs or None,
         )
     raise NotImplementedError(f"RAG retriever method is not implemented yet: {method}")
 
@@ -701,10 +710,12 @@ def _build_answer_prompt(
     return build_prompt(question, retrieved_chunks, template)
 
 
-def _build_scoring_kwargs_from_config(config: dict[str, Any]) -> dict[str, Any]:
+def _extract_scoring_kwargs(full_rag_config: dict[str, Any] | None) -> dict[str, Any]:
+    if not full_rag_config:
+        return {}
     from src.rag.scoring import build_scoring_kwargs
 
-    return build_scoring_kwargs({"rag": {"scoring": config}})
+    return build_scoring_kwargs({"rag": full_rag_config})
 
 
 def _resolve_hf_pipeline_device(device: str) -> int:

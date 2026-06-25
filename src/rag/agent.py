@@ -35,7 +35,7 @@ class AgentRunner:
         self.tools: dict[str, Tool] = {}
         for name, tool_cfg in raw_tools.items():
             self.tools[name] = build_tool_from_config(
-                name, tool_cfg, default_retriever, default_answerer, agent_cfg
+                name, tool_cfg, default_retriever, default_answerer, agent_cfg, rag_cfg
             )
 
         self.state: dict[str, ToolResult] = {}

@@ -2,7 +2,7 @@
 
 Usage:
     python scripts/run_rag_agent.py --config configs/experiments/rag/rag_agent.yaml --question "예산은?"
-    python scripts/run_rag_agent.py --config rag_agent.yaml --verbose --dump-state
+    python scripts/run_rag_agent.py --config rag_agent.yaml --dump-state
 """
 
 from __future__ import annotations
@@ -22,7 +22,6 @@ def main() -> None:
     parser = argparse.ArgumentParser(description="RAG Agent Loop 실행기")
     parser.add_argument("--config", required=True, help="실험 config 파일 경로")
     parser.add_argument("--question", default=None, help="질문 (없으면 Tool 설명으로 대체)")
-    parser.add_argument("--verbose", action="store_true", help="Phase/Tool 실행 로그 출력")
     parser.add_argument("--dump-state", action="store_true", help="Phase별 State를 JSON으로 출력")
     args = parser.parse_args()
 

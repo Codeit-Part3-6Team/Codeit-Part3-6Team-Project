@@ -54,6 +54,7 @@ class Tool:
     rules: list[dict[str, Any]] = field(default_factory=list)
     on_failure: OnFailure = OnFailure.SKIP
     input_from: list[str] = field(default_factory=list)
+    full_rag_config: dict[str, Any] | None = None
 
     def run(
         self,
@@ -83,7 +84,7 @@ class Tool:
         retrieved: list[dict[str, Any]] = []
         try:
             if self.retriever_cfg:
-                retriever = build_retriever_adapter(self.retriever_cfg, {})
+                retriever = build_retriever_adapter(self.retriever_cfg, {}, self.full_rag_config)
                 retrieved = retriever.retrieve(question, chunks, embeddings or [])
         except Exception as exc:
             errors.append(f"retrieve: {exc}")
@@ -135,6 +136,7 @@ def build_tool_from_config(
     default_retriever: dict[str, Any] | None = None,
     default_answerer: dict[str, Any] | None = None,
     agent_cfg: dict[str, Any] | None = None,
+    full_rag_config: dict[str, Any] | None = None,
 ) -> Tool:
     """agent.tools.* config 항목으로 Tool 인스턴스를 생성합니다.
 
@@ -144,6 +146,7 @@ def build_tool_from_config(
         default_retriever: rag.retriever 기본값
         default_answerer: rag.answerer 기본값
         agent_cfg: agent 최상위 설정 (schemas 검색용)
+        full_rag_config: rag 전체 설정 (scoring 추출용)
 
     Returns:
         Tool 인스턴스
@@ -178,4 +181,5 @@ def build_tool_from_config(
         rules=tool_cfg.get("rules", {}).get("patterns", []),
         on_failure=on_failure,
         input_from=tool_cfg.get("input_from", []),
+        full_rag_config=full_rag_config,
     )
