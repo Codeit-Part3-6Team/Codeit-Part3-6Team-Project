@@ -139,6 +139,54 @@ def test_agent_runner_tool_not_found_graceful():
     assert state["nonexistent_tool"]["status"] == "failed"
 
 
+def test_agent_runner_parallel_execution():
+    config = {
+        "rag": {
+            "embedding": {"provider": "local"},
+            "retriever": {"method": "keyword", "top_k": 3},
+            "answerer": {"provider": "local"},
+        },
+        "agent": {
+            "enabled": True,
+            "phases": [
+                {"name": "extract", "tools": ["t1", "t2"], "parallel": True},
+            ],
+            "tools": {
+                "t1": {"description": "tool 1", "answerer": {"provider": "local"}},
+                "t2": {"description": "tool 2", "answerer": {"provider": "local"}},
+            },
+        },
+    }
+    runner = AgentRunner(config)
+    result = runner.run("test?")
+    assert result["status"] == "ok"
+    assert result["step_count"] == 2
+    assert "t1" in result["state"]
+    assert "t2" in result["state"]
+
+
+def test_chatbot_runner_builds_from_config():
+    from src.rag.chatbot import build_chatbot_from_config
+
+    config = {
+        "rag": {
+            "embedding": {"provider": "local"},
+            "retriever": {"method": "keyword", "top_k": 3},
+            "answerer": {"provider": "local"},
+        },
+        "agent": {
+            "enabled": True,
+            "chatbot": {"enabled": True, "tool_selection_model": "gpt-4o-mini"},
+            "tools": {
+                "extract_facts": {"description": "extract facts", "answerer": {"provider": "local"}},
+            },
+        },
+    }
+    bot = build_chatbot_from_config(config)
+    assert "extract_facts" in bot.tools
+    assert bot.tool_selection_model == "gpt-4o-mini"
+
+
 def test_run_rag_agent_disabled_returns_disabled():
     from src.rag.pipeline import run_rag_agent
 
@@ -147,4 +195,5 @@ def test_run_rag_agent_disabled_returns_disabled():
     }
     result = run_rag_agent(config)
     assert result["status"] == "disabled"
+    assert result["step_count"] == 0
     assert result["step_count"] == 0

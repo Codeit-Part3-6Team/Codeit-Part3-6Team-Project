@@ -487,6 +487,33 @@ agent:
 - Agent 모드는 `answwer`/`citations` contract를 유지하므로 `run_rag_chat()` 대신 `run_rag_agent()`를 호출해도 동일한 형식의 결과를 받을 수 있습니다.
 - Phase가 많거나 Tool이 과도하면 `max_steps`를 늘리세요.
 
+### 챗봇 모드
+
+`agent.chatbot.enabled: true`로 설정하면 Phase DAG 대신 LLM이 Tool description을 읽고 사용자 질문에 적합한 Tool을 동적으로 선택하는 챗봇 모드가 동작합니다.
+
+```yaml
+agent:
+  chatbot:
+    enabled: true
+    tool_selection_model: gpt-4o-mini
+    system_prompt: |
+      너는 RFP 문서 분석 도우미 챗봇이다.
+    max_history: 10
+```
+
+| 키 | 기본값 | 설명 |
+| --- | --- | --- |
+| `chatbot.enabled` | `false` | `true`로 설정하면 챗봇 모드 활성화 |
+| `chatbot.tool_selection_model` | `gpt-4o-mini` | Tool 선택에 사용할 LLM 모델 |
+| `chatbot.system_prompt` | 기본 프롬프트 | 챗봇 시스템 프롬프트 |
+| `chatbot.max_history` | `10` | 대화 기록 최대 보존 수 |
+
+실행:
+```bash
+python scripts/run_rag_agent.py --config agent/agent_lplus.yaml           # 대화형
+python scripts/run_rag_agent.py --config agent/agent_lplus.yaml --question "예산?"  # 단일 질문
+```
+
 ## HuggingFace와 분류 Config의 위치
 
 HuggingFace는 RAG에서도 사용할 수 있습니다. 다만 위치가 다릅니다.
