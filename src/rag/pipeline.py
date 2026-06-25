@@ -230,6 +230,8 @@ def run_rag_agent(
     try:
         runner = AgentRunner(config, root)
         result = runner.run(question, output_dir=output_dir)
+        if not output_dir:
+            result["artifact_status"] = "disabled"
         if output_dir:
             _write_run_status(output_dir, "rag_agent", "success", result={"status": result.get("status", "ok")})
         return result

@@ -113,10 +113,9 @@ class Tool:
                 if hasattr(answerer, "output_schema"):
                     answerer.output_schema = self.output_schema
                 else:
-                    import warnings
-                    warnings.warn(
-                        f"Tool '{self.name}' has output_schema but adapter {type(answerer).__name__} does not support it. Schema will be ignored.",
-                        RuntimeWarning,
+                    errors.append(
+                        f"output_schema is configured but adapter {type(answerer).__name__} "
+                        "does not support structured output. Schema will be ignored."
                     )
             if self.prompt_template and hasattr(answerer, "prompt_template"):
                 answerer.prompt_template = self.prompt_template

@@ -491,11 +491,13 @@ def build_answerer_adapter(config: dict[str, Any]) -> RagAnswererAdapter:
             require_citations=bool(config.get("require_citations", True)),
             fallback_message=fallback_msg,
         )
-    if provider in {"openai", "ollama"} and mode in {"llm", "generative", ""}:
+    if provider in {"openai", "ollama"}:
         model_name = str(config.get("model_name", "") or "")
-        if not model_name and provider in {"openai", "ollama"}:
-            import warnings
-            warnings.warn(f"answerer provider={provider} but model_name is empty. Using provider default.", RuntimeWarning)
+        if not model_name:
+            raise ValueError(
+                f"answerer provider={provider} requires model_name. "
+                "Check rag.answerer.model_name in your config."
+            )
         temperature = float(config.get("temperature", 0.2))
         max_tokens = int(config["max_tokens"]) if config.get("max_tokens") else None
         prompt_template = config.get("prompt") or config.get("prompt_template") or None
