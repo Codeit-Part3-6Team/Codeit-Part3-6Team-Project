@@ -206,6 +206,8 @@ def run_rag_agent(
 
     chatbot_cfg = agent_cfg.get("chatbot", {})
     if chatbot_cfg.get("enabled", False):
+        # 챗봇 모드: Phase DAG를 건너뛰고 LLM이 동적으로 Tool 선택
+        # agent.phases는 무시됩니다 (의도된 설계)
         from src.rag.chatbot import build_chatbot_from_config
 
         bot = build_chatbot_from_config(config)

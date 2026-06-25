@@ -505,6 +505,7 @@ agent:
 | --- | --- | --- |
 | `chatbot.enabled` | `false` | `true`로 설정하면 챗봇 모드 활성화 |
 | `chatbot.tool_selection_model` | `gpt-4o-mini` | Tool 선택에 사용할 LLM 모델 |
+| `chatbot.tool_selection_provider` | `openai` | Tool 선택 LLM provider (`openai`, `ollama`) |
 | `chatbot.system_prompt` | 기본 프롬프트 | 챗봇 시스템 프롬프트 |
 | `chatbot.max_history` | `10` | 대화 기록 최대 보존 수 |
 

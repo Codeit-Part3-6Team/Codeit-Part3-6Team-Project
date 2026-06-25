@@ -23,11 +23,13 @@ class ChatbotRunner:
         self,
         tools: dict[str, Tool],
         tool_selection_model: str = "gpt-4o-mini",
+        tool_selection_provider: str = "openai",
         system_prompt: str | None = None,
         max_history: int = 10,
     ):
         self.tools = tools
         self.tool_selection_model = tool_selection_model
+        self.tool_selection_provider = tool_selection_provider
         self.system_prompt = system_prompt or (
             "너는 RFP 문서 분석 도우미 챗봇이다.\n"
             "사용자의 질문에 가장 적합한 도구를 선택하고, 도구 실행 결과를 바탕으로 답변하라.\n"
@@ -89,19 +91,32 @@ class ChatbotRunner:
         tool_descriptions = "\n".join(
             f"- {name}: {tool.description}" for name, tool in self.tools.items()
         )
+        history_context = ""
+        if self.history:
+            recent = self.history[-5:]
+            history_context = "\n".join(
+                f"{h['role']}: {h['content'][:200]}" for h in recent
+            )
+            history_context = f"이전 대화:\n{history_context}\n\n"
+
         prompt = (
             f"{self.system_prompt}\n\n"
             f"사용 가능한 도구:\n{tool_descriptions}\n\n"
+            f"{history_context}"
             f"사용자 질문: {user_input}\n\n"
             "JSON 응답:"
         )
         try:
-            from langchain_openai import ChatOpenAI
+            if self.tool_selection_provider == "ollama":
+                from langchain_ollama import ChatOllama
+                model = ChatOllama(model=self.tool_selection_model, temperature=0)
+            else:
+                from langchain_openai import ChatOpenAI
+                model = ChatOpenAI(model=self.tool_selection_model, temperature=0)
 
-            model = ChatOpenAI(model=self.tool_selection_model, temperature=0)
             response = model.invoke(prompt)
             text = getattr(response, "content", str(response)).strip()
-            parsed = json.loads(text)
+            parsed = _extract_json(text)
         except Exception:
             return None, user_input
 
@@ -159,6 +174,20 @@ def build_chatbot_from_config(config: dict[str, Any]) -> ChatbotRunner:
     return ChatbotRunner(
         tools=tools,
         tool_selection_model=chatbot_cfg.get("tool_selection_model", "gpt-4o-mini"),
+        tool_selection_provider=chatbot_cfg.get("tool_selection_provider", "openai"),
         system_prompt=chatbot_cfg.get("system_prompt"),
         max_history=int(chatbot_cfg.get("max_history", 10)),
     )
+
+
+def _extract_json(text: str) -> dict[str, Any]:
+    """LLM 응답에서 JSON을 추출합니다. markdown 코드블록과 trailing text 대응."""
+    import re
+
+    match = re.search(r"```(?:json)?\s*(\{.*?\})\s*```", text, re.DOTALL)
+    if match:
+        return json.loads(match.group(1))
+    match = re.search(r"\{.*?\}", text, re.DOTALL)
+    if match:
+        return json.loads(match.group(0))
+    return json.loads(text)
