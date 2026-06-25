@@ -37,6 +37,7 @@ class ChatbotRunner:
             "도구가 필요 없으면 {\"tool\": null, \"answer\": \"직접 답변\"} 형식으로 응답하라."
         )
         self.max_history = max_history
+        self.max_retries = 2
         self.history: list[dict[str, str]] = []
         self.state: dict[str, ToolResult] = {}
         self.chunks: list[dict[str, str]] = []
@@ -60,19 +61,23 @@ class ChatbotRunner:
 
         tool = self.tools.get(tool_name)
         if tool is None:
-            reply = f"도구 '{tool_name}'을 찾을 수 없습니다. 사용 가능한 도구: {', '.join(self.tools)}"
+            available = ", ".join(self.tools)
+            reply = f"죄송합니다. '{tool_name}' 기능은 아직 준비되지 않았습니다.\n사용 가능한 기능: {available}"
             self._add_history("assistant", reply)
             return {"reply": reply, "tool_used": None, "tool_result": None}
 
-        result = tool.run(refined_question, self.chunks, self.embeddings, self.state)
+        result = self._run_tool_with_retry(tool, refined_question)
         self.state[tool_name] = result
 
         if result.status == "failed":
-            reply = f"[{tool_name}] 실행 실패: {'; '.join(result.errors)}"
+            reply = (
+                f"죄송합니다, '{tool.description}' 분석 중 오류가 발생했습니다.\n"
+                f"잠시 후 다시 시도하거나 다른 질문을 해보세요."
+            )
         elif result.structured_output:
             reply = json.dumps(result.structured_output, ensure_ascii=False, indent=2)
         else:
-            reply = result.answer or "(응답 없음)"
+            reply = result.answer or "분석 결과를 생성하지 못했습니다."
 
         self._add_history("assistant", reply)
         return {
@@ -129,6 +134,19 @@ class ChatbotRunner:
         if direct_answer:
             return None, direct_answer
         return None, user_input
+
+    def _run_tool_with_retry(self, tool: Tool, question: str) -> ToolResult:
+        """Tool 실행 실패 시 최대 max_retries회 재시도합니다."""
+        last_result: ToolResult | None = None
+        for attempt in range(self.max_retries + 1):
+            result = tool.run(question, self.chunks, self.embeddings, self.state)
+            result.retry_count = attempt
+            if result.status != "failed":
+                return result
+            last_result = result
+        return last_result or ToolResult(
+            tool_name=tool.name, status="failed", errors=["max retries exceeded"]
+        )
 
     def _add_history(self, role: str, content: str) -> None:
         self.history.append({"role": role, "content": content})
