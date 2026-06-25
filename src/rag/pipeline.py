@@ -280,7 +280,7 @@ def run_rag_agent_evaluation(
         expected = row.get("expected_answer", "")
 
         runner = AgentRunner(config, root)
-        agent_result = runner.run(question, output_dir=None)
+        agent_result = runner.run(question, output_dir=output_dir)
 
         agent_answer = ""
         if target_tool and target_tool in agent_result.get("state", {}):

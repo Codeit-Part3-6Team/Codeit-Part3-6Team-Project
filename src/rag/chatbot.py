@@ -199,13 +199,29 @@ def build_chatbot_from_config(config: dict[str, Any]) -> ChatbotRunner:
 
 
 def _extract_json(text: str) -> dict[str, Any]:
-    """LLM 응답에서 JSON을 추출합니다. markdown 코드블록과 trailing text 대응."""
+    """LLM 응답에서 JSON을 추출합니다. markdown 코드블록, nested JSON 대응."""
     import re
 
-    match = re.search(r"```(?:json)?\s*(\{.*?\})\s*```", text, re.DOTALL)
+    match = re.search(r"```(?:json)?\s*(\{.*\})\s*```", text, re.DOTALL)
     if match:
         return json.loads(match.group(1))
-    match = re.search(r"\{.*?\}", text, re.DOTALL)
+    match = _find_json_object(text)
     if match:
-        return json.loads(match.group(0))
+        return json.loads(match)
     return json.loads(text)
+
+
+def _find_json_object(text: str) -> str | None:
+    """중첩된 JSON 객체를 brace 카운트로 추출합니다."""
+    start = text.find("{")
+    if start == -1:
+        return None
+    depth = 0
+    for i, ch in enumerate(text[start:], start):
+        if ch == "{":
+            depth += 1
+        elif ch == "}":
+            depth -= 1
+            if depth == 0:
+                return text[start : i + 1]
+    return None

@@ -80,12 +80,15 @@ class Tool:
         started_ms = int(time.time() * 1000)
         errors: list[str] = []
 
-        # 1. retriever 실행
+        # input_from에 지정된 이전 Tool 결과를 context로 주입
+        enriched_question = question
+        if state and self.input_from:
+            enriched_question = self._build_contextualized_question(question, state)
         retrieved: list[dict[str, Any]] = []
         try:
             if self.retriever_cfg:
                 retriever = build_retriever_adapter(self.retriever_cfg, {}, self.full_rag_config)
-                retrieved = retriever.retrieve(question, chunks, embeddings or [])
+                retrieved = retriever.retrieve(enriched_question, chunks, embeddings or [])
         except Exception as exc:
             errors.append(f"retrieve: {exc}")
             if self.on_failure in (OnFailure.ABORT_PHASE, OnFailure.ABORT_AGENT):
@@ -106,11 +109,11 @@ class Tool:
                 answerer.output_schema = self.output_schema
             if self.prompt_template and hasattr(answerer, "prompt_template"):
                 answerer.prompt_template = self.prompt_template
-            answer_payload = answerer.answer(question, retrieved)
+            answer_payload = answerer.answer(enriched_question, retrieved)
         except Exception as exc:
             errors.append(f"answer: {exc}")
             answer_payload = {
-                "question": question,
+                "question": enriched_question,
                 "answer": self.answerer_cfg.get("fallback_message", "문서에서 확인하지 못했습니다."),
                 "citations": [],
                 "status": "not_found",
@@ -119,7 +122,7 @@ class Tool:
         finished_ms = int(time.time() * 1000)
         return ToolResult(
             tool_name=self.name,
-            status="ok" if not errors else "partial",
+            status=self._resolve_status(errors, answer_payload),
             answer=str(answer_payload.get("answer", "")),
             structured_output=answer_payload.get("structured_output"),
             citations=answer_payload.get("citations", []),
@@ -128,6 +131,29 @@ class Tool:
             finished_at=str(finished_ms),
             duration_ms=finished_ms - started_ms,
         )
+
+    def _resolve_status(self, errors: list[str], payload: dict[str, Any]) -> str:
+        if errors:
+            return "partial"
+        if payload.get("status") == "not_found":
+            return "not_found"
+        return "ok"
+
+    def _build_contextualized_question(self, question: str, state: dict[str, ToolResult]) -> str:
+        """input_from에 지정된 이전 Tool 결과를 질문 context에 주입합니다."""
+        context_parts = []
+        for tool_name in self.input_from:
+            prev = state.get(tool_name)
+            if prev is None:
+                continue
+            content = prev.structured_output or prev.answer
+            if content:
+                if isinstance(content, dict):
+                    content = "\n".join(f"  {k}: {v}" for k, v in content.items())
+                context_parts.append(f"[{tool_name} 결과]\n{content}")
+        if not context_parts:
+            return question
+        return "\n\n".join(context_parts) + f"\n\n질문: {question}"
 
 
 def build_tool_from_config(
@@ -183,3 +209,5 @@ def build_tool_from_config(
         input_from=tool_cfg.get("input_from", []),
         full_rag_config=full_rag_config,
     )
+
+

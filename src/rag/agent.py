@@ -292,6 +292,7 @@ class AgentRunner:
                     "phase_name": result.phase_name,
                     "status": result.status,
                     "answer": result.answer[:200] if result.answer else "",
+                    "structured_output": result.structured_output,
                     "citations_count": len(result.citations),
                     "errors": result.errors,
                     "duration_ms": result.duration_ms,

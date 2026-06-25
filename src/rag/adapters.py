@@ -299,6 +299,9 @@ class OpenAIChatAnswererAdapter:
             if isinstance(response, dict):
                 structured = response
                 answer_text = "\n".join(f"{k}: {v}" for k, v in response.items())
+            elif hasattr(response, "model_dump"):
+                structured = response.model_dump()
+                answer_text = "\n".join(f"{k}: {v}" for k, v in structured.items())
             else:
                 answer_text = str(response)
         else:
@@ -372,6 +375,9 @@ class OllamaChatAnswererAdapter:
             if isinstance(response, dict):
                 structured = response
                 answer_text = "\n".join(f"{k}: {v}" for k, v in response.items())
+            elif hasattr(response, "model_dump"):
+                structured = response.model_dump()
+                answer_text = "\n".join(f"{k}: {v}" for k, v in structured.items())
             else:
                 answer_text = str(response)
         else:
