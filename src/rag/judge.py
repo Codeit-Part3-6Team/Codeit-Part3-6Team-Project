@@ -6,6 +6,7 @@
 from __future__ import annotations
 
 import os
+import re
 from typing import Any
 
 DEFAULT_BINARY_TEMPLATE = (
@@ -56,7 +57,8 @@ def judge_binary(
 
         result = judge.invoke([HumanMessage(content=prompt)])
         result_text = getattr(result, "content", str(result)).strip().lower()
-        return bool(re.search(r"\btrue\b", result_text))
+        normalized = result_text.strip(".!?:;\n ").split()[0] if result_text.strip() else result_text
+        return normalized == "true"
     except Exception:
         return False
 
