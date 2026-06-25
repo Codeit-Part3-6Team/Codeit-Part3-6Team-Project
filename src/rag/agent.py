@@ -42,8 +42,6 @@ class AgentRunner:
         self.phase_results: list[dict[str, Any]] = []
         self.step_count: int = 0
 
-        self._loader_config = dict(rag_cfg.get("loader", {}))
-        self._checkpoint_enabled = bool(rag_cfg.get("checkpoint", {}).get("enabled", False))
         self._output_dir: Path | None = None
 
     def run(self, question: str | None = None, output_dir: str | Path | None = None) -> dict[str, Any]:
@@ -64,8 +62,13 @@ class AgentRunner:
         for phase_name in self._phase_order:
             if self.step_count >= self.max_steps:
                 break
-
-            phase = next(p for p in self.phases if p["name"] == phase_name)
+            phase = None
+            for p in self.phases:
+                if p["name"] == phase_name:
+                    phase = p
+                    break
+            if phase is None:
+                continue
             result = self._run_phase(phase, question, chunks, embeddings)
             self.phase_results.append(result)
 
@@ -291,7 +294,7 @@ class AgentRunner:
                     "tool_name": result.tool_name,
                     "phase_name": result.phase_name,
                     "status": result.status,
-                    "answer": result.answer[:200] if result.answer else "",
+                    "answer": result.answer[:500] if result.answer else "",
                     "structured_output": result.structured_output,
                     "citations_count": len(result.citations),
                     "errors": result.errors,

@@ -109,8 +109,15 @@ class Tool:
         answer_payload: dict[str, Any] = {}
         try:
             answerer = build_answerer_adapter(self.answerer_cfg)
-            if self.output_schema is not None and hasattr(answerer, "output_schema"):
-                answerer.output_schema = self.output_schema
+            if self.output_schema is not None:
+                if hasattr(answerer, "output_schema"):
+                    answerer.output_schema = self.output_schema
+                else:
+                    import warnings
+                    warnings.warn(
+                        f"Tool '{self.name}' has output_schema but adapter {type(answerer).__name__} does not support it. Schema will be ignored.",
+                        RuntimeWarning,
+                    )
             if self.prompt_template and hasattr(answerer, "prompt_template"):
                 answerer.prompt_template = self.prompt_template
             answer_payload = answerer.answer(enriched_question, retrieved)
@@ -217,7 +224,7 @@ def build_tool_from_config(
         answerer_cfg=answerer_cfg,
         prompt_template=answerer_cfg.get("prompt_template") or None,
         output_schema=output_schema,
-        rules=tool_cfg.get("rules", {}).get("patterns", []),
+        rules=tool_cfg.get("rules", {}).get("patterns", []) if isinstance(tool_cfg.get("rules"), dict) else [],
         on_failure=on_failure,
         input_from=tool_cfg.get("input_from", []),
         full_rag_config=full_rag_config,

@@ -1,4 +1,4 @@
-"""Agent 챗봇 모듈.
+﻿"""Agent 챗봇 모듈.
 
 config의 agent.chatbot.enabled: true일 때, LLM이 Tool description을 읽고
 사용자 질문에 적합한 Tool을 동적으로 선택하여 실행합니다.
@@ -231,7 +231,12 @@ def _extract_json(text: str) -> dict[str, Any]:
     match = _find_json_object(text)
     if match:
         return json.loads(match)
-    return json.loads(text)
+    try:
+        return json.loads(text)
+    except Exception:
+        import sys
+        print(f"[Chatbot] JSON parse failed for: {text[:100]}", file=sys.stderr)
+        raise
 
 
 def _find_json_object(text: str) -> str | None:
