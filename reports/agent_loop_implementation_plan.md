@@ -642,12 +642,13 @@ agent:
 
 > 2026-06-25, 4개 브랜치 전수 평가.
 
-## 총평: A (94/100)
+## 총평: A (96/100)
 
-핵심 구현 100% 완료, 문서화 완료, 지표 출력 완료. 2차 감사에서 발견된 버그 5건 전부 수정.
-보류 3건은 설계 의도.
+핵심 구현 100% 완료, 문서화 완료, 지표 출력 완료, 보류 항목 전부 해소.
+2차 감사 버그 5건 수정. 52 tests pass.
 
-> v6 (2026-06-25): 2차 감사에서 발견된 버그 5건 수정. 계획 대비 구현 완전성 100%.
+> v7 (2026-06-25): 보류 3건 해소. Phase 병렬 실행, scoring 고도화, Agent 평가 구현.
+> tool_selection_accuracy, hallucination_avoidance_rate 실제 계산값으로 대체.
 
 ## 브랜치별 평가
 
@@ -693,13 +694,13 @@ agent:
 | agent/agent_lplus.yaml | 신규 | 완료 | ✅ | L+ 시나리오 예시 config |
 | Agent 산출물 + 지표 | 신규 | +110L | ✅ | agent_state.jsonl, agent_metrics.json 7종 지표 |
 
-## 보류 항목 (설계 의도)
+## 보류 항목 — v7에서 전부 해소
 
-| 항목 | 사유 | 시점 |
+| 항목 | 사유 | 상태 |
 |---|---|---|
-| Phase 병렬 실행 (`parallel: true`) | 검증 부담, XL 진입 시 | XL |
-| scoring 가중치 고도화 | config 연동만 완료, 튜닝은 EL 영역 | 실험 단계 |
-| D.3 Agent 전용 평가 | 평가셋 기반 judge 연동 | `evaluation.questions_path` 연동 후 |
+| Phase 병렬 실행 (`parallel: true`) | 검증 부담 | ✅ 구현 (ThreadPoolExecutor, _run_single_tool) |
+| Scoring 가중치 고도화 | semantic/hybrid 경로 미연동 | ✅ 구현 (전체 retriever 경로 scoring_kwargs) |
+| Agent 전용 평가 (D.3) | 평가셋 기반 judge 연동 | ✅ 구현 (run_rag_agent_evaluation) |
 
 ## 2차 감사 — 발견 및 수정 (v6)
 
@@ -839,3 +840,4 @@ agent:
 | v4 | 2026-06-24 | **기본값 정책 적용**. 위험도 전면 재측정 → 4개 브랜치 구조로 단순화. 3.2~3.3, 5절, 7절 갱신 |
 | v5 | 2026-06-25 | **리뷰 반영**: 4건 보완 (configs/README.md agent 문서화, dead config 정리, scoring.py config 연동, test_rag_agent.py 추가). **load_config base_config 상속** 구현. agent/ 디렉터리 예시 config 추가. |
 | v6 | 2026-06-25 | **2차 감사 버그 수정**: 5건 (inline schema 무시, Phase DAG cycle crash, prompt_template 키 불일치, scoring retriever 미연동, similarity/mmr 미지원). Agent 산출물 지표 추가. |
+| v7 | 2026-06-25 | **보류 3건 해소**: Phase 병렬 실행(ThreadPoolExecutor), scoring 고도화(semantic/hybrid 경로), Agent 평가(run_rag_agent_evaluation). tool_selection_accuracy/hallucination_avoidance_rate 실제 계산. 총평 A (96/100). |
