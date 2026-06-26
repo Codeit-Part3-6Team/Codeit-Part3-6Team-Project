@@ -70,7 +70,7 @@ class FakeChatOllama:
 
     def invoke(self, prompt):
         self.__class__.last_prompt = prompt
-        return FakeChatResponse("answer from ollama")
+        return FakeChatResponse("answer from ollama [사용근거: 1]")
 
 
 class FakeChatOpenAI:
@@ -83,7 +83,7 @@ class FakeChatOpenAI:
 
     def invoke(self, prompt):
         self.__class__.last_prompt = prompt
-        return FakeChatResponse("answer from openai")
+        return FakeChatResponse("answer from openai [사용근거: 1]")
 
 
 def test_langchain_engine_uses_standard_artifact_contract(monkeypatch, tmp_path: Path):
@@ -238,7 +238,7 @@ def test_langchain_ollama_answerer_returns_standard_payload(monkeypatch, tmp_pat
 
     answer = engine.answer("What is the budget?", retrieved)
 
-    assert answer["answer"] == "answer from ollama"
+    assert answer["answer"] == "answer from ollama [사용근거: 1]"
     assert answer["status"] == "answered"
     assert answer["citations"][0]["chunk_id"] == "doc_chunk_0001"
     assert FakeChatOllama.calls[-1] == {
@@ -283,7 +283,7 @@ def test_langchain_openai_answerer_returns_standard_payload(monkeypatch, tmp_pat
 
     answer = engine.answer("What is required?", retrieved)
 
-    assert answer["answer"] == "answer from openai"
+    assert answer["answer"] == "answer from openai [사용근거: 1]"
     assert answer["status"] == "answered"
     assert answer["citations"][0] == {
         "chunk_id": "doc_chunk_0002",
@@ -299,3 +299,76 @@ def test_langchain_openai_answerer_returns_standard_payload(monkeypatch, tmp_pat
         "api_key": "sk-test",
     }
     assert "chunk_id: doc_chunk_0002" in FakeChatOpenAI.last_prompt
+
+
+class FakeFallbackResponse:
+    def __init__(self, text: str):
+        self.content = text
+
+
+def test_answer_with_fallback_sets_not_found_status(monkeypatch, tmp_path: Path):
+    import sys
+    from types import SimpleNamespace
+    from src.rag.engines.langchain import LangChainRagEngine
+
+    monkeypatch.setitem(sys.modules, "langchain_core.documents", SimpleNamespace(Document=FakeDocument))
+
+    class FakeFallbackModel:
+        last_prompt = ""
+
+        def invoke(self, prompt):
+            FakeFallbackModel.last_prompt = prompt
+            return FakeFallbackResponse("문서에서 확인하지 못했습니다. [사용근거: 1,2,3]")
+
+    config = {
+        "rag": {
+            "engine": "langchain",
+            "embedding": {"provider": "local", "model_name": "hashing-char-ngram-v1"},
+            "vector_store": {"type": "memory"},
+            "retriever": {"method": "similarity", "top_k": 3},
+            "answerer": {"provider": "ollama", "model_name": "test"},
+        }
+    }
+    engine = LangChainRagEngine(config, str(tmp_path))
+    engine._build_chat_model = lambda cfg: FakeFallbackModel()
+
+    chunks = [{
+        "chunk_id": "c1", "text": "예산 정보 없음",
+        "document_id": "d1", "source_path": "p", "page": "1", "section": "s",
+    }]
+    result = engine.answer("없는 정보 질문", chunks)
+    assert result["status"] == "not_found"
+
+
+def test_answer_without_fallback_sets_answered_status(monkeypatch, tmp_path: Path):
+    import sys
+    from types import SimpleNamespace
+    from src.rag.engines.langchain import LangChainRagEngine
+
+    monkeypatch.setitem(sys.modules, "langchain_core.documents", SimpleNamespace(Document=FakeDocument))
+
+    class FakeAnswerModel:
+        last_prompt = ""
+
+        def invoke(self, prompt):
+            FakeAnswerModel.last_prompt = prompt
+            return FakeFallbackResponse("130,000,000원 [사용근거: 1]")
+
+    config = {
+        "rag": {
+            "engine": "langchain",
+            "embedding": {"provider": "local", "model_name": "hashing-char-ngram-v1"},
+            "vector_store": {"type": "memory"},
+            "retriever": {"method": "similarity", "top_k": 3},
+            "answerer": {"provider": "ollama", "model_name": "test"},
+        }
+    }
+    engine = LangChainRagEngine(config, str(tmp_path))
+    engine._build_chat_model = lambda cfg: FakeAnswerModel()
+
+    chunks = [{
+        "chunk_id": "c1", "text": "130,000,000원",
+        "document_id": "d1", "source_path": "p", "page": "1", "section": "s",
+    }]
+    result = engine.answer("예산 얼마?", chunks)
+    assert result["status"] == "answered"

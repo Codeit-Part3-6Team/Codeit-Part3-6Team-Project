@@ -15,8 +15,11 @@ def load_documents(
     project_root: str | Path,
     raw_docs_dir: str | Path,
     file_types: list[str] | None = None,
+    csv_file: str | None = None,
 ) -> list[dict[str, str]]:
-    """RAG 원본 문서를 읽어 document row 목록으로 변환합니다."""
+    """RAG 원본 문서를 읽어 document row 목록으로 변환합니다.
+    csv_file가 지정되면 해당 CSV 파일만 읽습니다 (중복 방지).
+    """
     root = Path(project_root)
     allowed_types = _normalize_file_types(file_types)
     docs_dir = _resolve_path(root, raw_docs_dir)
@@ -24,11 +27,16 @@ def load_documents(
         raise FileNotFoundError(f"RAG document directory not found: {docs_dir}")
 
     rows: list[dict[str, str]] = []
-    for path in sorted(item for item in docs_dir.rglob("*") if item.is_file()):
-        suffix = path.suffix.lower().lstrip(".")
-        if suffix not in allowed_types:
-            continue
-        rows.extend(_load_document_by_type(root, path, suffix))
+    if csv_file and "csv" in allowed_types:
+        csv_path = docs_dir / csv_file
+        if csv_path.exists():
+            rows.extend(_parse_csv_document(root, csv_path))
+    else:
+        for path in sorted(item for item in docs_dir.rglob("*") if item.is_file()):
+            suffix = path.suffix.lower().lstrip(".")
+            if suffix not in allowed_types:
+                continue
+            rows.extend(_load_document_by_type(root, path, suffix))
     if not rows:
         raise ValueError(f"No supported RAG documents found in {docs_dir}: {sorted(allowed_types)}")
     return rows

@@ -55,6 +55,14 @@ push_results() {
         fi
     done
 
+    if [ -d "/shared/experiments" ]; then
+        echo "[Push] /shared/experiments/"
+        rclone sync "/shared/experiments" "$RCLONE_REMOTE:/$DRIVE_DIR/experiments" \
+            --progress \
+            --exclude "*.log" \
+            --exclude "__pycache__/**"
+    fi
+
     echo ""
     echo "=== 백업 완료 ==="
 }

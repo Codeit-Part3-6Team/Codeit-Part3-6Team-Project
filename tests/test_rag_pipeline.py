@@ -40,7 +40,7 @@ def test_rag_langchain_pipeline_writes_artifacts(isolated_project: Path):
     saved_metrics = json.loads((output_dir / "metrics.json").read_text(encoding="utf-8"))
     run_status = json.loads((output_dir / "run_status.json").read_text(encoding="utf-8"))
     ingest_checkpoint = json.loads((output_dir / "rag_ingest_checkpoint.json").read_text(encoding="utf-8"))
-    assert saved_metrics["answer_contains_expected_rate"] == 1.0
+    assert saved_metrics["diagnostic"]["answer_contains_expected_rate"] == 1.0
     assert run_status["operation"] == "rag_evaluation"
     assert run_status["status"] == "success"
     assert ingest_checkpoint["stage"] == "embeddings"
@@ -74,7 +74,7 @@ def test_rag_evaluation_accepts_utf8_bom_questions_csv(isolated_project: Path):
     metrics = run_rag_evaluation(config, isolated_project)
 
     assert metrics["retrieval_hit_rate"] == 1.0
-    assert metrics["answer_contains_expected_rate"] == 1.0
+    assert metrics["diagnostic"]["answer_contains_expected_rate"] == 1.0
 
 
 def test_run_rag_chat_script_supports_evaluation(isolated_project: Path, repo_root: Path):

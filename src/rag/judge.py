@@ -1,0 +1,74 @@
+"""LLM-as-Judge 공통 모듈.
+
+평가(evaluation)와 에이전트(agent)에서 공통으로 사용하는 판단 로직.
+"""
+
+from __future__ import annotations
+
+import os
+from typing import Any
+
+DEFAULT_BINARY_TEMPLATE = (
+    '다음 expected_answer와 actual_answer가 의미상 같은 내용이면 "true", '
+    '다른 내용이면 "false"라고만 답하세요.\n\n'
+    "expected_answer: {expected}\n"
+    "actual_answer: {actual}\n\n"
+    "같은 의미인가요? (true/false)"
+)
+
+
+def judge_binary(
+    expected: str,
+    actual: str,
+    model_name: str = "gpt-5-mini",
+    api_key_env: str = "OPENAI_API_KEY",
+    template: str | None = None,
+) -> bool:
+    """expected와 actual이 의미상 같은 답인지 LLM으로 판단.
+
+    Args:
+        expected: 정답 텍스트.
+        actual: 모델이 생성한 답변.
+        model_name: 판단에 사용할 LLM 모델.
+        api_key_env: API 키가 등록된 환경변수 이름.
+        template: 판단 프롬프트 템플릿. None이면 기본 binary template 사용.
+
+    Returns:
+        의미상 같으면 True.
+    """
+    from langchain_openai import ChatOpenAI
+    from langchain_core.messages import HumanMessage
+
+    api_key = os.environ.get(api_key_env, "")
+    prompt_template = template or DEFAULT_BINARY_TEMPLATE
+    prompt = prompt_template.format(expected=expected, actual=actual)
+
+    judge = ChatOpenAI(model=model_name, temperature=0, openai_api_key=api_key or None)
+    result = judge.invoke([HumanMessage(content=prompt)])
+    result_text = getattr(result, "content", str(result)).strip().lower()
+    return "true" in result_text
+
+
+def judge_binary_from_config(
+    config: dict[str, Any],
+    expected: str,
+    actual: str,
+) -> bool:
+    """config의 evaluation.llm_judge 설정을 읽어 판단.
+
+    평가 전용 wrapper. config 구조:
+        evaluation:
+          llm_judge:
+            enabled: true
+            model_name: gpt-5-mini
+            prompt: |      # optional, template override
+              ...
+    """
+    judge_cfg = config.get("evaluation", {}).get("llm_judge", {})
+    return judge_binary(
+        expected=expected,
+        actual=actual,
+        model_name=judge_cfg.get("model_name", "gpt-5-mini"),
+        api_key_env=judge_cfg.get("api_key_env", "OPENAI_API_KEY"),
+        template=judge_cfg.get("prompt"),
+    )

@@ -1,0 +1,54 @@
+# RAG 베이스라인 실험 config
+# rag_langchain.yaml 기반, embedder + answerer 교체
+
+experiment:
+  name: rag-baseline
+  author: team
+  seed: 42
+  contract_version: rag-v0.2
+
+paths:
+  raw_docs_dir: /shared/data/raw_docs
+  output_dir: /shared/experiments/rag-baseline
+
+artifact_policy:
+  run_id:
+  on_existing: overwrite
+
+rag:
+  engine: langchain
+  loader:
+    file_types: [csv]          # data_list.csv (100건, metadata + 텍스트)
+  splitter:
+    type: recursive_character
+    chunk_size: 500
+    chunk_overlap: 80
+  checkpoint:
+    enabled: true
+    resume: true
+  embedding:
+    provider: ollama
+    model_name: nomic-embed-text
+  vector_store:
+    type: memory
+    path:
+    collection_name: rag_baseline
+  retriever:
+    method: similarity
+    top_k: 3
+    score_threshold: 0.0
+  reranker:
+    enabled: false
+  answerer:
+    mode: generative
+    provider: openai
+    model_name: gpt-5-mini
+    temperature: 0.2
+    fallback_message: 문서에서 확인하지 못했습니다.
+
+evaluation:
+  questions_path: /shared/data/eval_questions.csv
+
+metric:
+  monitor: judge_correct_rate
+  mode: max

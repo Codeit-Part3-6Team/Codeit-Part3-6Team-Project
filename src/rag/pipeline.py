@@ -67,7 +67,7 @@ def run_rag_ingest(config_path: str | Path, project_root: str | Path = ".") -> d
         if resume_enabled and documents_path.exists():
             documents = _read_csv(documents_path)
         else:
-            documents = load_documents(root, raw_docs_dir, loader_cfg.get("file_types", ["txt"]))
+            documents = load_documents(root, raw_docs_dir, loader_cfg.get("file_types", ["txt"]), csv_file=loader_cfg.get("csv_file"))
             _write_csv(documents_path, documents, DOCUMENT_COLUMNS)
         _write_rag_ingest_checkpoint(output_dir, "documents", documents=len(documents))
 
@@ -247,14 +247,25 @@ def run_rag_evaluation(config_path: str | Path, project_root: str | Path = ".") 
             retrieved_ids = {str(item["chunk_id"]) for item in retrieval["retrieved_chunks"]}
             citation_ids = {str(item["chunk_id"]) for item in answer["citations"]}
             retrieval_hit = bool(expected_chunk_ids & retrieved_ids)
-            answer_contains_expected = row["expected_answer"] in answer["answer"]
+            answer_contains_expected = _normalize_for_match(row["expected_answer"]) in _normalize_for_match(answer["answer"])
             citation_correct = bool(expected_chunk_ids & citation_ids)
+
+            judge_enabled = config.get("evaluation", {}).get("llm_judge", {}).get("enabled", False)
+            judge_ok = False
+            if judge_enabled:
+                try:
+                    from src.rag.judge import judge_binary_from_config
+                    judge_ok = judge_binary_from_config(config, row["expected_answer"], answer["answer"])
+                except Exception:
+                    pass
+
             result_rows.append(
                 {
                     "question": row["question"],
                     "retrieval_hit": str(retrieval_hit).lower(),
                     "answer_contains_expected": str(answer_contains_expected).lower(),
                     "citation_correct": str(citation_correct).lower(),
+                    "judge_correct": str(judge_ok).lower(),
                     "status": answer["status"],
                 }
             )
@@ -269,6 +280,7 @@ def run_rag_evaluation(config_path: str | Path, project_root: str | Path = ".") 
                     "retrieval_hit": str(retrieval_hit).lower(),
                     "answer_contains_expected": str(answer_contains_expected).lower(),
                     "citation_correct": str(citation_correct).lower(),
+                    "judge_correct": str(judge_ok).lower(),
                     "status": answer["status"],
                 }
             )
@@ -277,7 +289,7 @@ def run_rag_evaluation(config_path: str | Path, project_root: str | Path = ".") 
         _write_csv(
             output_dir / "evaluation_results.csv",
             result_rows,
-            ["question", "retrieval_hit", "answer_contains_expected", "citation_correct", "status"],
+            ["question", "retrieval_hit", "answer_contains_expected", "citation_correct", "judge_correct", "status"],
         )
         _write_error_analysis(output_dir, analysis_rows)
         write_json(output_dir / "metrics.json", metrics)
@@ -290,12 +302,37 @@ def run_rag_evaluation(config_path: str | Path, project_root: str | Path = ".") 
 
 def _calculate_metrics(rows: list[dict[str, str]]) -> dict[str, float]:
     total = len(rows) or 1
+    answered_rows = [r for r in rows if r["status"] != "not_found"]
+    answered_total = len(answered_rows) or 1
     return {
         "retrieval_hit_rate": _ratio(rows, "retrieval_hit", total),
-        "answer_contains_expected_rate": _ratio(rows, "answer_contains_expected", total),
         "citation_correct_rate": _ratio(rows, "citation_correct", total),
+        "judge_correct_rate": _ratio(rows, "judge_correct", total),
         "not_found_rate": sum(row["status"] == "not_found" for row in rows) / total,
+        "diagnostic": {
+            "answer_contains_expected_rate": _ratio(rows, "answer_contains_expected", total),
+            "judge_on_answered_rate": _ratio(answered_rows, "judge_correct", answered_total),
+            "retrieval_failure_rate": sum(r["retrieval_hit"] == "false" for r in rows) / total,
+            "answerer_gave_up_rate": sum(
+                r["retrieval_hit"] == "true" and r["status"] == "not_found" for r in rows
+            ) / total,
+            "answerer_error_rate": sum(
+                r["retrieval_hit"] == "true"
+                and r["status"] == "answered"
+                and r["judge_correct"] == "false"
+                for r in rows
+            ) / total,
+        },
     }
+
+
+def _normalize_for_match(text: str) -> str:
+    """쉼표·공백·따옴표 제거. substring 매칭 정확도 보정."""
+    import re
+
+    text = text.strip('"').strip("'")
+    text = re.sub(r"[\s,]+", "", text)
+    return text
 
 
 def _ratio(rows: list[dict[str, str]], column: str, total: int) -> float:

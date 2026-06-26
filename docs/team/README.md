@@ -55,6 +55,7 @@ flowchart LR
 | RAG 입력/출력 계약이 필요할 때 | [../md/rag/RAG_PIPELINE_SPEC.md](../md/rag/RAG_PIPELINE_SPEC.md) |
 | 데이터를 Drive에서 VM으로 가져오거나 백업할 때 | [backup_guide.md](backup_guide.md) |
 | Data Engineer — 문서 수집·정리 규칙 | [data_engineer_guide.md](data_engineer_guide.md) |
+| Experiment Lead — 실험 config 작성·결과 분석 | [experiment_lead_guide.md](experiment_lead_guide.md) |
 | 데이터 형식을 맞춰야 할 때 | [../md/data/DATA_CONTRACT.md](../md/data/DATA_CONTRACT.md) |
 | 실험 실행 방법이 필요할 때 | [../md/experiments/EXPERIMENT_GUIDE.md](../md/experiments/EXPERIMENT_GUIDE.md) |
 | 평가 질문과 정답 데이터를 만들어야 할 때 | [golden_dataset_guide.md](golden_dataset_guide.md) |
