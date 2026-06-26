@@ -132,7 +132,10 @@ def _parse_csv_document(project_root: Path, path: Path) -> list[dict[str, str]]:
                 "source_path": _relative_path(project_root, path),
                 "page": "1",
                 "section": "본문",
-                "text": _normalize_text(text),
+                # 사업 금액/발주 기관 등은 나라장터 메타데이터에서 온 값이라 본문(텍스트
+                # 컬럼)에 그대로 안 적혀있는 경우가 많다. text에 직접 섞어 넣어야
+                # chunk/검색 대상이 되어 retrieval로 찾을 수 있다.
+                "text": _normalize_text(f"{_build_meta_preamble(entry, title)} {text}"),
             }
             for meta_key in ("사업 금액", "발주 기관", "공고 차수", "파일형식", "파일명", "사업 요약"):
                 value = entry.get(meta_key, "").strip()
@@ -142,8 +145,29 @@ def _parse_csv_document(project_root: Path, path: Path) -> list[dict[str, str]]:
     return rows
 
 
+def _build_meta_preamble(entry: dict[str, str], title: str) -> str:
+    parts = [f"사업명: {title}"] if title else []
+    기관 = entry.get("발주 기관", "").strip()
+    if 기관:
+        parts.append(f"발주기관: {기관}")
+    금액 = entry.get("사업 금액", "").strip()
+    if 금액:
+        parts.append(f"사업금액: {_format_amount(금액)}")
+    차수 = entry.get("공고 차수", "").strip()
+    if 차수:
+        parts.append(f"공고차수: {차수}")
+    return " | ".join(parts)
+
+
+def _format_amount(value: str) -> str:
+    try:
+        return f"{int(float(value)):,}원"
+    except ValueError:
+        return value
+
+
 def _parse_hwp_document(project_root: Path, path: Path) -> list[dict[str, str]]:
-    """olefile로 HWP BodyText section을 best-effort로 추출합니다."""
+    """olefile + HWP5 레코드 파싱으로 BodyText section의 문단 텍스트를 추출합니다."""
     try:
         import olefile  # type: ignore
     except ImportError as exc:
@@ -156,12 +180,16 @@ def _parse_hwp_document(project_root: Path, path: Path) -> list[dict[str, str]]:
         raise ValueError(f"{path} is not a valid HWP/OLE file.") from exc
 
     with ole:
-        section_names = sorted(
-            "/".join(item)
-            for item in ole.listdir()
-            if len(item) == 2 and item[0] == "BodyText" and item[1].startswith("Section")
+        section_items = sorted(
+            (
+                item
+                for item in ole.listdir()
+                if len(item) == 2 and item[0] == "BodyText" and item[1].startswith("Section")
+            ),
+            key=lambda item: int(item[1].removeprefix("Section")),
         )
-        for index, section_name in enumerate(section_names, start=1):
+        for index, item in enumerate(section_items, start=1):
+            section_name = "/".join(item)
             data = ole.openstream(section_name).read()
             text = _extract_hwp_text(data)
             if text:
@@ -253,14 +281,18 @@ def _extract_xml_paragraphs(xml_bytes: bytes) -> list[str]:
     return [text] if text else []
 
 
+HWPTAG_PARA_TEXT = 0x10 + 51  # 67: BodyText section 레코드 중 문단 텍스트 레코드
+
+
 def _extract_hwp_text(data: bytes) -> str:
-    for candidate in (_try_zlib_decompress(data), data):
-        if not candidate:
-            continue
-        text = _decode_hwp_text(candidate)
-        if text:
-            return text
-    return ""
+    """BodyText section bytes(압축 여부 무관)에서 문단 텍스트만 추출합니다.
+
+    section 전체를 단순히 UTF-16으로 디코딩하면 표/그림/스타일 등 비텍스트
+    레코드의 바이너리가 노이즈로 섞여 본문이 묻힌다. 레코드 헤더를 읽어
+    HWPTAG_PARA_TEXT 레코드만 디코딩해야 깨끗한 본문을 얻을 수 있다.
+    """
+    decompressed = _try_zlib_decompress(data)
+    return _normalize_text(_parse_hwp_records(decompressed or data))
 
 
 def _try_zlib_decompress(data: bytes) -> bytes:
@@ -270,10 +302,52 @@ def _try_zlib_decompress(data: bytes) -> bytes:
         return b""
 
 
-def _decode_hwp_text(data: bytes) -> str:
-    decoded = data.decode("utf-16le", errors="ignore")
-    decoded = re.sub(r"[\x00-\x08\x0b\x0c\x0e-\x1f]+", " ", decoded)
-    return _normalize_text(decoded)
+def _parse_hwp_records(data: bytes) -> str:
+    paragraphs: list[str] = []
+    pos, size_of_data = 0, len(data)
+    while pos + 4 <= size_of_data:
+        header = int.from_bytes(data[pos : pos + 4], "little")
+        tag_id = header & 0x3FF
+        size = (header >> 20) & 0xFFF
+        pos += 4
+        if size == 0xFFF:
+            if pos + 4 > size_of_data:
+                break
+            size = int.from_bytes(data[pos : pos + 4], "little")
+            pos += 4
+        record_data = data[pos : pos + size]
+        pos += size
+        if tag_id == HWPTAG_PARA_TEXT:
+            text = _decode_hwp_para_text(record_data)
+            if text.strip():
+                paragraphs.append(text)
+    return "\n".join(paragraphs)
+
+
+def _decode_hwp_para_text(data: bytes) -> str:
+    """문단 텍스트 레코드를 디코딩합니다.
+
+    코드값 32 미만의 제어문자는 표/필드 등 인라인 컨트롤을 가리키며, 뒤따르는
+    WCHAR 7개(14바이트)는 텍스트가 아니라 컨트롤 부가정보이므로 함께 건너뛴다.
+    surrogate pair로 표현되는 문자가 끊기지 않도록, 일반 텍스트 구간은
+    바이트 버퍼에 모아 한 번에 utf-16-le로 디코딩한다.
+    """
+    parts: list[str] = []
+    buffer = bytearray()
+    i, n = 0, len(data) - (len(data) % 2)
+    while i < n:
+        code = int.from_bytes(data[i : i + 2], "little")
+        if code in (9, 10, 13) or code >= 32:
+            buffer += data[i : i + 2]
+            i += 2
+            continue
+        if buffer:
+            parts.append(buffer.decode("utf-16-le", errors="ignore"))
+            buffer.clear()
+        i += 2 + 14
+    if buffer:
+        parts.append(buffer.decode("utf-16-le", errors="ignore"))
+    return "".join(parts)
 
 
 def _normalize_file_types(file_types: list[str] | None) -> set[str]:
