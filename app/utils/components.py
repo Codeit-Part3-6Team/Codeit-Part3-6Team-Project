@@ -24,25 +24,41 @@ IC_USERS  = _svg('<path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle c
 
 # 페이지 경로 (st.navigation 에 등록된 경로와 동일해야 함)
 P_HOME      = "views/home.py"
+P_ABOUT     = "views/about.py"    # 신규: 서비스 소개 페이지
 P_ANALYZE   = "views/analyze.py"
 P_WORKSPACE = "views/workspace.py"
 P_PRICING   = "views/pricing.py"
+P_SEARCH    = "views/search.py"   # 정부제안서 검색(외부 사이트 모음)
 
 
 def topbar():
-    """상단 네비바: 좌측 브랜드 + 우측 페이지 링크(홈/요금제)."""
-    left, right = st.columns([3, 1.3], vertical_alignment="center")
+    """상단 네비바 (A안 레이아웃).
+    좌측 끝 : 브랜드 'IT'S MINE' (크게 · 클릭하면 홈으로 이동)
+    우측 끝 : 서비스 소개 / 정부제안서 검색 / 요금제 (균등 폭으로 모음)
+    """
+    # 왼쪽 브랜드 영역은 넓게 잡아 IT'S MINE 을 왼쪽 끝에 두고,
+    # 오른쪽 메뉴 영역은 좁게 잡아 3개를 오른쪽 끝으로 몰아준다.
+    left, mid, right = st.columns([2, 3, 3], vertical_alignment="center")
     with left:
-        st.markdown(f'<div class="brand">{IC_DOC} BidAI</div>', unsafe_allow_html=True)
+        # 브랜드 자체가 '홈으로 가는 링크'(요구사항 2).
+        # st.container(key="brandbar") → div 에 'st-key-brandbar' 클래스가 붙어
+        # styles.py 에서 이 링크만 크게 키운다(요구사항 1).
+        with st.container(key="brandbar"):
+            st.page_link(P_HOME, label="IT'S MINE")
     with right:
-        n1, n2 = st.columns(2)
-        with n1:
-            st.page_link(P_HOME, label="홈")
-        with n2:
-            st.page_link(P_PRICING, label="요금제")
+        # 메뉴 3개를 같은 폭으로 나란히 → 오른쪽에 균등 배치.
+        # st.container(key="navbar") → hover 효과를 이 메뉴에만 적용(요구사항 4).
+        with st.container(key="navbar"):
+            n1, n2, n3 = st.columns(3)
+            with n1:
+                st.page_link(P_ABOUT, label="서비스 소개")
+            with n2:
+                st.page_link(P_SEARCH, label="정부제안서 검색")
+            with n3:
+                st.page_link(P_PRICING, label="요금제")
     st.markdown('<div class="topbar-line"></div>', unsafe_allow_html=True)
 
 
 def footer():
-    st.markdown('<div class="foot">© 2026 BidAI · RFP 입찰 분석 서비스 · hello@bidai.kr</div>',
+    st.markdown('<div class="foot">© 2026 IT\'S MINE · RFP 입찰 분석 서비스 · hello@bidai.kr</div>',
                 unsafe_allow_html=True)
