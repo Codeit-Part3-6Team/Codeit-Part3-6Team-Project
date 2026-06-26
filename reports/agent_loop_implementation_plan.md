@@ -842,3 +842,28 @@ agent:
 | v6 | 2026-06-25 | **2차 감사 버그 수정**: 5건 (inline schema 무시, Phase DAG cycle crash, prompt_template 키 불일치, scoring retriever 미연동, similarity/mmr 미지원). Agent 산출물 지표 추가. |
 | v7 | 2026-06-25 | **보류 3건 해소**: Phase 병렬, scoring 고도화, Agent 평가. tool_selection_accuracy/hallucination_avoidance_rate 실제 계산. |
 | v8 | 2026-06-25 | **챗봇 지원**: ChatbotRunner(LLM 동적 Tool 선택), agent.chatbot.enabled, CLI 루프. 3차 리뷰 버그 5건 수정. A (96/100). |
+| v9 | 2026-06-25 | **통합 감사 해소**: 32건 이슈(🔴6 🟠6 🟡10 🟢10) 전수 수정. 15 fix 커밋. 55 tests pass. 실패 가시성 강화(ValueError/errors/artifact_status). 파생 버그 2건 추가 수정. |
+
+---
+
+# 부록 H: Fix 로그 — 15건
+
+> v9 기준. `feature/agent-polish` 브랜치의 모든 fix 커밋 연대기.
+
+| # | 커밋 | 내용 |
+|---|------|------|
+| 1 | `2ebfc01` | 치명: 문서 chunk 로딩, structured_output 보존, adapter payload |
+| 2 | `8b1cb6e` | chunks.csv 로딩으로 수정 |
+| 3 | `807754d` | 치명 6건: state context, eval output_dir, Pydantic model_dump, not_found status, structured_output 포함, nested JSON |
+| 4 | `209aca7` | 높음 5건: chatbot chunks, embedding config, answerer on_failure, retry partial, judge word boundary |
+| 5 | `d560d82` | #14 chatbot LLM 실패 진단 stderr |
+| 6 | `c72061f` | #18 judge import re + normalized 토큰 비교 |
+| 7 | `e84eaa8` | 중간 10건: dead code, StopIteration, schema 경고, json 방어, rules 타입체크, answer 절단 |
+| 8 | `e4891a9` | #25 output_dir guard + #24 model_name warning |
+| 9 | `4c7326c` | 실패 가시성 3건: model_name ValueError, schema errors 기록, artifact_status |
+| 10 | `afd383c` | 경미 9건: abort 주석, prompt KeyError, enum 비교, DAG wording, 코드 스타일 |
+| 11 | `035d6dd` | 파생 버그: OnFailure/write_json import, abort_phase 회귀 테스트 |
+| 12 | `f192e38` | BUG4 _CHAT_HISTORY, BUG5 DAG cycle |
+| 13 | `bae0957` | 3차 리뷰: scoring 경로, mode 정정, CLI dead flag |
+| 14 | `5505138` | 감사 5건 버그 수정 |
+| 15 | `068af9d` | 챗봇 4건: provider 분기, JSON 강건화, 히스토리 주입 |
