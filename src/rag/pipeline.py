@@ -368,7 +368,7 @@ def _ratio(rows: list[dict[str, str]], column: str, total: int) -> float:
 
 
 def _split_expected_ids(value: str) -> set[str]:
-    return {item.strip() for item in value.replace("|", ",").split(",") if item.strip()}
+    return {item.strip() for item in value.replace("|", ",").replace(";", ",").split(",") if item.strip()}
 
 
 def _join_ids(values: set[str]) -> str:
