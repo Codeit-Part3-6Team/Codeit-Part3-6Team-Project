@@ -445,7 +445,13 @@ def build_retriever_adapter(
     method = config.get("method", "keyword")
     top_k = int(config.get("top_k", 3))
     score_threshold = float(config.get("score_threshold", 0.0))
-    embedding_adapter = build_embedding_adapter(embedding_config)
+
+    embedding_adapter = None
+    if method in {"semantic", "similarity", "hybrid", "mmr"}:
+        provider = embedding_config.get("provider", "local")
+        if provider not in {"local", "huggingface"}:
+            embedding_config = {"provider": "local"}
+        embedding_adapter = build_embedding_adapter(embedding_config)
 
     scoring_kwargs = _extract_scoring_kwargs(full_rag_config)
 
