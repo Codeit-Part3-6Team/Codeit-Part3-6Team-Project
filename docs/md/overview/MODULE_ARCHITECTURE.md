@@ -83,11 +83,14 @@ flowchart LR
 | reranker | `rag.reranker.enabled`, `rag.reranker.model_name` |
 | 답변 방식 | `rag.answerer.mode`, `rag.answerer.provider` |
 | 평가 질문 | `evaluation.questions_path` |
-| Agent 실행 모드 | `agent.mode` |
-| Agent Phase DAG | `agent.phases` |
-| Tool dispatch | `agent.tools` |
-| Structured Output schema | `agent.output_schema` |
-| Scoring 기준 | `agent.scoring_rules` |
+| Agent 활성화 | `agent.enabled` |
+| Phase DAG | `agent.phases`, `depends_on`, `parallel` |
+| Tool 설정 | `agent.tools.*.description`, `retriever`, `answerer` |
+| Tool 실패 정책 | `agent.tools.*.on_failure` (skip/abort_phase/abort_agent) |
+| Phase 간 전달 | `agent.tools.*.input_from` |
+| Structured Output | `agent.tools.*.answerer.output_schema` |
+| 챗봇 모드 | `agent.chatbot.enabled`, `tool_selection_model` |
+| 키워드 가중치 | `rag.scoring.keyword_weights` |
 
 ## RAG Artifact
 

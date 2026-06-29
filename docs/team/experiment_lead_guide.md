@@ -136,10 +136,10 @@ ls experiments/rag_langchain/
 | 임베딩 모델 | `rag.embedding.provider` | local | local, ollama |
 | 답변 모델 | `rag.answerer.provider` | local | local, ollama, openai |
 | Agent 활성화 | `agent.enabled` | false | true, false |
-| Agent 최대 단계 | `agent.max_steps` | 12 | 6, 12, 20 |
-| Agent 도구 목록 | `agent.tools` | — | [extract_info, check_completeness, ...] |
-| Agent 구조화 출력 | `agent.structured_output.enabled` | false | true, false |
-| Agent 출력 스키마 | `agent.structured_output.schema` | — | rfp_summary, rfp_comparison |
+| Agent 최대 단계 | `agent.max_steps` | 15 | 10, 15, 30 |
+| Agent Tool 목록 | `agent.tools` | config별 정의 | extract_facts, decide_participation, ... |
+| Tool별 Structured Output | `tools.*.answerer.output_schema` | 없음 | facts_schema, decision_schema |
+| Tool별 프롬프트 | `tools.*.answerer.prompt_template` | 기본 프롬프트 | 커스텀 템플릿 |
 
 ### 실험 config 만들기
 

@@ -727,8 +727,9 @@ Tool 출력은 `tool_outputs.jsonl`에 기록되고, 최종 답변은 `agent_ans
 
 ### Structured output
 
-Agent 모드에서는 `agent.structured_output.enabled: true`일 때 답변이 Pydantic 스키마에 따라
-구조화됩니다. `agent.structured_output.schema`로 원하는 출력 스키마를 지정합니다 (예: `rfp_summary`, `rfp_comparison`, `rfp_recommendation`).
+Agent 모드에서는 각 Tool의 `output_schema` 키로 Structured Output을 활성화합니다.
+예: `tools.extract_facts.answerer.output_schema: facts_schema`.
+스키마는 `agent.schemas`에 inline 정의하거나 `schema_parser.py`의 BUILTIN_SCHEMAS를 참조합니다.
 
 구현체: `src/rag/structured_output.py`
 

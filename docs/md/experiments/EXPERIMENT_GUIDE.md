@@ -160,8 +160,8 @@ RAG에서는 답변 문장만 보지 않습니다. 아래 순서로 봅니다.
 | `rag.reranker.enabled` | 재정렬을 붙일 가치가 있는가? |
 | `rag.answerer.mode` | extractive 답변으로 충분한가, LLM 답변이 필요한가? |
 | `agent.enabled` | Agent/Chatbot 모드를 활성화할지 |
-| `agent.max_turns` | Agent 최대 검색-답변 반복 횟수 |
-| `agent.clarify_on_fail` | 근거 부족 시 사용자에게 확인 질문을 할지 |
+| `agent.max_steps` | Agent 최대 실행 단계 (무한 루프 방지) |
+| `agent.tools.*.on_failure` | Tool 실패 시 처리 (skip / abort_phase / abort_agent) |
 
 ## 실험 이름 규칙
 
