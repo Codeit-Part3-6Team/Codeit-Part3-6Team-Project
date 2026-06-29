@@ -13,6 +13,7 @@
 | 3 | metric 뽑기 (`--evaluate`) | `metrics.json` (retrieval_hit_rate, citation_correct_rate 등) | 대기 |
 | 4 | chunk_size, top_k, retriever_method 튜닝 | 실험 config 2~3종 + 결과 비교 | 대기 |
 | 5 | Ollama 모델 pull (`nomic-embed-text`, `llama3.2`) | VM 모델 준비 | 대기 |
+| 6 | Agent/Chatbot 실행 (`run_rag_agent.py`) | `agent_state.jsonl`, `agent_metrics.json` | 대기 |
 
 **실행 명령어**:
 ```bash

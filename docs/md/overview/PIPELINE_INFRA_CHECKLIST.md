@@ -33,6 +33,9 @@
 | 실험 산출물 저장 | 있음 | `experiments/{experiment.name}/` |
 | 실험 요약 리포트 | 있음 | `scripts/summarize_experiments.py` |
 | GCP VM 설정 가이드 | 있음 | `scripts/setup_vm.sh`, `docs/team/backup_guide.md` |
+| Agent/Chatbot 실행 | 있음 | `scripts/run_rag_agent.py` |
+| Agent 상태 기록 | 있음 | `agent_state.jsonl`, `agent_metrics.json` |
+| Agent 평가 | 있음 | `agent_evaluation.csv` |
 | 기본 테스트 | 있음 | `pytest` 기반 smoke/unit tests |
 
 ## 일부만 갖춘 것

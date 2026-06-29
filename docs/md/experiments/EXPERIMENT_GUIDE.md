@@ -159,6 +159,9 @@ RAG에서는 답변 문장만 보지 않습니다. 아래 순서로 봅니다.
 | `rag.embedding.provider` | local과 HuggingFace embedding 차이가 있는가? |
 | `rag.reranker.enabled` | 재정렬을 붙일 가치가 있는가? |
 | `rag.answerer.mode` | extractive 답변으로 충분한가, LLM 답변이 필요한가? |
+| `agent.enabled` | Agent/Chatbot 모드를 활성화할지 |
+| `agent.max_turns` | Agent 최대 검색-답변 반복 횟수 |
+| `agent.clarify_on_fail` | 근거 부족 시 사용자에게 확인 질문을 할지 |
 
 ## 실험 이름 규칙
 
@@ -202,6 +205,38 @@ backup:
   include_logs: true
   include_checkpoints: true
 ```
+
+## 7. Agent 실행
+
+단일 질문:
+
+```bash
+python scripts/run_rag_agent.py \
+  --config configs/experiments/rag/rag_langchain.yaml \
+  --project-root . \
+  --question "예산은 얼마야?"
+```
+
+평가 질문 세트:
+
+```bash
+python scripts/run_rag_agent.py \
+  --config configs/experiments/rag/rag_langchain.yaml \
+  --project-root . \
+  --evaluate
+```
+
+생성되는 주요 산출물:
+
+```text
+experiments/rag_langchain/
+|-- agent_state.jsonl
+|-- agent_metrics.json
+|-- agent_evaluation.csv
+```
+
+Agent 실행 시 retrieval과 answer 사이에 추가 검색 루프가 생기며,
+`agent_state.jsonl`에 각 턴의 질문, 근거, 답변 상태가 기록됩니다.
 
 ## HuggingFace는 어디에 쓰는가
 

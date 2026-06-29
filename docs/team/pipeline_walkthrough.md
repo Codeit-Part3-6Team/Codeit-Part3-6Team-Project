@@ -253,6 +253,7 @@ A: 바꾼 항목에 따라 다릅니다.
 | `rag.retriever.top_k` | `run_rag_retrieve.py` + `run_rag_chat.py --evaluate` | 검색 결과 개수만 다시 |
 | `rag.answerer.provider` | `run_rag_chat.py --evaluate` | 검색 결과는 그대로, 답변만 다시 |
 | `evaluation.questions_path` | `run_rag_chat.py --evaluate` | 평가 질문만 바뀜 |
+| `agent.tools` / `agent.max_steps` | `run_rag_agent.py --evaluate` | Agent 실행만 다시 |
 
 팁: 노트북에서 FLAG를 쓰면 `RUN_INGEST=False`로 두고 필요한 부분만 다시 돌릴 수 있습니다.
 
@@ -297,9 +298,24 @@ A: [golden_dataset_guide.md](golden_dataset_guide.md)를 참고하세요.
 
 ---
 
+## Agent 모드
+
+`ingest → retrieve → answer`의 단일 흐름을 넘어, 여러 Tool을 순차적으로 조합하는 **Agent 모드**가
+`scripts/run_rag_agent.py`로 제공됩니다.
+
+```bash
+python scripts/run_rag_agent.py --config configs/experiments/rag/agent/agent_lplus.yaml --project-root . --question "이 RFP 요약해줘"
+```
+
+Agent 모드는 `agent.enabled: true` config에서 활성화되며, Phase DAG에 따라 Tool을
+순차 실행하고 structured output을 생성합니다. 자세한 구조는 [agent_pipeline_overview.md](agent_pipeline_overview.md)를 참고하세요.
+
+---
+
 ## 관련 문서
 
 - 파이프라인 입출력 계약 (상세): [docs/md/rag/RAG_PIPELINE_SPEC.md](../md/rag/RAG_PIPELINE_SPEC.md)
+- Agent 파이프라인 개요: [agent_pipeline_overview.md](agent_pipeline_overview.md)
 - 실험 실행 가이드: [docs/md/experiments/EXPERIMENT_GUIDE.md](../md/experiments/EXPERIMENT_GUIDE.md)
 - 골든 데이터셋 구축 가이드: [golden_dataset_guide.md](golden_dataset_guide.md)
 - 첫 주 작업 목록: [first-week.md](first-week.md)
