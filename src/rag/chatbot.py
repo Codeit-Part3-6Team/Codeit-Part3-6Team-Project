@@ -87,6 +87,14 @@ class ChatbotRunner:
             self._add_history("assistant", reply)
             return {"reply": reply, "tool_used": None, "tool_result": None}
 
+        # input_from dependency 자동 실행
+        for dep_name in tool.input_from:
+            if dep_name not in self.state:
+                dep_tool = self.tools.get(dep_name)
+                if dep_tool:
+                    dep_result = self._run_tool_with_retry(dep_tool, user_input)
+                    self.state[dep_name] = dep_result
+
         result = self._run_tool_with_retry(tool, refined_question)
         self.state[tool_name] = result
 
