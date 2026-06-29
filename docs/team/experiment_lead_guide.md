@@ -293,8 +293,8 @@ python scripts/run_rag_agent.py \
 ```
 
 Agent 모드는 `agent.enabled: true`일 때 활성화되며, Phase DAG에 따라 여러 Tool을
-순차 실행합니다. 실행 trace는 `agent_trace.jsonl`, Tool 출력은 `tool_outputs.jsonl`,
-최종 답변은 `agent_answers.jsonl`에 저장됩니다.
+순차 실행합니다. 실행 trace는 `agent_state.jsonl`, Tool 출력은 `agent_state.jsonl`,
+최종 답변은 `agent_state.jsonl`에 저장됩니다.
 
 ## 8. Ollama 모델로 업그레이드하기
 

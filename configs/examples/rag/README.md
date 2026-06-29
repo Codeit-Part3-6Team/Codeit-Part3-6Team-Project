@@ -1,6 +1,7 @@
 # RAG 예제 config
 
 기본 실행 config가 아니라, 프로젝트에서 특정 기능을 켜고 싶을 때 참고할 config를 둡니다.
+Agent/Chatbot 설정은 `configs/experiments/rag/agent/`를 참고하세요.
 
 - `rag_hf_llm_answerer.yaml`: HuggingFace `transformers.pipeline` 기반 LLM answerer 예시
 - `rag_langchain_ollama.yaml`: LangChain splitter/embedding/retriever/answerer 기반 Ollama 실행 예시

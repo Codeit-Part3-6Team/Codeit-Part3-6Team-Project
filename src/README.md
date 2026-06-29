@@ -2,7 +2,7 @@
 
 `src/`는 파이프라인의 실제 구현 코드가 들어가는 곳입니다.
 
-현재 프로젝트의 기본 구현 대상은 RAG입니다. `src/train.py`, `src/predict.py`, `src/models/`는 기존 분류/HuggingFace 학습 파이프라인 참고용으로 남아 있습니다.
+현재 프로젝트의 기본 구현 대상은 RAG이며, `src/rag/`에 Agent Loop(Phase DAG + Tool dispatch)와 Chatbot 모듈이 추가되어 있습니다. `src/train.py`, `src/predict.py`, `src/models/`는 기존 분류/HuggingFace 학습 파이프라인 참고용으로 남아 있습니다.
 
 ## 구조
 

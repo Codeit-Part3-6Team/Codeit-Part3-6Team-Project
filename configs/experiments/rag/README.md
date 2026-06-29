@@ -15,6 +15,8 @@
 | `rag_keyword.yaml` | keyword retriever 비교 | `rag.retriever.method` |
 | `rag_hybrid.yaml` | keyword + semantic hybrid 비교 | `rag.retriever.keyword_weight`, `rag.retriever.semantic_weight` |
 | `rag_agent.yaml` | Agent 확장 참조 템플릿 (`agent.enabled: false` 기본) | `agent.enabled`, `agent.phases`, `agent.tools.*` |
+| `agent/agent_lplus.yaml` | L+ 시나리오 예시 (`agent.enabled: true` + `chatbot`) | `agent.phases`, `agent.tools.*`, `chatbot.*` |
+| `rag_agent_demo.yaml` | Agent + Chatbot 데모 config |
 
 ## 실험 명명 규칙
 

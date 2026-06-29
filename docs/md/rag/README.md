@@ -6,7 +6,8 @@ RAG 입력/출력 계약, 문서 처리, 검색, 답변, 평가 기준을 설명
 
 | 문서 | 용도 |
 | --- | --- |
-| [RAG_PIPELINE_SPEC.md](RAG_PIPELINE_SPEC.md) | RAG 파이프라인의 모든 입출력 계약을 정의합니다. 문서 loader, chunk, embedding, retrieval, answer, citation, 평가 산출물의 형식과 계약을 명시합니다. |
+| [RAG_PIPELINE_SPEC.md](RAG_PIPELINE_SPEC.md) | RAG 파이프라인의 모든 입출력 계약을 정의합니다. Agent 확장 섹션 포함. |
+| [PIPELINE_FLOW.md](../PIPELINE_FLOW.md) | RAG + Agent + Chatbot 전체 파이프라인 흐름도 | 문서 loader, chunk, embedding, retrieval, answer, citation, 평가 산출물의 형식과 계약을 명시합니다. |
 
 ## 언제 보는가
 
