@@ -148,6 +148,14 @@ class ChatbotRunner:
             print(f"[Chatbot] Tool selection failed ({type(exc).__name__}: {exc})", file=sys.stderr)
             return None, user_input
 
+        # Fallback: JSON parsing failed, try natural language
+        if not isinstance(parsed, dict) or "tool" not in parsed:
+            for name in self.tools:
+                if name in str(parsed) or name in text:
+                    self._add_history("user", user_input)
+                    return name, user_input
+            return None, user_input
+
         tool_name = parsed.get("tool")
         question = parsed.get("question", user_input)
         if isinstance(tool_name, str) and tool_name:
