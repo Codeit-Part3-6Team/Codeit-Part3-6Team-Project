@@ -400,6 +400,109 @@ class AgentRunner:
         write_json(output_dir / "agent_metrics.json", self._calculate_metrics())
 
 
+
+class AgentLoopRunner:
+    """Agent Loop: Planner -> Executor -> Evaluator 반복.
+
+    config의 agent.loop.max_iterations에 따라 Tool을 선택하고 실행한 뒤,
+    결과를 평가하여 부족하면 다른 Tool로 재시도합니다.
+    모든 Tool은 agent.tools에 정의된 것을 그대로 사용합니다.
+    """
+
+    def __init__(self, tools, loop_cfg, chunks, embeddings, agent_cfg=None):
+        self.tools = tools
+        self.max_iterations = int(loop_cfg.get("max_iterations", 5))
+        self.chunks = chunks
+        self.embeddings = embeddings
+        self.agent_cfg = agent_cfg or {}
+        self.state = {}
+        self.trace = []
+
+    def run(self, user_input):
+        self.trace = []
+        for iteration in range(self.max_iterations):
+            step = {"iteration": iteration + 1}
+            tool_name, question = self._plan(user_input, iteration)
+            if tool_name is None:
+                step["status"] = "no_tool_selected"
+                self.trace.append(step)
+                break
+            step["tool"] = tool_name
+
+            result = self._execute(tool_name, question)
+            self.state[tool_name] = result
+            step["status"] = result.status
+            step["answer"] = result.answer[:200] if result.answer else ""
+            step["duration_ms"] = result.duration_ms
+            self.trace.append(step)
+
+            if self._is_complete(result, iteration):
+                return self._build_response(result, tool_name)
+
+        last = self.trace[-1] if self.trace else {}
+        last_tool = last.get("tool")
+        if last_tool and last_tool in self.state:
+            return self._build_response(self.state[last_tool], last_tool)
+        return {"reply": "분석을 완료하지 못했습니다.", "tool_used": [], "completed": False, "trace": self.trace}
+
+    def _plan(self, user_input, iteration):
+        keyword_map = {
+            "extract_facts": ["추출", "요약", "분석", "예산", "기간", "자격", "마감", "정보"],
+            "decide_participation": ["참여", "판단", "추천", "가능", "적합"],
+        }
+        for name, keywords in keyword_map.items():
+            if name in self.tools and any(kw in user_input for kw in keywords):
+                return name, user_input
+        if self.tools:
+            first = next(iter(self.tools))
+            return first, user_input
+        return None, user_input
+
+    def _execute(self, tool_name, question):
+        from src.rag.tool import ToolResult
+        tool = self.tools.get(tool_name)
+        if tool is None:
+            return ToolResult(tool_name=tool_name, status="failed", errors=[f"Tool not found: {tool_name}"])
+        return tool.run(question, self.chunks, self.embeddings, self.state)
+
+    def _is_complete(self, result, iteration):
+        if result.status == "ok" and result.answer and "확인하지 못했습니다" not in result.answer:
+            return True
+        return iteration >= self.max_iterations - 1
+
+    def _build_response(self, result, tool_name):
+        reply = self._format(result)
+        return {
+            "reply": reply,
+            "tool_used": [t["tool"] for t in self.trace if "tool" in t],
+            "completed": True,
+            "status": result.status,
+            "citations_count": len(result.citations),
+            "trace": self.trace,
+        }
+
+    def _format(self, result):
+        if getattr(result, "structured_output", None):
+            lines = []
+            for k, v in result.structured_output.items():
+                if isinstance(v, list):
+                    lines.append(f"  {k}: " + ", ".join(str(x) for x in v))
+                else:
+                    lines.append(f"  {k}: {v}")
+            out = "\n".join(lines)
+        else:
+            out = getattr(result, "answer", "") or "(응답 없음)"
+        citations = getattr(result, "citations", [])
+        if citations:
+            sources = []
+            for c in citations[:3]:
+                page = c.get("page", c.get("page_start", "?"))
+                section = c.get("section", "")
+                sources.append(f"p.{page} ({section})" if section else f"p.{page}")
+            out += f"\n\n[출처: " + ", ".join(sources) + "]"
+        return out
+
+
 def run_rag_agent(
     config: dict[str, Any],
     project_root: str | Path = ".",
