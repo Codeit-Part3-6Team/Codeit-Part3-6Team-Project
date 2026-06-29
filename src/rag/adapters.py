@@ -104,6 +104,66 @@ class HuggingFaceEmbeddingAdapter:
 
 
 @dataclass
+class OllamaEmbeddingAdapter:
+    """LangChain OllamaEmbeddings 기반 임베딩 구현체입니다."""
+
+    model_name: str
+    base_url: str | None = None
+
+    def embed_chunks(self, chunks: list[dict[str, str]]) -> list[dict[str, Any]]:
+        vectors = self.embed_texts([chunk["text"] for chunk in chunks])
+        return [
+            {"chunk_id": chunk["chunk_id"], "embedding_model": self.model_name, "vector": vector}
+            for chunk, vector in zip(chunks, vectors)
+        ]
+
+    def embed_texts(self, texts: list[str]) -> list[list[float]]:
+        try:
+            from langchain_ollama import OllamaEmbeddings
+        except ImportError as exc:
+            raise ImportError(
+                "Ollama embedding을 사용하려면 langchain-ollama가 필요합니다. "
+                "`pip install langchain-ollama`를 먼저 실행하세요."
+            ) from exc
+        kwargs: dict[str, Any] = {"model": self.model_name}
+        if self.base_url:
+            kwargs["base_url"] = self.base_url
+        embedder = OllamaEmbeddings(**kwargs)
+        return embedder.embed_documents(texts)
+
+
+@dataclass
+class OpenAIEmbeddingAdapter:
+    """LangChain OpenAIEmbeddings 기반 임베딩 구현체입니다."""
+
+    model_name: str
+    api_key_env: str = "OPENAI_API_KEY"
+
+    def embed_chunks(self, chunks: list[dict[str, str]]) -> list[dict[str, Any]]:
+        vectors = self.embed_texts([chunk["text"] for chunk in chunks])
+        return [
+            {"chunk_id": chunk["chunk_id"], "embedding_model": self.model_name, "vector": vector}
+            for chunk, vector in zip(chunks, vectors)
+        ]
+
+    def embed_texts(self, texts: list[str]) -> list[list[float]]:
+        try:
+            from langchain_openai import OpenAIEmbeddings
+        except ImportError as exc:
+            raise ImportError(
+                "OpenAI embedding을 사용하려면 langchain-openai가 필요합니다. "
+                "`pip install langchain-openai`를 먼저 실행하세요."
+            ) from exc
+        import os
+        kwargs: dict[str, Any] = {"model": self.model_name}
+        api_key = os.environ.get(self.api_key_env)
+        if api_key:
+            kwargs["api_key"] = api_key
+        embedder = OpenAIEmbeddings(**kwargs)
+        return embedder.embed_documents(texts)
+
+
+@dataclass
 class KeywordRetrieverAdapter:
     """token overlap 기반 keyword retriever 구현체입니다."""
 
@@ -430,6 +490,16 @@ def build_embedding_adapter(config: dict[str, Any]) -> RagEmbeddingAdapter:
             device=str(config.get("device", "auto")),
             normalize=bool(config.get("normalize", True)),
         )
+    if provider == "ollama":
+        return OllamaEmbeddingAdapter(
+            model_name=str(config.get("model_name", "")),
+            base_url=config.get("base_url") or None,
+        )
+    if provider == "openai":
+        return OpenAIEmbeddingAdapter(
+            model_name=str(config.get("model_name", "")),
+            api_key_env=str(config.get("api_key_env", "OPENAI_API_KEY") or "OPENAI_API_KEY"),
+        )
     raise NotImplementedError(f"RAG embedding provider is not implemented yet: {provider}")
 
 
@@ -446,12 +516,7 @@ def build_retriever_adapter(
     top_k = int(config.get("top_k", 3))
     score_threshold = float(config.get("score_threshold", 0.0))
 
-    embedding_adapter = None
-    if method in {"semantic", "similarity", "hybrid", "mmr"}:
-        provider = embedding_config.get("provider", "local")
-        if provider not in {"local", "huggingface"}:
-            embedding_config = {"provider": "local"}
-        embedding_adapter = build_embedding_adapter(embedding_config)
+    embedding_adapter = build_embedding_adapter(embedding_config)
 
     scoring_kwargs = _extract_scoring_kwargs(full_rag_config)
 
