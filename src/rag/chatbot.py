@@ -64,6 +64,70 @@ class ChatbotRunner:
                     if line.strip():
                         self.embeddings.append(json.loads(line))
 
+
+    def _run_agent_loop(self, user_input: str, max_iterations: int = 3):
+        self._add_history('user', user_input)
+        tool_history = []
+
+        for iteration in range(max_iterations):
+            tool_name, refined_question = self._select_tool(user_input)
+            if tool_name is None:
+                break
+            tool = self.tools.get(tool_name)
+            if tool is None:
+                break
+
+            for dep_name in tool.input_from:
+                if dep_name not in self.state:
+                    dep_tool = self.tools.get(dep_name)
+                    if dep_tool:
+                        dep_result = self._run_tool_with_retry(dep_tool, user_input)
+                        self.state[dep_name] = dep_result
+
+            result = self._run_tool_with_retry(tool, refined_question)
+            self.state[tool_name] = result
+            tool_history.append(tool_name)
+
+            is_complete, next_tool = self._evaluate_result(user_input, tool_name, result, iteration, max_iterations)
+            if is_complete:
+                reply = self._format_tool_result(result)
+                self._add_history('assistant', reply)
+                return {
+                    'reply': reply,
+                    'tool_used': tool_history,
+                    'tool_result': {'status': result.status, 'answer': result.answer[:500], 'citations_count': len(result.citations), 'duration_ms': result.duration_ms},
+                }
+            if next_tool and next_tool in self.tools:
+                continue
+        return None
+
+    def _evaluate_result(self, user_input, tool_name, result, iteration, max_iterations):
+        if result.status == 'ok' and result.answer and '확인하지 못했습니다' not in result.answer:
+            return True, None
+        if iteration >= max_iterations - 1:
+            return True, None
+        return False, next(iter(self.tools))
+
+    def _format_tool_result(self, result):
+        if result.structured_output:
+            lines = []
+            for k, v in result.structured_output.items():
+                if isinstance(v, list):
+                    lines.append(f'  {k}: ' + ', '.join(str(x) for x in v))
+                else:
+                    lines.append(f'  {k}: {v}')
+            out = '\n'.join(lines)
+        else:
+            out = result.answer or '(응답 없음)'
+        if result.citations:
+            sources = []
+            for c in result.citations[:3]:
+                page = c.get('page', c.get('page_start', '?'))
+                section = c.get('section', '')
+                sources.append(f'p.{page} ({section})' if section else f'p.{page}')
+            out += f'\n\n[출처: ' + ', '.join(sources) + ']'
+        return out
+
     def chat(self, user_input: str) -> dict[str, Any]:
         """사용자 입력을 받아 Tool 선택 → 실행 → 응답을 반환합니다.
 
@@ -73,7 +137,9 @@ class ChatbotRunner:
         Returns:
             {"reply": str, "tool_used": str | None, "tool_result": dict | None}
         """
-        tool_name, refined_question = self._select_tool(user_input)
+        result = self._run_agent_loop(user_input, max_iterations=3)
+        if result:
+            return result
 
         if tool_name is None:
             reply = refined_question or "죄송합니다. 해당 질문에 적합한 도구를 찾지 못했습니다."
