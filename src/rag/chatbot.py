@@ -158,10 +158,25 @@ class ChatbotRunner:
 
         # Fallback: JSON parsing failed, try natural language
         if not isinstance(parsed, dict) or "tool" not in parsed:
+            combined = str(parsed) + " " + text
             for name in self.tools:
-                if name in str(parsed) or name in text:
+                if name in combined:
                     self._add_history("user", user_input)
                     return name, user_input
+            # Keyword fallback: Korean keywords -> tool mapping
+            keyword_map = {
+                "extract_facts": ["추출", "요약", "분석", "정보", "예산", "기간", "자격", "마감"],
+                "decide_participation": ["참여", "판단", "추천", "가능", "적합"],
+            }
+            for name, keywords in keyword_map.items():
+                if name in self.tools and any(kw in user_input for kw in keywords):
+                    self._add_history("user", user_input)
+                    return name, user_input
+            # Default: first tool
+            if self.tools:
+                first = next(iter(self.tools))
+                self._add_history("user", user_input)
+                return first, user_input
             return None, user_input
 
         tool_name = parsed.get("tool")
