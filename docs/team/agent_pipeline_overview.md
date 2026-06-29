@@ -46,6 +46,16 @@ python scripts/run_rag_agent.py \
 
 ---
 
+## Agent Loop 모드 (챗봇 내부 반복 실행)
+
+챗봇 모드에서 복잡한 질문이 들어오면 `AgentLoopRunner`가 여러 Tool을 순차적으로 실행합니다:
+
+- `agent.loop.enabled: true` — 반복 Tool 실행 활성화
+- config의 `loop.max_iterations` 값으로 최대 반복 횟수 제한
+- 활용 예: 단일 질문에 여러 Tool을 순차 적용해야 하는 복합 분석
+
+---
+
 ## Config만 바꾸면 동작이 달라진다
 
 | 바꾸는 것 | config 키 | 예시 |

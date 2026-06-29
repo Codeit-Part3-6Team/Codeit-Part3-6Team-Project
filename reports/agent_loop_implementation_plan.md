@@ -230,6 +230,32 @@ rag:
 - `judge.py`가 `build_answerer_adapter()`와 동일한 패턴으로 judge backend 선택
 - config `evaluation.llm_judge.provider: ollama` 지원
 
+### 2.11 `src/rag/agent_loop_runner.py` — 신규 (~120L)
+
+**책임**: Planner Tool + Executor + Evaluator 를 반복 루프로 수행하는 config 기반 반복 실행 모드
+
+```
+AgentLoopRunner
+├── agent.enabled: true + agent.loop.enabled: true → loop 진입
+├── Planner: agent.tools[].description 기준으로 적절한 Tool 선택 (LLM 기반)
+├── Executor: 선택된 Tool 실행 (retrieve → answer → output_schema 검증)
+├── Evaluator: ToolResult 평가, 부족하면 다른 Tool 재선택 → max_iterations까지 반복
+└── 한 iteration마다 answer + citations + errors 누적 → State에 기록
+```
+
+**핵심 로직**:
+- `agent.loop.enabled: false` → 기존 AgentRunner Phase DAG 모드로 진행
+- `agent.loop.enabled: true` → Plan→Execute→Evaluate 반복 루프 진입
+- `agent.loop.max_iterations`로 무한 루프 방지 (기본값 5)
+- 각 iteration에서 Planner가 `agent.tools` 중 적절한 Tool을 LLM으로 선택
+- Evaluator가 결과 품질을 판단하여 만족 시 early stop, 불충족 시 다른 Tool로 재시도
+- State dict에 iteration별 ToolResult를 history로 누적 → 다음 iteration의 context로 활용
+
+**설계 결정**:
+- Tool 선택은 `agent.chatbot.tool_selection_model`과 동일한 LLM 사용 → config 일관성
+- Evaluator 판정 로직은 기본적으로 `not_found` 감지 + answer 길이 체크 → 필요 시 LLM judge 연동
+- `on_failure` 정책과 연계: 한 Tool이 `abort_agent`면 loop 즉시 종료
+
 ---
 
 ## 3. 호환성 계약
@@ -843,6 +869,7 @@ agent:
 | v7 | 2026-06-25 | **보류 3건 해소**: Phase 병렬, scoring 고도화, Agent 평가. tool_selection_accuracy/hallucination_avoidance_rate 실제 계산. |
 | v8 | 2026-06-25 | **챗봇 지원**: ChatbotRunner(LLM 동적 Tool 선택), agent.chatbot.enabled, CLI 루프. 3차 리뷰 버그 5건 수정. A (96/100). |
 | v9 | 2026-06-25 | **통합 감사 해소**: 32건 이슈(🔴6 🟠6 🟡10 🟢10) 전수 수정. 15 fix 커밋. 55 tests pass. 실패 가시성 강화(ValueError/errors/artifact_status). 파생 버그 2건 추가 수정. |
+| v10 | 2026-06-29 | **AgentLoopRunner 구현**: Plan→Execute→Evaluate 반복 루프. `agent.loop.*` config (`enabled`, `max_iterations`) 신설. AgentLoopRunner 신규 파일 추가, configs/README.md Agent Loop 모드 문서화. |
 
 ---
 

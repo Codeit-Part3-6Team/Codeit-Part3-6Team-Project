@@ -121,7 +121,25 @@ flowchart TB
     U --> LLM
     TOOLS --> LLM
     LLM --> CHOOSE --> EXEC --> REPLY --> HIST
-    HIST -.->|"context"| LLM
+     HIST -.->|"context"| LLM
+```
+
+### Agent Loop 모드
+
+```mermaid
+flowchart TB
+    U["👤 User Question"]
+    LOOP["🔄 AgentLoopRunner"]
+    PLAN["📋 Plan: Tool 선택"]
+    EXEC["⚡ Execute: Tool 실행 + State 누적"]
+    EVAL["🔍 Evaluate: 결과 평가"]
+    CHECK{"✅ Complete?"}
+    YES["💬 Format & Reply"]
+    NO["🔄 Plan next Tool"]
+
+    U --> LOOP --> PLAN --> EXEC --> EVAL --> CHECK
+    CHECK -->|"Yes"| YES
+    CHECK -->|"No"| NO --> PLAN
 ```
 
 ## 데이터 흐름 요약
