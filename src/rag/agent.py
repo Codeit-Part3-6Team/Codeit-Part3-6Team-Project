@@ -207,7 +207,8 @@ class AgentRunner:
         self.state[tool_name] = tool_result
 
         if self.verbose:
-            status_icon = "OK" if tool_result.status in ("ok", "partial") else "FAIL"
+            status_map = {"ok": "OK", "partial": "PARTIAL", "not_found": "NF", "failed": "FAIL", "skipped": "SKIP"}
+            status_icon = status_map.get(tool_result.status, tool_result.status.upper())
             print(f"  Tool {tool_name}: {status_icon} ({tool_result.duration_ms}ms)")
 
         abort = False
