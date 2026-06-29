@@ -154,48 +154,20 @@ class LangChainRagEngine:
         answerer_cfg = self.rag_config.get("answerer", {})
         if "llm" in self.rag_config:
             import warnings
-
             warnings.warn(
                 "rag.llm is deprecated. Use rag.answerer instead.",
                 DeprecationWarning,
                 stacklevel=2,
             )
         provider = str(answerer_cfg.get("provider", answerer_cfg.get("type", "local")) or "local")
-        fallback_msg = answerer_cfg.get("fallback_message", "문서에서 확인하지 못했습니다.")
         if provider == "local":
             return build_answer(
                 question,
                 retrieved_chunks,
-                fallback_message=fallback_msg,
+                fallback_message=answerer_cfg.get("fallback_message", "문서에서 확인하지 못했습니다."),
             )
-        if not retrieved_chunks:
-            return {
-                "question": question,
-                "answer": fallback_msg,
-                "citations": [],
-                "status": "not_found",
-            }
-        prompt = _build_prompt(question, retrieved_chunks, answerer_cfg.get("prompt"))
-        model = self._build_chat_model(answerer_cfg)
-        response = model.invoke(prompt)
-        answer_text = getattr(response, "content", str(response)).strip()
-        if not answer_text:
-            answer_text = fallback_msg
-
-        used_chunk_ids = _parse_used_chunks(answer_text)
-        is_fallback = answer_text.strip().startswith(
-            fallback_msg.strip()
-        ) or answer_text.strip().startswith(
-            "문서에서 찾을 수 없습니다"
-        )
-
-        return {
-            "question": question,
-            "answer": answer_text,
-            "citations": _citations_from_chunks(retrieved_chunks, used_chunk_ids),
-            "status": "not_found" if is_fallback else "answered",
-        }
-
+        from src.rag.adapters import build_answerer_adapter
+        return build_answerer_adapter(answerer_cfg).answer(question, retrieved_chunks)
     def _build_embeddings(self) -> Any:
         embedding_cfg = self.rag_config.get("embedding", {})
         provider = str(embedding_cfg.get("provider", embedding_cfg.get("type", "huggingface")) or "huggingface")

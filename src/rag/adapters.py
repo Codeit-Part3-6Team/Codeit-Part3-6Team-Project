@@ -757,12 +757,14 @@ def _extract_generated_text(generated: Any, prompt: str) -> str:
     return text.strip()
 
 
-def _citations_from_chunks(retrieved_chunks: list[dict[str, Any]]) -> list[dict[str, Any]]:
+def _citations_from_chunks(retrieved_chunks: list[dict[str, Any]], used_chunk_ids: set[str] | None = None) -> list[dict[str, Any]]:
     citations = []
     seen = set()
-    for chunk in retrieved_chunks:
+    for index, chunk in enumerate(retrieved_chunks, start=1):
         chunk_id = str(chunk.get("chunk_id", ""))
         if not chunk_id or chunk_id in seen:
+            continue
+        if used_chunk_ids is not None and used_chunk_ids and str(index) not in used_chunk_ids:
             continue
         seen.add(chunk_id)
         citations.append(
