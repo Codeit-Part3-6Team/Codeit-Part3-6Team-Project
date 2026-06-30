@@ -1,6 +1,6 @@
 """내부 RFP 문서 선택형 Streamlit UI 초안.
 
-기존에 ingest된 run을 재사용하는 화면 예시입니다.
+기존에 ingest된 내부 문서 인덱스를 자동으로 재사용하는 화면 예시입니다.
 최종 UI에 직접 연결하지 않고, 프론트 구현 참고용으로 둡니다.
 """
 
@@ -27,11 +27,12 @@ from services.rag_service import (
 )
 
 
-def _run_label(run: dict) -> str:
-    created = run.get("created_at") or "unknown time"
-    status = run.get("status") or "unknown"
-    docs = run.get("documents", 0)
-    return f"{run['run_id']} · {status} · {docs} docs · {created}"
+def _latest_internal_run() -> dict | None:
+    """사용자에게 run을 노출하지 않고 최신 내부 문서 인덱스를 선택합니다."""
+    for run in list_runs():
+        if int(run.get("documents") or 0) > 0:
+            return run
+    return None
 
 
 def _citation_label(citation: dict) -> str:
@@ -73,38 +74,33 @@ st.set_page_config(
     layout="wide",
 )
 
-st.title("내부 RFP 문서 분석 초안")
+st.title("내부 RFP 문서 분석")
 
-runs = list_runs()
-if not runs:
-    st.info("아직 재사용할 RAG run이 없습니다. 먼저 ingest를 실행해 주세요.")
+internal_run = _latest_internal_run()
+if internal_run is None:
+    st.info("분석할 내부 문서 인덱스가 없습니다. 먼저 내부 RFP 문서 ingest를 실행해 주세요.")
     st.stop()
 
-selected_run = st.selectbox(
-    "분석할 run",
-    options=runs,
-    format_func=_run_label,
-)
-run_id = selected_run["run_id"]
-
+run_id = internal_run["run_id"]
 documents = get_documents(run_id)
 if not documents:
-    st.warning("선택한 run에 문서 목록이 없습니다.")
+    st.warning("내부 문서 목록을 불러오지 못했습니다.")
     st.stop()
 
 doc_options = {doc["document_id"]: doc for doc in documents}
+st.caption(f"내부 문서 {len(documents)}개를 대상으로 분석합니다.")
+
 selected_doc_ids = st.multiselect(
-    "분석할 내부 문서",
+    "특정 문서만 보기",
     options=list(doc_options.keys()),
     format_func=lambda doc_id: f"{doc_options[doc_id]['title']} ({doc_options[doc_id]['chunk_count']} chunks)",
 )
 
 active_doc_ids = selected_doc_ids or None
-
-st.caption(
-    "문서를 선택하지 않으면 run 전체 문서를 대상으로 분석합니다. "
-    "문서를 선택하면 선택한 문서의 chunk만 검색합니다."
-)
+if active_doc_ids:
+    st.caption(f"선택 문서 {len(active_doc_ids)}개만 검색합니다.")
+else:
+    st.caption("선택한 문서가 없으면 전체 내부 문서를 검색합니다.")
 
 tab_summary, tab_requirements, tab_compare, tab_chat = st.tabs(
     ["핵심 요약", "참가 자격/서류", "문서 비교", "질문"]

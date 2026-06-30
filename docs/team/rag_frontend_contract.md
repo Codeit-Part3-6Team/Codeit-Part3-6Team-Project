@@ -200,23 +200,24 @@ BodyText/Section0
 
 ### 내부 문서 선택 분석
 
-이미 ingest된 내부 RFP 문서를 대상으로 할 때는 새 ingest를 실행하지 않고 기존 run을 재사용합니다.
+이미 ingest된 내부 RFP 문서를 대상으로 할 때는 새 ingest를 실행하지 않고 기존 내부 인덱스를 재사용합니다. `run_id`는 내부 구현 값이므로 사용자 화면에는 노출하지 않습니다.
 
-1. `list_runs()`로 사용 가능한 run 목록을 가져옵니다.
-2. 사용자가 run을 선택합니다.
-3. `get_documents(run_id)`로 문서 목록을 가져옵니다.
-4. 사용자가 분석할 문서를 선택합니다.
-5. 선택 문서가 있으면 `selected_doc_ids`로 넘기고, 없으면 run 전체를 대상으로 둡니다.
-6. `summarize(run_id, selected_doc_ids)`, `extract_requirements(run_id, selected_doc_ids)`, `compare(run_id, selected_doc_ids)`를 호출합니다.
-7. 질문형 UI는 `ask_with_document_filter(run_id, question, selected_doc_ids)`를 호출합니다.
+1. UI 로딩 시 `list_runs()`로 사용 가능한 내부 인덱스를 가져옵니다.
+2. 문서가 있는 최신 run을 내부적으로 선택합니다.
+3. `get_documents(run_id)`로 전체 내부 문서 목록을 가져옵니다.
+4. 화면에는 run 선택이 아니라 문서 선택 필터만 보여줍니다.
+5. 문서를 선택하지 않으면 전체 내부 문서를 대상으로 둡니다.
+6. 선택 문서가 있으면 `selected_doc_ids`로 넘깁니다.
+7. `summarize(run_id, selected_doc_ids)`, `extract_requirements(run_id, selected_doc_ids)`, `compare(run_id, selected_doc_ids)`를 호출합니다.
+8. 질문형 UI는 `ask_with_document_filter(run_id, question, selected_doc_ids)`를 호출합니다.
 
 ```python
-runs = list_runs()
-run_id = selected_run["run_id"]
+internal_run = next(run for run in list_runs() if run["documents"] > 0)
+run_id = internal_run["run_id"]  # 화면에는 노출하지 않는 내부 값
 
 documents = get_documents(run_id)
 selected_doc_ids = st.multiselect(
-    "분석할 문서",
+    "특정 문서만 보기",
     options=[doc["document_id"] for doc in documents],
 )
 
