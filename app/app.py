@@ -45,6 +45,7 @@ with st.sidebar:
         options=["demo", "real"],
         format_func=lambda m: "데모 모드" if m == "demo" else "실전 모드",
         horizontal=True,
+        key="app_mode_radio",
     )
     if ss.mode != prev_mode:
         # 모드 전환 시 상태 초기화
@@ -55,7 +56,7 @@ with st.sidebar:
         ss.run_id = None
         ss.pending_q = None
         ss.pending_tool = None
-        from app.services.rag_service import clear_chatbot
+        from services.rag_service import clear_chatbot
         clear_chatbot()
 
     st.markdown("---")
@@ -65,7 +66,7 @@ with st.sidebar:
     else:
         st.caption("실전 모드: 문서 업로드 → RAG 분석 → 챗봇")
         # 기존 run 선택
-        from app.services.rag_service import list_runs
+        from services.rag_service import list_runs
         runs = list_runs()
         if runs:
             run_options = {r["run_id"]: f"{r['run_id'][:20]}... ({r['status']})" for r in runs}

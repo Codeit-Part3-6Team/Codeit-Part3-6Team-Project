@@ -57,7 +57,7 @@ with h1:
 with h2:
     if st.button("다른 문서 분석", type="secondary", use_container_width=True, key="ws_change"):
         if is_real:
-            from app.services.rag_service import clear_chatbot
+            from services.rag_service import clear_chatbot
             clear_chatbot(ss.run_id)
             ss.run_id = None
         ss.doc_name = None
@@ -71,7 +71,7 @@ st.markdown('<div style="height:14px"></div>', unsafe_allow_html=True)
 # ── 실전 모드: 문서 선택 체크박스 ──────────────────────────────────────────
 selected_doc_ids: list[str] = []
 if is_real:
-    from app.services.rag_service import get_documents
+    from services.rag_service import get_documents
     docs = get_documents(ss.run_id)
     if docs:
         with st.expander(f"분석된 문서 ({len(docs)}개) — 선택하여 범위 좁히기", expanded=False):
@@ -241,7 +241,7 @@ with right:
             ph = st.empty()
 
             with st.spinner("문서에서 검색 중... (RAG)"):
-                from app.services.rag_service import ask_with_document_filter, run_tool
+                from services.rag_service import ask_with_document_filter, run_tool
 
                 if pending_tool:
                     response = run_tool(

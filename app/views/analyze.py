@@ -105,7 +105,7 @@ else:
                         dest.write_bytes(uf.getbuffer())
 
                     with st.spinner(f"문서 {len(uploaded_files)}개를 분석 중입니다... (RAG 파이프라인 실행)"):
-                        from app.services.rag_service import create_and_ingest
+                        from services.rag_service import create_and_ingest
 
                         result = create_and_ingest(str(tmp))
 
@@ -128,7 +128,7 @@ else:
 
     else:
         # run_id 있음 → ready 상태 표시
-        from app.services.rag_service import get_run_info, get_documents
+        from services.rag_service import get_run_info, get_documents
 
         info = get_run_info(run_id)
         docs = get_documents(run_id)
@@ -159,7 +159,7 @@ else:
                 st.switch_page(P_WORKSPACE)
         with col2:
             if st.button("다른 문서 분석", type="secondary", use_container_width=True):
-                from app.services.rag_service import clear_chatbot
+                from services.rag_service import clear_chatbot
                 clear_chatbot(run_id)
                 ss.run_id = None
                 ss.analyzed = False
