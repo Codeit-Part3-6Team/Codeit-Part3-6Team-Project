@@ -224,12 +224,52 @@ def _filter_bot_documents(bot: Any, selected_doc_ids: list[str] | None) -> bool:
 
 
 def _collect_citations(bot: Any, tool_used: str | list[str] | None) -> list[dict[str, Any]]:
-    if not tool_used:
+    result = _get_state_result(bot, tool_used)
+    if result is None:
         return []
+    return _dedupe_citations(list(result.citations))
+
+
+def _get_state_result(bot: Any, tool_used: str | list[str] | None) -> Any | None:
+    if not tool_used:
+        return None
     tool_name = tool_used[-1] if isinstance(tool_used, list) else tool_used
     if tool_name in bot.state:
-        return list(bot.state[tool_name].citations)
-    return []
+        return bot.state[tool_name]
+    return None
+
+
+def _dedupe_citations(citations: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    seen: set[str] = set()
+    deduped: list[dict[str, Any]] = []
+    for citation in citations:
+        key = str(citation.get("chunk_id") or citation)
+        if key in seen:
+            continue
+        seen.add(key)
+        deduped.append(citation)
+    return deduped
+
+
+def _format_structured_output(structured: dict[str, Any] | None) -> str:
+    if not structured:
+        return ""
+
+    lines: list[str] = []
+    for key, value in structured.items():
+        if isinstance(value, list):
+            lines.append(f"{key}")
+            if value:
+                for item in value:
+                    lines.append(f"- {item}")
+            else:
+                lines.append("- 명시되지 않음")
+        elif value in (None, ""):
+            lines.append(f"{key}: 명시되지 않음")
+        else:
+            lines.append(f"{key}: {value}")
+        lines.append("")
+    return "\n".join(lines).strip()
 
 
 def _strip_source_block(reply: str) -> str:
@@ -237,6 +277,13 @@ def _strip_source_block(reply: str) -> str:
     if marker in reply:
         return reply.split(marker, 1)[0].rstrip()
     return reply
+
+
+def _display_reply(raw_reply: str, structured: dict[str, Any] | None = None) -> str:
+    structured_reply = _format_structured_output(structured)
+    if structured_reply:
+        return structured_reply
+    return _strip_source_block(raw_reply)
 
 
 def _execute_tool(bot: Any, tool_name: str, question: str) -> Any:
@@ -279,15 +326,18 @@ def ask(run_id: str, question: str) -> dict[str, Any]:
 
         citations: list[dict[str, Any]] = []
         tool_used = response.get("tool_used")
+        structured_output = None
         if tool_used:
             tool_name = tool_used[-1] if isinstance(tool_used, list) else tool_used
             if tool_name in bot.state:
                 tool_result = bot.state[tool_name]
-                citations = list(tool_result.citations)
+                citations = _dedupe_citations(list(tool_result.citations))
+                structured_output = tool_result.structured_output
 
         return {
-            "reply": _strip_source_block(response.get("reply", "")),
+            "reply": _display_reply(response.get("reply", ""), structured_output),
             "tool_used": tool_used,
+            "structured_output": structured_output,
             "citations": citations,
             "status": (response.get("tool_result") or {}).get("status", "unknown"),
             "duration_ms": (response.get("tool_result") or {}).get("duration_ms", 0),
@@ -298,6 +348,7 @@ def ask(run_id: str, question: str) -> dict[str, Any]:
         return {
             "reply": "",
             "tool_used": None,
+            "structured_output": None,
             "citations": [],
             "status": "error",
             "duration_ms": 0,
@@ -321,6 +372,7 @@ def ask_with_document_filter(
             return {
                 "reply": "선택한 문서에 해당하는 분석 데이터가 없습니다.",
                 "tool_used": None,
+                "structured_output": None,
                 "citations": [],
                 "status": "not_found",
                 "duration_ms": 0,
@@ -328,11 +380,14 @@ def ask_with_document_filter(
             }
 
         response = bot.chat(question)
-        citations = _collect_citations(bot, response.get("tool_used"))
+        tool_result = _get_state_result(bot, response.get("tool_used"))
+        structured_output = getattr(tool_result, "structured_output", None)
+        citations = _dedupe_citations(list(getattr(tool_result, "citations", []))) if tool_result else []
 
         return {
-            "reply": _strip_source_block(response.get("reply", "")),
+            "reply": _display_reply(response.get("reply", ""), structured_output),
             "tool_used": response.get("tool_used"),
+            "structured_output": structured_output,
             "citations": citations,
             "status": (response.get("tool_result") or {}).get("status", "unknown"),
             "duration_ms": (response.get("tool_result") or {}).get("duration_ms", 0),
@@ -342,6 +397,7 @@ def ask_with_document_filter(
         return {
             "reply": "",
             "tool_used": None,
+            "structured_output": None,
             "citations": [],
             "status": "error",
             "duration_ms": 0,
@@ -363,6 +419,7 @@ def run_tool(
             return {
                 "reply": "선택한 문서에 해당하는 분석 데이터가 없습니다.",
                 "tool_used": tool_name,
+                "structured_output": None,
                 "citations": [],
                 "status": "not_found",
                 "duration_ms": 0,
@@ -370,11 +427,12 @@ def run_tool(
             }
 
         result = _execute_tool(bot, tool_name, question)
-        reply = _strip_source_block(bot._format_tool_result(result))
+        reply = _display_reply(bot._format_tool_result(result), result.structured_output)
         return {
             "reply": reply,
             "tool_used": tool_name,
-            "citations": list(result.citations),
+            "structured_output": result.structured_output,
+            "citations": _dedupe_citations(list(result.citations)),
             "status": result.status,
             "duration_ms": int((time.perf_counter() - started) * 1000),
             "error": None,
@@ -383,6 +441,7 @@ def run_tool(
         return {
             "reply": "",
             "tool_used": tool_name,
+            "structured_output": None,
             "citations": [],
             "status": "error",
             "duration_ms": int((time.perf_counter() - started) * 1000),

@@ -218,11 +218,12 @@ with right:
             if is_real and m.get("citations"):
                 cite_lines = []
                 for c in m["citations"][:6]:
-                    chunk_id = c.get("chunk_id", "")[:16]
+                    chunk_id = c.get("chunk_id", "")
+                    chunk_label = chunk_id[-12:] if len(chunk_id) > 12 else chunk_id
                     page = c.get("page", c.get("page_start", "?"))
                     section = c.get("section", "")
                     label = f"p.{page} ({section})" if section else f"p.{page}"
-                    cite_lines.append(f'<span class="src-tag">&#x1F4C4; {label} · {chunk_id}</span>')
+                    cite_lines.append(f'<span class="src-tag">&#x1F4C4; {label} · {chunk_label}</span>')
                 tags_html = "".join(cite_lines)
             elif m.get("sources"):
                 tags_html = "".join(
@@ -281,11 +282,12 @@ with right:
             citations = response.get("citations", [])
             cite_lines = []
             for c in citations[:6]:
-                chunk_id = c.get("chunk_id", "")[:16]
+                chunk_id = c.get("chunk_id", "")
+                chunk_label = chunk_id[-12:] if len(chunk_id) > 12 else chunk_id
                 page = c.get("page", c.get("page_start", "?"))
                 section = c.get("section", "")
                 label = f"p.{page} ({section})" if section else f"p.{page}"
-                cite_lines.append(f'<span class="src-tag">&#x1F4C4; {label} · {chunk_id}</span>')
+                cite_lines.append(f'<span class="src-tag">&#x1F4C4; {label} · {chunk_label}</span>')
             tags_html = "".join(cite_lines)
 
             ph.markdown(

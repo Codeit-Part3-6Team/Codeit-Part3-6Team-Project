@@ -171,7 +171,7 @@ html, body, [class*="css"]{
   font-size:.94rem; line-height:1.6; }
 .msg-ai{ background:var(--panel-2); border:1px solid var(--border); color:#dde3f2;
   border-radius:14px 14px 14px 4px; padding:12px 16px; margin:10px 0 10px 0;
-  font-size:.94rem; line-height:1.65; }
+  font-size:.94rem; line-height:1.65; white-space:pre-wrap; }
 .src-tag{ display:inline-block; background:rgba(79,124,255,.1); color:var(--blue-bright);
   border:1px solid rgba(79,124,255,.25); border-radius:7px; font-size:.76rem;
   padding:3px 9px; margin:8px 6px 0 0; }
