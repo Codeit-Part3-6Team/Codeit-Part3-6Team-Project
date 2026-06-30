@@ -38,4 +38,20 @@ python -m streamlit run app/app.py
 실행하면 브라우저에서 자동 실행됩니다.
 (기본 주소: http://localhost:8501/workspace)
 
+## RAG 연결 계약
+
+실제 RAG 연결은 화면 코드에서 `src.rag`를 직접 import하지 않고 `app/services/rag_service.py`를 통해 호출합니다.
+
+주요 흐름은 다음과 같습니다.
+
+1. 업로드 파일을 임시 디렉토리에 저장
+2. `create_and_ingest(temp_dir)` 호출
+3. 반환된 `run_id`를 세션에 저장
+4. `summarize`, `extract_requirements`, `ask_with_document_filter` 호출
+5. `reply`, `structured_output`, `citations`를 UI에 표시
+
+참고 화면은 `app/views/rag_contract_demo.py`입니다. 최종 UI는 이 화면을 그대로 쓰기보다 `app/services/rag_service.py`의 함수 계약만 유지해서 다시 구성하면 됩니다.
+
+팀 공유용 설명은 `docs/team/rag_frontend_contract.md`를 확인하세요.
+
 

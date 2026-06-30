@@ -55,6 +55,7 @@ flowchart LR
 | --- | --- |
 | 파이프라인이 내부적으로 어떻게 동작하는지 이해가 안 될 때 | [pipeline_walkthrough.md](pipeline_walkthrough.md) |
 | Agent/Chatbot 파이프라인이 내부적으로 어떻게 동작하는지 | [agent_pipeline_overview.md](agent_pipeline_overview.md) |
+| Streamlit 화면에서 RAG 기능을 어떻게 호출해야 하는지 | [rag_frontend_contract.md](rag_frontend_contract.md) |
 | RAG 입력/출력 계약이 필요할 때 | [../md/rag/RAG_PIPELINE_SPEC.md](../md/rag/RAG_PIPELINE_SPEC.md) |
 | 데이터를 Drive에서 VM으로 가져오거나 백업할 때 | [backup_guide.md](backup_guide.md) |
 | Data Engineer — 문서 수집·정리 규칙 | [data_engineer_guide.md](data_engineer_guide.md) |
