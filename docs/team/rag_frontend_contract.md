@@ -35,6 +35,46 @@ flowchart LR
 | `get_citation(run_id, chunk_id)` | 특정 근거 원문 조회 | citation 상세 보기 |
 | `clear_chatbot(run_id=None)` | 챗봇 캐시 초기화 | run 변경 또는 새 분석 |
 
+## create_and_ingest 동작 방식
+
+`create_and_ingest(raw_docs_source_dir)`는 화면에서 받은 문서 폴더를 RAG가 검색할 수 있는 run 산출물로 바꾸는 서비스용 래퍼입니다.
+
+```text
+입력 문서 폴더
+→ run_id 생성
+→ experiments/streamlit/{run_id}/raw_docs/ 로 파일 복사
+→ streamlit.yaml 기반 run 전용 config 생성
+→ run_rag_ingest(config_path) 실행
+→ parsed_documents.csv / chunks.csv / embeddings.jsonl 생성
+```
+
+실제 생성 구조:
+
+```text
+experiments/streamlit/{run_id}/
+├── raw_docs/
+│   └── 업로드 또는 내부 원본 문서
+├── config.yaml
+└── output/
+    ├── parsed_documents.csv
+    ├── chunks.csv
+    ├── embeddings.jsonl
+    ├── run_info.json
+    └── run_status.json
+```
+
+입력 폴더 범위에 따라 보이는 문서 수가 달라집니다.
+
+```python
+# 업로드 파일 1개만 들어 있는 폴더를 넘기면 문서 1개짜리 run
+create_and_ingest("/tmp/uploaded-doc")
+
+# 내부 문서 전체 폴더를 넘기면 전체 내부 문서 run
+create_and_ingest("/shared/data/raw_docs")
+```
+
+따라서 내부 문서 선택 UI에서 문서가 하나만 보이면, UI 문제가 아니라 현재 선택된 내부 인덱스가 문서 하나짜리 run일 가능성이 큽니다. 이 경우 `/shared/data/raw_docs/` 전체를 대상으로 한 번 ingest해야 합니다.
+
 ## 응답 형식
 
 ```python
