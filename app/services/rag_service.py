@@ -17,6 +17,7 @@ from __future__ import annotations
 import csv
 import time
 import shutil
+import sys
 import uuid
 from datetime import datetime
 from pathlib import Path
@@ -24,10 +25,13 @@ from typing import Any
 
 import yaml
 
+_PROJECT_ROOT = Path(__file__).resolve().parents[2]
+if str(_PROJECT_ROOT) not in sys.path:
+    sys.path.insert(0, str(_PROJECT_ROOT))
+
 from src.config import load_config
 from src.rag.pipeline import run_rag_ingest
 
-_PROJECT_ROOT = Path(__file__).resolve().parents[2]
 _STREAMLIT_EXPERIMENTS = _PROJECT_ROOT / "experiments" / "streamlit"
 # 전용 streamlit 템플릿 사용 (base_config 상속으로 rag-baseline/agent_lplus 포함)
 _TEMPLATE_CONFIG_PATH = (
