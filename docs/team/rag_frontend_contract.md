@@ -251,6 +251,16 @@ streamlit run app/examples/internal_document_summary_draft.py
 python app/examples/build_internal_corpus.py --raw-docs-dir /shared/data/raw_docs
 ```
 
+위 명령은 `streamlit.yaml`이 상속하는 RAG 설정을 그대로 사용합니다. 현재 실험 설정이 `ollama / nomic-embed-text` 임베딩을 사용한다면, VM에서 Ollama 서버와 모델이 준비되어 있어야 합니다.
+
+아래와 같은 에러가 나면 문서 로딩 문제가 아니라 임베딩 서버 또는 모델 호출 문제입니다.
+
+```text
+Post "http://127.0.0.1:38635/tokenize": EOF
+```
+
+이 경우 Ollama 프로세스, 모델 설치 여부, 임베딩 서버 포트 상태를 먼저 확인합니다.
+
 1. 내부 문서 디렉토리를 한 번에 ingest해서 전체 문서 인덱스를 만듭니다.
 2. UI 로딩 시 `list_runs()`로 사용 가능한 내부 인덱스를 가져옵니다.
 3. 문서가 있는 최신 run을 내부적으로 선택합니다.
