@@ -19,6 +19,11 @@ st.markdown('<div style="height:14px"></div>', unsafe_allow_html=True)
 
 is_real = ss.get("mode", "demo") == "real"
 
+
+def _citation_label(citation: dict) -> str:
+    page = citation.get("page", citation.get("page_start", ""))
+    return f"p.{page}" if page and page != "?" else "원문 근거"
+
 # ── 가드: 분석 결과가 없으면 분석 페이지로 유도 ─────────────────────────────
 if is_real:
     if ss.run_id:
@@ -245,9 +250,7 @@ with right:
             if is_real and m.get("citations"):
                 cite_lines = []
                 for c in m["citations"][:6]:
-                    page = c.get("page", c.get("page_start", "?"))
-                    section = c.get("section", "")
-                    label = f"p.{page} ({section})" if section else f"p.{page}"
+                    label = _citation_label(c)
                     cite_lines.append(f'<span class="src-tag">&#x1F4C4; {label}</span>')
                 tags_html = "".join(cite_lines)
             elif m.get("sources"):
@@ -307,9 +310,7 @@ with right:
             citations = response.get("citations", [])
             cite_lines = []
             for c in citations[:6]:
-                page = c.get("page", c.get("page_start", "?"))
-                section = c.get("section", "")
-                label = f"p.{page} ({section})" if section else f"p.{page}"
+                label = _citation_label(c)
                 cite_lines.append(f'<span class="src-tag">&#x1F4C4; {label}</span>')
             tags_html = "".join(cite_lines)
 
