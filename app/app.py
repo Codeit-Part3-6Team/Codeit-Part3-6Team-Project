@@ -19,7 +19,7 @@ st.set_page_config(
     page_title="IT'S MINE · RFP 입찰 분석",
     page_icon="📄",
     layout="wide",
-    initial_sidebar_state="auto",
+    initial_sidebar_state="expanded",
 )
 st.markdown(CSS, unsafe_allow_html=True)
 
@@ -32,6 +32,7 @@ ss.setdefault("analyzed", False)    # 분석 완료/ready 여부
 ss.setdefault("analysis", None)     # 분석 결과 dict
 ss.setdefault("messages", [])       # 채팅 기록
 ss.setdefault("pending_q", None)    # 추천 질문 클릭 처리용
+ss.setdefault("pending_tool", None) # 빠른 분석 버튼의 명시 Tool 실행용
 
 # ── 2) 사이드바: 모드 선택 + run 목록 ────────────────────────────────────────
 with st.sidebar:
@@ -52,6 +53,8 @@ with st.sidebar:
         ss.analysis = None
         ss.messages = []
         ss.run_id = None
+        ss.pending_q = None
+        ss.pending_tool = None
         from app.services.rag_service import clear_chatbot
         clear_chatbot()
 
