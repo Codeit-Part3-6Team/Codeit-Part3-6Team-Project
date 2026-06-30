@@ -7,7 +7,7 @@
 
 ## 한 장 요약
 
-`
+```
 config.yaml
     │
     ├── agent.enabled: false  ──→  기존 RAG (ingest → retrieve → answer → evaluate)
