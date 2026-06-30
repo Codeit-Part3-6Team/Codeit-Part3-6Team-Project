@@ -40,7 +40,7 @@ rag:
   reranker:
     enabled: false
   answerer:
-    mode: generative
+    mode: llm
     provider: openai
     model_name: gpt-5-mini
     temperature: 0.2

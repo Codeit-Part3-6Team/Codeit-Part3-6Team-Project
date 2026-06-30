@@ -188,6 +188,27 @@ def test_chatbot_runner_builds_from_config():
     assert bot.tool_selection_model == "gpt-4o-mini"
 
 
+def test_agent_loop_configs_load_with_service_tools(repo_root):
+    from src.config import load_config
+
+    loop_cfg = load_config(repo_root / "configs" / "experiments" / "rag" / "agent" / "agent_loop.yaml")
+    lplus_cfg = load_config(repo_root / "configs" / "experiments" / "rag" / "agent" / "agent_lplus.yaml")
+
+    assert "rag" in loop_cfg
+    assert loop_cfg["agent"]["loop"]["enabled"] is True
+    assert set(lplus_cfg["agent"]["tools"]) >= {
+        "extract_facts",
+        "decide_participation",
+        "search_rfp_documents",
+        "compare_rfps",
+        "extract_requirements",
+    }
+    assert lplus_cfg["agent"]["phases"] == [
+        {"name": "extract", "tools": ["extract_facts"]},
+        {"name": "decide", "tools": ["decide_participation"], "depends_on": ["extract"]},
+    ]
+
+
 def test_run_rag_agent_disabled_returns_disabled():
     from src.rag.pipeline import run_rag_agent
 

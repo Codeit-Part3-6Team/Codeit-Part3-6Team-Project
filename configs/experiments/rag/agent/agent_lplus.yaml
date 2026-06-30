@@ -56,20 +56,10 @@ agent:
 
   phases:
     - name: extract
-      # Agent Loop 모드 (Tool 반복 실행)
-  loop:
-    enabled: false
-    max_iterations: 5
-
-  tools: [extract_facts]
+      tools: [extract_facts]
 
     - name: decide
-      # Agent Loop 모드 (Tool 반복 실행)
-  loop:
-    enabled: false
-    max_iterations: 5
-
-  tools: [decide_participation]
+      tools: [decide_participation]
       depends_on: [extract]
 
   # 챗봇 모드 (Phase DAG 대신 대화형 Tool 선택)

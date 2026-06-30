@@ -316,9 +316,14 @@ def test_answer_with_fallback_sets_not_found_status(monkeypatch, tmp_path: Path)
     class FakeFallbackModel:
         last_prompt = ""
 
+        def __init__(self, **kwargs):
+            self.kwargs = kwargs
+
         def invoke(self, prompt):
             FakeFallbackModel.last_prompt = prompt
             return FakeFallbackResponse("문서에서 확인하지 못했습니다. [사용근거: 1,2,3]")
+
+    monkeypatch.setitem(sys.modules, "langchain_ollama", SimpleNamespace(ChatOllama=FakeFallbackModel))
 
     config = {
         "rag": {
@@ -330,7 +335,6 @@ def test_answer_with_fallback_sets_not_found_status(monkeypatch, tmp_path: Path)
         }
     }
     engine = LangChainRagEngine(config, str(tmp_path))
-    engine._build_chat_model = lambda cfg: FakeFallbackModel()
 
     chunks = [{
         "chunk_id": "c1", "text": "예산 정보 없음",
@@ -350,9 +354,14 @@ def test_answer_without_fallback_sets_answered_status(monkeypatch, tmp_path: Pat
     class FakeAnswerModel:
         last_prompt = ""
 
+        def __init__(self, **kwargs):
+            self.kwargs = kwargs
+
         def invoke(self, prompt):
             FakeAnswerModel.last_prompt = prompt
             return FakeFallbackResponse("130,000,000원 [사용근거: 1]")
+
+    monkeypatch.setitem(sys.modules, "langchain_ollama", SimpleNamespace(ChatOllama=FakeAnswerModel))
 
     config = {
         "rag": {
@@ -364,7 +373,6 @@ def test_answer_without_fallback_sets_answered_status(monkeypatch, tmp_path: Pat
         }
     }
     engine = LangChainRagEngine(config, str(tmp_path))
-    engine._build_chat_model = lambda cfg: FakeAnswerModel()
 
     chunks = [{
         "chunk_id": "c1", "text": "130,000,000원",

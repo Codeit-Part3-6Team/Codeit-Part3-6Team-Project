@@ -10,10 +10,10 @@ experiment:
   author: team
   contract_version: rag-v0.2
 
-base_config: ../rag-baseline-v6final.yaml
+base_config: ../rag-baseline.yaml
 
 paths:
-  output_dir: /shared/experiments/rag-baseline-v6final
+  output_dir: /shared/experiments/agent-loop
 
 agent:
   enabled: true
