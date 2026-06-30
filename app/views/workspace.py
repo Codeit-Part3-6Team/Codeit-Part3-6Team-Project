@@ -26,14 +26,19 @@ if is_real:
 
         info = get_run_info(ss.run_id)
         if info.get("exists") and info.get("status") in ("success", "ready"):
+            current = ss.analysis or {}
+            current_meta = current.get("meta", {})
+            current_meta.update({
+                "run_id": ss.run_id,
+                "문서 수": info.get("document_count", 0),
+            })
             ss.analyzed = True
             ss.analysis = {
-                "meta": {
-                    "run_id": ss.run_id,
-                    "문서 수": info.get("document_count", 0),
-                },
-                "summary": "",
-                "requirements": [],
+                "meta": current_meta,
+                "summary": current.get("summary", ""),
+                "facts": current.get("facts", {}),
+                "requirements": current.get("requirements", []),
+                "citations": current.get("citations", []),
             }
         else:
             ss.analyzed = False
@@ -106,11 +111,11 @@ with left:
 
     with tab1:
         if is_real:
+            summary = data.get("summary") or "요약을 생성하지 못했습니다. 오른쪽 대화형 탐색에서 다시 질문해보세요."
             st.markdown(
-                '<div class="panel" style="margin-top:10px">'
-                '<div style="color:var(--text-2);font-size:.95rem;line-height:1.75">'
-                '하단 챗봇에서 "요약해줘" 라고 질문하거나, 분석 버튼을 사용하세요.'
-                '</div></div>',
+                f'<div class="panel" style="margin-top:10px">'
+                f'<div style="color:var(--text-2);font-size:.95rem;line-height:1.75;white-space:pre-wrap">'
+                f'{summary}</div></div>',
                 unsafe_allow_html=True,
             )
         else:
@@ -123,13 +128,24 @@ with left:
 
     with tab2:
         if is_real:
-            st.markdown(
-                '<div class="panel" style="margin-top:10px">'
-                '<div style="color:var(--text-2);font-size:.95rem;line-height:1.75">'
-                '하단 "참가자격/제출서류 추출" 버튼을 눌러 요구사항을 분석하세요.'
-                '</div></div>',
-                unsafe_allow_html=True,
-            )
+            requirements = data.get("requirements") or []
+            if requirements:
+                reqs = "".join(
+                    f'<div class="req-item"><span class="req-num">{i:02d}</span><span>{r}</span></div>'
+                    for i, r in enumerate(requirements, 1)
+                )
+                st.markdown(
+                    f'<div class="panel" style="margin-top:10px">{reqs}</div>',
+                    unsafe_allow_html=True,
+                )
+            else:
+                st.markdown(
+                    '<div class="panel" style="margin-top:10px">'
+                    '<div style="color:var(--text-2);font-size:.95rem;line-height:1.75">'
+                    '오른쪽 "요구사항" 버튼을 누르면 참가자격과 제출서류를 정리합니다.'
+                    '</div></div>',
+                    unsafe_allow_html=True,
+                )
         else:
             reqs = "".join(
                 f'<div class="req-item"><span class="req-num">{i:02d}</span><span>{r}</span></div>'
@@ -142,13 +158,24 @@ with left:
 
     with tab3:
         if is_real:
-            st.markdown(
-                '<div class="panel" style="margin-top:10px">'
-                '<div style="color:var(--text-2);font-size:.95rem;line-height:1.75">'
-                'Run ID, 문서 수, 청크 수 등의 메타 정보입니다.'
-                '</div></div>',
-                unsafe_allow_html=True,
-            )
+            facts = data.get("facts") or {}
+            if facts:
+                rows = []
+                for key in ["사업명", "발주기관", "사업예산", "사업기간", "제출마감"]:
+                    if key in facts:
+                        rows.append(f'<div class="meta-cell"><div class="meta-k">{key}</div><div class="meta-v">{facts[key]}</div></div>')
+                st.markdown(
+                    f'<div class="panel" style="margin-top:10px"><div class="meta-grid">{"".join(rows)}</div></div>',
+                    unsafe_allow_html=True,
+                )
+            else:
+                st.markdown(
+                    '<div class="panel" style="margin-top:10px">'
+                    '<div style="color:var(--text-2);font-size:.95rem;line-height:1.75">'
+                    'Run ID, 문서 수, 청크 수 등의 메타 정보입니다.'
+                    '</div></div>',
+                    unsafe_allow_html=True,
+                )
             for k, v in data["meta"].items():
                 st.markdown(f"- **{k}**: {v}")
         else:
@@ -218,12 +245,10 @@ with right:
             if is_real and m.get("citations"):
                 cite_lines = []
                 for c in m["citations"][:6]:
-                    chunk_id = c.get("chunk_id", "")
-                    chunk_label = chunk_id[-12:] if len(chunk_id) > 12 else chunk_id
                     page = c.get("page", c.get("page_start", "?"))
                     section = c.get("section", "")
                     label = f"p.{page} ({section})" if section else f"p.{page}"
-                    cite_lines.append(f'<span class="src-tag">&#x1F4C4; {label} · {chunk_label}</span>')
+                    cite_lines.append(f'<span class="src-tag">&#x1F4C4; {label}</span>')
                 tags_html = "".join(cite_lines)
             elif m.get("sources"):
                 tags_html = "".join(
@@ -282,12 +307,10 @@ with right:
             citations = response.get("citations", [])
             cite_lines = []
             for c in citations[:6]:
-                chunk_id = c.get("chunk_id", "")
-                chunk_label = chunk_id[-12:] if len(chunk_id) > 12 else chunk_id
                 page = c.get("page", c.get("page_start", "?"))
                 section = c.get("section", "")
                 label = f"p.{page} ({section})" if section else f"p.{page}"
-                cite_lines.append(f'<span class="src-tag">&#x1F4C4; {label} · {chunk_label}</span>')
+                cite_lines.append(f'<span class="src-tag">&#x1F4C4; {label}</span>')
             tags_html = "".join(cite_lines)
 
             ph.markdown(
@@ -302,11 +325,20 @@ with right:
 
             # 답변을 summary/requirements에 반영
             if ss.analysis is None:
-                ss.analysis = {"meta": {}, "summary": "", "requirements": []}
+                ss.analysis = {"meta": {}, "summary": "", "facts": {}, "requirements": []}
             if response.get("tool_used") == "extract_facts" or "요약" in question:
                 ss.analysis["summary"] = reply
+                facts = response.get("structured_output") or {}
+                if facts:
+                    ss.analysis["facts"] = facts
+                    if isinstance(facts.get("자격요건"), list):
+                        ss.analysis["requirements"] = facts["자격요건"]
             elif response.get("tool_used") == "extract_requirements" or "요구사항" in question:
-                ss.analysis["requirements"] = [reply]
+                structured = response.get("structured_output") or {}
+                if isinstance(structured.get("참가자격"), list):
+                    ss.analysis["requirements"] = structured["참가자격"]
+                else:
+                    ss.analysis["requirements"] = [reply]
 
             st.rerun()
 

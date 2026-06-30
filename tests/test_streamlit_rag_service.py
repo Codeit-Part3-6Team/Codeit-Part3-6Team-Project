@@ -137,12 +137,12 @@ def test_format_structured_output_keeps_fields_readable():
 
 def test_dedupe_citations_by_chunk_id():
     citations = [
-        {"chunk_id": "c1", "text": "a"},
-        {"chunk_id": "c1", "text": "a duplicate"},
-        {"chunk_id": "c2", "text": "b"},
+        {"chunk_id": "c1", "source_path": "a.pdf", "page": "1", "section": "본문"},
+        {"chunk_id": "c2", "source_path": "a.pdf", "page": "1", "section": "본문"},
+        {"chunk_id": "c3", "source_path": "a.pdf", "page": "2", "section": "본문"},
     ]
 
     assert rag_service._dedupe_citations(citations) == [
-        {"chunk_id": "c1", "text": "a"},
-        {"chunk_id": "c2", "text": "b"},
+        {"chunk_id": "c1", "source_path": "a.pdf", "page": "1", "section": "본문"},
+        {"chunk_id": "c3", "source_path": "a.pdf", "page": "2", "section": "본문"},
     ]

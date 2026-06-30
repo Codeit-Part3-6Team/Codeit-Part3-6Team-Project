@@ -243,12 +243,19 @@ def _dedupe_citations(citations: list[dict[str, Any]]) -> list[dict[str, Any]]:
     seen: set[str] = set()
     deduped: list[dict[str, Any]] = []
     for citation in citations:
-        key = str(citation.get("chunk_id") or citation)
+        key = _citation_display_key(citation)
         if key in seen:
             continue
         seen.add(key)
         deduped.append(citation)
     return deduped
+
+
+def _citation_display_key(citation: dict[str, Any]) -> str:
+    page = citation.get("page", citation.get("page_start", ""))
+    section = citation.get("section", "")
+    source = citation.get("source_path", "")
+    return f"{source}|{page}|{section}"
 
 
 def _format_structured_output(structured: dict[str, Any] | None) -> str:

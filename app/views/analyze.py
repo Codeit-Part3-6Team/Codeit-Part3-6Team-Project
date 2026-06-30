@@ -111,19 +111,25 @@ else:
                             dest.write_bytes(uf.getbuffer())
 
                     with st.spinner(f"문서 {len(display_names)}개를 분석 중입니다... (RAG 파이프라인 실행)"):
-                        from services.rag_service import create_and_ingest
+                        from services.rag_service import create_and_ingest, summarize
 
                         result = create_and_ingest(str(tmp))
 
                 if result["status"] == "ready":
+                    with st.spinner("핵심 요약을 생성하는 중입니다..."):
+                        summary_result = summarize(result["run_id"])
+                    facts = summary_result.get("structured_output") or {}
+
                     ss.run_id = result["run_id"]
                     ss.analyzed = True
                     ss.doc_name = result["run_id"]
                     ss.pending_uploads = []
                     ss.analysis = {
                         "meta": {"run_id": result["run_id"], "문서 수": result["documents"], "청크 수": result["chunks"]},
-                        "summary": "",
-                        "requirements": [],
+                        "summary": summary_result.get("reply", ""),
+                        "facts": facts,
+                        "requirements": facts.get("자격요건", []) if isinstance(facts.get("자격요건"), list) else [],
+                        "citations": summary_result.get("citations", []),
                     }
                     st.success(f"분석 완료! 문서 {result['documents']}개, 청크 {result['chunks']}개 생성됨.")
                     st.switch_page(P_WORKSPACE)
