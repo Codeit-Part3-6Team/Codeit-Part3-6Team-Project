@@ -48,6 +48,11 @@
 | Phase 간 데이터 전달 | `input_from` 필드로 이전 Phase 산출물을 다음 Phase 입력으로 연결 |
 | Agent config | `agent.enabled`, `agent.phases`, `agent.tools`, `agent.chatbot` 등 agent.* 설정 체계 (`configs/experiments/rag/agent/`) |
 | Agent CLI | `scripts/run_rag_agent.py` |
+| 서비스 어댑터 | `app/services/rag_service.py` — UI ↔ RAG 연결 계층 (create_and_ingest, summarize, extract_requirements, compare, ask, run_tool) |
+| 서비스 config | `configs/experiments/rag/streamlit.yaml` — agent_lplus.yaml 상속, 업로드 loader + 챗봇 활성화, paths 동적 override |
+| 프론트 계약 | `docs/team/rag_frontend_contract.md` — UI 개발자 전달용 함수/응답 스키마 명세 |
+| 연동 예제 | `app/examples/rag_contract_example.py` (CLI), `app/views/rag_contract_demo.py` (Streamlit) |
+| 서비스 테스트 | `tests/test_streamlit_rag_service.py` |
 
 ## 아직 구현 후보인 기능
 
@@ -59,7 +64,7 @@
 | vector index 저장/로드 | Chroma provider 계약 있음 | 검색 비용이 커지면 실제 index 저장소로 승격 |
 | fine-grained resume | 미구현 | 대량 문서 처리 중단 문제가 생기면 필요 |
 | 실제 외부 RFP PDF/HWP E2E | 대기 | 실제 공고 원문 확보 후 PDF/HWP/HWPX 품질 재검증 |
-| 웹앱/데모 | 예비 구조 | 담당자와 범위 확정 후 구현 |
+| 웹앱/데모 | 서비스 어댑터 + 계약 구현 완료 | UI 구현자는 계약서 기반으로 자유롭게 화면 구성 가능 |
 
 ## 작업 우선순위
 

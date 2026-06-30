@@ -73,10 +73,30 @@ class ChatbotRunner:
         for iteration in range(max_iterations):
             tool_name, refined_question = self._select_tool(user_input)
             if tool_name is None:
-                break
+                reply = (
+                    refined_question
+                    if refined_question and refined_question != user_input
+                    else "죄송합니다. 해당 질문에 적합한 도구를 찾지 못했습니다."
+                )
+                self._add_history('assistant', reply)
+                return {
+                    'reply': reply,
+                    'tool_used': None,
+                    'tool_result': None,
+                }
             tool = self.tools.get(tool_name)
             if tool is None:
-                break
+                available = ", ".join(self.tools.keys())
+                reply = (
+                    f"죄송합니다. '{tool_name}' 기능은 아직 준비되지 않았습니다.\n"
+                    f"사용 가능한 기능: {available}"
+                )
+                self._add_history('assistant', reply)
+                return {
+                    'reply': reply,
+                    'tool_used': None,
+                    'tool_result': None,
+                }
 
             for dep_name in tool.input_from:
                 if dep_name not in self.state:
@@ -147,53 +167,9 @@ class ChatbotRunner:
         if result:
             return result
 
-        if tool_name is None:
-            reply = refined_question or "죄송합니다. 해당 질문에 적합한 도구를 찾지 못했습니다."
-            self._add_history("assistant", reply)
-            return {"reply": reply, "tool_used": None, "tool_result": None}
-
-        tool = self.tools.get(tool_name)
-        if tool is None:
-            available = ", ".join(self.tools.keys())
-            reply = f"죄송합니다. '{tool_name}' 기능은 아직 준비되지 않았습니다.\n사용 가능한 기능: {available}"
-            self._add_history("assistant", reply)
-            return {"reply": reply, "tool_used": None, "tool_result": None}
-
-        # input_from dependency 자동 실행
-        for dep_name in tool.input_from:
-            if dep_name not in self.state:
-                dep_tool = self.tools.get(dep_name)
-                if dep_tool:
-                    dep_result = self._run_tool_with_retry(dep_tool, user_input)
-                    self.state[dep_name] = dep_result
-
-        result = self._run_tool_with_retry(tool, refined_question)
-        self.state[tool_name] = result
-        self.current_context["last_tool"] = tool_name
-        self.current_context["last_question"] = user_input
-        self.current_context["last_answer"] = result.answer[:300] if result.answer else ""
-
-        if result.status == "failed":
-            reply = (
-                f"죄송합니다, '{tool.description}' 분석 중 오류가 발생했습니다.\n"
-                f"잠시 후 다시 시도하거나 다른 질문을 해보세요."
-            )
-        elif result.structured_output:
-            reply = json.dumps(result.structured_output, ensure_ascii=False, indent=2)
-        else:
-            reply = result.answer or "분석 결과를 생성하지 못했습니다."
-
+        reply = "죄송합니다. 해당 질문에 적합한 도구를 찾지 못했습니다."
         self._add_history("assistant", reply)
-        return {
-            "reply": reply,
-            "tool_used": tool_name,
-            "tool_result": {
-                "status": result.status,
-                "answer": result.answer[:500],
-                "citations_count": len(result.citations),
-                "duration_ms": result.duration_ms,
-            },
-        }
+        return {"reply": reply, "tool_used": None, "tool_result": None}
 
     def _select_tool(self, user_input: str) -> tuple[str | None, str]:
         """LLM에게 Tool 목록을 보여주고 선택하게 합니다."""
@@ -235,33 +211,11 @@ class ChatbotRunner:
         except Exception as exc:
             import sys
             print(f"[Chatbot] Tool selection failed ({type(exc).__name__}: {exc})", file=sys.stderr)
-            return None, user_input
+            return self._fallback_tool_selection(user_input)
 
         # Fallback: JSON parsing failed, try natural language
         if not isinstance(parsed, dict) or "tool" not in parsed:
-            combined = str(parsed) + " " + text
-            for name in self.tools:
-                if name in combined:
-                    self._add_history("user", user_input)
-                    return name, user_input
-            # Keyword fallback: Korean keywords -> tool mapping
-            keyword_map = {
-                "extract_facts": ["추출", "요약", "분석", "정보", "예산", "기간", "자격", "마감"],
-                "decide_participation": ["참여", "판단", "추천", "가능", "적합"],
-                "search_rfp_documents": ["검색", "찾아", "조건", "필터", "골라"],
-                "compare_rfps": ["비교", "차이", "대조"],
-                "extract_requirements": ["자격", "서류", "요건", "체크리스트", "필요한"],
-            }
-            for name, keywords in keyword_map.items():
-                if name in self.tools and any(kw in user_input for kw in keywords):
-                    self._add_history("user", user_input)
-                    return name, user_input
-            # Default: first tool
-            if self.tools:
-                first = next(iter(self.tools))
-                self._add_history("user", user_input)
-                return first, user_input
-            return None, user_input
+            return self._fallback_tool_selection(user_input, str(parsed) + " " + text)
 
         tool_name = parsed.get("tool")
         question = parsed.get("question", user_input)
@@ -271,6 +225,51 @@ class ChatbotRunner:
         direct_answer = parsed.get("answer")
         if direct_answer:
             return None, direct_answer
+        return self._fallback_tool_selection(user_input)
+
+    def _fallback_tool_selection(
+        self,
+        user_input: str,
+        model_text: str = "",
+    ) -> tuple[str | None, str]:
+        """LLM Tool 선택이 실패했을 때 키워드 기반으로 안전하게 라우팅합니다."""
+        combined = f"{model_text} {user_input}"
+        for name in self.tools:
+            if name in combined:
+                self._add_history("user", user_input)
+                return name, user_input
+
+        keyword_map = {
+            "compare_rfps": ["비교", "차이", "대조"],
+            "extract_requirements": ["참가", "자격", "서류", "요건", "체크리스트", "필요한"],
+            "decide_participation": ["참여", "판단", "추천", "가능", "적합", "리스크"],
+            "search_rfp_documents": ["검색", "찾아", "조건", "필터", "골라"],
+            "extract_facts": [
+                "추출",
+                "요약",
+                "분석",
+                "정보",
+                "예산",
+                "기간",
+                "마감",
+                "발주",
+                "사업",
+                "얼마",
+                "언제",
+            ],
+        }
+        for name, keywords in keyword_map.items():
+            if name in self.tools and any(kw in user_input for kw in keywords):
+                self._add_history("user", user_input)
+                return name, user_input
+
+        if "extract_facts" in self.tools:
+            self._add_history("user", user_input)
+            return "extract_facts", user_input
+        if self.tools:
+            first = next(iter(self.tools))
+            self._add_history("user", user_input)
+            return first, user_input
         return None, user_input
 
     def _run_tool_with_retry(self, tool: Tool, question: str) -> ToolResult:

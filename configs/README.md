@@ -15,6 +15,7 @@
 | keyword + semantic hybrid 비교 | `configs/experiments/rag/rag_hybrid.yaml` |
 | Ollama + OpenAI 베이스라인 | `configs/experiments/rag/rag-baseline.yaml` |
 | Agent Loop 데모 (L+ 시나리오) | `configs/experiments/rag/agent/agent_lplus.yaml` |
+| Streamlit 서비스 전용 | `configs/experiments/rag/streamlit.yaml` — agent_lplus 상속, paths만 동적 override |
 | HuggingFace LLM answerer 예시 | `configs/examples/rag/rag_hf_llm_answerer.yaml` |
 | LangChain + Ollama 실행 예시 | `configs/examples/rag/rag_langchain_ollama.yaml` |
 | LangChain + OpenAI 실행 예시 | `configs/examples/rag/rag_langchain_openai.yaml` |
