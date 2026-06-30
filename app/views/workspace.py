@@ -163,14 +163,17 @@ with right:
         with btn_cols[0]:
             if st.button("&#x1F4CB; 요약", type="secondary", use_container_width=True, key="btn_summarize"):
                 ss.pending_q = "이 RFP 문서의 핵심 내용을 요약해줘."
+                ss.pending_tool = "extract_facts"
                 st.rerun()
         with btn_cols[1]:
             if st.button("&#x1F4CB; 요구사항", type="secondary", use_container_width=True, key="btn_requirements"):
                 ss.pending_q = "참가자격과 제출서류를 추출해서 보여줘."
+                ss.pending_tool = "extract_requirements"
                 st.rerun()
         with btn_cols[2]:
             if st.button("&#x1F4CA; 비교", type="secondary", use_container_width=True, key="btn_compare"):
                 ss.pending_q = "분석된 문서들을 예산, 기간, 자격요건 기준으로 비교해줘."
+                ss.pending_tool = "compare_rfps"
                 st.rerun()
 
     # ── 추천 질문 칩 ──
@@ -221,7 +224,9 @@ with right:
     # ── 입력 처리 ──
     typed = st.chat_input("문서에 대해 질문해보세요")
     question = ss.pending_q or typed
+    pending_tool = ss.pending_tool
     ss.pending_q = None
+    ss.pending_tool = None
 
     if question:
         ss.messages.append({"role": "user", "content": question})
@@ -236,13 +241,21 @@ with right:
             ph = st.empty()
 
             with st.spinner("문서에서 검색 중... (RAG)"):
-                from app.services.rag_service import ask_with_document_filter
+                from app.services.rag_service import ask_with_document_filter, run_tool
 
-                response = ask_with_document_filter(
-                    ss.run_id,
-                    question,
-                    selected_doc_ids if selected_doc_ids else None,
-                )
+                if pending_tool:
+                    response = run_tool(
+                        ss.run_id,
+                        pending_tool,
+                        question,
+                        selected_doc_ids if selected_doc_ids else None,
+                    )
+                else:
+                    response = ask_with_document_filter(
+                        ss.run_id,
+                        question,
+                        selected_doc_ids if selected_doc_ids else None,
+                    )
 
             reply = response.get("reply", "응답을 생성하지 못했습니다.")
             if response.get("error"):

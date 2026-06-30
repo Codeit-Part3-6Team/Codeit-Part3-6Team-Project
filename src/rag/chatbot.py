@@ -73,10 +73,30 @@ class ChatbotRunner:
         for iteration in range(max_iterations):
             tool_name, refined_question = self._select_tool(user_input)
             if tool_name is None:
-                break
+                reply = (
+                    refined_question
+                    if refined_question and refined_question != user_input
+                    else "죄송합니다. 해당 질문에 적합한 도구를 찾지 못했습니다."
+                )
+                self._add_history('assistant', reply)
+                return {
+                    'reply': reply,
+                    'tool_used': None,
+                    'tool_result': None,
+                }
             tool = self.tools.get(tool_name)
             if tool is None:
-                break
+                available = ", ".join(self.tools.keys())
+                reply = (
+                    f"죄송합니다. '{tool_name}' 기능은 아직 준비되지 않았습니다.\n"
+                    f"사용 가능한 기능: {available}"
+                )
+                self._add_history('assistant', reply)
+                return {
+                    'reply': reply,
+                    'tool_used': None,
+                    'tool_result': None,
+                }
 
             for dep_name in tool.input_from:
                 if dep_name not in self.state:

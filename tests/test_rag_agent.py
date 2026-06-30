@@ -188,6 +188,32 @@ def test_chatbot_runner_builds_from_config():
     assert bot.tool_selection_model == "gpt-4o-mini"
 
 
+def test_chatbot_runner_handles_no_tool_selection(monkeypatch):
+    from src.rag.chatbot import ChatbotRunner
+
+    bot = ChatbotRunner({})
+    monkeypatch.setattr(bot, "_select_tool", lambda user_input: (None, user_input))
+
+    response = bot.chat("문서 밖 질문")
+
+    assert response["tool_used"] is None
+    assert response["tool_result"] is None
+    assert "적합한 도구" in response["reply"]
+
+
+def test_chatbot_runner_handles_unknown_tool_selection(monkeypatch):
+    from src.rag.chatbot import ChatbotRunner
+
+    bot = ChatbotRunner({})
+    monkeypatch.setattr(bot, "_select_tool", lambda user_input: ("missing_tool", user_input))
+
+    response = bot.chat("요약해줘")
+
+    assert response["tool_used"] is None
+    assert response["tool_result"] is None
+    assert "missing_tool" in response["reply"]
+
+
 def test_agent_loop_configs_load_with_service_tools(repo_root):
     from src.config import load_config
 

@@ -12,7 +12,7 @@ experiment:
 
 rag:
   loader:
-    file_types: [pdf, docx, hwp, hwpx, txt]
+    file_types: [pdf, docx, hwp, hwpx, txt, csv]
 
 agent:
   chatbot:

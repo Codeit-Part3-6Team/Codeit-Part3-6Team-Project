@@ -137,13 +137,13 @@ html, body, [class*="css"]{
 [data-testid="stFileUploaderDropzone"]{ background:var(--panel); border:1px solid var(--border); border-radius:12px; }
 [data-testid="stFileUploaderDropzone"] *{ color:var(--text-2) !important; }
 
-/* ── 사이드바 완전 숨김 (요구사항 5) ─────────────────────────
-   app.py 의 st.navigation(..., position="hidden") 으로 자동 메뉴를 끄고,
-   여기서 사이드바 영역과 펼침 버튼까지 화면에서 제거한다. */
-[data-testid="stSidebar"]{ display:none !important; }
-[data-testid="stSidebarCollapsedControl"]{ display:none !important; }
-[data-testid="collapsedControl"]{ display:none !important; }
-[data-testid="stSidebarCollapseButton"]{ display:none !important; }
+  /* ── 사이드바 ────────────────────────────────────────────────
+     자동 페이지 메뉴는 app.py 의 st.navigation(..., position="hidden") 으로 끄고,
+     사이드바는 Demo/Real 모드 전환과 기존 run 선택용으로 사용한다. */
+  [data-testid="stSidebar"]{
+    background:var(--panel);
+    border-right:1px solid var(--border);
+  }
 
 /* ── 패널/분석 카드 ──────────────────────────────────────── */
 .panel{ background:var(--panel); border:1px solid var(--border);
