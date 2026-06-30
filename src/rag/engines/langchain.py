@@ -97,20 +97,56 @@ class LangChainRagEngine:
         top_k = int(retriever_cfg.get("top_k", retriever_cfg.get("k", 3)))
         reranker_cfg = self.rag_config.get("reranker", {})
         rerank_enabled = bool(reranker_cfg.get("enabled", False))
-
-        # 1차 검색 (reranker 있으면 더 많은 후보를 가져옴)
-        fetch_k = top_k * 3 if rerank_enabled else top_k
+        hybrid_enabled = bool(retriever_cfg.get("hybrid_bm25", False))
+        # 1차 검색 (reranker/hybrid 있으면 더 많은 후보를 가져옴)
+        fetch_k = top_k * 3 if (rerank_enabled or hybrid_enabled) else top_k
         if store is not None:
             rows = store.similarity_search_with_score(question, k=fetch_k)
             results = _retrieval_rows_from_documents(rows)
         else:
             query_vector = self._build_embeddings().embed_query(question)
             results = _retrieve_from_artifact(question, chunks, embeddings, query_vector, fetch_k)
+        # 하이브리드 검색: BM25 키워드 매칭 결과를 RRF(Reciprocal Rank Fusion)로 결합
+        if hybrid_enabled and chunks:
+            from rank_bm25 import BM25Okapi
 
+            tokenized_corpus = [c["text"].split() for c in chunks]
+            bm25 = BM25Okapi(tokenized_corpus)
+            bm25_scores = bm25.get_scores(question.split())
+            bm25_ranked_idx = sorted(
+                range(len(bm25_scores)), key=lambda i: bm25_scores[i], reverse=True
+            )[:fetch_k]
+
+            rrf_k = 60
+            rrf_scores: dict[str, float] = {}
+            chunk_lookup: dict[str, dict[str, str]] = {}
+
+            # semantic 결과의 순위 기반 RRF 점수
+            for rank, row in enumerate(results, start=1):
+                cid = row["chunk_id"]
+                rrf_scores[cid] = rrf_scores.get(cid, 0.0) + 1.0 / (rrf_k + rank)
+                chunk_lookup[cid] = row
+
+            # BM25 결과의 순위 기반 RRF 점수
+            for rank, idx in enumerate(bm25_ranked_idx, start=1):
+                chunk = chunks[idx]
+                cid = chunk["chunk_id"]
+                rrf_scores[cid] = rrf_scores.get(cid, 0.0) + 1.0 / (rrf_k + rank)
+                if cid not in chunk_lookup:
+                    chunk_lookup[cid] = _to_retrieval_row(rank, float(bm25_scores[idx]), chunk)
+
+            # RRF 점수 기준으로 재정렬
+            sorted_ids = sorted(rrf_scores.keys(), key=lambda cid: rrf_scores[cid], reverse=True)
+            merged_results = []
+            for new_rank, cid in enumerate(sorted_ids, start=1):
+                row = dict(chunk_lookup[cid])
+                row["rank"] = new_rank
+                row["score"] = round(rrf_scores[cid], 6)
+                merged_results.append(row)
+            results = merged_results
         # 2차 재정렬 (Re-rank)
         if rerank_enabled and results:
             results = self._rerank(question, results, reranker_cfg, top_k)
-
         return results[:top_k]
 
     def _rerank(
