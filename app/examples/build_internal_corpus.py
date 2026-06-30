@@ -26,23 +26,9 @@ def main() -> None:
         default="/shared/data/raw_docs",
         help="내부 RFP 원문 문서가 모여 있는 디렉토리",
     )
-    parser.add_argument(
-        "--embedding-provider",
-        default="local",
-        help="내부 corpus 생성에 사용할 embedding provider. 기본값은 Ollama 의존이 없는 local",
-    )
-    parser.add_argument(
-        "--embedding-model-name",
-        default=None,
-        help="embedding model_name override. local provider는 지정하지 않아도 됩니다.",
-    )
     args = parser.parse_args()
 
-    result = create_and_ingest(
-        args.raw_docs_dir,
-        embedding_provider=args.embedding_provider,
-        embedding_model_name=args.embedding_model_name,
-    )
+    result = create_and_ingest(args.raw_docs_dir)
     if result.get("status") != "ready":
         raise RuntimeError(result.get("error") or "internal corpus ingest failed")
 

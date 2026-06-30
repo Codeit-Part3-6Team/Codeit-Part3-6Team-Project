@@ -71,12 +71,7 @@ def _output_dir(run_id: str) -> Path:
     return _run_dir(run_id) / "output"
 
 
-def _build_streamlit_config(
-    run_id: str,
-    *,
-    embedding_provider: str | None = None,
-    embedding_model_name: str | None = None,
-) -> dict[str, Any]:
+def _build_streamlit_config(run_id: str) -> dict[str, Any]:
     """streamlit.yaml 템플릿을 로드해 run별 경로만 덮어씁니다.
 
     base_config 상속으로 rag-baseline.yaml → agent_lplus.yaml 설정을
@@ -91,11 +86,6 @@ def _build_streamlit_config(
     base.setdefault("rag", {}).setdefault("loader", {})["file_types"] = list(
         _SUPPORTED_FILE_TYPES
     )
-    if embedding_provider:
-        embedding_cfg = base.setdefault("rag", {}).setdefault("embedding", {})
-        embedding_cfg["provider"] = embedding_provider
-        if embedding_model_name is not None:
-            embedding_cfg["model_name"] = embedding_model_name
     base.setdefault("agent", {}).setdefault("chatbot", {})["enabled"] = True
     base["artifact_policy"] = {"on_existing": "overwrite"}
 
@@ -107,18 +97,11 @@ def _build_streamlit_config(
 # ──────────────────────────────────────────────────────────────────────
 
 
-def create_and_ingest(
-    raw_docs_source_dir: str,
-    *,
-    embedding_provider: str | None = None,
-    embedding_model_name: str | None = None,
-) -> dict[str, Any]:
+def create_and_ingest(raw_docs_source_dir: str) -> dict[str, Any]:
     """원본 문서 디렉토리로 새 run을 생성하고 RAG ingest를 실행합니다.
 
     Args:
         raw_docs_source_dir: 원본 문서가 이미 저장된 디렉토리 경로
-        embedding_provider: run config에 덮어쓸 embedding provider. None이면 streamlit.yaml 상속값을 사용
-        embedding_model_name: run config에 덮어쓸 embedding model_name
 
     Returns:
         {
@@ -160,11 +143,7 @@ def create_and_ingest(
                 "error": "업로드된 파일이 없습니다.",
             }
 
-        config = _build_streamlit_config(
-            run_id,
-            embedding_provider=embedding_provider,
-            embedding_model_name=embedding_model_name,
-        )
+        config = _build_streamlit_config(run_id)
         config_path = run_dir / "config.yaml"
         _write_yaml(config_path, config)
 

@@ -251,15 +251,6 @@ streamlit run app/examples/internal_document_summary_draft.py
 python app/examples/build_internal_corpus.py --raw-docs-dir /shared/data/raw_docs
 ```
 
-`build_internal_corpus.py`는 기본적으로 `local` 임베딩을 사용합니다. UI 연결 확인과 전체 문서 목록 생성에는 외부 임베딩 서버 의존을 줄이는 편이 안전하기 때문입니다. 실험 설정과 동일하게 Ollama 임베딩을 쓰고 싶다면 아래처럼 실행합니다.
-
-```bash
-python app/examples/build_internal_corpus.py \
-  --raw-docs-dir /shared/data/raw_docs \
-  --embedding-provider ollama \
-  --embedding-model-name nomic-embed-text
-```
-
 1. 내부 문서 디렉토리를 한 번에 ingest해서 전체 문서 인덱스를 만듭니다.
 2. UI 로딩 시 `list_runs()`로 사용 가능한 내부 인덱스를 가져옵니다.
 3. 문서가 있는 최신 run을 내부적으로 선택합니다.
