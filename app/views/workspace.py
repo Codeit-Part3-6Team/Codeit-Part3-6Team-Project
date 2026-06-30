@@ -21,6 +21,21 @@ is_real = ss.get("mode", "demo") == "real"
 
 # ── 가드: 분석 결과가 없으면 분석 페이지로 유도 ─────────────────────────────
 if is_real:
+    if ss.run_id and not ss.analyzed:
+        from services.rag_service import get_run_info
+
+        info = get_run_info(ss.run_id)
+        if info.get("exists") and info.get("status") in ("success", "ready"):
+            ss.analyzed = True
+            ss.analysis = {
+                "meta": {
+                    "run_id": ss.run_id,
+                    "문서 수": info.get("document_count", 0),
+                },
+                "summary": "",
+                "requirements": [],
+            }
+
     if not ss.run_id or not ss.analyzed:
         st.markdown(
             '<div class="eyebrow">WORKSPACE</div>'

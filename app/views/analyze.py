@@ -119,7 +119,7 @@ else:
                         "requirements": [],
                     }
                     st.success(f"분석 완료! 문서 {result['documents']}개, 청크 {result['chunks']}개 생성됨.")
-                    st.rerun()
+                    st.switch_page(P_WORKSPACE)
                 else:
                     st.error(f"분석 실패: {result.get('error', '알 수 없는 오류')}")
 
