@@ -15,7 +15,7 @@ config.yaml
     └── agent.enabled: true
         ├── Phase DAG 모드  ──→  extract → scan → decide (순차/병렬)
         └── 챗봇 모드       ──→  LLM이 Tool 동적 선택, 대화형
-`
+```
 
 ---
 
@@ -42,7 +42,7 @@ python scripts/run_rag_agent.py \
 # 챗봇 모드 — 대화형
 python scripts/run_rag_agent.py \
   --config configs/experiments/rag/agent/agent_lplus.yaml
-`
+```
 
 ---
 
