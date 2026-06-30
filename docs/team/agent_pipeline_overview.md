@@ -33,7 +33,7 @@ config.yaml
 
 ## Agent 모드 실행 예시
 
-`bash
+```bash
 # Phase DAG 모드 — extract → decide 순차 실행
 python scripts/run_rag_agent.py \
   --config configs/experiments/rag/agent/agent_lplus.yaml \
@@ -60,14 +60,14 @@ python scripts/run_rag_agent.py \
 
 | 바꾸는 것 | config 키 | 예시 |
 |----------|----------|------|
-| 검색 방식 | ag.retriever.method | keyword / semantic / hybrid |
-| LLM 종류 | ag.answerer.provider | openai / ollama / huggingface |
+| 검색 방식 | rag.retriever.method | keyword / semantic / hybrid |
+| LLM 종류 | rag.answerer.provider | openai / ollama / huggingface |
 | Phase 구성 | agent.phases | extract → decide |
-| Tool별 검색 개수 | 	ools.*.retriever.top_k | 10 |
-| Tool별 프롬프트 | 	ools.*.answerer.prompt_template | 커스텀 템플릿 |
-| Structured Output 형식 | 	ools.*.answerer.output_schema | facts_schema / decision_schema |
-| 실패 시 동작 | 	ools.*.on_failure | skip / abort_phase / abort_agent |
-| Tool 간 데이터 전달 | 	ools.*.input_from | [extract_facts] |
+| Tool별 검색 개수 | tools.*.retriever.top_k | 10 |
+| Tool별 프롬프트 | tools.*.answerer.prompt_template | 커스텀 템플릿 |
+| Structured Output 형식 | tools.*.answerer.output_schema | facts_schema / decision_schema |
+| 실패 시 동작 | tools.*.on_failure | skip / abort_phase / abort_agent |
+| Tool 간 데이터 전달 | tools.*.input_from | [extract_facts] |
 | 병렬 실행 여부 | phases[*].parallel | true / false |
 
 ---
