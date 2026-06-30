@@ -146,3 +146,38 @@ def test_dedupe_citations_by_chunk_id():
         {"chunk_id": "c1", "source_path": "a.pdf", "page": "1", "section": "본문"},
         {"chunk_id": "c3", "source_path": "a.pdf", "page": "2", "section": "본문"},
     ]
+
+
+def test_compare_selected_documents_includes_every_selected_doc(monkeypatch):
+    docs = [
+        {"document_id": "doc-a", "title": "문서 A", "source_path": "a.pdf", "chunk_count": 3},
+        {"document_id": "doc-b", "title": "문서 B", "source_path": "b.pdf", "chunk_count": 3},
+        {"document_id": "doc-c", "title": "문서 C", "source_path": "c.pdf", "chunk_count": 3},
+    ]
+    monkeypatch.setattr(rag_service, "get_documents", lambda run_id: docs)
+
+    def fake_summarize(run_id: str, selected_doc_ids: list[str] | None = None) -> dict:
+        doc_id = selected_doc_ids[0]
+        return {
+            "reply": "",
+            "structured_output": {
+                "사업명": f"{doc_id} 사업",
+                "발주기관": f"{doc_id} 기관",
+                "사업예산": "100원",
+                "사업기간": "1개월",
+                "제출마감": "명시되지 않음",
+                "자격요건": [f"{doc_id} 요건"],
+            },
+            "citations": [{"source_path": f"{doc_id}.pdf", "page": "1", "section": "본문"}],
+            "error": None,
+        }
+
+    monkeypatch.setattr(rag_service, "summarize", fake_summarize)
+
+    result = rag_service.compare("run-1", ["doc-a", "doc-b", "doc-c"])
+
+    assert result["status"] == "ok"
+    assert result["structured_output"]["문서목록"] == ["문서 A", "문서 B", "문서 C"]
+    assert "doc-a 사업" in result["reply"]
+    assert "doc-b 사업" in result["reply"]
+    assert "doc-c 사업" in result["reply"]

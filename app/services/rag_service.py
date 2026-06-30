@@ -293,6 +293,70 @@ def _display_reply(raw_reply: str, structured: dict[str, Any] | None = None) -> 
     return _strip_source_block(raw_reply)
 
 
+def _format_doc_fact_for_compare(title: str, structured: dict[str, Any] | None, fallback: str) -> str:
+    if not structured:
+        return f"문서명: {title}\n{_strip_source_block(fallback).strip() or '요약 정보를 추출하지 못했습니다.'}"
+
+    fields = [
+        ("문서명", title),
+        ("사업명", structured.get("사업명", "명시되지 않음")),
+        ("발주기관", structured.get("발주기관", "명시되지 않음")),
+        ("사업예산", structured.get("사업예산", "명시되지 않음")),
+        ("사업기간", structured.get("사업기간", "명시되지 않음")),
+        ("제출마감", structured.get("제출마감", "명시되지 않음")),
+    ]
+    lines = [f"{key}: {value}" for key, value in fields]
+    requirements = structured.get("자격요건")
+    if isinstance(requirements, list) and requirements:
+        lines.append("자격요건: " + "; ".join(str(item) for item in requirements))
+    elif requirements:
+        lines.append(f"자격요건: {requirements}")
+    return "\n".join(lines)
+
+
+def _compare_selected_documents_by_facts(
+    run_id: str,
+    selected_doc_ids: list[str],
+) -> dict[str, Any]:
+    started = time.perf_counter()
+    docs_by_id = {doc["document_id"]: doc for doc in get_documents(run_id)}
+    doc_summaries: list[str] = []
+    citations: list[dict[str, Any]] = []
+    errors: list[str] = []
+
+    for doc_id in selected_doc_ids:
+        title = docs_by_id.get(doc_id, {}).get("title") or doc_id
+        response = summarize(run_id, [doc_id])
+        if response.get("error"):
+            errors.append(f"{title}: {response['error']}")
+        doc_summaries.append(
+            _format_doc_fact_for_compare(
+                title,
+                response.get("structured_output"),
+                response.get("reply", ""),
+            )
+        )
+        citations.extend(response.get("citations") or [])
+
+    comparison_text = (
+        f"선택한 {len(selected_doc_ids)}개 문서를 모두 포함해 문서별 핵심 정보를 같은 기준으로 정리했습니다.\n\n"
+        + "\n\n---\n\n".join(doc_summaries)
+    )
+    structured = {
+        "문서목록": [docs_by_id.get(doc_id, {}).get("title") or doc_id for doc_id in selected_doc_ids],
+        "비교결과": comparison_text,
+    }
+    return {
+        "reply": _format_structured_output(structured),
+        "tool_used": "compare_rfps",
+        "structured_output": structured,
+        "citations": _dedupe_citations(citations),
+        "status": "partial" if errors else "ok",
+        "duration_ms": int((time.perf_counter() - started) * 1000),
+        "error": "\n".join(errors) if errors else None,
+    }
+
+
 def _execute_tool(bot: Any, tool_name: str, question: str) -> Any:
     tool = bot.tools.get(tool_name)
     if tool is None:
@@ -481,6 +545,9 @@ def extract_requirements(
 
 def compare(run_id: str, selected_doc_ids: list[str] | None = None) -> dict[str, Any]:
     """선택 문서를 예산, 기간, 자격요건 기준으로 비교합니다."""
+    if selected_doc_ids and len(selected_doc_ids) >= 2:
+        return _compare_selected_documents_by_facts(run_id, selected_doc_ids)
+
     return run_tool(
         run_id,
         "compare_rfps",
