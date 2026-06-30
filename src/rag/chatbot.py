@@ -248,6 +248,9 @@ class ChatbotRunner:
             keyword_map = {
                 "extract_facts": ["추출", "요약", "분석", "정보", "예산", "기간", "자격", "마감"],
                 "decide_participation": ["참여", "판단", "추천", "가능", "적합"],
+                "search_rfp_documents": ["검색", "찾아", "조건", "필터", "골라"],
+                "compare_rfps": ["비교", "차이", "대조"],
+                "extract_requirements": ["자격", "서류", "요건", "체크리스트", "필요한"],
             }
             for name, keywords in keyword_map.items():
                 if name in self.tools and any(kw in user_input for kw in keywords):
