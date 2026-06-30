@@ -45,8 +45,15 @@ with right:
     up = st.file_uploader("RFP 파일 업로드", type=["pdf", "docx", "hwp", "txt"],
                           label_visibility="collapsed", key="home_upload")
     if up is not None:
-        ss.doc_name = up.name
-        ss.analyzed = False
+        if ss.get("mode", "demo") == "real":
+            ss.pending_uploads = [{"name": up.name, "data": up.getvalue()}]
+            ss.run_id = None
+            ss.doc_name = up.name
+            ss.analyzed = False
+            ss.analysis = None
+        else:
+            ss.doc_name = up.name
+            ss.analyzed = False
         st.switch_page(P_ANALYZE)
 
     c = st.columns([1, 2, 1])[1]

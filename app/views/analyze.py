@@ -82,6 +82,7 @@ else:
 
     if not run_id:
         st.info("RFP 문서를 업로드하고 RAG 분석을 시작하세요. PDF, DOCX, HWP, TXT를 지원합니다.")
+        pending_uploads = list(ss.get("pending_uploads", []))
         uploaded_files = st.file_uploader(
             "RFP 파일 업로드 (복수 선택 가능)",
             type=["pdf", "docx", "hwp", "hwpx", "txt", "csv"],
@@ -89,22 +90,27 @@ else:
             key="real_upload",
         )
 
-        if uploaded_files:
+        if pending_uploads or uploaded_files:
+            display_names = [f["name"] for f in pending_uploads] or [f.name for f in uploaded_files]
             st.markdown(
                 f'<div class="panel"><div class="panel-title">&#x1F4E4; '
-                f'{len(uploaded_files)}개 파일 선택됨</div>'
-                f'{"".join(f"<div>· {f.name}</div>" for f in uploaded_files)}</div>',
+                f'{len(display_names)}개 파일 선택됨</div>'
+                f'{"".join(f"<div>· {name}</div>" for name in display_names)}</div>',
                 unsafe_allow_html=True,
             )
 
             if st.button("⚡ RAG 분석 시작", type="primary", use_container_width=True, key="run_real_analyze"):
                 with tempfile.TemporaryDirectory() as tmpdir:
                     tmp = Path(tmpdir)
-                    for uf in uploaded_files:
-                        dest = tmp / uf.name
-                        dest.write_bytes(uf.getbuffer())
+                    if pending_uploads:
+                        for item in pending_uploads:
+                            (tmp / item["name"]).write_bytes(item["data"])
+                    else:
+                        for uf in uploaded_files:
+                            dest = tmp / uf.name
+                            dest.write_bytes(uf.getbuffer())
 
-                    with st.spinner(f"문서 {len(uploaded_files)}개를 분석 중입니다... (RAG 파이프라인 실행)"):
+                    with st.spinner(f"문서 {len(display_names)}개를 분석 중입니다... (RAG 파이프라인 실행)"):
                         from services.rag_service import create_and_ingest
 
                         result = create_and_ingest(str(tmp))
@@ -113,6 +119,7 @@ else:
                     ss.run_id = result["run_id"]
                     ss.analyzed = True
                     ss.doc_name = result["run_id"]
+                    ss.pending_uploads = []
                     ss.analysis = {
                         "meta": {"run_id": result["run_id"], "문서 수": result["documents"], "청크 수": result["chunks"]},
                         "summary": "",

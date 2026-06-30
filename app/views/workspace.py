@@ -21,7 +21,7 @@ is_real = ss.get("mode", "demo") == "real"
 
 # ── 가드: 분석 결과가 없으면 분석 페이지로 유도 ─────────────────────────────
 if is_real:
-    if ss.run_id and not ss.analyzed:
+    if ss.run_id:
         from services.rag_service import get_run_info
 
         info = get_run_info(ss.run_id)
@@ -35,6 +35,8 @@ if is_real:
                 "summary": "",
                 "requirements": [],
             }
+        else:
+            ss.analyzed = False
 
     if not ss.run_id or not ss.analyzed:
         st.markdown(
@@ -46,7 +48,7 @@ if is_real:
         if st.button("📤 분석하러 가기", type="primary", key="goto_analyze"):
             st.switch_page(P_ANALYZE)
         st.stop()
-    data = {"summary": "", "requirements": [], "meta": {"run_id": ss.run_id}}
+    data = ss.analysis or {"summary": "", "requirements": [], "meta": {"run_id": ss.run_id}}
 else:
     if not ss.analyzed or not ss.analysis:
         st.markdown(

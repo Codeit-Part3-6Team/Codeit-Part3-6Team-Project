@@ -33,31 +33,59 @@ ss.setdefault("analysis", None)     # 분석 결과 dict
 ss.setdefault("messages", [])       # 채팅 기록
 ss.setdefault("pending_q", None)    # 추천 질문 클릭 처리용
 ss.setdefault("pending_tool", None) # 빠른 분석 버튼의 명시 Tool 실행용
+ss.setdefault("pending_uploads", []) # 홈에서 업로드한 실전 분석 대기 파일
+
+
+def _clear_active_run() -> None:
+    ss.run_id = None
+    ss.doc_name = None
+    ss.analyzed = False
+    ss.analysis = None
+    ss.messages = []
+    ss.pending_q = None
+    ss.pending_tool = None
+    ss.pending_uploads = []
+
+
+def _activate_run(run_id: str) -> None:
+    from services.rag_service import get_run_info
+
+    info = get_run_info(run_id)
+    ss.run_id = run_id
+    ss.doc_name = run_id
+    ss.analyzed = bool(info.get("exists") and info.get("status") in ("success", "ready"))
+    ss.analysis = {
+        "meta": {
+            "run_id": run_id,
+            "문서 수": info.get("document_count", 0),
+        },
+        "summary": "",
+        "requirements": [],
+    }
 
 # ── 2) 사이드바: 모드 선택 + run 목록 ────────────────────────────────────────
 with st.sidebar:
     st.markdown("## IT'S MINE")
     st.caption("RFP 입찰 분석")
 
+    if "app_mode_radio" not in ss:
+        ss.app_mode_radio = ss.mode
     prev_mode = ss.mode
-    ss.mode = st.radio(
+    selected_mode = st.radio(
         "운영 모드",
         options=["demo", "real"],
         format_func=lambda m: "데모 모드" if m == "demo" else "실전 모드",
         horizontal=True,
         key="app_mode_radio",
     )
-    if ss.mode != prev_mode:
+    if selected_mode != prev_mode:
         # 모드 전환 시 상태 초기화
-        ss.doc_name = None
-        ss.analyzed = False
-        ss.analysis = None
-        ss.messages = []
-        ss.run_id = None
-        ss.pending_q = None
-        ss.pending_tool = None
         from services.rag_service import clear_chatbot
+        ss.mode = selected_mode
+        _clear_active_run()
         clear_chatbot()
+    else:
+        ss.mode = selected_mode
 
     st.markdown("---")
 
@@ -70,15 +98,25 @@ with st.sidebar:
         runs = list_runs()
         if runs:
             run_options = {r["run_id"]: f"{r['run_id'][:20]}... ({r['status']})" for r in runs}
+            valid_options = [""] + list(run_options.keys())
+            if ss.run_id and ss.run_id in run_options:
+                ss.existing_run_select = ss.run_id
+            elif ss.get("existing_run_select") not in valid_options:
+                ss.existing_run_select = ""
             selected_run = st.selectbox(
                 "기존 분석 선택",
-                options=[""] + list(run_options.keys()),
+                options=valid_options,
                 format_func=lambda r: run_options.get(r, "새로 업로드"),
+                key="existing_run_select",
             )
-            if selected_run:
-                ss.run_id = selected_run
-                ss.analyzed = True
-                ss.doc_name = selected_run
+            if selected_run and selected_run != ss.run_id:
+                _activate_run(selected_run)
+                st.rerun()
+            if not selected_run and ss.run_id:
+                from services.rag_service import clear_chatbot
+                clear_chatbot(ss.run_id)
+                _clear_active_run()
+                st.rerun()
 
 # ── 3) 페이지 등록 ───────────────────────────────────────────────────────────
 # st.page_link 로 이동하려면 그 페이지가 아래 목록에 등록돼 있어야 합니다.
