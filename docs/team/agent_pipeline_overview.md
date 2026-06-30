@@ -23,17 +23,17 @@ config.yaml
 
 | 하려는 일 | 모드 | 실행 |
 |----------|------|------|
-| 단일 문서에서 답변 찾기 | RAG (기본) | un_rag_chat.py |
-| 여러 관점에서 문서 분석 후 종합 판단 | Agent Phase DAG | un_rag_agent.py --question "..." |
-| 대화하면서 문서 분석 | 챗봇 | un_rag_agent.py (질문 없이) |
-| 검색 품질 평가 | RAG 평가 | un_rag_evaluation |
-| Agent 종합 평가 | Agent 평가 | un_rag_agent_evaluation |
+| 단일 문서에서 답변 찾기 | RAG (기본) | run_rag_chat.py |
+| 여러 관점에서 문서 분석 후 종합 판단 | Agent Phase DAG | run_rag_agent.py --question "..." |
+| 대화하면서 문서 분석 | 챗봇 | run_rag_agent.py (질문 없이) |
+| 검색 품질 평가 | RAG 평가 | run_rag_evaluation |
+| Agent 종합 평가 | Agent 평가 | run_rag_agent_evaluation |
 
 ---
 
 ## Agent 모드 실행 예시
 
-`ash
+`bash
 # Phase DAG 모드 — extract → decide 순차 실행
 python scripts/run_rag_agent.py \
   --config configs/experiments/rag/agent/agent_lplus.yaml \
@@ -62,7 +62,7 @@ python scripts/run_rag_agent.py \
 |----------|----------|------|
 | 검색 방식 | ag.retriever.method | keyword / semantic / hybrid |
 | LLM 종류 | ag.answerer.provider | openai / ollama / huggingface |
-| Phase 구성 | gent.phases | extract → decide |
+| Phase 구성 | agent.phases | extract → decide |
 | Tool별 검색 개수 | 	ools.*.retriever.top_k | 10 |
 | Tool별 프롬프트 | 	ools.*.answerer.prompt_template | 커스텀 템플릿 |
 | Structured Output 형식 | 	ools.*.answerer.output_schema | facts_schema / decision_schema |
@@ -76,21 +76,25 @@ python scripts/run_rag_agent.py \
 
 | 모드 | 산출물 | 내용 |
 |------|--------|------|
-| RAG | nswers.jsonl | 질문별 답변 + citation |
+| RAG | answers.jsonl | 질문별 답변 + citation |
 | RAG | metrics.json | retrieval_hit_rate 등 |
-| Agent | gent_state.jsonl | Phase별 Tool 실행 결과 (answer + structured_output) |
-| Agent | gent_metrics.json | tool_success_rate 등 7종 지표 |
-| Agent | gent_evaluation.csv | 질문별 Agent 평가 결과 |
+| Agent | agent_state.jsonl | Phase별 Tool 실행 결과 (answer + structured_output) |
+| Agent | agent_metrics.json | tool_success_rate 등 7종 지표 |
+| Agent | agent_evaluation.csv | 질문별 Agent 평가 결과 |
 
 ---
 
 ## Streamlit App 연동
 
-pp/utils/mock_data.py의 2개 함수만 실제 파이프라인 호출로 교체:
+`app/services/rag_service.py`가 UI ↔ RAG 서비스 어댑터 역할을 합니다.
+UI는 `src.rag`를 직접 import하지 않고 아래 함수만 호출합니다.
 
-`
-mock_analyze()  →  run_rag_ingest + AgentRunner.run()
-mock_chat()     →  ChatbotRunner.chat()
-`
+| 서비스 함수 | 내부 호출 | 용도 |
+|-----------|----------|------|
+| `create_and_ingest()` | `run_rag_ingest()` | 업로드 문서 → run 생성 |
+| `summarize()` | `run_tool("extract_facts")` | 핵심 요약 |
+| `extract_requirements()` | `run_tool("extract_requirements")` | 참가자격/제출서류 |
+| `compare()` | `run_tool("compare_rfps")` | 다중 문서 비교 |
+| `ask_with_document_filter()` | `ChatbotRunner.chat()` | 선택 문서 챗봇 질의 |
 
-UI 코드는 0줄 수정.
+UI 계약은 `docs/team/rag_frontend_contract.md`를 봅니다.
