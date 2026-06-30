@@ -7,9 +7,16 @@ Streamlit 화면에서는 아래 흐름을 버튼/세션 상태에 맞게 옮기
 from __future__ import annotations
 
 import argparse
+import sys
 from pathlib import Path
 
-from app.services.rag_service import (
+PROJECT_ROOT = Path(__file__).resolve().parents[2]
+APP_ROOT = PROJECT_ROOT / "app"
+for path in (PROJECT_ROOT, APP_ROOT):
+    if str(path) not in sys.path:
+        sys.path.insert(0, str(path))
+
+from services.rag_service import (
     ask_with_document_filter,
     create_and_ingest,
     extract_requirements,

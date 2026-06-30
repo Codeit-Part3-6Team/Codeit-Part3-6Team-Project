@@ -6,11 +6,18 @@
 
 from __future__ import annotations
 
+import sys
 from pathlib import Path
 
 import streamlit as st
 
-from app.services.rag_service import (
+PROJECT_ROOT = Path(__file__).resolve().parents[2]
+APP_ROOT = PROJECT_ROOT / "app"
+for path in (PROJECT_ROOT, APP_ROOT):
+    if str(path) not in sys.path:
+        sys.path.insert(0, str(path))
+
+from services.rag_service import (
     ask_with_document_filter,
     compare,
     extract_requirements,
