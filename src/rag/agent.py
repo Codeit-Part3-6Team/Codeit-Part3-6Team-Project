@@ -494,12 +494,14 @@ class AgentLoopRunner:
             out = getattr(result, "answer", "") or "(응답 없음)"
         citations = getattr(result, "citations", [])
         if citations:
-            sources = []
-            for c in citations[:3]:
+            source_lines = []
+            for c in citations[:5]:
                 page = c.get("page", c.get("page_start", "?"))
                 section = c.get("section", "")
-                sources.append(f"p.{page} ({section})" if section else f"p.{page}")
-            out += f"\n\n[출처: " + ", ".join(sources) + "]"
+                chunk_id = c.get("chunk_id", "")
+                label = f"p.{page} ({section})" if section else f"p.{page}"
+                source_lines.append(f"📄 {label} chunk_id: {chunk_id}")
+            out += "\n\n[출처]\n" + "\n".join(source_lines)
         return out
 
 

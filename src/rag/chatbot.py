@@ -40,6 +40,7 @@ class ChatbotRunner:
         self.max_retries = 2
         self.history: list[dict[str, str]] = []
         self.state: dict[str, ToolResult] = {}
+        self.current_context: dict[str, str] = {}  # {"last_tool": "...", "last_question": "...", "last_answer": "..."}
         self.chunks: list[dict[str, str]] = []
         self.embeddings: list[dict[str, Any]] = []
 
@@ -87,6 +88,9 @@ class ChatbotRunner:
             result = self._run_tool_with_retry(tool, refined_question)
             self.state[tool_name] = result
             tool_history.append(tool_name)
+            self.current_context["last_tool"] = tool_name
+            self.current_context["last_question"] = user_input
+            self.current_context["last_answer"] = result.answer[:300] if result.answer else ""
 
             is_complete, next_tool = self._evaluate_result(user_input, tool_name, result, iteration, max_iterations)
             if is_complete:
@@ -120,12 +124,14 @@ class ChatbotRunner:
         else:
             out = result.answer or '(응답 없음)'
         if result.citations:
-            sources = []
-            for c in result.citations[:3]:
+            source_lines = []
+            for c in result.citations[:5]:
                 page = c.get('page', c.get('page_start', '?'))
                 section = c.get('section', '')
-                sources.append(f'p.{page} ({section})' if section else f'p.{page}')
-            out += f'\n\n[출처: ' + ', '.join(sources) + ']'
+                chunk_id = c.get('chunk_id', '')
+                label = f'p.{page} ({section})' if section else f'p.{page}'
+                source_lines.append(f'📄 {label} chunk_id: {chunk_id}')
+            out += '\n\n[출처]\n' + '\n'.join(source_lines)
         return out
 
     def chat(self, user_input: str) -> dict[str, Any]:
@@ -163,6 +169,9 @@ class ChatbotRunner:
 
         result = self._run_tool_with_retry(tool, refined_question)
         self.state[tool_name] = result
+        self.current_context["last_tool"] = tool_name
+        self.current_context["last_question"] = user_input
+        self.current_context["last_answer"] = result.answer[:300] if result.answer else ""
 
         if result.status == "failed":
             reply = (
@@ -199,9 +208,15 @@ class ChatbotRunner:
             )
             history_context = f"이전 대화:\n{history_context}\n\n"
 
+        context_context = ""
+        if self.current_context.get("last_tool"):
+            ctx = self.current_context
+            context_context = f"현재 맥락:\n  마지막 도구: {ctx['last_tool']}\n  마지막 질문: {ctx['last_question'][:200]}\n  마지막 답변: {ctx.get('last_answer', '')[:200]}\n\n"
+
         prompt = (
             f"{self.system_prompt}\n\n"
             f"사용 가능한 도구:\n{tool_descriptions}\n\n"
+            f"{context_context}"
             f"{history_context}"
             f"사용자 질문: {user_input}\n\n"
             "JSON 응답:"
