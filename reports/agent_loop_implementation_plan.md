@@ -869,7 +869,37 @@ agent:
 | v7 | 2026-06-25 | **보류 3건 해소**: Phase 병렬, scoring 고도화, Agent 평가. tool_selection_accuracy/hallucination_avoidance_rate 실제 계산. |
 | v8 | 2026-06-25 | **챗봇 지원**: ChatbotRunner(LLM 동적 Tool 선택), agent.chatbot.enabled, CLI 루프. 3차 리뷰 버그 5건 수정. A (96/100). |
 | v9 | 2026-06-25 | **통합 감사 해소**: 32건 이슈(🔴6 🟠6 🟡10 🟢10) 전수 수정. 15 fix 커밋. 55 tests pass. 실패 가시성 강화(ValueError/errors/artifact_status). 파생 버그 2건 추가 수정. |
-| v10 | 2026-06-29 | **AgentLoopRunner 구현**: Plan→Execute→Evaluate 반복 루프. `agent.loop.*` config (`enabled`, `max_iterations`) 신설. AgentLoopRunner 신규 파일 추가, configs/README.md Agent Loop 모드 문서화. |
+| v10 | 2026-06-29 | **AgentLoopRunner 구현**: Plan→Execute→Evaluate 반복 루프. `agent.loop.*` config 신설. |
+| v11 | 2026-06-29 | **확장 구현**: Ollama/OpenAI embedding adapters. Chatbot input_from 자동 연쇄. _format_tool_result() + citation 확장. 대화 메모리. 한국어 키워드 fallback. 20개 문서 갱신. 55 passed. |
+| v12 | 2026-06-29 | **서비스 Tool 구현**: extract_requirements, search_rfp_documents, compare_rfps config 기반 추가. BM25+RRF hybrid search 머지. C2 업무형 RFP 챗봇 완성. |
+
+---
+
+# 부록 G: 최종 구현 상태 (2026-06-29)
+
+## 신규 모듈 (12개)
+`agent.py`, `tool.py`, `chatbot.py`, `prompt.py`, `schema_parser.py`, `scoring.py`, `judge.py`, `run_rag_agent.py`, `test_rag_agent.py`, `agent_lplus.yaml`, `agent_loop.yaml`, `rag_agent_demo.yaml`
+
+## 확장 구현 (5개)
+OllamaEmbeddingAdapter, OpenAIEmbeddingAdapter, AgentLoopRunner, BM25+RRF hybrid search, input_from auto-chain
+
+## 챗봇 Tool (5개)
+extract_facts, extract_requirements, decide_participation, search_rfp_documents, compare_rfps
+
+## 버그 수정 (32건)
+치명 8 + 높음 12 + 중간 12
+
+## 문서 갱신 (20+개)
+docs/llm/ 4, docs/team/ 8, docs/md/ 6, configs/README.md, src/rag/README.md, reports/PM/
+
+## Config 기반 모드 전환
+`agent.enabled: false` → RAG 기본
+`agent.enabled: true` → Phase DAG
+`agent.chatbot.enabled: true` → Chatbot
+`agent.loop.enabled: true` → Agent Loop (Plan→Execute→Evaluate)
+
+## 테스트
+55 passed, RAG 회귀 없음, 하위호환성 유지
 
 ---
 
