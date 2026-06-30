@@ -232,6 +232,13 @@ def _collect_citations(bot: Any, tool_used: str | list[str] | None) -> list[dict
     return []
 
 
+def _strip_source_block(reply: str) -> str:
+    marker = "\n\n[출처]\n"
+    if marker in reply:
+        return reply.split(marker, 1)[0].rstrip()
+    return reply
+
+
 def _execute_tool(bot: Any, tool_name: str, question: str) -> Any:
     tool = bot.tools.get(tool_name)
     if tool is None:
@@ -279,7 +286,7 @@ def ask(run_id: str, question: str) -> dict[str, Any]:
                 citations = list(tool_result.citations)
 
         return {
-            "reply": response.get("reply", ""),
+            "reply": _strip_source_block(response.get("reply", "")),
             "tool_used": tool_used,
             "citations": citations,
             "status": (response.get("tool_result") or {}).get("status", "unknown"),
@@ -324,7 +331,7 @@ def ask_with_document_filter(
         citations = _collect_citations(bot, response.get("tool_used"))
 
         return {
-            "reply": response.get("reply", ""),
+            "reply": _strip_source_block(response.get("reply", "")),
             "tool_used": response.get("tool_used"),
             "citations": citations,
             "status": (response.get("tool_result") or {}).get("status", "unknown"),
@@ -363,7 +370,7 @@ def run_tool(
             }
 
         result = _execute_tool(bot, tool_name, question)
-        reply = bot._format_tool_result(result)
+        reply = _strip_source_block(bot._format_tool_result(result))
         return {
             "reply": reply,
             "tool_used": tool_name,

@@ -113,3 +113,9 @@ def test_get_citation_returns_chunk_text(tmp_path, monkeypatch):
     assert citation is not None
     assert citation["text"] == "근거 원문입니다."
     assert citation["section"] == "사업 개요"
+
+
+def test_strip_source_block_removes_inline_citations():
+    reply = "답변입니다.\n\n[출처]\n문서 1\n문서 2"
+
+    assert rag_service._strip_source_block(reply) == "답변입니다."

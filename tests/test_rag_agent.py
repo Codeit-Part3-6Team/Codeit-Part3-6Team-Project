@@ -214,6 +214,33 @@ def test_chatbot_runner_handles_unknown_tool_selection(monkeypatch):
     assert "missing_tool" in response["reply"]
 
 
+def test_chatbot_runner_fallback_routes_common_korean_questions():
+    from src.rag.chatbot import build_chatbot_from_config
+
+    config = {
+        "rag": {
+            "embedding": {"provider": "local"},
+            "retriever": {"method": "keyword", "top_k": 3},
+            "answerer": {"provider": "local"},
+        },
+        "agent": {
+            "enabled": True,
+            "chatbot": {"enabled": True, "tool_selection_provider": "missing_provider"},
+            "tools": {
+                "extract_facts": {"description": "extract facts", "answerer": {"provider": "local"}},
+                "extract_requirements": {"description": "extract requirements", "answerer": {"provider": "local"}},
+                "compare_rfps": {"description": "compare rfp documents", "answerer": {"provider": "local"}},
+            },
+        },
+    }
+    bot = build_chatbot_from_config(config)
+
+    assert bot._fallback_tool_selection("요약해줘")[0] == "extract_facts"
+    assert bot._fallback_tool_selection("사업 예산과 기간은?")[0] == "extract_facts"
+    assert bot._fallback_tool_selection("참가 자격 요건은?")[0] == "extract_requirements"
+    assert bot._fallback_tool_selection("두 문서를 비교해줘")[0] == "compare_rfps"
+
+
 def test_agent_loop_configs_load_with_service_tools(repo_root):
     from src.config import load_config
 

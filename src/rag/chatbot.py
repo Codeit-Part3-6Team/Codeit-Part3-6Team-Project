@@ -255,33 +255,11 @@ class ChatbotRunner:
         except Exception as exc:
             import sys
             print(f"[Chatbot] Tool selection failed ({type(exc).__name__}: {exc})", file=sys.stderr)
-            return None, user_input
+            return self._fallback_tool_selection(user_input)
 
         # Fallback: JSON parsing failed, try natural language
         if not isinstance(parsed, dict) or "tool" not in parsed:
-            combined = str(parsed) + " " + text
-            for name in self.tools:
-                if name in combined:
-                    self._add_history("user", user_input)
-                    return name, user_input
-            # Keyword fallback: Korean keywords -> tool mapping
-            keyword_map = {
-                "extract_facts": ["추출", "요약", "분석", "정보", "예산", "기간", "자격", "마감"],
-                "decide_participation": ["참여", "판단", "추천", "가능", "적합"],
-                "search_rfp_documents": ["검색", "찾아", "조건", "필터", "골라"],
-                "compare_rfps": ["비교", "차이", "대조"],
-                "extract_requirements": ["자격", "서류", "요건", "체크리스트", "필요한"],
-            }
-            for name, keywords in keyword_map.items():
-                if name in self.tools and any(kw in user_input for kw in keywords):
-                    self._add_history("user", user_input)
-                    return name, user_input
-            # Default: first tool
-            if self.tools:
-                first = next(iter(self.tools))
-                self._add_history("user", user_input)
-                return first, user_input
-            return None, user_input
+            return self._fallback_tool_selection(user_input, str(parsed) + " " + text)
 
         tool_name = parsed.get("tool")
         question = parsed.get("question", user_input)
@@ -291,6 +269,51 @@ class ChatbotRunner:
         direct_answer = parsed.get("answer")
         if direct_answer:
             return None, direct_answer
+        return self._fallback_tool_selection(user_input)
+
+    def _fallback_tool_selection(
+        self,
+        user_input: str,
+        model_text: str = "",
+    ) -> tuple[str | None, str]:
+        """LLM Tool 선택이 실패했을 때 키워드 기반으로 안전하게 라우팅합니다."""
+        combined = f"{model_text} {user_input}"
+        for name in self.tools:
+            if name in combined:
+                self._add_history("user", user_input)
+                return name, user_input
+
+        keyword_map = {
+            "compare_rfps": ["비교", "차이", "대조"],
+            "extract_requirements": ["참가", "자격", "서류", "요건", "체크리스트", "필요한"],
+            "decide_participation": ["참여", "판단", "추천", "가능", "적합", "리스크"],
+            "search_rfp_documents": ["검색", "찾아", "조건", "필터", "골라"],
+            "extract_facts": [
+                "추출",
+                "요약",
+                "분석",
+                "정보",
+                "예산",
+                "기간",
+                "마감",
+                "발주",
+                "사업",
+                "얼마",
+                "언제",
+            ],
+        }
+        for name, keywords in keyword_map.items():
+            if name in self.tools and any(kw in user_input for kw in keywords):
+                self._add_history("user", user_input)
+                return name, user_input
+
+        if "extract_facts" in self.tools:
+            self._add_history("user", user_input)
+            return "extract_facts", user_input
+        if self.tools:
+            first = next(iter(self.tools))
+            self._add_history("user", user_input)
+            return first, user_input
         return None, user_input
 
     def _run_tool_with_retry(self, tool: Tool, question: str) -> ToolResult:
