@@ -316,6 +316,7 @@ Agent 모드는 `agent.enabled: true` config에서 활성화되며, Phase DAG에
 
 - 파이프라인 입출력 계약 (상세): [docs/md/rag/RAG_PIPELINE_SPEC.md](../md/rag/RAG_PIPELINE_SPEC.md)
 - Agent 파이프라인 개요: [agent_pipeline_overview.md](agent_pipeline_overview.md)
+- 프론트엔드 연결 계약 (UI 개발자용): [rag_frontend_contract.md](rag_frontend_contract.md)
 - 실험 실행 가이드: [docs/md/experiments/EXPERIMENT_GUIDE.md](../md/experiments/EXPERIMENT_GUIDE.md)
 - 골든 데이터셋 구축 가이드: [golden_dataset_guide.md](golden_dataset_guide.md)
 - 첫 주 작업 목록: [first-week.md](first-week.md)

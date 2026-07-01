@@ -3,16 +3,22 @@
 ## 전체 흐름
 
 ```text
-configs/experiments/rag/*.yaml
+configs/experiments/rag/*.yaml          ← streamlit.yaml (서비스 전용)
     |
     v
 scripts/run_rag_*.py
     |
     v
-src/
+src/rag/                                ← pipeline, chatbot, tool, agent
     |
     v
-experiments/ + reports/
+app/services/rag_service.py             ← 서비스 어댑터 계층 (UI ↔ RAG)
+    |
+    v
+app/views/                              ← Streamlit UI
+    |
+    v
+experiments/streamlit/{run_id}/         ← 서비스 산출물
 ```
 
 ## 경로별 책임
@@ -40,6 +46,12 @@ experiments/ + reports/
 | `docs/md/` | 관리용 Markdown | 문서 원본 |
 | `docs/html/` | 공유/설명용 HTML | Markdown 백업본이 아니라 킥오프와 설명에 직접 쓰는 자료만 유지 |
 | `docs/llm/` | LLM 작업용 컨텍스트 | 실제 코드/문서 구조가 바뀌면 함께 갱신 |
+| `app/` | Streamlit 웹앱 | mock_data.py는 데모 전용, 실제 연결은 services/rag_service.py |
+| `app/services/rag_service.py` | UI ↔ RAG 서비스 어댑터 | Streamlit은 이 함수만 호출, src.rag 직접 import 금지 |
+| `app/views/rag_contract_demo.py` | 서비스 계약 검증 데모 | 계약에 맞춘 최소 화면 예시 |
+| `app/examples/` | CLI/UI 연동 참고 예제 | 최종 UI가 아니라 연결 패턴 확인용 |
+| `configs/experiments/rag/streamlit.yaml` | Streamlit 서비스 전용 config | agent_lplus.yaml 상속, paths만 동적 override |
+| `docs/team/rag_frontend_contract.md` | 프론트엔드 연결 계약서 | UI 개발자에게 전달하는 함수/응답 스키마 명세 |
 | `tests/` | 회귀 방지 테스트 | 기능 변경 시 함께 갱신 |
 
 ## RAG 실행 흐름
@@ -80,6 +92,13 @@ run_rag_agent.py  (agent.enabled: true)
     -> src/rag/judge.py  (정성 평가)
     -> experiments/{name}/agent_state.jsonl
     -> experiments/{name}/agent_metrics.json
+
+app/services/rag_service.py  (서비스 계층)
+    -> configs/experiments/rag/streamlit.yaml  (서비스 config 템플릿)
+    -> src/rag/pipeline.py  (create_and_ingest → run_rag_ingest)
+    -> src/rag/chatbot.py  (summarize/extract_requirements → run_tool → Tool.run)
+    -> experiments/streamlit/{run_id}/  (서비스 산출물)
+    -> Streamlit UI  (reply, structured_output, citations 표시)
 ```
 
 ## 기준 Config와 데이터
@@ -92,6 +111,7 @@ run_rag_agent.py  (agent.enabled: true)
 | `configs/experiments/rag/rag_semantic.yaml` | `data/rag_sample/` | local semantic retriever 비교 |
 | `configs/experiments/rag/rag_hybrid.yaml` | `data/rag_sample/` | local hybrid retriever 비교 |
 | `configs/experiments/rag/agent/agent_lplus.yaml` | `data/rag_sample/` | Agent 모드 Phase DAG + Tool dispatch 실행 |
+| `configs/experiments/rag/streamlit.yaml` | 사용자 업로드 | Streamlit 서비스 전용 (agent_lplus.yaml 상속, paths만 동적 override) |
 
 ## 작업별 수정 위치
 
@@ -113,6 +133,9 @@ run_rag_agent.py  (agent.enabled: true)
 | HTML 설명 자료 정리 | `docs/html/` | `docs/html/README.md`, `docs/team/kickoff.md` |
 | Agent 구현 추가 | `src/rag/agent.py`, `src/rag/chatbot.py`, `src/rag/tool.py`, `src/rag/prompt.py`, `scripts/run_rag_agent.py` | `configs/experiments/rag/agent/` |
 | Agent config 추가 | `configs/experiments/rag/agent/*.yaml` | `src/rag/validation.py`, `tests/test_rag_validation.py` |
+| Streamlit 서비스 어댑터 수정 | `app/services/rag_service.py` | `docs/team/rag_frontend_contract.md`, `tests/test_streamlit_rag_service.py` |
+| Streamlit config 조정 | `configs/experiments/rag/streamlit.yaml` | `configs/experiments/rag/agent/agent_lplus.yaml`, `configs/experiments/rag/rag-baseline.yaml` |
+| 프론트 계약 갱신 | `docs/team/rag_frontend_contract.md` | `app/services/rag_service.py` |
 | LLM 문서 최신화 | `docs/llm/` | `AGENTS.md`, `docs/team/README.md` |
 
 ## Engine 판단 기준
@@ -154,4 +177,9 @@ experiments/{experiment_name}/
  `-- rag_ingest_checkpoint.json
 |-- agent_state.jsonl  (Agent 모드)
 `-- agent_metrics.json  (Agent 모드)
+
+experiments/streamlit/{run_id}/
+|-- config.yaml          ← streamlit.yaml 복사본 (paths override)
+|-- raw_docs/            ← 업로드 원본 파일
+`-- output/              ← RAG ingest 산출물 (chunks.csv, embeddings.jsonl)
 ```

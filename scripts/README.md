@@ -17,6 +17,20 @@
 | `summarize_experiments.py` | RAG 실험 metric/config/run info 요약 |
 | `diagnose_hwp_extraction.py` | HWP/PDF 직접 파서로 텍스트 추출 진단 (CSV vs 직접 파싱 비교) |
 
+## Streamlit 서비스 실행
+
+```bash
+python -m streamlit run app/app.py
+```
+
+서비스 어댑터 계약 검증 데모:
+
+```bash
+python -m streamlit run app/views/rag_contract_demo.py
+```
+
+자세한 계약은 `docs/team/rag_frontend_contract.md`를 봅니다.
+
 ## Shell 스크립트 (GCP VM)
 
 | script | 용도 |

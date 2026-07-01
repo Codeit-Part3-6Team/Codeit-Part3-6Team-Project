@@ -17,6 +17,7 @@
 | `rag_agent.yaml` | Agent 확장 참조 템플릿 (`agent.enabled: false` 기본) | `agent.enabled`, `agent.phases`, `agent.tools.*` |
 | `agent/agent_lplus.yaml` | L+ 시나리오 예시 (`agent.enabled: true` + `chatbot`) | `agent.phases`, `agent.tools.*`, `chatbot.*` |
 | `rag_agent_demo.yaml` | Agent + Chatbot 데모 config |
+| `streamlit.yaml` | **Streamlit 서비스 전용** — agent_lplus.yaml 상속, 업로드 loader + 챗봇 활성화, `create_and_ingest()`가 paths 동적 override |
 
 ## 실험 명명 규칙
 
