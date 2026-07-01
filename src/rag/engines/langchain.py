@@ -48,6 +48,7 @@ class LangChainRagEngine:
                     "source_path": document["source_path"],
                     "page": document["page"],
                     "section": document["section"],
+                    "preamble": document.get("preamble", ""),
                 },
             )
             for document in documents
@@ -59,6 +60,8 @@ class LangChainRagEngine:
             document_id = str(doc.metadata["document_id"])
             counters[document_id] = counters.get(document_id, 0) + 1
             chunk_id = f"{document_id}_chunk_{counters[document_id]:04d}"
+            preamble = str(doc.metadata.get("preamble", ""))
+            text = f"[{preamble}]  {doc.page_content}" if preamble else doc.page_content
             chunks.append(
                 {
                     "chunk_id": chunk_id,
@@ -67,8 +70,8 @@ class LangChainRagEngine:
                     "page_start": str(doc.metadata.get("page", "")),
                     "page_end": str(doc.metadata.get("page", "")),
                     "section": str(doc.metadata.get("section", "")),
-                    "text": doc.page_content,
-                    "token_count": str(len(doc.page_content.split())),
+                    "text": text,
+                    "token_count": str(len(text.split())),
                 }
             )
         return chunks
