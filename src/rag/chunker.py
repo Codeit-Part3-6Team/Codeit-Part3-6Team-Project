@@ -19,9 +19,11 @@ def chunk_documents(
     for document in documents:
         document_id = document["document_id"]
         counters.setdefault(document_id, 0)
-        for text in _split_text(document["text"], chunk_size, overlap):
+        preamble = document.get("preamble", "")
+        for body in _split_text(document["text"], chunk_size, overlap):
             counters[document_id] += 1
             chunk_id = f"{document_id}_chunk_{counters[document_id]:04d}"
+            text = f"[{preamble}]  {body}" if preamble else body
             # source/page metadata를 chunk에 복사해야 답변 단계에서 citation을 만들 수 있습니다.
             chunks.append(
                 {

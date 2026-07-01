@@ -132,10 +132,10 @@ def _parse_csv_document(project_root: Path, path: Path) -> list[dict[str, str]]:
                 "source_path": _relative_path(project_root, path),
                 "page": "1",
                 "section": "본문",
-                # 사업 금액/발주 기관 등은 나라장터 메타데이터에서 온 값이라 본문(텍스트
-                # 컬럼)에 그대로 안 적혀있는 경우가 많다. text에 직접 섞어 넣어야
-                # chunk/검색 대상이 되어 retrieval로 찾을 수 있다.
-                "text": _normalize_text(f"{_build_meta_preamble(entry, title)} {text}"),
+                # preamble은 chunker가 각 청크마다 삽입하므로 text에서 분리한다.
+                # text에는 목차 제거 후 정규화된 본문만 담는다.
+                "preamble": _build_meta_preamble(entry, title),
+                "text": _normalize_text(_remove_toc(text)),
             }
             for meta_key in ("사업 금액", "발주 기관", "공고 차수", "파일형식", "파일명", "사업 요약"):
                 value = entry.get(meta_key, "").strip()
@@ -360,6 +360,30 @@ def _normalize_file_types(file_types: list[str] | None) -> set[str]:
 
 def _normalize_text(text: str) -> str:
     return re.sub(r"\s+", " ", text).strip()
+
+
+# HWP 페이지번호 특수문자(袏請畏裗 등)는 U+4E00-U+9FFF (CJK 통합 한자) 범위에 있다.
+# 한글 음절(U+AC00-U+D7A3)은 이 범위 밖이므로 오탐 없음.
+_HWP_PAGE_CHAR = re.compile(r"[\u4E00-\u9FFF\uF900-\uFAFF]")
+_TOC_HEADER = re.compile(r"목\s+차")
+
+
+def _remove_toc(text: str) -> str:
+    """목차 항목 줄을 개별 제거한다.
+
+    범위 삭제 대신 줄 단위 필터를 사용해 목차와 본문이 혼재된 문서에서
+    본문이 지워지는 문제를 방지한다.
+    """
+    lines = text.split("\n")
+    result = []
+    for line in lines:
+        stripped = line.strip()
+        if _TOC_HEADER.search(line) and len(stripped) < 20:
+            continue
+        if stripped and _HWP_PAGE_CHAR.search(stripped) and "\t" in line and len(stripped) < 80:
+            continue
+        result.append(line)
+    return "\n".join(result)
 
 
 def _local_name(tag: str) -> str:
