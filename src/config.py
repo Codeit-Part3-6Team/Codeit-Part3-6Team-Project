@@ -10,6 +10,9 @@ def load_config(path: str | Path) -> dict[str, Any]:
 
     기본은 PyYAML을 사용합니다. 다만 smoke test가 아주 최소 환경에서도
     돌아갈 수 있도록 작은 fallback parser를 함께 둡니다.
+
+    base_config 키가 있으면 해당 경로의 config를 먼저 불러온 뒤
+    현재 config의 값으로 오버라이드합니다. base_config는 연쇄 상속 가능합니다.
     """
     config_path = Path(path)
     # Windows/Excel/일부 에디터가 붙인 UTF-8 BOM이 최상위 key에 섞이지 않게 제거합니다.
@@ -18,9 +21,20 @@ def load_config(path: str | Path) -> dict[str, Any]:
         # 팀 프로젝트에서는 PyYAML을 쓰는 것이 기본이고, fallback은 최소 실행을 위한 안전망입니다.
         import yaml  # type: ignore
     except ImportError:
-        return _parse_simple_yaml(text)
-    loaded = yaml.safe_load(text)
-    return loaded or {}
+        loaded = _parse_simple_yaml(text)
+    else:
+        loaded = yaml.safe_load(text)
+    loaded = loaded or {}
+
+    base_config = loaded.pop("base_config", None)
+    if base_config:
+        base_path = config_path.parent / str(base_config)
+        if base_path.exists():
+            base = load_config(base_path)
+            merged = _deep_merge(base, loaded)
+            return merged
+
+    return loaded
 
 
 def write_config_copy(
@@ -116,3 +130,14 @@ def _parse_scalar(value: str) -> Any:
         return float(value)
     except ValueError:
         return value.strip("'\"")
+
+
+def _deep_merge(base: dict[str, Any], override: dict[str, Any]) -> dict[str, Any]:
+    """base에 override를 덧씌웁니다. 공통 키는 override 우선, dict는 재귀 병합."""
+    result = dict(base)
+    for key, value in override.items():
+        if key in result and isinstance(result[key], dict) and isinstance(value, dict):
+            result[key] = _deep_merge(result[key], value)
+        else:
+            result[key] = value
+    return result

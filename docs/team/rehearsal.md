@@ -29,6 +29,8 @@ bad_retrievals.csv
 unsupported_answers.csv
 failed_questions.csv
 metrics.json
+agent_state.jsonl
+agent_metrics.json
 run_status.json
 rag_ingest_checkpoint.json
 ```

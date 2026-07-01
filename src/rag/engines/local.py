@@ -39,6 +39,7 @@ class LocalRagEngine:
         return build_retriever_adapter(
             self.rag_config.get("retriever", {}),
             self.rag_config.get("embedding", {}),
+            self.rag_config,
         ).retrieve(question, chunks, embeddings)
 
     def answer(self, question: str, retrieved_chunks: list[dict[str, Any]]) -> dict[str, Any]:

@@ -27,6 +27,7 @@ rag:
     model_name: hashing-char-ngram-v1
     dimension: 64
     device: auto
+    # deprecated: normalize는 local embedding adapter가 참조하지 않습니다
     normalize: true
   vector_store:
     type: memory
@@ -50,6 +51,7 @@ rag:
 evaluation:
   questions_path: data/rag_sample/eval_questions.csv
 
+# deprecated: metric 섹션은 아직 코드에서 참조되지 않습니다
 metric:
   monitor: retrieval_hit_rate
   mode: max

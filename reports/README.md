@@ -31,7 +31,11 @@ reports/
 |-- experiment_summary.csv          # 실험 요약 생성 결과
 |-- experiment_summary.json         # 실험 요약 JSON
 |-- rag_retriever_comparison.csv    # RAG retriever 비교 결과
-`-- rag_retriever_comparison.json   # RAG retriever 비교 JSON
+|-- rag_retriever_comparison.json   # RAG retriever 비교 JSON
+|-- agent_evaluation.csv            # Agent 평가 결과
+|-- agent_state.jsonl               # Agent 턴별 상태 기록
+|-- agent_metrics.json              # Agent 평가 metric
+`-- PM/                             # PM 보고 자료
 ```
 
 ## 주요 파일

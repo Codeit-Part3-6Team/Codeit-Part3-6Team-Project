@@ -124,9 +124,44 @@ def test_huggingface_embedding_adapter_is_registered_without_loading_model():
     assert adapter.model_name == "sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2"
 
 
-def test_contract_only_adapters_raise_clear_errors():
-    with pytest.raises(NotImplementedError, match="contract is validated"):
-        build_answerer_adapter({"mode": "llm", "provider": "openai", "model_name": "gpt-4o-mini"})
+def test_unimplemented_adapters_still_raise_errors():
+    with pytest.raises(NotImplementedError, match="not implemented yet"):
+        build_answerer_adapter({"mode": "llm", "provider": "anthropic", "model_name": "claude-3"})
+
+    with pytest.raises(NotImplementedError, match="not implemented yet"):
+        build_answerer_adapter({"mode": "unknown", "provider": "local"})
+
+
+def test_openai_adapter_config_creation():
+    adapter = build_answerer_adapter(
+        {
+            "mode": "llm",
+            "provider": "openai",
+            "model_name": "gpt-4o-mini",
+            "temperature": 0.3,
+            "max_tokens": 512,
+            "fallback_message": "문서에서 확인하지 못했습니다.",
+        }
+    )
+    assert adapter.model_name == "gpt-4o-mini"
+    assert adapter.temperature == 0.3
+    assert adapter.max_tokens == 512
+    assert adapter.prompt_template is None
+
+
+def test_ollama_adapter_config_creation():
+    adapter = build_answerer_adapter(
+        {
+            "mode": "llm",
+            "provider": "ollama",
+            "model_name": "gemma3:latest",
+            "temperature": 0.1,
+            "base_url": "http://localhost:11434",
+        }
+    )
+    assert adapter.model_name == "gemma3:latest"
+    assert adapter.temperature == 0.1
+    assert adapter.base_url == "http://localhost:11434"
 
 
 def test_huggingface_llm_answerer_uses_transformers_pipeline(monkeypatch):

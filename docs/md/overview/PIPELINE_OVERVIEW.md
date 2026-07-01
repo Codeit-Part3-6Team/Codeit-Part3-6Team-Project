@@ -158,7 +158,23 @@ python scripts/run_rag_chat.py \
 - citation 연결
 - `retrieval_results.jsonl`, `answers.jsonl` 저장
 
-### 4. RAG 평가와 실험 요약
+### 4. Agent 실행
+
+```bash
+python scripts/run_rag_agent.py \
+  --config configs/experiments/rag/rag_langchain.yaml \
+  --project-root . \
+  --question "A사와 B사의 제안을 비교해줘"
+```
+
+Agent 단계에서 하는 일:
+
+- Phase DAG에 따라 분석/비교/추천 단계를 실행
+- Tool dispatch로 문서 검색, scoring, schema 파싱 수행
+- Structured Output으로 답변을 규격화된 JSON 구조로 저장
+- `agent_state.jsonl`, `agent_metrics.json` 저장
+
+### 5. RAG 평가와 실험 요약
 
 ```bash
 python scripts/run_rag_chat.py --config configs/experiments/rag/rag_langchain.yaml --project-root . --evaluate
@@ -211,6 +227,10 @@ RAG 예시:
 - `configs/experiments/rag/rag_hybrid.yaml`: hybrid retriever 비교 실험
 
 분류 모델과 HuggingFace fine-tuning config는 현재 RAG 프로젝트의 본 실험이 아니라 `configs/examples/classification/`에 참고용으로 보관합니다.
+
+## Agent 모드
+
+Agent 모드는 RAG 파이프라인 위에서 동작하는 추가 실행 모드입니다. Phase DAG를 통해 단순 검색-답변을 넘어 문서 분석, 비교, 추천, 판단을 구조화된 흐름으로 수행합니다. Tool dispatch로 retriever, answerer, schema_parser, scoring, judge를 필요에 따라 호출하며, Structured Output으로 답변을 JSON 규격으로 남겨 downstream 자동화에 연결할 수 있습니다. Chatbot 모드는 이 Agent 흐름을 대화형 인터페이스로 제공합니다.
 
 ## RAG 프로젝트 기준으로 무엇을 본다
 

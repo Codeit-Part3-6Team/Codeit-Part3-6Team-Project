@@ -135,6 +135,11 @@ ls experiments/rag_langchain/
 | 검색 개수 | `rag.retriever.top_k` | 5 | 3, 5, 7 |
 | 임베딩 모델 | `rag.embedding.provider` | local | local, ollama |
 | 답변 모델 | `rag.answerer.provider` | local | local, ollama, openai |
+| Agent 활성화 | `agent.enabled` | false | true, false |
+| Agent 최대 단계 | `agent.max_steps` | 15 | 10, 15, 30 |
+| Agent Tool 목록 | `agent.tools` | config별 정의 | extract_facts, decide_participation, ... |
+| Tool별 Structured Output | `tools.*.answerer.output_schema` | 없음 | facts_schema, decision_schema |
+| Tool별 프롬프트 | `tools.*.answerer.prompt_template` | 기본 프롬프트 | 커스텀 템플릿 |
 
 ### 실험 config 만들기
 
@@ -269,7 +274,29 @@ python scripts/compare_rag_retrievers.py \
 cat reports/rag_retriever_comparison.csv
 ```
 
-## 7. Ollama 모델로 업그레이드하기
+## 7. Agent 모드 실행하기
+
+RAG 파이프라인을 단일 검색/답변 대신 Agent 모드로 실행할 수 있습니다.
+
+```bash
+# Agent 모드로 단일 질문 실행
+python scripts/run_rag_agent.py \
+  --config configs/experiments/rag/agent/agent_lplus.yaml \
+  --project-root . \
+  --question "이 RFP를 요약하고 독소조항을 분석해줘"
+
+# Agent 모드 평가
+python scripts/run_rag_agent.py \
+  --config configs/experiments/rag/agent/agent_lplus.yaml \
+  --project-root . \
+  --evaluate
+```
+
+Agent 모드는 `agent.enabled: true`일 때 활성화되며, Phase DAG에 따라 여러 Tool을
+순차 실행합니다. 실행 trace는 `agent_state.jsonl`, Tool 출력은 `agent_state.jsonl`,
+최종 답변은 `agent_state.jsonl`에 저장됩니다.
+
+## 8. Ollama 모델로 업그레이드하기
 
 기본 config는 local 모델을 써서 가볍지만 정확도가 낮습니다. Ollama를 쓰려면:
 
@@ -297,7 +324,7 @@ python scripts/run_rag_ingest.py --config configs/experiments/rag/rag_ollama.yam
 python scripts/run_rag_chat.py --config configs/experiments/rag/rag_ollama.yaml --project-root . --evaluate
 ```
 
-## 8. 수동 실험 로그 남기기
+## 9. 수동 실험 로그 남기기
 
 `reports/experiment_log.csv` 파일에 실험 기록을 남기면 나중에 한눈에 비교할 수 있습니다:
 

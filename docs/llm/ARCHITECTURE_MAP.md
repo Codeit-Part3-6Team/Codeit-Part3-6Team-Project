@@ -27,6 +27,14 @@ experiments/ + reports/
 | `data/examples/classification/` | 기존 분류/HF 참고 fixture | RAG 메인 데이터가 아님 |
 | `src/` | 재사용 가능한 구현 코드 | 테스트와 docstring 갱신 |
 | `src/rag/` | RAG 구현체 | 입력/출력 계약 유지 |
+| `src/rag/agent.py` | AgentRunner, Phase DAG 실행 | agent.enabled true일 때 진입 |
+| `src/rag/chatbot.py` | Chatbot 모드 LLM 동적 Tool 선택 | agent.chatbot 설정으로 동작 |
+| `src/rag/tool.py` | Tool 정의/등록/dispatch | Phase에서 호출할 Tool 구현 |
+| `src/rag/prompt.py` | Phase별 프롬프트 템플릿 | Phase prompt_template 필드 |
+| `src/rag/schema_parser.py` | Pydantic output_schema 파싱 | Structured Output 지원 |
+| `src/rag/scoring.py` | 답변 점수 계산 | agent_metrics.json 생성 |
+| `src/rag/judge.py` | LLM 기반 정성 평가 | scoring과 함께 사용 |
+| `scripts/run_rag_agent.py` | Agent 실행 CLI | Agent 진입점 |
 | `experiments/` | 실험 결과 | 자동 생성 산출물은 보통 커밋하지 않음 |
 | `reports/` | 공유용 요약 | 필요한 결과만 선별 |
 | `docs/md/` | 관리용 Markdown | 문서 원본 |
@@ -61,6 +69,17 @@ run_rag_chat.py
     -> src/rag/engines/*
     -> experiments/{name}/answers.jsonl
     -> experiments/{name}/metrics.json
+
+run_rag_agent.py  (agent.enabled: true)
+    -> src/rag/agent.py  (AgentRunner)
+    -> src/rag/chatbot.py  (Chatbot Tool 선택)
+    -> src/rag/tool.py  (Tool dispatch)
+    -> src/rag/prompt.py  (Phase별 프롬프트)
+    -> src/rag/schema_parser.py  (Pydantic Structured Output)
+    -> src/rag/scoring.py  (답변 평가)
+    -> src/rag/judge.py  (정성 평가)
+    -> experiments/{name}/agent_state.jsonl
+    -> experiments/{name}/agent_metrics.json
 ```
 
 ## 기준 Config와 데이터
@@ -72,6 +91,7 @@ run_rag_chat.py
 | `configs/experiments/rag/rag_keyword.yaml` | `data/rag_sample/` | local keyword retriever 비교 |
 | `configs/experiments/rag/rag_semantic.yaml` | `data/rag_sample/` | local semantic retriever 비교 |
 | `configs/experiments/rag/rag_hybrid.yaml` | `data/rag_sample/` | local hybrid retriever 비교 |
+| `configs/experiments/rag/agent/agent_lplus.yaml` | `data/rag_sample/` | Agent 모드 Phase DAG + Tool dispatch 실행 |
 
 ## 작업별 수정 위치
 
@@ -91,6 +111,8 @@ run_rag_chat.py
 | 문서 구조 변경 | `docs/` | 관련 README와 링크를 함께 확인 |
 | 실제 포맷 점검 추가 | `data/rag_realistic/`, `configs/experiments/rag/*.yaml`, `tests/test_rag_quality_gate.py` | `docs/team/rehearsal.md`, `docs/md/overview/RAG_QUALITY_CHECKLIST.md` |
 | HTML 설명 자료 정리 | `docs/html/` | `docs/html/README.md`, `docs/team/kickoff.md` |
+| Agent 구현 추가 | `src/rag/agent.py`, `src/rag/chatbot.py`, `src/rag/tool.py`, `src/rag/prompt.py`, `scripts/run_rag_agent.py` | `configs/experiments/rag/agent/` |
+| Agent config 추가 | `configs/experiments/rag/agent/*.yaml` | `src/rag/validation.py`, `tests/test_rag_validation.py` |
 | LLM 문서 최신화 | `docs/llm/` | `AGENTS.md`, `docs/team/README.md` |
 
 ## Engine 판단 기준
@@ -129,5 +151,7 @@ experiments/{experiment_name}/
 |-- unsupported_answers.csv
 |-- failed_questions.csv
 |-- failure.log
-`-- rag_ingest_checkpoint.json
+ `-- rag_ingest_checkpoint.json
+|-- agent_state.jsonl  (Agent 모드)
+`-- agent_metrics.json  (Agent 모드)
 ```

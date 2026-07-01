@@ -171,8 +171,189 @@ def run_rag_chat(config_path: str | Path, project_root: str | Path, question: st
         raise
 
 
-# ===== 멀티턴 대화 지원 =====
-_CHAT_HISTORY: dict[str, list[dict[str, str]]] = {}
+def run_rag_agent(
+    config_path: str | Path | dict[str, Any],
+    project_root: str | Path = ".",
+    question: str | None = None,
+) -> dict[str, Any]:
+    """agent.enabled config에 따라 Agent Loop를 실행합니다.
+
+    agent.enabled가 False이면 기존 run_rag_chat과 동일하게 동작합니다.
+    agent.enabled가 True이면 AgentRunner를 통해 Phase DAG를 실행합니다.
+
+    Args:
+        config_path: config 파일 경로(str/Path) 또는 config dict
+        project_root: 프로젝트 루트
+        question: 초기 질문
+
+    Returns:
+        AgentRunner.run() 결과 또는 run_rag_chat() 결과
+    """
+    root = Path(project_root)
+    if isinstance(config_path, dict):
+        config = config_path
+    else:
+        config_path = _resolve_path(root, config_path)
+        config = load_config(config_path)
+    agent_cfg = config.get("agent", {})
+
+    if not agent_cfg.get("enabled", False):
+        if question is None:
+            return {"state": {}, "phase_results": [], "step_count": 0, "status": "disabled"}
+        if isinstance(config_path, dict):
+            raise ValueError("config_path as dict is not supported when agent.enabled is False")
+        return run_rag_chat(config_path, root, question)
+
+    output_dir = None
+    if isinstance(config_path, (str, Path)):
+        output_dir = resolve_experiment_dir(root, config)  # type: ignore[arg-type]
+        ensure_dir(output_dir)
+
+    chatbot_cfg = agent_cfg.get("chatbot", {})
+    if chatbot_cfg.get("enabled", False):
+        # 챗봇 모드: Phase DAG를 건너뛰고 LLM이 동적으로 Tool 선택
+        # agent.phases는 무시됩니다 (의도된 설계)
+        from src.rag.chatbot import build_chatbot_from_config
+
+        bot = build_chatbot_from_config(config)
+        if output_dir:
+            bot.load_document_context(output_dir)
+        if question:
+            return bot.chat(question)
+        bot.run_cli_loop()
+        return {"status": "chatbot_session_ended"}
+
+    from src.rag.agent import AgentRunner
+
+    if output_dir:
+        _write_run_status(output_dir, "rag_agent", "running")
+    try:
+        runner = AgentRunner(config, root)
+        result = runner.run(question, output_dir=output_dir)
+        if not output_dir:
+            result["artifact_status"] = "disabled"
+        if output_dir:
+            _write_run_status(output_dir, "rag_agent", "success", result={"status": result.get("status", "ok")})
+        return result
+    except Exception as exc:
+        if output_dir:
+            _write_failure_artifact(output_dir, "rag_agent", exc)
+        raise
+
+
+def run_rag_agent_evaluation(
+    config_path: str | Path,
+    project_root: str | Path = ".",
+) -> dict[str, Any]:
+    """Agent 모드 평가: 질문셋을 순회하며 Agent 결과를 평가합니다.
+
+    config의 agent.evaluation.questions_path에서 질문을 읽고,
+    각 질문에 대해 Agent를 실행한 뒤 target_tool의 answer를 평가합니다.
+
+    Args:
+        config_path: config 파일 경로
+        project_root: 프로젝트 루트
+
+    Returns:
+        metrics dict (judge_correct_rate 포함)
+    """
+    root = Path(project_root)
+    config_path = _resolve_path(root, config_path)
+    config = load_config(config_path)
+    agent_cfg = config.get("agent", {})
+    eval_cfg = agent_cfg.get("evaluation", {})
+
+    if not agent_cfg.get("enabled", False) or not eval_cfg.get("enabled", False):
+        return {"status": "disabled", "reason": "agent.enabled or agent.evaluation.enabled is False"}
+
+    questions_path = _resolve_path(root, eval_cfg.get("questions_path", ""))
+    if not questions_path.exists():
+        raise FileNotFoundError(f"Agent evaluation questions not found: {questions_path}")
+
+    rows = _read_csv(questions_path)
+    target_tool = eval_cfg.get("target_tool", "")
+    target_field = eval_cfg.get("target_field", "answer")
+    judge_enabled = eval_cfg.get("llm_judge", {}).get("enabled", False)
+
+    output_dir = resolve_experiment_dir(root, config)  # type: ignore[arg-type]
+    ensure_dir(output_dir)
+
+    from src.rag.agent import AgentRunner
+
+    result_rows: list[dict[str, str]] = []
+    for row in rows:
+        question = row.get("question", "")
+        expected = row.get("expected_answer", "")
+
+        runner = AgentRunner(config, root)
+        agent_result = runner.run(question, output_dir=output_dir)
+
+        agent_answer = ""
+        if target_tool and target_tool in agent_result.get("state", {}):
+            tr = agent_result["state"][target_tool]
+            if target_field.startswith("structured_output."):
+                key = target_field.split(".", 1)[1]
+                so = tr.get("structured_output") or {}
+                agent_answer = str(so.get(key, ""))
+            else:
+                agent_answer = str(tr.get("answer", ""))
+
+        judge_ok = "false"
+        if judge_enabled and expected and agent_answer:
+            try:
+                from src.rag.judge import judge_binary_from_config
+
+                judge_ok = str(judge_binary_from_config(config, expected, agent_answer)).lower()
+            except Exception:
+                pass
+
+        result_rows.append({
+            "question": question,
+            "expected_answer": expected,
+            "agent_answer": agent_answer[:500],
+            "judge_correct": judge_ok,
+            "agent_status": agent_result.get("status", "unknown"),
+            "step_count": str(agent_result.get("step_count", 0)),
+        })
+
+    # metrics 계산
+    total = len(result_rows)
+    judge_correct_count = sum(1 for r in result_rows if str(r.get("judge_correct", "false")).lower() == "true")
+    metrics = {
+        "agent_judge_correct_rate": round(judge_correct_count / total, 4) if total else 0.0,
+        "total_questions": total,
+        "judge_enabled": judge_enabled,
+    }
+
+    _write_csv(
+        output_dir / "agent_evaluation.csv",
+        result_rows,
+        ["question", "expected_answer", "agent_answer", "judge_correct", "agent_status", "step_count"],
+    )
+    write_json(output_dir / "agent_metrics.json", metrics)
+    return metrics
+
+class _ChatMemory:
+    """멀티턴 대화 기록 저장소입니다.
+
+    Agent 모드는 AgentRunner 인스턴스의 State dict를 사용하므로
+    이 클래스는 agent.enabled: false + memory.enabled: true 경로 전용입니다.
+    """
+
+    _store: dict[str, list[dict[str, str]]] = {}
+
+    @classmethod
+    def get(cls, thread_id: str) -> list[dict[str, str]]:
+        if thread_id not in cls._store:
+            cls._store[thread_id] = []
+        return cls._store[thread_id]
+
+    @classmethod
+    def clear(cls, thread_id: str | None = None) -> None:
+        if thread_id:
+            cls._store.pop(thread_id, None)
+        else:
+            cls._store.clear()
 
 
 def run_rag_chat_with_history(
@@ -196,7 +377,7 @@ def run_rag_chat_with_history(
 
     _write_run_status(output_dir, "rag_chat", "running")
     try:
-        history = _CHAT_HISTORY.setdefault(thread_id, [])
+        history = _ChatMemory.get(thread_id)
 
         # 이전 대화를 컨텍스트로 포함하여 검색
         context_question = question

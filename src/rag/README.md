@@ -37,6 +37,14 @@ mindmap
       pipeline.py
       validation.py
       comparison.py
+    Agent
+      agent.py
+      chatbot.py
+      tool.py
+      prompt.py
+      schema_parser.py
+      scoring.py
+      judge.py
     Artifacts
       parsed_documents
       chunks
@@ -60,6 +68,13 @@ src/rag/
 |-- pipeline.py         # ingest/retrieve/chat/evaluate 실행
 |-- validation.py       # RAG config 계약 검증
 `-- comparison.py       # retriever 비교 실행
+|-- agent.py            # Phase DAG 기반 Agent 실행
+|-- chatbot.py          # 대화형 RFP 분석 인터페이스
+|-- tool.py             # Agent용 Tool dispatch 구현
+|-- prompt.py           # Agent 단계별 프롬프트 관리
+|-- schema_parser.py    # Structured Output 스키마 파싱
+|-- scoring.py          # 문서/제안서 채점 및 랭킹
+|-- judge.py            # 판단/추천 규칙 실행
 ```
 
 ## 흐름
@@ -106,6 +121,8 @@ LangChain은 splitter, embedding, vector store, retriever, LLM 호출을 맡는 
 - vector store: `memory`, `chroma`
 - retriever: `similarity`, `keyword`, `semantic`, `hybrid`
 - answerer: `extractive/local`, `llm/huggingface`, `llm/ollama`, `llm/openai`
+- agent: `phase_dag`, `chatbot`
+- agent embedder/answerer: tool dispatch를 통해 retriever/answerer를 재사용
 
 LangChain 엔진에서는 RecursiveCharacterTextSplitter, local/HuggingFace/Ollama/OpenAI embedding, Chroma, Ollama/OpenAI answerer를 config로 선택합니다.
 LangChain 패키지가 아직 설치되지 않은 환경에서도 `local` embedding, `memory` vector store, `local` answerer 조합은 dependency-free fallback으로 산출물 계약을 검증할 수 있습니다.

@@ -62,6 +62,13 @@ flowchart LR
 | `pipeline.py` | ingest, retrieve, chat, evaluate 오케스트레이션 |
 | `validation.py` | config와 입력 경로 검증 |
 | `comparison.py` | retriever 비교 결과 생성 |
+| `agent.py` | Phase DAG 기반 Agent 실행 |
+| `chatbot.py` | 대화형 RFP 분석 인터페이스 |
+| `tool.py` | Agent용 Tool dispatch 구현 |
+| `prompt.py` | Agent 단계별 프롬프트 관리 |
+| `schema_parser.py` | Structured Output 스키마 파싱 |
+| `scoring.py` | 문서/제안서 채점 및 랭킹 |
+| `judge.py` | 판단/추천 규칙 실행 |
 
 ## Config로 바꾸는 영역
 
@@ -76,6 +83,14 @@ flowchart LR
 | reranker | `rag.reranker.enabled`, `rag.reranker.model_name` |
 | 답변 방식 | `rag.answerer.mode`, `rag.answerer.provider` |
 | 평가 질문 | `evaluation.questions_path` |
+| Agent 활성화 | `agent.enabled` |
+| Phase DAG | `agent.phases`, `depends_on`, `parallel` |
+| Tool 설정 | `agent.tools.*.description`, `retriever`, `answerer` |
+| Tool 실패 정책 | `agent.tools.*.on_failure` (skip/abort_phase/abort_agent) |
+| Phase 간 전달 | `agent.tools.*.input_from` |
+| Structured Output | `agent.tools.*.answerer.output_schema` |
+| 챗봇 모드 | `agent.chatbot.enabled`, `tool_selection_model` |
+| 키워드 가중치 | `rag.scoring.keyword_weights` |
 
 ## RAG Artifact
 

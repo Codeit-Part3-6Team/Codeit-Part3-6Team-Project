@@ -42,6 +42,12 @@
 | Notebook | 로컬 RAG walkthrough, 분석 노트북 |
 | Docs | Markdown 원본, HTML 설명 문서, README 지도 |
 | 실제 포맷 점검 | `configs/experiments/rag/rag_realistic_docs.yaml` 기준 DOCX/HWPX 준실제 샘플 확인, PDF loader 단위 검증 통과 |
+| Agent Loop | Phase DAG + Tool dispatch 기반 자동화 루프 (`src/rag/agent.py`) |
+| Chatbot 모드 | LLM 동적 Tool 선택 방식의 대화형 실행 (`src/rag/chatbot.py`) |
+| Structured Output | Pydantic `output_schema` 기반 정형 출력 제어 (`src/rag/schema_parser.py`) |
+| Phase 간 데이터 전달 | `input_from` 필드로 이전 Phase 산출물을 다음 Phase 입력으로 연결 |
+| Agent config | `agent.enabled`, `agent.phases`, `agent.tools`, `agent.chatbot` 등 agent.* 설정 체계 (`configs/experiments/rag/agent/`) |
+| Agent CLI | `scripts/run_rag_agent.py` |
 
 ## 아직 구현 후보인 기능
 
@@ -83,3 +89,4 @@
 - RAG 결과는 답변만 남기지 않고 retrieval 결과와 citation을 함께 남깁니다.
 - 실패도 artifact로 남깁니다.
 - Git에는 재현 가능한 코드와 작은 샘플만 남깁니다.
+- Agent 모드는 `agent.enabled: true`로 RAG와 전환 가능하며, Phase DAG와 Tool dispatch를 통해 기존 RAG 파이프라인과 동일한 산출물 계약을 유지합니다.

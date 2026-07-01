@@ -1,0 +1,140 @@
+# RAG Agent Loop 데모 config (L+ 적합도 판단 시나리오)
+# rag-baseline.yaml 기반, agent.enabled: true
+# 사용법:
+#   python scripts/run_rag_agent.py --config configs/experiments/rag/rag_agent_demo.yaml --question "이 RFP에 우리 회사가 참여해도 될까?"
+# 또는:
+#   python scripts/run_rag_agent.py --config configs/experiments/rag/rag_agent_demo.yaml --verbose
+
+experiment:
+  name: rag-agent-demo
+  author: team
+  seed: 42
+  contract_version: rag-v0.2
+
+paths:
+  raw_docs_dir: /shared/data/raw_docs
+  output_dir: /shared/experiments/rag-agent-demo
+
+artifact_policy:
+  run_id:
+  on_existing: overwrite
+
+# ── 기존 RAG 설정 (rag-baseline.yaml 기반, Tool별 오버라이드 가능) ──
+rag:
+  engine: langchain
+  loader:
+    file_types: [csv]
+  splitter:
+    type: recursive_character
+    chunk_size: 500
+    chunk_overlap: 80
+  checkpoint:
+    enabled: true
+    resume: true
+  embedding:
+    provider: ollama
+    model_name: nomic-embed-text
+  vector_store:
+    type: memory
+    path:
+    collection_name: rag_agent_demo
+  retriever:
+    method: similarity
+    top_k: 3
+    score_threshold: 0.0
+  reranker:
+    enabled: false
+  answerer:
+    provider: openai
+    model_name: gpt-5-mini
+    temperature: 0.2
+    fallback_message: 문서에서 확인하지 못했습니다.
+
+# deprecated: metric 섹션은 아직 코드에서 참조되지 않습니다
+metric:
+  monitor: retrieval_hit_rate
+  mode: max
+
+evaluation:
+  questions_path: /shared/data/eval_questions.csv
+
+# ── Agent 확장 (L+ 적합도 판단) ──
+agent:
+  enabled: true
+  max_steps: 10
+  verbose: true
+
+  # Structured Output 스키마 정의
+  schemas:
+    facts_schema:
+      fields:
+        사업명: str
+        발주기관: str
+        사업예산: str
+        사업기간: str
+        제출마감: str
+        자격요건: list[str]
+
+    decision_schema:
+      fields:
+        참여여부: bool
+        근거: str
+        리스크: list[str]
+        제안_주의사항: str | None
+
+  # Phase 정의: extract → decide 순차 실행
+  phases:
+    - name: extract
+      tools: [extract_facts]
+
+    - name: decide
+      tools: [decide_participation]
+      depends_on: [extract]
+
+  # Tool 정의
+  tools:
+    extract_facts:
+      description: "RFP 문서에서 사업명, 발주기관, 예산, 기간, 마감일, 자격요건 등 핵심 사실 정보를 추출합니다."
+      retriever:
+        top_k: 10
+      answerer:
+        provider: openai
+        model_name: gpt-5-mini
+        output_schema: facts_schema
+        prompt_template: |
+          너는 RFP 문서에서 사실 정보만 추출하는 분석기다.
+          아래 근거에 있는 내용만 사용해서, 각 필드에 해당하는 정보를 찾아 채워라.
+          문서에 명시된 내용만 답하고, 없는 정보는 '명시되지 않음'으로 표시하라.
+
+          {context}
+
+          질문: {question}
+        temperature: 0.1
+      on_failure: abort_phase
+
+    decide_participation:
+      description: "추출된 RFP 정보를 바탕으로 우리 회사가 참여 가능한지 판단하고, 리스크를 식별합니다."
+      input_from: [extract_facts]
+      retriever:
+        top_k: 5
+      answerer:
+        provider: openai
+        model_name: gpt-4o-mini
+        output_schema: decision_schema
+        prompt_template: |
+          너는 RFP 입찰 참여 여부를 판단하는 컨설턴트다.
+          아래 추출된 RFP 정보를 바탕으로, 중소 IT 서비스 기업 기준으로 참여 가능 여부를 판단하라.
+
+          추출된 RFP 정보:
+          {context}
+
+          우리 회사 프로필:
+          - 규모: 중소기업, 직원 50인
+          - 주요 분야: 전자정부 시스템 개발, 클라우드 마이그레이션
+          - 연간 매출: 약 60억
+          - 보유 자격: 소프트웨어사업자(컨설팅/개발), 정보보호 관리체계(ISMS) 인증
+          - 참고: 2억 이상 사업은 컨소시엄 구성 필요, 10억 초과 시 대기업 경쟁 가능성 높음
+
+          판단 질문: {question}
+        temperature: 0.2
+      on_failure: abort_phase

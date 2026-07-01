@@ -3,7 +3,7 @@ from __future__ import annotations
 from typing import Any
 
 from src.rag.embedder import embed_text
-from src.rag.retriever import _score, _tokenize
+from src.rag.scoring import score as _score, tokenize as _tokenize
 
 
 def retrieve_chunks_by_vector(

@@ -161,6 +161,14 @@ experiments/rag_langchain/
 |-- failure.log         # 실패한 경우
 `-- run_info.json
 ```
+Agent 모드 활성화 시 추가 산출물:
+
+```text
+experiments/rag_langchain/
+|-- agent_state.jsonl          # Phase별 Tool 실행 결과
+|-- agent_metrics.json          # Agent 종합 지표 (7종)
+`-- agent_evaluation.csv         # Agent 평가 결과
+```
 
 현재 metric:
 
@@ -670,3 +678,70 @@ rag:
 
 주의: 현재 구현은 단계별 artifact resume입니다. 문서 수천 개를 처리하다가 한 문서 중간에서 끊겼을 때
 그 문서 내부 위치까지 이어가는 세밀한 resume은 아직 구현하지 않았습니다.
+
+## Agent 모드 확장
+
+RAG 파이프라인은 단일 retrieval→answer 흐름을 넘어, **Agent 모드**로 전환할 수 있습니다.
+Agent 모드는 `agent.enabled: true`일 때 활성화되며, 여러 검색/판단/추출 도구를 순차적으로 조합해
+복합 질의를 처리합니다.
+
+### Agent 모드 활성화 (config)
+
+```yaml
+agent:
+  enabled: true
+  max_steps: 12
+  tools: [extract_info, check_completeness, format_report]
+  structured_output:
+    enabled: true
+    schema: rfp_summary
+```
+
+Agent 전용 config 예시: `configs/experiments/rag/agent/agent_lplus.yaml`
+
+### Phase DAG
+
+Agent 실행은 **Phase DAG**(유향 비순환 그래프)로 설계됩니다. 각 Phase는 하나 이상의 Tool을 묶은
+실행 단위이며, Phase 간 의존성이 있어 선행 Phase 결과를 누적해 후속 Phase로 전달합니다.
+
+Phase 예시 (XL 컨설턴트 에이전트 기준):
+
+| Phase | 내용 | 선행 Phase |
+|---|---|---|
+| Phase 1 | 팩트 추출 (extract_info) | — |
+| Phase 2 | 독소조항 탐지 (scan_unfair_clauses, rate_clause_severity) | Phase 1 |
+| Phase 3 | 리스크 진단 (check_schedule_viability, check_budget_sufficiency) | Phase 1 |
+| Phase 4 | 경쟁 분석 (search_similar_bids, estimate_winning_bid) | Phase 1 |
+| Phase 5 | 전략 판단 (decide_participation, suggest_bid_price) | Phase 2,3,4 |
+| Phase 6 | 리포트 종합 (compile_report) | Phase 1~5 |
+
+### Tool dispatch
+
+각 Tool은 `src/rag/tool.py`의 Tool registry에 등록되며, Agent loop가 Phase 순서에 따라
+dispatch 합니다. Tool은 표준화된 입력/출력 계약을 따릅니다:
+
+- **입력**: `question`, `context_chunks`, `previous_outputs` (선행 Phase 결과)
+- **출력**: `tool_name`, `result`, `citations`, `confidence`
+
+Tool 출력은 `agent_state.jsonl`에 기록되고, 최종 답변은 `agent_state.jsonl`에 남습니다.
+
+### Structured output
+
+Agent 모드에서는 각 Tool의 `output_schema` 키로 Structured Output을 활성화합니다.
+예: `tools.extract_facts.answerer.output_schema: facts_schema`.
+스키마는 `agent.schemas`에 inline 정의하거나 `schema_parser.py`의 BUILTIN_SCHEMAS를 참조합니다.
+
+구현체: `src/rag/schema_parser.py`
+
+### Agent 실행 흐름
+
+```text
+질문 입력
+  → Phase DAG 해석 (의존성 순서 결정)
+  → Phase별 Tool dispatch
+  → 각 Tool 출력 누적
+  → structured output 조립
+  → agent_state.jsonl + agent_metrics.json 저장
+```
+
+실행 스크립트: `scripts/run_rag_agent.py`

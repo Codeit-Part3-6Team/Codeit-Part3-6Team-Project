@@ -120,6 +120,42 @@ HTML은 모든 Markdown의 백업본이 아니라 설명에 직접 쓰는 자료
 문서 삭제나 이동이 있으면 링크와 테스트도 함께 갱신해줘.
 ```
 
+## Agent Tool 추가 요청
+
+```text
+AGENTS.md, docs/llm/ARCHITECTURE_MAP.md, src/rag/tool.py를 읽고 진행해줘.
+Agent 모드에 새로운 Tool {tool_name}을 추가해줘.
+Tool은 Phase DAG에서 호출 가능하도록 등록하고, input_from으로 이전 Phase 결과를 받을 수 있어야 해.
+agent.* config에서 tools 목록을 통해 활성화되도록 하고, 테스트와 config 예시도 함께 갱신해줘.
+```
+
+## Phase DAG 수정 요청
+
+```text
+AGENTS.md, docs/llm/ARCHITECTURE_MAP.md, src/rag/agent.py를 읽고 진행해줘.
+Agent Phase DAG에 {phase_name} Phase를 추가하거나 순서/의존성을 수정해줘.
+Phase 간 데이터 전달은 input_from으로 연결하고, 각 Phase의 prompt_template과 output_schema가 깨지지 않게 해줘.
+agent.* config와 테스트도 함께 맞춰줘.
+```
+
+## Chatbot 모드 구현 요청
+
+```text
+AGENTS.md, src/rag/chatbot.py, src/rag/agent.py를 읽고 진행해줘.
+Agent chatbot 모드를 추가하거나 수정해줘.
+LLM이 동적으로 Tool을 선택해 실행할 수 있도록 하되, 제어 불가능한 외부 호출은 방어 로직을 넣어줘.
+agent.chatbot 설정으로 활성화 여부를 제어하고, 대화 흐름이 agent_state.jsonl에 기록되게 해줘.
+```
+
+## Structured Output 스키마 요청
+
+```text
+AGENTS.md, src/rag/schema_parser.py, src/rag/prompt.py를 읽고 진행해줘.
+{대상 Phase}의 output_schema를 Pydantic 모델로 정의하거나 수정해줘.
+schema_parser가 출력을 검증하고 파싱할 수 있게 하고, schema 불일치 시 실패 artifact가 남도록 해줘.
+config에서 output_schema 참조 경로를 지정할 수 있게 유지해줘.
+```
+
 ## HTML 설명 자료 정리 요청
 
 ```text

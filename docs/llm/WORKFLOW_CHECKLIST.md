@@ -6,6 +6,7 @@
 - [ ] 워킹트리가 깨끗한지 확인합니다.
 - [ ] 관련 README를 읽습니다.
 - [ ] RAG 작업이면 `docs/md/rag/RAG_PIPELINE_SPEC.md`를 확인합니다.
+- [ ] Agent 작업이면 `src/rag/agent.py`, `src/rag/chatbot.py`, `src/rag/tool.py`를 확인합니다.
 - [ ] config 작업이면 `configs/README.md`를 확인합니다.
 - [ ] 실행 스크립트 작업이면 `scripts/README.md`를 확인합니다.
 - [ ] RAG와 무관한 참고 script/config/data를 건드리면 `examples/` 하위에 머무르는지 확인합니다.
@@ -32,6 +33,7 @@
 - [ ] 실험 산출물, 모델 weight, 원본 데이터가 Git에 들어가지 않았는지 확인합니다.
 - [ ] 변경 내용을 커밋 단위로 분리할 수 있는지 확인합니다.
 - [ ] RAG 작업이라면 `retrieval_results.jsonl`, `answers.jsonl`, `metrics.json`, 실패 CSV가 생성되는지 확인합니다.
+- [ ] Agent 작업이라면 `agent_state.jsonl`, `agent_metrics.json`이 생성되는지 확인합니다.
 
 ## 테스트 선택 기준
 
@@ -73,4 +75,18 @@ DOCX/HWPX 준실제 샘플은 기본 흐름이 아니라 문서 포맷과 산출
 python scripts/check_rag_pipeline.py --config configs/experiments/rag/rag_realistic_docs.yaml --project-root .
 python scripts/run_rag_ingest.py --config configs/experiments/rag/rag_realistic_docs.yaml --project-root .
 python scripts/run_rag_chat.py --config configs/experiments/rag/rag_realistic_docs.yaml --project-root . --evaluate
+```
+
+## Agent 기준 검증 명령
+
+Agent 모드 기본 실행:
+
+```bash
+python scripts/run_rag_agent.py --config configs/experiments/rag/agent/agent_lplus.yaml --project-root .
+```
+
+Agent 모드 평가 포함 실행:
+
+```bash
+python scripts/run_rag_agent.py --config configs/experiments/rag/agent/agent_lplus.yaml --project-root . --evaluate
 ```

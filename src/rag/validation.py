@@ -40,6 +40,8 @@ def check_rag_pipeline(config_path: str | Path, project_root: str | Path = ".") 
 
     config = load_config(resolved_config_path)
     _validate_required_sections(config, errors)
+    _validate_agent_section(config, errors, warnings)
+    _validate_chunk_splitter_keys(config, warnings)
     summary = _build_summary(root, resolved_config_path, config, errors, warnings)
     return {
         "ok": not errors,
@@ -366,6 +368,75 @@ def _as_float(value: Any, name: str, errors: list[str]) -> float | None:
 def _resolve_path(root: Path, path: str | Path) -> Path:
     candidate = Path(path)
     return candidate if candidate.is_absolute() else root / candidate
+
+
+def _validate_agent_section(config: dict[str, Any], errors: list[str], warnings: list[str]) -> None:
+    agent_cfg = config.get("agent", {})
+    if not isinstance(agent_cfg, dict) or not agent_cfg:
+        return
+
+    phases = agent_cfg.get("phases")
+    tools = agent_cfg.get("tools", {})
+    schemas = agent_cfg.get("schemas", {})
+
+    if not isinstance(phases, list):
+        errors.append("agent.phases must be a list")
+        return
+
+    phase_names = set()
+    for phase in phases:
+        if not isinstance(phase, dict):
+            errors.append("agent.phases[*] must be a dict")
+            continue
+        name = phase.get("name")
+        if not name or not isinstance(name, str):
+            errors.append("agent.phases[*].name is required and must be a string")
+            continue
+        phase_names.add(name)
+        phase_tools = phase.get("tools", [])
+        for tname in phase_tools:
+            if tname not in tools:
+                errors.append(
+                    "agent.phases.{}.tools.{} is not defined in agent.tools".format(name, tname)
+                )
+        depends = phase.get("depends_on", [])
+        for dep in depends:
+            if dep not in phase_names and dep not in {p.get("name") for p in phases}:
+                warnings.append(
+                    "agent.phases.{}.depends_on.{} references unknown phase".format(name, dep)
+                )
+
+    if not isinstance(tools, dict):
+        errors.append("agent.tools must be a dict")
+        return
+
+    for tname, tcfg in tools.items():
+        if not isinstance(tcfg, dict):
+            errors.append("agent.tools.{} must be a dict".format(tname))
+            continue
+        if not tcfg.get("description"):
+            errors.append("agent.tools.{}.description is required".format(tname))
+        on_failure = tcfg.get("on_failure", "skip")
+        if on_failure not in {"skip", "abort_phase", "abort_agent"}:
+            warnings.append(
+                "agent.tools.{}.on_failure '{}' is not one of skip/abort_phase/abort_agent".format(
+                    tname, on_failure
+                )
+            )
+
+    if isinstance(schemas, dict):
+        for sname, sdef in schemas.items():
+            if not isinstance(sdef, dict) or "fields" not in sdef:
+                warnings.append("agent.schemas.{} must have 'fields' key".format(sname))
+
+
+def _validate_chunk_splitter_keys(config: dict[str, Any], warnings: list[str]) -> None:
+    rag_cfg = config.get("rag", {})
+    if "chunk" in rag_cfg:
+        warnings.append(
+            "rag.chunk is deprecated. Use rag.splitter instead. "
+            "rag.chunk will be removed in a future version."
+        )
 
 
 def _display_path(root: Path, path: Path) -> str:
