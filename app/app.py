@@ -26,8 +26,10 @@ st.markdown(CSS, unsafe_allow_html=True)
 # ── 공유 세션 상태 (페이지가 바뀌어도 유지됨) ────────────────────────────────
 ss = st.session_state
 ss.setdefault("doc_name", None)     # 업로드/선택한 문서명
+ss.setdefault("doc_bytes", None)    # 업로드 파일 내용 (rerun 후에도 유지, 샘플이면 None)
 ss.setdefault("analyzed", False)    # 분석 완료 여부
 ss.setdefault("analysis", None)     # 분석 결과 dict
+ss.setdefault("run_id", None)       # RAG run ID (백엔드 인덱스 식별자)
 ss.setdefault("messages", [])       # 채팅 기록
 ss.setdefault("pending_q", None)    # 추천 질문 클릭 처리용
 
