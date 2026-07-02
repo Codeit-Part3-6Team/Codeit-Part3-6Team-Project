@@ -11,7 +11,8 @@ RFP 분석 후 사용하는 작업 화면.
 
 import streamlit as st
 from utils.components import topbar, P_ANALYZE
-from utils.mock_data import mock_chat, stream_words
+from utils.mock_data import stream_words
+from services.frontend_adapter import chat_ask, backend_mode
 
 ss = st.session_state
 topbar()
@@ -56,6 +57,9 @@ with left:
         st.markdown(f'<div class="panel" style="margin-top:10px">'
                     f'<div style="color:var(--text-2);font-size:.95rem;line-height:1.75">'
                     f'{data["summary"]}</div></div>', unsafe_allow_html=True)
+        _summary_srcs = (data.get("sources") or {}).get("summary") or []
+        if _summary_srcs:
+            st.caption("근거: " + " · ".join(f"{p} {s}" for p, s in _summary_srcs))
 
     with tab2:
         reqs = "".join(
@@ -77,7 +81,11 @@ with left:
 with right:
     st.markdown('<div class="panel-title" style="margin-bottom:6px">💬 대화형 탐색</div>',
                 unsafe_allow_html=True)
-    st.caption("RAG 연결 전이라 예시 응답입니다. 출처(페이지)는 Mock 데이터입니다.")
+    # 백엔드 모드에 맞는 안내 문구 (실제 RAG 면 근거가 실제 청크 citation)
+    if ss.analysis.get("mode") == "rag" and ss.run_id:
+        st.caption("문서 인덱스 기반 RAG 응답입니다. 출처는 문서 내 실제 근거 위치입니다.")
+    else:
+        st.caption("RAG 미연결(Mock) 모드입니다. 예시 응답과 예시 출처가 표시됩니다.")
 
     # 추천 질문 칩
     suggested = ["제출 마감일은?", "예산 규모는?", "보안 요구사항은?"]
@@ -95,7 +103,7 @@ with right:
                         unsafe_allow_html=True)
         else:
             tags = "".join(f'<span class="src-tag">📑 {p} · {s}</span>' for p, s in m.get("sources", []))
-            st.markdown(f'<div class="role a">BidAI</div><div class="msg-ai">{m["content"]}'
+            st.markdown(f'<div class="role a">IT&#39;S MINE</div><div class="msg-ai">{m["content"]}'
                         f'<div style="margin-top:4px">{tags}</div></div>', unsafe_allow_html=True)
 
     # 입력 처리 (추천칩 또는 직접 입력)
@@ -108,8 +116,8 @@ with right:
         st.markdown(f'<div class="role u">You</div><div class="msg-user">{question}</div>',
                     unsafe_allow_html=True)
 
-        ans, srcs = mock_chat(question)
-        st.markdown('<div class="role a">BidAI</div>', unsafe_allow_html=True)
+        ans, srcs = chat_ask(question, ss.run_id)
+        st.markdown('<div class="role a">IT&#39;S MINE</div>', unsafe_allow_html=True)
         ph = st.empty()
         acc = ""
         with st.spinner("문서에서 검색 중..."):

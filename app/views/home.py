@@ -46,6 +46,7 @@ with right:
                           label_visibility="collapsed", key="home_upload")
     if up is not None:
         ss.doc_name = up.name
+        ss.doc_bytes = up.getvalue()   # 분석 페이지에서 실제 RAG ingest 에 사용
         ss.analyzed = False
         st.switch_page(P_ANALYZE)
 
@@ -54,6 +55,7 @@ with right:
         if st.button("샘플 문서로 바로 체험하기  →", type="secondary",
                      use_container_width=True, key="home_sample"):
             ss.doc_name = "샘플_전자조달시스템_RFP.pdf"
+            ss.doc_bytes = None           # 실제 파일이 없으므로 Mock 분석 경로로 감
             ss.analyzed = False
             st.switch_page(P_ANALYZE)
 
