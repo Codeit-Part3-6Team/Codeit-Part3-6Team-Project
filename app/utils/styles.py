@@ -237,6 +237,36 @@ html, body, [class*="css"]{
 .about-step-d{ font-size:.92rem; line-height:1.6; color:var(--text-2); }
 @media (max-width:760px){ .about-grid{ grid-template-columns:1fr; } }
 
+
+/* ── 내부 문서 목록 (documents) ─────────────────────────────── */
+.doc-toolbar{ display:flex; align-items:center; gap:12px; margin:6px 0 4px; }
+.doc-count{ font-size:.86rem; color:var(--text-3); }
+.doc-count b{ color:var(--blue-bright); font-weight:700; }
+.doc-card{ background:var(--panel); border:1px solid var(--border);
+  border-radius:14px; padding:18px 20px 14px; margin-bottom:0;
+  transition:border-color .16s ease, box-shadow .16s ease; height:100%; }
+.doc-card:hover{ border-color:var(--blue);
+  box-shadow:0 14px 34px -20px rgba(79,124,255,.7); }
+.doc-card.selected{ border-color:var(--blue);
+  background:linear-gradient(180deg,rgba(79,124,255,.07),var(--panel)); }
+.doc-title{ font-size:.98rem; font-weight:700; color:var(--text);
+  line-height:1.45; margin-bottom:9px; min-height:2.9em;
+  display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; }
+.doc-meta{ display:flex; flex-wrap:wrap; gap:6px; margin-bottom:10px; }
+.doc-chip{ font-size:.74rem; font-weight:600; color:var(--text-2);
+  background:var(--panel-2); border:1px solid var(--border);
+  padding:3px 9px; border-radius:7px; }
+.doc-chip.amt{ color:var(--blue-bright); border-color:rgba(79,124,255,.3);
+  background:rgba(79,124,255,.08); }
+.doc-sum{ font-size:.83rem; color:var(--text-3); line-height:1.55;
+  display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical;
+  overflow:hidden; margin-bottom:4px; }
+.sel-bar{ background:linear-gradient(135deg,rgba(79,124,255,.12),rgba(79,124,255,.05));
+  border:1px solid rgba(79,124,255,.35); border-radius:12px;
+  padding:14px 18px; margin:6px 0 14px; }
+.sel-bar-t{ font-size:.9rem; font-weight:700; color:var(--blue-bright); margin-bottom:4px; }
+.sel-bar-d{ font-size:.84rem; color:var(--text-2); line-height:1.5; }
+
 h1,h2,h3,h4{ color:var(--text); }
 hr{ border-color:var(--border-soft); }
 </style>
