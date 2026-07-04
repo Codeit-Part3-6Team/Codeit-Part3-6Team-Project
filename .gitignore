@@ -82,3 +82,5 @@ miniconda-installer.exe
 .miniconda/
 condaenv.*.requirements.txt
 docs/html/overview/langchain_langgraph_guide.html
+data/
+.vscode/

@@ -5,7 +5,7 @@ Free / Pro / Enterprise 3단 요금제 (Mock).
 """
 
 import streamlit as st
-from utils.components import topbar, footer, P_ANALYZE
+from utils.components import topbar, footer, P_DOCS
 
 ss = st.session_state
 topbar()
@@ -17,9 +17,9 @@ st.markdown('<div class="eyebrow">PRICING</div>'
             '무료 체험 · 신용카드 불필요 · 즉시 사용 가능</div>', unsafe_allow_html=True)
 
 plans = [
-    ("Free", "₩0", "/월", ["문서 5건/월 분석", "기본 요약 추출", "PDF 지원"], False),
+    ("Free", "₩0", "/월", ["내부 문서 5건/월 분석", "기본 요약 추출", "핵심 요약 제공"], False),
     ("Pro", "₩49,000", "/월",
-     ["문서 무제한 분석", "RAG 대화형 탐색", "PDF·DOCX·HWP 전체 지원", "경쟁력 분석 리포트"], True),
+     ["내부 문서 무제한 분석", "RAG 대화형 탐색", "문서 비교 분석", "경쟁력 분석 리포트"], True),
     ("Enterprise", "별도 문의", "",
      ["전용 인프라 · SSO", "온프레미스 배포", "전담 지원 매니저", "보안 인증 대응"], False),
 ]
@@ -37,7 +37,7 @@ st.markdown('<div style="height:26px"></div>', unsafe_allow_html=True)
 c = st.columns([1, 1, 1])[1]
 with c:
     if st.button("무료로 시작하기  ›", type="primary", use_container_width=True, key="pricing_start"):
-        st.switch_page(P_ANALYZE)
+        st.switch_page(P_DOCS)
 
 st.markdown('<div style="height:50px"></div>', unsafe_allow_html=True)
 footer()

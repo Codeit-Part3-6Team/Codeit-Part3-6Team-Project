@@ -1,80 +1,73 @@
 """
 홈 (랜딩 페이지)
 ================
-캡처 1 → 2 → 3 을 위→아래로 이어 붙인 연속 스크롤 화면.
-히어로 → 통계 → 핵심 기능 → 하단 CTA → 푸터.
+히어로 → 통계 → 핵심 기능 → 하단 CTA → 푸터로 이어지는 연속 스크롤 화면.
+외부 업로드가 없는 '내부 RFP 문서 분석' 서비스에 맞춰 문구·동선을 구성했습니다.
+CTA 는 모두 문서 목록(documents) 페이지로 연결됩니다.
 """
 
 import streamlit as st
+
 from utils.components import (
-    topbar, footer, P_ANALYZE, P_PRICING,
-    IC_UPLOAD, IC_BOLT, IC_CHAT, IC_CHART, IC_SHIELD, IC_FILES, IC_USERS,
+    topbar, footer, P_DOCS, P_PRICING,
+    IC_SEARCH, IC_BOLT, IC_CHAT, IC_COMPARE, IC_SHIELD, IC_FILES, IC_LAYERS,
 )
 
 ss = st.session_state
 topbar()
 
-# ── 캡처 1: 히어로 ───────────────────────────────────────────────────────────
+# ── 히어로 ───────────────────────────────────────────────────────────────────
 st.markdown('<div class="hero-pad"></div>', unsafe_allow_html=True)
 left, right = st.columns([1.05, 0.95], gap="large")
 
 with left:
     st.markdown("""
     <div class="badge">✦ AI 기반 RFP 분석 엔진</div>
-    <div class="hero-title">입찰 문서 분석,<br><span class="accent">AI</span>가 대신합니다</div>
-    <div class="hero-sub">수백 페이지의 RFP 문서를 몇 초 만에 분석하고,
-    핵심 요구사항과 경쟁 포인트를 자동으로 추출합니다.</div>
+    <div class="hero-title">공공 입찰 문서 분석,<br><span class="accent">AI</span>가 대신합니다</div>
+    <div class="hero-sub">나라장터 RFP 문서 98건이 이미 분석 준비를 마쳤습니다.
+    문서를 선택하면 핵심 요약과 요구사항을 바로 확인하고, 궁금한 점은 출처와 함께 질문할 수 있습니다.</div>
     """, unsafe_allow_html=True)
 
     b1, _ = st.columns([1.15, 2.05])
     with b1:
-        if st.button("무료로 시작하기  ›", type="primary", use_container_width=True, key="hero_start"):
-            st.switch_page(P_ANALYZE)
+        if st.button("문서 분석 시작하기  ›", type="primary", use_container_width=True, key="hero_start"):
+            st.switch_page(P_DOCS)
 
 with right:
     st.markdown(f"""
     <div class="upload-card">
-      <div class="upload-ico">{IC_UPLOAD}</div>
-      <div class="upload-title">RFP 문서를 드래그하거나 클릭하세요</div>
-      <div class="upload-sub">PDF, DOCX, HWP 지원 · 최대 200MB</div>
-      <div class="pill-row"><span class="pill">.PDF</span>
-      <span class="pill">.DOCX</span><span class="pill">.HWP</span></div>
+      <div class="upload-ico">{IC_LAYERS}</div>
+      <div class="upload-title">내부 RFP 문서 98건 분석 준비 완료</div>
+      <div class="upload-sub">사업명·발주기관으로 검색 → 선택 → 즉시 분석</div>
+      <div class="pill-row"><span class="pill">요약</span>
+      <span class="pill">비교</span><span class="pill">질의응답</span></div>
     </div>
     """, unsafe_allow_html=True)
 
-    up = st.file_uploader("RFP 파일 업로드", type=["pdf", "docx", "hwp", "txt"],
-                          label_visibility="collapsed", key="home_upload")
-    if up is not None:
-        ss.doc_name = up.name
-        ss.analyzed = False
-        st.switch_page(P_ANALYZE)
-
     c = st.columns([1, 2, 1])[1]
     with c:
-        if st.button("샘플 문서로 바로 체험하기  →", type="secondary",
-                     use_container_width=True, key="home_sample"):
-            ss.doc_name = "샘플_전자조달시스템_RFP.pdf"
-            ss.analyzed = False
-            st.switch_page(P_ANALYZE)
+        if st.button("문서 목록 둘러보기  →", type="secondary",
+                     use_container_width=True, key="home_browse"):
+            st.switch_page(P_DOCS)
 
 # ── 통계 ─────────────────────────────────────────────────────────────────────
 st.markdown("""
 <div class="stats">
-  <div class="stat"><div class="stat-num">12,000+</div><div class="stat-label">분석 완료 문서</div></div>
-  <div class="stat"><div class="stat-num">92.5%</div><div class="stat-label">추출 정확도</div></div>
-  <div class="stat"><div class="stat-num">5초</div><div class="stat-label">평균 분석 시간</div></div>
-  <div class="stat"><div class="stat-num">340개</div><div class="stat-label">도입 기업</div></div>
+  <div class="stat"><div class="stat-num">98건</div><div class="stat-label">분석 가능한 내부 문서</div></div>
+  <div class="stat"><div class="stat-num">85곳</div><div class="stat-label">발주기관 커버</div></div>
+  <div class="stat"><div class="stat-num">5초</div><div class="stat-label">평균 응답 시간</div></div>
+  <div class="stat"><div class="stat-num">RAG</div><div class="stat-label">출처 기반 답변</div></div>
 </div>
 """, unsafe_allow_html=True)
 
-# ── 캡처 2: 핵심 기능 ────────────────────────────────────────────────────────
+# ── 핵심 기능 ────────────────────────────────────────────────────────────────
 feats = [
-    (IC_BOLT,   "즉각적인 요약", "수백 페이지 문서를 AI가 핵심 내용으로 정리합니다.", "row1"),
-    (IC_CHAT,   "대화형 탐색",   "궁금한 걸 물어보면 문서 어디에 나온 내용인지와 함께 답변합니다", "row1"),
-    (IC_CHART,  "경쟁력 분석",   "낙찰 가능성을 높이는 핵심 전략 포인트를 추출합니다.", "row1"),
-    (IC_SHIELD, "보안 처리",     "비밀 문서를 철저한 암호화로 안전하게 지킵니다.", "row2"),
-    (IC_FILES,  "다양한 형식",   "PDF, DOCX, HWP 등 공공기관 문서를 모두 지원합니다.", "row2"),
-    (IC_USERS,  "팀 협업",       "분석 결과를 팀원과 공유하고 함께 전략을 수립하세요.", "row2"),
+    (IC_SEARCH,  "문서 검색·선택", "사업명·발주기관으로 원하는 RFP를 찾아 바로 선택합니다.", "row1"),
+    (IC_BOLT,    "즉각적인 요약",  "선택한 문서의 핵심 내용을 AI가 정리해 보여줍니다.", "row1"),
+    (IC_CHAT,    "대화형 탐색",    "궁금한 걸 물어보면 문서 어디에 나온 내용인지와 함께 답변합니다.", "row1"),
+    (IC_COMPARE, "문서 비교",      "여러 공고를 담아 예산·발주기관·요건을 한눈에 비교합니다.", "row2"),
+    (IC_FILES,   "다양한 형식",    "PDF, DOCX, HWP 등 공공기관 문서를 모두 처리해 두었습니다.", "row2"),
+    (IC_SHIELD,  "안전한 인덱스",  "내부에 구축된 문서 인덱스만 사용해 안정적으로 동작합니다.", "row2"),
 ]
 cards = "".join(
     f'<div class="feat-card {cls}"><div class="feat-icon">{ic}</div>'
@@ -89,16 +82,16 @@ st.markdown(f"""
 </div>
 """, unsafe_allow_html=True)
 
-# ── 캡처 3: 하단 CTA ─────────────────────────────────────────────────────────
+# ── 하단 CTA ─────────────────────────────────────────────────────────────────
 st.markdown("""
 <div class="cta">
   <div class="cta-title">지금 바로 시작해보세요</div>
-  <div class="cta-sub">무료 체험 · 간편 결제 · 즉시 사용 가능</div>
+  <div class="cta-sub">문서 선택 → 요약 확인 → 질문까지 한 화면에서</div>
 </div>
 """, unsafe_allow_html=True)
 c = st.columns([1, 1, 1])[1]
 with c:
-    if st.button("요금제 보기  ›", type="primary", use_container_width=True, key="cta_pricing"):
-        st.switch_page(P_PRICING)
+    if st.button("문서 분석 시작하기  ›", type="primary", use_container_width=True, key="cta_start"):
+        st.switch_page(P_DOCS)
 
 footer()
