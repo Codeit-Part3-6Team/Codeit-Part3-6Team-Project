@@ -297,6 +297,8 @@ def _format_structured_output(structured: dict[str, Any] | None) -> str:
     if not structured:
         return ""
 
+    total = len(structured)
+    missing: list[str] = []
     lines: list[str] = []
     for key, value in structured.items():
         if isinstance(value, list):
@@ -306,12 +308,21 @@ def _format_structured_output(structured: dict[str, Any] | None) -> str:
                     lines.append(f"- {item}")
             else:
                 lines.append("- 명시되지 않음")
+                missing.append(key)
         elif value in (None, ""):
             lines.append(f"{key}: 명시되지 않음")
+            missing.append(key)
         else:
             lines.append(f"{key}: {value}")
         lines.append("")
-    return "\n".join(lines).strip()
+
+    result = "\n".join(lines).strip()
+
+    if missing and len(missing) / total > 0.3:
+        missing_fields = ", ".join(f"'{m}'" for m in missing)
+        result += f"\n\n※ {missing_fields} 항목은 문서에 명시되지 않았습니다."
+
+    return result
 
 
 def _strip_source_block(reply: str) -> str:
