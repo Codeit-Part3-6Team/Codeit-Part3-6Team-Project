@@ -45,6 +45,7 @@ class ChatbotRunner:
         self.embeddings: list[dict[str, Any]] = []
         self._output_dir: Path | None = None
         self._use_chroma: bool = False
+        self._run_id: str | None = None
 
     def load_document_context(self, output_dir: str | Path | None) -> None:
         """CSV/JSONL에서 문서 context를 로딩하거나 ChromaDB에 연결합니다."""
@@ -330,6 +331,12 @@ class ChatbotRunner:
         self.history.append({"role": role, "content": content})
         if len(self.history) > self.max_history:
             self.history.pop(0)
+        if self._run_id:
+            try:
+                from app.services.sqlite_store import add_chat_message
+                add_chat_message(self._run_id, role, content)
+            except Exception:
+                pass
 
     def run_cli_loop(self, exit_words: tuple[str, ...] = ("exit", "quit", "q")) -> None:
         """대화형 CLI 루프를 실행합니다."""

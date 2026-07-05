@@ -346,6 +346,11 @@ class _ChatMemory:
     def get(cls, thread_id: str) -> list[dict[str, str]]:
         if thread_id not in cls._store:
             cls._store[thread_id] = []
+            try:
+                from app.services.sqlite_store import get_chat_history
+                cls._store[thread_id] = get_chat_history(thread_id, limit=10)
+            except Exception:
+                pass
         return cls._store[thread_id]
 
     @classmethod
@@ -354,6 +359,11 @@ class _ChatMemory:
             cls._store.pop(thread_id, None)
         else:
             cls._store.clear()
+        try:
+            from app.services.sqlite_store import clear_chat_history
+            clear_chat_history(thread_id)
+        except Exception:
+            pass
 
 
 def run_rag_chat_with_history(

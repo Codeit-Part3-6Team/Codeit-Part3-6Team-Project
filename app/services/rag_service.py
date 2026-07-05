@@ -31,6 +31,7 @@ if str(_PROJECT_ROOT) not in sys.path:
 
 from src.config import load_config
 from src.rag.pipeline import run_rag_ingest
+from app.services import sqlite_store
 
 _STREAMLIT_EXPERIMENTS = _PROJECT_ROOT / "experiments" / "streamlit"
 # 전용 streamlit 템플릿 사용 (base_config 상속으로 rag-baseline/agent_lplus 포함)
@@ -147,7 +148,16 @@ def create_and_ingest(raw_docs_source_dir: str) -> dict[str, Any]:
         config_path = run_dir / "config.yaml"
         _write_yaml(config_path, config)
 
+        sqlite_store.insert_run(run_id, status="running", config_path=str(config_path), output_dir=str(output_dir))
+
         result = run_rag_ingest(str(config_path), str(_PROJECT_ROOT))
+
+        sqlite_store.update_run_status(run_id, "ready", document_count=result.get("documents", 0), chunk_count=result.get("chunks", 0))
+
+        # 문서 목록도 SQLite에 저장
+        docs = get_documents(run_id)
+        if docs:
+            sqlite_store.upsert_documents(run_id, docs)
 
         return {
             "run_id": run_id,
@@ -190,6 +200,7 @@ def _get_or_build_chatbot(run_id: str) -> Any:
 
     bot = build_chatbot_from_config(config)
     bot.load_document_context(output_dir)
+    bot._run_id = run_id
 
     _chatbot_cache[run_id] = bot
     return bot
@@ -565,11 +576,11 @@ def compare(run_id: str, selected_doc_ids: list[str] | None = None) -> dict[str,
 
 
 def get_documents(run_id: str) -> list[dict[str, Any]]:
-    """chunks.csv에서 문서 목록을 추출합니다.
+    """SQLite 또는 CSV에서 문서 목록을 조회합니다."""
+    db_docs = sqlite_store.get_documents(run_id)
+    if db_docs:
+        return db_docs
 
-    Returns:
-        [{"document_id": str, "title": str, "source_path": str, "chunk_count": int}, ...]
-    """
     output_dir = _output_dir(run_id)
     chunks_path = output_dir / "chunks.csv"
     if not chunks_path.exists():
@@ -610,18 +621,17 @@ def get_citation(run_id: str, chunk_id: str) -> dict[str, Any] | None:
 
 
 def list_runs() -> list[dict[str, Any]]:
-    """기존 run 목록을 반환합니다.
+    """기존 run 목록을 SQLite에서 조회합니다."""
+    db_runs = sqlite_store.list_runs()
+    if db_runs:
+        return db_runs
 
-    Returns:
-        [{"run_id": str, "created_at": str, "status": str, "documents": int}, ...]
-    """
+    # 폴백: 기존 파일시스템 기반 run도 포함
     if not _STREAMLIT_EXPERIMENTS.exists():
         return []
 
     runs: list[dict[str, Any]] = []
-    for run_dir in sorted(
-        _STREAMLIT_EXPERIMENTS.iterdir(), reverse=True
-    ):
+    for run_dir in sorted(_STREAMLIT_EXPERIMENTS.iterdir(), reverse=True):
         if not run_dir.is_dir():
             continue
         run_id = run_dir.name
@@ -638,24 +648,14 @@ def list_runs() -> list[dict[str, Any]]:
                 pass
         elif chunks_path.exists():
             status = "ready"
-
-        docs_count = len(get_documents(run_id))
-
-        config_path = run_dir / "config.yaml"
-        created_at = ""
-        if config_path.exists():
-            try:
-                created_at = datetime.fromtimestamp(
-                    config_path.stat().st_mtime
-                ).isoformat()
-            except Exception:
-                pass
+        else:
+            status = "running"
 
         runs.append({
             "run_id": run_id,
-            "created_at": created_at,
+            "created_at": datetime.fromtimestamp(run_dir.stat().st_mtime).isoformat(),
             "status": status,
-            "documents": docs_count,
+            "documents": 0,
         })
 
     return runs
@@ -699,8 +699,10 @@ def get_run_info(run_id: str) -> dict[str, Any]:
 
 
 def clear_chatbot(run_id: str | None = None) -> None:
-    """챗봇 캐시를 초기화합니다. run_id가 None이면 전체 초기화."""
+    """챗봇 캐시와 대화 기록을 초기화합니다."""
     if run_id:
         _chatbot_cache.pop(run_id, None)
+        sqlite_store.clear_chat_history(run_id)
     else:
         _chatbot_cache.clear()
+        sqlite_store.clear_chat_history()
