@@ -20,6 +20,10 @@ rag:
 agent:
   chatbot:
     enabled: true
+    cache_ttl: 300
+  performance:
+    target_first_response_ms: 3000
+    target_full_analysis_ms: 10000
 
 artifact_policy:
   on_existing: overwrite

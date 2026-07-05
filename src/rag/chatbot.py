@@ -7,6 +7,8 @@ config의 agent.chatbot.enabled: true일 때, LLM이 Tool description을 읽고
 from __future__ import annotations
 
 import json
+import time
+from pathlib import Path
 from typing import Any
 
 from src.rag.tool import Tool, ToolResult
@@ -26,6 +28,7 @@ class ChatbotRunner:
         tool_selection_provider: str = "openai",
         system_prompt: str | None = None,
         max_history: int = 10,
+        cache_ttl: int = 300,
     ):
         self.tools = tools
         self.tool_selection_model = tool_selection_model
@@ -38,6 +41,8 @@ class ChatbotRunner:
         )
         self.max_history = max_history
         self.max_retries = 2
+        self.cache_ttl = cache_ttl
+        self._cache: dict[str, tuple[float, dict[str, Any]]] = {}
         self.history: list[dict[str, str]] = []
         self.state: dict[str, ToolResult] = {}
         self.current_context: dict[str, str] = {}
@@ -194,8 +199,17 @@ class ChatbotRunner:
             self._add_history("assistant", reply)
             return {"reply": reply, "tool_used": None, "tool_result": None}
 
+        cache_key = user_input.strip()
+        if cache_key in self._cache:
+            ts, cached = self._cache[cache_key]
+            if time.time() - ts < self.cache_ttl:
+                self._add_history("assistant", cached.get("reply", ""))
+                return cached
+            del self._cache[cache_key]
+
         result = self._run_agent_loop(user_input, max_iterations=3)
         if result:
+            self._cache[cache_key] = (time.time(), result)
             return result
 
         reply = "죄송합니다. 해당 질문에 적합한 도구를 찾지 못했습니다."
@@ -387,6 +401,7 @@ def build_chatbot_from_config(config: dict[str, Any]) -> ChatbotRunner:
         tool_selection_provider=chatbot_cfg.get("tool_selection_provider", "openai"),
         system_prompt=chatbot_cfg.get("system_prompt"),
         max_history=int(chatbot_cfg.get("max_history", 10)),
+        cache_ttl=int(chatbot_cfg.get("cache_ttl", 300)),
     )
 
 
