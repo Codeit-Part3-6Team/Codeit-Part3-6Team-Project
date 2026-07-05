@@ -14,10 +14,10 @@
 |---|------|----------|----------|----------|------|------|
 | 1 | `_chatbot_cache` dict 휘발성 | `rag_service.py:42` | `app/services/rag_service.py` | `_chatbot_cache: dict` → `_get_chatbot(run_id)` 내부에서 `ChatbotRunner` 대신 `ChromaChatbotRunner` 생성. SQLite로 run_id별 연결 상태 관리 | PM | ✅ |
 | 2 | `load_document_context()` 전체 메모리 적재 | `chatbot.py:47-66` | `src/rag/chatbot.py` | `load_document_context()` → `connect_collection(run_id)`. self.chunks, self.embeddings 제거. 내부적으로 ChromaDB 컬렉션 쿼리로 대체 | PM | ✅ |
-| 3 | `_ChatMemory` dict 휘발성 | `pipeline.py:343-357` | `src/rag/pipeline.py` | class 변수 dict → `sqlite3` 기반 `chat_history` 테이블. `thread_id`로 조회/저장 | PM | ☐ |
+| 3 | `_ChatMemory` dict 휘발성 | `pipeline.py:343-357` | `src/rag/pipeline.py` | class 변수 dict → `sqlite3` 기반 `chat_history` 테이블. `thread_id`로 조회/저장 | PM | ✅ |
 | 4 | `embeddings.jsonl` 파일 기반 | `pipeline.py:85-86`, `chatbot.py:62-66` | `src/rag/adapters.py`, `src/rag/chatbot.py` | `ChromaRetrieverAdapter` 신규 구현. `RagRetrieverAdapter.retrieve()` 시그니처 유지하되 chunks/embeddings 파라미터는 무시하고 ChromaDB 컬렉션에서 직접 쿼리 | PM | ✅ |
-| 5 | run 관리 파일시스템 순회 | `rag_service.py:614-653` | `app/services/rag_service.py` | `list_runs()` → SQLite `runs` 테이블 조회. `create_and_ingest()` 시 run 메타데이터 INSERT | PM | ☐ |
-| 6 | 문서 목록 매번 CSV 파싱 | `rag_service.py:559-593` | `app/services/rag_service.py` | `get_documents()` → SQLite `documents` 테이블 또는 ChromaDB 컬렉션 메타데이터 조회 | PM | ☐ |
+| 5 | run 관리 파일시스템 순회 | `rag_service.py:614-653` | `app/services/rag_service.py` | `list_runs()` → SQLite `runs` 테이블 조회. `create_and_ingest()` 시 run 메타데이터 INSERT | PM | ✅ |
+| 6 | 문서 목록 매번 CSV 파싱 | `rag_service.py:559-593` | `app/services/rag_service.py` | `get_documents()` → SQLite `documents` 테이블 또는 ChromaDB 컬렉션 메타데이터 조회 | PM | ✅ |
 
 **핵심 변경 포인트**:
 ```
@@ -139,10 +139,10 @@ _classify_intent(user_input)   ← 신규
 |------|------|----------|----------|------|
 | 1 | `_display_reply()` + `_format_tool_result()` 분리 | `rag_service.py`, `chatbot.py` | 2h | ✅ |
 | 2 | 시스템 프롬프트 페르소나 변경 | `chatbot.py`, `agent_lplus.yaml` | 1h | ✅ |
-| 3 | SQLite: run 관리 + 대화 기록 | `rag_service.py`, `pipeline.py` | 3h | ☐ |
+| 3 | SQLite: run 관리 + 대화 기록 | `rag_service.py`, `pipeline.py` | 3h | ✅ |
 | 4 | Domain classifier (off-topic 필터) | `chatbot.py` | 2h | ✅ |
-| 5 | ChromaDB 연동: embeddings 검색 | `adapters.py`, `chatbot.py` | 4h | ☐ |
-| 6 | extract_facts 프롬프트 튜닝 | `agent_lplus.yaml` | 1h | ☐ |
+| 5 | ChromaDB 연동: embeddings 검색 | `adapters.py`, `chatbot.py` | 4h | ✅ |
+| 6 | extract_facts 프롬프트 튜닝 | `agent_lplus.yaml` | 1h | ✅ |
 | 7 | 응답 속도 측정 + 질문 캐싱 | `chatbot.py`, `streamlit.yaml` | 2h | ✅ |
 | 8 | 분석 진행률 UI | `workspace.py`, `rag_service.py` | 2h | ✅ |
 
