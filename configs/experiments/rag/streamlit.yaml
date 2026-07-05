@@ -13,6 +13,9 @@ experiment:
 rag:
   loader:
     file_types: [pdf, docx, hwp, hwpx, txt, csv]
+  vector_store:
+    type: chroma
+    path: vector_store
 
 agent:
   chatbot:

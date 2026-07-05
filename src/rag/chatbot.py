@@ -31,28 +31,48 @@ class ChatbotRunner:
         self.tool_selection_model = tool_selection_model
         self.tool_selection_provider = tool_selection_provider
         self.system_prompt = system_prompt or (
-            "너는 RFP 문서 분석 도우미 챗봇이다.\n"
-            "사용자의 질문에 가장 적합한 도구를 선택하고, 도구 실행 결과를 바탕으로 답변하라.\n"
-            "아래 도구 중 하나를 선택하여 JSON으로 응답하라: {\"tool\": \"도구명\", \"question\": \"도구에 전달할 질문\"}\n"
-            "도구가 필요 없으면 {\"tool\": null, \"answer\": \"직접 답변\"} 형식으로 응답하라."
+            "너는 RFP 입찰 전문 컨설턴트 'IT'S MINE'이다.\n"
+            "사용자의 질문을 이해하고 적합한 분석 도구를 선택하여 자연스러운 문장으로 답변하라.\n"
+            "도구 선택은 JSON으로 하라: {\"tool\": \"도구명\", \"question\": \"도구에 전달할 질문\"}\n"
+            "도구가 필요 없는 일반 대화면 {\"tool\": null, \"answer\": \"직접 답변\"} 으로 응답하라."
         )
         self.max_history = max_history
         self.max_retries = 2
         self.history: list[dict[str, str]] = []
         self.state: dict[str, ToolResult] = {}
-        self.current_context: dict[str, str] = {}  # {"last_tool": "...", "last_question": "...", "last_answer": "..."}
+        self.current_context: dict[str, str] = {}
         self.chunks: list[dict[str, str]] = []
         self.embeddings: list[dict[str, Any]] = []
+        self._output_dir: Path | None = None
+        self._use_chroma: bool = False
 
     def load_document_context(self, output_dir: str | Path | None) -> None:
-        """Agent와 동일한 방식으로 chunks.csv, embeddings.jsonl을 로딩합니다."""
+        """CSV/JSONL에서 문서 context를 로딩하거나 ChromaDB에 연결합니다."""
         if output_dir is None:
             return
+
+        from pathlib import Path
+        dir_path = Path(output_dir)
+        self._output_dir = dir_path
+
+        # ChromaDB vector_store 설정 확인
+        # retriever.method가 chroma이면 chunks/embeddings 로딩을 건너뜀
+        for tool in self.tools.values():
+            if tool.retriever_cfg.get("method") == "chroma":
+                persist_path = tool.retriever_cfg.get("persist_dir", "")
+                if persist_path:
+                    p = Path(persist_path)
+                    if not p.is_absolute():
+                        persist_path = str(dir_path / persist_path)
+                    tool.retriever_cfg["persist_dir"] = persist_path
+                self._use_chroma = True
+
+        if self._use_chroma:
+            return
+
         import csv
         import json
-        from pathlib import Path
 
-        dir_path = Path(output_dir)
         chunks_path = dir_path / "chunks.csv"
         if chunks_path.exists():
             with open(chunks_path, "r", encoding="utf-8-sig") as fh:
@@ -133,13 +153,15 @@ class ChatbotRunner:
         return False, next(iter(self.tools))
 
     def _format_tool_result(self, result):
-        if result.structured_output:
+        if result.answer and result.answer != '(응답 없음)':
+            out = result.answer
+        elif result.structured_output:
             lines = []
             for k, v in result.structured_output.items():
                 if isinstance(v, list):
-                    lines.append(f'  {k}: ' + ', '.join(str(x) for x in v))
+                    lines.append(f'{k}: ' + ', '.join(str(x) for x in v))
                 else:
-                    lines.append(f'  {k}: {v}')
+                    lines.append(f'{k}: {v}')
             out = '\n'.join(lines)
         else:
             out = result.answer or '(응답 없음)'
@@ -163,6 +185,14 @@ class ChatbotRunner:
         Returns:
             {"reply": str, "tool_used": str | None, "tool_result": dict | None}
         """
+        if not self._is_rfp_question(user_input):
+            reply = (
+                "저는 RFP 문서 전문 분석 도우미입니다.\n"
+                "문서 요약, 요구사항 추출, 비교 분석, 참여 판단에 대해 질문해 주세요."
+            )
+            self._add_history("assistant", reply)
+            return {"reply": reply, "tool_used": None, "tool_result": None}
+
         result = self._run_agent_loop(user_input, max_iterations=3)
         if result:
             return result
@@ -170,6 +200,17 @@ class ChatbotRunner:
         reply = "죄송합니다. 해당 질문에 적합한 도구를 찾지 못했습니다."
         self._add_history("assistant", reply)
         return {"reply": reply, "tool_used": None, "tool_result": None}
+
+    def _is_rfp_question(self, user_input: str) -> bool:
+        """질문이 RFP/입찰 문서 분석 도메인에 속하는지 키워드 기반으로 1차 판단합니다."""
+        rfp_keywords = [
+            "rfp", "입찰", "제안", "공고", "사업", "예산", "발주", "마감",
+            "자격", "서류", "평가", "계약", "낙찰", "과업", "용역",
+            "요약", "비교", "분석", "추출", "참여", "요구사항",
+            "체크리스트", "리스크", "검색", "찾아",
+        ]
+        text = user_input.lower()
+        return any(kw in text for kw in rfp_keywords)
 
     def _select_tool(self, user_input: str) -> tuple[str | None, str]:
         """LLM에게 Tool 목록을 보여주고 선택하게 합니다."""
@@ -318,6 +359,13 @@ def build_chatbot_from_config(config: dict[str, Any]) -> ChatbotRunner:
 
     default_retriever = dict(rag_cfg.get("retriever", {}))
     default_answerer = dict(rag_cfg.get("answerer", {}))
+
+    # ChromaDB vector_store가 설정되어 있으면 retriever에 persist_dir 주입
+    vector_store_cfg = rag_cfg.get("vector_store", {})
+    if vector_store_cfg.get("type") == "chroma":
+        default_retriever["method"] = "chroma"
+        default_retriever["persist_dir"] = vector_store_cfg.get("path", "vector_store")
+
     raw_tools = agent_cfg.get("tools", {})
     tools: dict[str, Tool] = {}
     for name, tool_cfg in raw_tools.items():

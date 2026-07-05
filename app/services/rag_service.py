@@ -213,6 +213,9 @@ def _build_chatbot(run_id: str) -> Any:
 def _filter_bot_documents(bot: Any, selected_doc_ids: list[str] | None) -> bool:
     if not selected_doc_ids:
         return True
+    # ChromaDB 모드에서는 in-memory 필터링을 건너뜀 (ChromaDB 쿼리 레벨 필터는 추후 추가)
+    if getattr(bot, "_use_chroma", False):
+        return True
 
     doc_ids = set(selected_doc_ids)
     bot.chunks = [c for c in bot.chunks if c.get("document_id") in doc_ids]
@@ -287,10 +290,15 @@ def _strip_source_block(reply: str) -> str:
 
 
 def _display_reply(raw_reply: str, structured: dict[str, Any] | None = None) -> str:
+    reply = _strip_source_block(raw_reply)
     structured_reply = _format_structured_output(structured)
+    if reply:
+        if structured_reply:
+            return reply + "\n\n---\n\n📋 분석 결과\n\n" + structured_reply
+        return reply
     if structured_reply:
         return structured_reply
-    return _strip_source_block(raw_reply)
+    return reply
 
 
 def _format_doc_fact_for_compare(title: str, structured: dict[str, Any] | None, fallback: str) -> str:

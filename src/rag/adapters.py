@@ -215,6 +215,75 @@ class MemorySemanticRetrieverAdapter:
 
 
 @dataclass
+class ChromaRetrieverAdapter:
+    """ChromaDB vector store에서 직접 검색하는 adapter입니다.
+
+    기존 MemorySemanticRetrieverAdapter와 동일한 RagRetrieverAdapter 계약을
+    따르지만, chunks/embeddings 파라미터를 무시하고 ChromaDB 컬렉션을 쿼리합니다.
+    """
+
+    persist_dir: str = ""
+    embedding_adapter: RagEmbeddingAdapter | None = None
+    top_k: int = 3
+    score_threshold: float = 0.0
+
+    def retrieve(
+        self,
+        question: str,
+        chunks: list[dict[str, str]],
+        embeddings: list[dict[str, Any]],
+    ) -> list[dict[str, str | float | int]]:
+        try:
+            from langchain_chroma import Chroma
+        except ImportError as exc:
+            raise ImportError(
+                "ChromaDB 검색을 사용하려면 langchain-chroma가 필요합니다."
+            ) from exc
+
+        if not self.persist_dir:
+            raise ValueError("ChromaRetrieverAdapter requires persist_dir")
+
+        embedding_fn = self._build_embedding_fn()
+        store = Chroma(persist_directory=self.persist_dir, embedding_function=embedding_fn)
+        rows = store.similarity_search_with_score(question, k=self.top_k)
+        results: list[dict[str, str | float | int]] = []
+        for rank, (doc, score) in enumerate(rows, start=1):
+            results.append({
+                "rank": rank,
+                "score": round(float(score), 4),
+                "chunk_id": doc.metadata.get("chunk_id", ""),
+                "document_id": doc.metadata.get("document_id", ""),
+                "source_path": doc.metadata.get("source_path", ""),
+                "page": doc.metadata.get("page", ""),
+                "section": doc.metadata.get("section", ""),
+                "text": doc.page_content,
+            })
+        return results
+
+    def _build_embedding_fn(self):
+        if self.embedding_adapter is None:
+            from src.rag.embedder import embed_text as _embed
+            from src.rag.embedder import DEFAULT_EMBEDDING_MODEL
+
+            class _LocalEmbeddingFn:
+                def embed_documents(self, texts):
+                    return [_embed(t) for t in texts]
+                def embed_query(self, text):
+                    return _embed(text)
+            return _LocalEmbeddingFn()
+
+        adapter = self.embedding_adapter
+
+        class _AdapterEmbeddingFn:
+            def embed_documents(self, texts):
+                return adapter.embed_texts(texts)
+            def embed_query(self, text):
+                return adapter.embed_texts([text])[0]
+
+        return _AdapterEmbeddingFn()
+
+
+@dataclass
 class HybridRetrieverAdapter:
     """keyword 점수와 vector 점수를 합쳐 검색하는 local hybrid retriever 구현체입니다."""
 
@@ -532,6 +601,14 @@ def build_retriever_adapter(
             score_threshold=score_threshold,
             embedding_adapter=embedding_adapter,
             scoring_kwargs=scoring_kwargs or None,
+        )
+    if method == "chroma":
+        persist_dir = config.get("persist_dir", "")
+        return ChromaRetrieverAdapter(
+            persist_dir=str(persist_dir),
+            embedding_adapter=embedding_adapter,
+            top_k=top_k,
+            score_threshold=score_threshold,
         )
     if method in {"hybrid", "mmr"}:
         return HybridRetrieverAdapter(
