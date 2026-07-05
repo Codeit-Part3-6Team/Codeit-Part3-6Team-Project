@@ -445,19 +445,12 @@ def ask(run_id: str, question: str) -> dict[str, Any]:
         bot = _get_or_build_chatbot(run_id)
         response = bot.chat(question)
 
-        citations: list[dict[str, Any]] = []
-        tool_used = response.get("tool_used")
-        structured_output = None
-        if tool_used:
-            tool_name = tool_used[-1] if isinstance(tool_used, list) else tool_used
-            if tool_name in bot.state:
-                tool_result = bot.state[tool_name]
-                citations = _dedupe_citations(list(tool_result.citations))
-                structured_output = tool_result.structured_output
+        citations = _dedupe_citations(list(response.get("citations") or []))
+        structured_output = response.get("structured_output")
 
         return {
             "reply": _display_reply(response.get("reply", ""), structured_output),
-            "tool_used": tool_used,
+            "tool_used": response.get("tool_used"),
             "structured_output": structured_output,
             "citations": citations,
             "status": (response.get("tool_result") or {}).get("status", "unknown"),
@@ -493,9 +486,8 @@ def ask_with_document_filter(
             }
 
         response = bot.chat(question)
-        tool_result = _get_state_result(bot, response.get("tool_used"))
-        structured_output = getattr(tool_result, "structured_output", None)
-        citations = _dedupe_citations(list(getattr(tool_result, "citations", []))) if tool_result else []
+        structured_output = response.get("structured_output")
+        citations = _dedupe_citations(list(response.get("citations") or []))
 
         return {
             "reply": _display_reply(response.get("reply", ""), structured_output),
@@ -507,15 +499,7 @@ def ask_with_document_filter(
             "error": None,
         }
     except Exception as exc:
-        return {
-            "reply": "",
-            "tool_used": None,
-            "structured_output": None,
-            "citations": [],
-            "status": "error",
-            "duration_ms": 0,
-            "error": str(exc),
-        }
+        return _service_error("ASK_FILTER_FAILED", "답변 생성 중 오류가 발생했습니다.", exc)
 
 
 def run_tool(

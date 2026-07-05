@@ -137,10 +137,10 @@ class ChatbotRunner:
                 if dep_name not in run_state:
                     dep_tool = self.tools.get(dep_name)
                     if dep_tool:
-                        dep_result = self._run_tool_with_retry(dep_tool, user_input)
+                        dep_result = self._run_tool_with_retry(dep_tool, user_input, run_state)
                         run_state[dep_name] = dep_result
 
-            result = self._run_tool_with_retry(tool, refined_question)
+            result = self._run_tool_with_retry(tool, refined_question, run_state)
             run_state[tool_name] = result
             tool_history.append(tool_name)
             self.current_context["last_tool"] = tool_name
@@ -340,11 +340,12 @@ class ChatbotRunner:
             return first, user_input
         return None, user_input
 
-    def _run_tool_with_retry(self, tool: Tool, question: str) -> ToolResult:
+    def _run_tool_with_retry(self, tool: Tool, question: str, state: dict[str, ToolResult] | None = None) -> ToolResult:
         """Tool 실행 실패 시 최대 max_retries회 재시도합니다."""
+        effective_state = state if state is not None else self.state
         last_result: ToolResult | None = None
         for attempt in range(self.max_retries + 1):
-            result = tool.run(question, self.chunks, self.embeddings, self.state)
+            result = tool.run(question, self.chunks, self.embeddings, effective_state)
             result.retry_count = attempt
             if result.status not in ("failed", "partial"):
                 return result
