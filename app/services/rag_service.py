@@ -16,6 +16,7 @@ from __future__ import annotations
 
 import csv
 import logging
+import threading
 import time
 import shutil
 import sys
@@ -45,6 +46,7 @@ _TEMPLATE_CONFIG_PATH = (
 
 # ── run_id별 챗봇 인스턴스 캐시 ──
 _chatbot_cache: dict[str, Any] = {}
+_chatbot_lock = threading.Lock()
 _SUPPORTED_FILE_TYPES = ["pdf", "docx", "hwp", "hwpx", "txt", "csv"]
 
 
@@ -205,9 +207,10 @@ def create_and_ingest(raw_docs_source_dir: str) -> dict[str, Any]:
 
 
 def _get_or_build_chatbot(run_id: str) -> Any:
-    """run_id에 해당하는 ChatbotRunner를 로딩하거나 생성합니다."""
-    if run_id in _chatbot_cache:
-        return _chatbot_cache[run_id]
+    """run_id에 해당하는 ChatbotRunner를 로딩하거나 생성합니다 (Thread-safe)."""
+    with _chatbot_lock:
+        if run_id in _chatbot_cache:
+            return _chatbot_cache[run_id]
 
     from src.rag.chatbot import build_chatbot_from_config
     from src.artifacts import resolve_experiment_dir
@@ -223,7 +226,8 @@ def _get_or_build_chatbot(run_id: str) -> Any:
     bot.load_document_context(output_dir)
     bot._run_id = run_id
 
-    _chatbot_cache[run_id] = bot
+    with _chatbot_lock:
+        _chatbot_cache[run_id] = bot
     return bot
 
 
@@ -716,3 +720,39 @@ def clear_chatbot(run_id: str | None = None) -> None:
     else:
         _chatbot_cache.clear()
         sqlite_store.clear_chat_history()
+
+
+def get_ingest_progress(run_id: str) -> dict[str, Any]:
+    """ingest 진행률을 반환합니다.
+
+    Returns:
+        {"stage": "documents"|"chunks"|"embeddings"|"ready"|"unknown",
+         "progress": float (0.0 ~ 1.0),
+         "message": str}
+    """
+    output_dir = _output_dir(run_id)
+    checkpoint_path = output_dir / "rag_ingest_checkpoint.json"
+    status_path = output_dir / "run_status.json"
+
+    if status_path.exists():
+        try:
+            data = json.loads(status_path.read_text(encoding="utf-8"))
+            if data.get("status") == "success":
+                return {"stage": "ready", "progress": 1.0, "message": "분석 완료"}
+        except Exception:
+            pass
+
+    if checkpoint_path.exists():
+        try:
+            data = json.loads(checkpoint_path.read_text(encoding="utf-8"))
+            stage = data.get("stage", "unknown")
+            stage_map = {"documents": 0.33, "chunks": 0.66, "embeddings": 0.9}
+            return {
+                "stage": stage,
+                "progress": stage_map.get(stage, 0.0),
+                "message": {"documents": "문서 파싱 중...", "chunks": "청크 분할 중...", "embeddings": "임베딩 생성 중..."}.get(stage, "처리 중..."),
+            }
+        except Exception:
+            pass
+
+    return {"stage": "unknown", "progress": 0.0, "message": "대기 중..."}

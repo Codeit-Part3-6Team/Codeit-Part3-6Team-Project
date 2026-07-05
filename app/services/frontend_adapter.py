@@ -45,6 +45,15 @@ def _load_rag():
     if _rag_checked:
         return _rag
     _rag_checked = True
+
+    # 환경변수로 명시적 모드 전환 (RAG_MODE=mock → 강제 Mock)
+    forced_mode = os.environ.get("RAG_MODE", "").lower()
+    if forced_mode == "mock":
+        _rag = None
+        _rag_status = "local"
+        _rag_error = "RAG_MODE=mock 으로 강제 지정됨"
+        return _rag
+
     try:
         from services import rag_service  # 여기서 src.* import 가 실행됨
         _rag = rag_service
