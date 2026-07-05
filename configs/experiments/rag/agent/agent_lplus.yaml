@@ -86,14 +86,14 @@ agent:
       answerer:
         output_schema: requirements_schema
         prompt_template: |
-          너는 RFP 문서에서 입찰 참가 요구사항을 추출하는 분석기다.
-          아래 근거에 있는 내용만 사용해서 각 필드에 해당하는 정보를 찾아 채워라.
-          문서에 명시된 내용만 답하고, 없는 정보는 '명시되지 않음'으로 표시하라.
+          너는 RFP 문서에서 입찰 요구사항을 분석하는 전문가다.
+          아래 근거를 바탕으로 참가자격, 제출서류, 평가기준을 자연스럽게 정리하라.
+          근거에 없는 항목은 '명시되지 않음'으로 표시하라.
 
           {context}
 
           질문: {question}
-        temperature: 0.1
+        temperature: 0.3
       on_failure: skip
 
     search_rfp_documents:
@@ -138,14 +138,14 @@ agent:
       answerer:
         output_schema: facts_schema
         prompt_template: |
-          너는 RFP 문서에서 사실 정보만 추출하는 분석기다.
-          아래 근거에 있는 내용만 사용해서, 각 필드에 해당하는 정보를 찾아 채워라.
-          문서에 명시된 내용만 답하고, 없는 정보는 '명시되지 않음'으로 표시하라.
+          너는 RFP 문서의 핵심 정보를 요약하는 전문가다.
+          아래 근거를 바탕으로 사업명, 발주기관, 예산, 기간, 마감일, 자격요건을 자연스러운 문장으로 정리하라.
+          근거에 없는 항목은 '명시되지 않음'으로 표시하라.
 
           {context}
 
           질문: {question}
-        temperature: 0.1
+        temperature: 0.3
       on_failure: abort_phase
 
     decide_participation:

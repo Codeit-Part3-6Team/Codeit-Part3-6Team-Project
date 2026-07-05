@@ -41,8 +41,8 @@ Tool.run(question, chunks, embeddings)    Tool.run(question, collection, top_k)
 | 8 | `_display_reply()` 가 structured_output 우선 | `rag_service.py:289-293` | `app/services/rag_service.py` | `_display_reply()` → `structured_output`을 reply 뒤 "📋 분석 결과" 블록으로 별도 출력. reply가 비어있을 때만 structured_output을 fallback | PM | ✅ |
 | 9 | 시스템 프롬프트 기계적 지시 | `chatbot.py:33-37` | `src/rag/chatbot.py` → `system_prompt` 필드 | `"JSON으로 응답하라"` → `"너는 RFP 입찰 전문 컨설턴트 'IT'S MINE'이다. 사용자 질문을 이해하고 자연스러운 대화로 답변하라. 분석이 필요하면 내부 도구를 호출하라."`. config의 `agent.chatbot.system_prompt`로 오버라이드 가능하게 | PM | ✅ |
 | 10 | `_strip_source_block()` 무조건 제거 | `rag_service.py:282-286` | `app/services/rag_service.py` | 출처 블록을 제거하지 않고 `citations` 리스트를 UI에 전달. UI에서 접이식(foldable) 출처 영역으로 렌더링 | PM | ✅ |
-| 11 | extract_facts 프롬프트 보수적 | `agent_lplus.yaml:140-149` | `configs/experiments/rag/agent/agent_lplus.yaml` | `"문서에 명시된 내용만 답하고"` → `"근거에 있는 정보를 기반으로 자연스럽게 요약하라. 명시되지 않은 항목은 '명시되지 않음'으로 표시하라."`. temperature 0.1 → 0.3 | PM | ☐ |
-| 12 | extract_requirements 프롬프트 동일 | `agent_lplus.yaml:88-97` | `configs/experiments/rag/agent/agent_lplus.yaml` | 11번과 동일한 방향으로 수정. `참가자격`, `제출서류`, `평가기준` 필드별 요구사항 설명 강화 | PM | ☐ |
+| 11 | extract_facts 프롬프트 보수적 | `agent_lplus.yaml:140-149` | `configs/experiments/rag/agent/agent_lplus.yaml` | `"문서에 명시된 내용만 답하고"` → `"근거에 있는 정보를 기반으로 자연스럽게 요약하라. 명시되지 않은 항목은 '명시되지 않음'으로 표시하라."`. temperature 0.1 → 0.3 | PM | ✅ |
+| 12 | extract_requirements 프롬프트 동일 | `agent_lplus.yaml:88-97` | `configs/experiments/rag/agent/agent_lplus.yaml` | 11번과 동일한 방향으로 수정. `참가자격`, `제출서류`, `평가기준` 필드별 요구사항 설명 강화 | PM | ✅ |
 
 ---
 
