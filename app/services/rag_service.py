@@ -121,16 +121,17 @@ def _build_streamlit_config(run_id: str) -> dict[str, Any]:
 # ──────────────────────────────────────────────────────────────────────
 
 
-def create_and_ingest(raw_docs_source_dir: str) -> dict[str, Any]:
+def create_and_ingest(raw_docs_source_dir: str, async_mode: bool = True) -> dict[str, Any]:
     """원본 문서 디렉토리로 새 run을 생성하고 RAG ingest를 실행합니다.
 
     Args:
         raw_docs_source_dir: 원본 문서가 이미 저장된 디렉토리 경로
+        async_mode: True이면 백그라운드로 ingest 실행 후 즉시 반환
 
     Returns:
         {
             "run_id": str,
-            "status": "ready" | "failed",
+            "status": "ready" | "processing" | "failed",
             "documents": int,
             "chunks": int,
             "embeddings": int,
@@ -144,66 +145,68 @@ def create_and_ingest(raw_docs_source_dir: str) -> dict[str, Any]:
     raw_docs_dir = run_dir / "raw_docs"
     output_dir = run_dir / "output"
 
-    try:
-        raw_docs_dir.mkdir(parents=True, exist_ok=True)
-        output_dir.mkdir(parents=True, exist_ok=True)
+    raw_docs_dir.mkdir(parents=True, exist_ok=True)
+    output_dir.mkdir(parents=True, exist_ok=True)
 
-        source = Path(raw_docs_source_dir)
-        file_count = 0
-        for f in source.iterdir():
-            if f.is_file():
-                shutil.copy2(f, raw_docs_dir / f.name)
-                file_count += 1
+    source = Path(raw_docs_source_dir)
+    file_count = 0
+    for f in source.iterdir():
+        if f.is_file():
+            shutil.copy2(f, raw_docs_dir / f.name)
+            file_count += 1
 
-        if file_count == 0:
-            return {
-                "run_id": run_id,
-                "status": "failed",
-                "documents": 0,
-                "chunks": 0,
-                "embeddings": 0,
-                "config_path": None,
-                "output_dir": None,
-                "error": "업로드된 파일이 없습니다.",
-            }
-
-        config = _build_streamlit_config(run_id)
-        config_path = run_dir / "config.yaml"
-        _write_yaml(config_path, config)
-
-        sqlite_store.insert_run(run_id, status="running", config_path=str(config_path), output_dir=str(output_dir))
-
-        result = run_rag_ingest(str(config_path), str(_PROJECT_ROOT))
-
-        sqlite_store.update_run_status(run_id, "ready", document_count=result.get("documents", 0), chunk_count=result.get("chunks", 0))
-
-        # 문서 목록도 SQLite에 저장
-        docs = get_documents(run_id)
-        if docs:
-            sqlite_store.upsert_documents(run_id, docs)
-
-        return {
-            "run_id": run_id,
-            "status": "ready",
-            "documents": result.get("documents", 0),
-            "chunks": result.get("chunks", 0),
-            "embeddings": result.get("embeddings", 0),
-            "config_path": str(config_path),
-            "output_dir": str(output_dir),
-            "error": None,
-        }
-
-    except Exception as exc:
+    if file_count == 0:
         return {
             "run_id": run_id,
             "status": "failed",
-            "documents": 0,
-            "chunks": 0,
-            "embeddings": 0,
-            "config_path": None,
-            "output_dir": None,
-            "error": str(exc),
+            "documents": 0, "chunks": 0, "embeddings": 0,
+            "config_path": None, "output_dir": None,
+            "error": "업로드된 파일이 없습니다.",
         }
+
+    config = _build_streamlit_config(run_id)
+    config_path = run_dir / "config.yaml"
+    _write_yaml(config_path, config)
+
+    sqlite_store.insert_run(run_id, status="running", config_path=str(config_path), output_dir=str(output_dir))
+
+    if async_mode:
+        def _ingest_worker():
+            try:
+                result = run_rag_ingest(str(config_path), str(_PROJECT_ROOT))
+                sqlite_store.update_run_status(run_id, "ready", result.get("documents", 0), result.get("chunks", 0))
+                docs = get_documents(run_id)
+                if docs:
+                    sqlite_store.upsert_documents(run_id, docs)
+            except Exception as exc:
+                logger.error("Async ingest failed for %s: %s", run_id, exc)
+                sqlite_store.update_run_status(run_id, "failed")
+
+        threading.Thread(target=_ingest_worker, daemon=True).start()
+        return {
+            "run_id": run_id,
+            "status": "processing",
+            "documents": 0, "chunks": 0, "embeddings": 0,
+            "config_path": str(config_path), "output_dir": str(output_dir),
+            "error": None,
+        }
+
+    result = run_rag_ingest(str(config_path), str(_PROJECT_ROOT))
+    sqlite_store.update_run_status(run_id, "ready", document_count=result.get("documents", 0), chunk_count=result.get("chunks", 0))
+    docs = get_documents(run_id)
+    if docs:
+        sqlite_store.upsert_documents(run_id, docs)
+
+    return {
+        "run_id": run_id,
+        "status": "ready",
+        "documents": result.get("documents", 0),
+        "chunks": result.get("chunks", 0),
+        "embeddings": result.get("embeddings", 0),
+        "config_path": str(config_path),
+        "output_dir": str(output_dir),
+        "error": None,
+    }
 
 
 def _get_or_build_chatbot(run_id: str) -> Any:
@@ -243,6 +246,7 @@ def _build_chatbot(run_id: str) -> Any:
     output_dir = resolve_experiment_dir(_PROJECT_ROOT, config)
     bot = build_chatbot_from_config(config)
     bot.load_document_context(output_dir)
+    bot._run_id = run_id
     return bot
 
 

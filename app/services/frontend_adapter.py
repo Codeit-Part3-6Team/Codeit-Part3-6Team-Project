@@ -373,3 +373,11 @@ def chat_ask(question: str, run_id: str | None,
 
     reply = response.get("reply") or "문서에서 확인하지 못했습니다."
     return (reply, _citations_to_sources(response.get("citations")))
+
+
+def ingest_progress(run_id: str | None) -> dict[str, Any]:
+    """ingest 진행률을 조회합니다."""
+    rag = _load_rag()
+    if rag is None or not run_id:
+        return {"stage": "mock", "progress": 1.0, "message": "Mock 모드"}
+    return rag.get_ingest_progress(run_id)
