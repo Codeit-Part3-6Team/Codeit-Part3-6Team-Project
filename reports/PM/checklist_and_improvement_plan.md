@@ -12,10 +12,10 @@
 
 | # | 이슈 | 현재 위치 | 변경 파일 | 구현 방법 | 담당 | 상태 |
 |---|------|----------|----------|----------|------|------|
-| 1 | `_chatbot_cache` dict 휘발성 | `rag_service.py:42` | `app/services/rag_service.py` | `_chatbot_cache: dict` → `_get_chatbot(run_id)` 내부에서 `ChatbotRunner` 대신 `ChromaChatbotRunner` 생성. SQLite로 run_id별 연결 상태 관리 | PM | ☐ |
-| 2 | `load_document_context()` 전체 메모리 적재 | `chatbot.py:47-66` | `src/rag/chatbot.py` | `load_document_context()` → `connect_collection(run_id)`. self.chunks, self.embeddings 제거. 내부적으로 ChromaDB 컬렉션 쿼리로 대체 | PM | ☐ |
+| 1 | `_chatbot_cache` dict 휘발성 | `rag_service.py:42` | `app/services/rag_service.py` | `_chatbot_cache: dict` → `_get_chatbot(run_id)` 내부에서 `ChatbotRunner` 대신 `ChromaChatbotRunner` 생성. SQLite로 run_id별 연결 상태 관리 | PM | ✅ |
+| 2 | `load_document_context()` 전체 메모리 적재 | `chatbot.py:47-66` | `src/rag/chatbot.py` | `load_document_context()` → `connect_collection(run_id)`. self.chunks, self.embeddings 제거. 내부적으로 ChromaDB 컬렉션 쿼리로 대체 | PM | ✅ |
 | 3 | `_ChatMemory` dict 휘발성 | `pipeline.py:343-357` | `src/rag/pipeline.py` | class 변수 dict → `sqlite3` 기반 `chat_history` 테이블. `thread_id`로 조회/저장 | PM | ☐ |
-| 4 | `embeddings.jsonl` 파일 기반 | `pipeline.py:85-86`, `chatbot.py:62-66` | `src/rag/adapters.py`, `src/rag/chatbot.py` | `ChromaRetrieverAdapter` 신규 구현. `RagRetrieverAdapter.retrieve()` 시그니처 유지하되 chunks/embeddings 파라미터는 무시하고 ChromaDB 컬렉션에서 직접 쿼리 | PM | ☐ |
+| 4 | `embeddings.jsonl` 파일 기반 | `pipeline.py:85-86`, `chatbot.py:62-66` | `src/rag/adapters.py`, `src/rag/chatbot.py` | `ChromaRetrieverAdapter` 신규 구현. `RagRetrieverAdapter.retrieve()` 시그니처 유지하되 chunks/embeddings 파라미터는 무시하고 ChromaDB 컬렉션에서 직접 쿼리 | PM | ✅ |
 | 5 | run 관리 파일시스템 순회 | `rag_service.py:614-653` | `app/services/rag_service.py` | `list_runs()` → SQLite `runs` 테이블 조회. `create_and_ingest()` 시 run 메타데이터 INSERT | PM | ☐ |
 | 6 | 문서 목록 매번 CSV 파싱 | `rag_service.py:559-593` | `app/services/rag_service.py` | `get_documents()` → SQLite `documents` 테이블 또는 ChromaDB 컬렉션 메타데이터 조회 | PM | ☐ |
 
@@ -37,10 +37,10 @@ Tool.run(question, chunks, embeddings)    Tool.run(question, collection, top_k)
 
 | # | 이슈 | 현재 위치 | 변경 파일 | 구현 방법 | 담당 | 상태 |
 |---|------|----------|----------|----------|------|------|
-| 7 | `_format_tool_result()` key-value 나열 | `chatbot.py:135-155` | `src/rag/chatbot.py` | structured_output이 있으면 "요약 카드"용 마크다운 테이블로 따로 렌더링. reply(answer)는 자연어 문장 그대로 노출. `_format_tool_result()`가 structured_output을 평문에 섞지 않도록 분리 | PM | ☐ |
-| 8 | `_display_reply()` 가 structured_output 우선 | `rag_service.py:289-293` | `app/services/rag_service.py` | `_display_reply()` → `structured_output`을 reply 뒤 "📋 분석 결과" 블록으로 별도 출력. reply가 비어있을 때만 structured_output을 fallback | PM | ☐ |
-| 9 | 시스템 프롬프트 기계적 지시 | `chatbot.py:33-37` | `src/rag/chatbot.py` → `system_prompt` 필드 | `"JSON으로 응답하라"` → `"너는 RFP 입찰 전문 컨설턴트 'IT'S MINE'이다. 사용자 질문을 이해하고 자연스러운 대화로 답변하라. 분석이 필요하면 내부 도구를 호출하라."`. config의 `agent.chatbot.system_prompt`로 오버라이드 가능하게 | PM | ☐ |
-| 10 | `_strip_source_block()` 무조건 제거 | `rag_service.py:282-286` | `app/services/rag_service.py` | 출처 블록을 제거하지 않고 `citations` 리스트를 UI에 전달. UI에서 접이식(foldable) 출처 영역으로 렌더링 | PM | ☐ |
+| 7 | `_format_tool_result()` key-value 나열 | `chatbot.py:135-155` | `src/rag/chatbot.py` | structured_output이 있으면 "요약 카드"용 마크다운 테이블로 따로 렌더링. reply(answer)는 자연어 문장 그대로 노출. `_format_tool_result()`가 structured_output을 평문에 섞지 않도록 분리 | PM | ✅ |
+| 8 | `_display_reply()` 가 structured_output 우선 | `rag_service.py:289-293` | `app/services/rag_service.py` | `_display_reply()` → `structured_output`을 reply 뒤 "📋 분석 결과" 블록으로 별도 출력. reply가 비어있을 때만 structured_output을 fallback | PM | ✅ |
+| 9 | 시스템 프롬프트 기계적 지시 | `chatbot.py:33-37` | `src/rag/chatbot.py` → `system_prompt` 필드 | `"JSON으로 응답하라"` → `"너는 RFP 입찰 전문 컨설턴트 'IT'S MINE'이다. 사용자 질문을 이해하고 자연스러운 대화로 답변하라. 분석이 필요하면 내부 도구를 호출하라."`. config의 `agent.chatbot.system_prompt`로 오버라이드 가능하게 | PM | ✅ |
+| 10 | `_strip_source_block()` 무조건 제거 | `rag_service.py:282-286` | `app/services/rag_service.py` | 출처 블록을 제거하지 않고 `citations` 리스트를 UI에 전달. UI에서 접이식(foldable) 출처 영역으로 렌더링 | PM | ✅ |
 | 11 | extract_facts 프롬프트 보수적 | `agent_lplus.yaml:140-149` | `configs/experiments/rag/agent/agent_lplus.yaml` | `"문서에 명시된 내용만 답하고"` → `"근거에 있는 정보를 기반으로 자연스럽게 요약하라. 명시되지 않은 항목은 '명시되지 않음'으로 표시하라."`. temperature 0.1 → 0.3 | PM | ☐ |
 | 12 | extract_requirements 프롬프트 동일 | `agent_lplus.yaml:88-97` | `configs/experiments/rag/agent/agent_lplus.yaml` | 11번과 동일한 방향으로 수정. `참가자격`, `제출서류`, `평가기준` 필드별 요구사항 설명 강화 | PM | ☐ |
 
@@ -50,8 +50,8 @@ Tool.run(question, chunks, embeddings)    Tool.run(question, collection, top_k)
 
 | # | 이슈 | 현재 위치 | 변경 파일 | 구현 방법 | 담당 | 상태 |
 |---|------|----------|----------|----------|------|------|
-| 13 | Domain classification 부재 | `chatbot.py:230-273` | `src/rag/chatbot.py` | `_fallback_tool_selection()` 호출 전 `_is_rfp_question(question)` 게이트 추가. LLM에게 "이 질문이 RFP/입찰 문서 분석과 관련 있는가?" 1차 판단 후 관련 없으면 거절 응답 | PM | ☐ |
-| 14 | Out-of-scope 응답 정의 | 없음 | `src/rag/chatbot.py` | `self.out_of_scope_reply = "저는 RFP 문서 전문 분석 도우미입니다. 문서 요약, 요구사항 추출, 비교 분석, 참여 판단에 대해 질문해 주세요."` | PM | ☐ |
+| 13 | Domain classification 부재 | `chatbot.py:230-273` | `src/rag/chatbot.py` | `_fallback_tool_selection()` 호출 전 `_is_rfp_question(question)` 게이트 추가. LLM에게 "이 질문이 RFP/입찰 문서 분석과 관련 있는가?" 1차 판단 후 관련 없으면 거절 응답 | PM | ✅ |
+| 14 | Out-of-scope 응답 정의 | 없음 | `src/rag/chatbot.py` | `self.out_of_scope_reply = "저는 RFP 문서 전문 분석 도우미입니다. 문서 요약, 요구사항 추출, 비교 분석, 참여 판단에 대해 질문해 주세요."` | PM | ✅ |
 | 15 | Intent classifier 도입 | Tool 선택만 있음 | `src/rag/chatbot.py` | `_select_tool()` 전 단계로 `_classify_intent()` 추가. 반환값: `("rfp_question", tool_name)` / `("general", None)` / `("feature_question", None)`. 일반 질문은 out_of_scope_reply, 기능 문의는 help 메시지 | PM | ☐ |
 
 **구현 구조**:
@@ -137,14 +137,14 @@ _classify_intent(user_input)   ← 신규
 
 | 순번 | 작업 | 변경 파일 | 예상 소요 | 완료 |
 |------|------|----------|----------|------|
-| 1 | `_display_reply()` + `_format_tool_result()` 분리 | `rag_service.py`, `chatbot.py` | 2h | ☐ |
-| 2 | 시스템 프롬프트 페르소나 변경 | `chatbot.py`, `agent_lplus.yaml` | 1h | ☐ |
+| 1 | `_display_reply()` + `_format_tool_result()` 분리 | `rag_service.py`, `chatbot.py` | 2h | ✅ |
+| 2 | 시스템 프롬프트 페르소나 변경 | `chatbot.py`, `agent_lplus.yaml` | 1h | ✅ |
 | 3 | SQLite: run 관리 + 대화 기록 | `rag_service.py`, `pipeline.py` | 3h | ☐ |
-| 4 | Domain classifier (off-topic 필터) | `chatbot.py` | 2h | ☐ |
+| 4 | Domain classifier (off-topic 필터) | `chatbot.py` | 2h | ✅ |
 | 5 | ChromaDB 연동: embeddings 검색 | `adapters.py`, `chatbot.py` | 4h | ☐ |
 | 6 | extract_facts 프롬프트 튜닝 | `agent_lplus.yaml` | 1h | ☐ |
-| 7 | 응답 속도 측정 + 질문 캐싱 | `chatbot.py`, `streamlit.yaml` | 2h | ☐ |
-| 8 | 분석 진행률 UI | `workspace.py`, `rag_service.py` | 2h | ☐ |
+| 7 | 응답 속도 측정 + 질문 캐싱 | `chatbot.py`, `streamlit.yaml` | 2h | ✅ |
+| 8 | 분석 진행률 UI | `workspace.py`, `rag_service.py` | 2h | ✅ |
 
 ### 발표 데모 시나리오
 
