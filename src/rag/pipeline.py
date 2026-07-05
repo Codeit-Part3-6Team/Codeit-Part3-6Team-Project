@@ -80,7 +80,17 @@ def run_rag_ingest(config_path: str | Path, project_root: str | Path = ".") -> d
         _write_rag_ingest_checkpoint(output_dir, "chunks", documents=len(documents), chunks=len(chunks))
 
         if resume_enabled and embeddings_path.exists():
-            embeddings = _read_jsonl(embeddings_path)
+            # ChromaDB persist가 누락되었으면 embeddings도 다시 생성
+            vector_store_cfg = rag_cfg.get("vector_store", {})
+            if vector_store_cfg.get("type") == "chroma":
+                chroma_path = output_dir / str(vector_store_cfg.get("path", "vector_store"))
+                if not chroma_path.exists():
+                    embeddings = engine.embed_chunks(chunks)
+                    _write_jsonl(embeddings_path, embeddings)
+                else:
+                    embeddings = _read_jsonl(embeddings_path)
+            else:
+                embeddings = _read_jsonl(embeddings_path)
         else:
             embeddings = engine.embed_chunks(chunks)
             _write_jsonl(embeddings_path, embeddings)

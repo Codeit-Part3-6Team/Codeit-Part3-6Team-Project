@@ -628,44 +628,43 @@ def get_citation(run_id: str, chunk_id: str) -> dict[str, Any] | None:
 
 
 def list_runs() -> list[dict[str, Any]]:
-    """기존 run 목록을 SQLite에서 조회합니다."""
-    db_runs = sqlite_store.list_runs()
-    if db_runs:
-        return db_runs
+    """SQLite + 파일시스템 run 목록을 병합하여 반환합니다."""
+    db_runs = {r["run_id"]: r for r in sqlite_store.list_runs()}
 
-    # 폴백: 기존 파일시스템 기반 run도 포함
-    if not _STREAMLIT_EXPERIMENTS.exists():
-        return []
+    # 파일시스템 run도 병합
+    fs_runs: dict[str, dict[str, Any]] = {}
+    if _STREAMLIT_EXPERIMENTS.exists():
+        for run_dir in sorted(_STREAMLIT_EXPERIMENTS.iterdir(), reverse=True):
+            if not run_dir.is_dir():
+                continue
+            run_id = run_dir.name
+            status_path = run_dir / "output" / "run_status.json"
+            chunks_path = run_dir / "output" / "chunks.csv"
 
-    runs: list[dict[str, Any]] = []
-    for run_dir in sorted(_STREAMLIT_EXPERIMENTS.iterdir(), reverse=True):
-        if not run_dir.is_dir():
-            continue
-        run_id = run_dir.name
-        status_path = run_dir / "output" / "run_status.json"
-        chunks_path = run_dir / "output" / "chunks.csv"
+            status = "unknown"
+            if status_path.exists():
+                import json
+                try:
+                    data = json.loads(status_path.read_text(encoding="utf-8"))
+                    status = data.get("status", "unknown")
+                except Exception:
+                    pass
+            elif chunks_path.exists():
+                status = "ready"
+            else:
+                status = "running"
 
-        status = "unknown"
-        if status_path.exists():
-            import json
-            try:
-                data = json.loads(status_path.read_text(encoding="utf-8"))
-                status = data.get("status", "unknown")
-            except Exception:
-                pass
-        elif chunks_path.exists():
-            status = "ready"
-        else:
-            status = "running"
+            fs_runs[run_id] = {
+                "run_id": run_id,
+                "created_at": datetime.fromtimestamp(run_dir.stat().st_mtime).isoformat(),
+                "status": status,
+                "documents": 0,
+            }
 
-        runs.append({
-            "run_id": run_id,
-            "created_at": datetime.fromtimestamp(run_dir.stat().st_mtime).isoformat(),
-            "status": status,
-            "documents": 0,
-        })
-
-    return runs
+    # DB 우선 병합
+    merged = dict(fs_runs)
+    merged.update(db_runs)
+    return sorted(merged.values(), key=lambda r: r.get("created_at", ""), reverse=True)
 
 
 def get_run_info(run_id: str) -> dict[str, Any]:
@@ -727,11 +726,18 @@ def get_ingest_progress(run_id: str) -> dict[str, Any]:
     checkpoint_path = output_dir / "rag_ingest_checkpoint.json"
     status_path = output_dir / "run_status.json"
 
+    # SQLite 실패 상태 우선 확인
+    db_run = sqlite_store.get_run(run_id)
+    if db_run and db_run.get("status") == "failed":
+        return {"stage": "failed", "progress": 1.0, "message": "분석 실패", "error": "ingest 처리 중 오류가 발생했습니다."}
+
     if status_path.exists():
         try:
             data = json.loads(status_path.read_text(encoding="utf-8"))
             if data.get("status") == "success":
                 return {"stage": "ready", "progress": 1.0, "message": "분석 완료"}
+            if data.get("status") in ("failed", "error"):
+                return {"stage": "failed", "progress": 1.0, "message": "분석 실패", "error": str(data.get("result", ""))}
         except Exception:
             pass
 

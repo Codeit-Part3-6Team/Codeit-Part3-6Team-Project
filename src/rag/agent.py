@@ -234,6 +234,11 @@ class AgentRunner:
                 if dep in phase_map:
                     adj[dep].append(phase["name"])
                     in_degree[phase["name"]] += 1
+                else:
+                    logger.warning(
+                        "Phase '%s' depends_on '%s' but no such phase exists. Dependency ignored.",
+                        phase["name"], dep,
+                    )
 
         queue = deque([name for name, deg in in_degree.items() if deg == 0])
         order: list[str] = []

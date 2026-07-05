@@ -53,6 +53,8 @@ def _load_rag():
         _rag_status = "local"
         _rag_error = "RAG_MODE=mock 으로 강제 지정됨"
         return _rag
+    if forced_mode == "rag":
+        pass  # 강제 RAG 모드 — import 실패 시 fatal로 처리
 
     try:
         from services import rag_service  # 여기서 src.* import 가 실행됨
@@ -88,10 +90,13 @@ def backend_mode() -> dict[str, Any]:
     rag = _load_rag()
     if rag is not None:
         return {"mode": "rag", "healthy": True, "detail": "RAG 파이프라인 연결됨"}
+    forced_mode = os.environ.get("RAG_MODE", "").lower()
+    if forced_mode == "rag":
+        return {"mode": "rag", "healthy": False,
+                "detail": f"RAG_MODE=rag 강제 지정됐으나 백엔드 연결 실패 (사유: {_rag_error})"}
     if _rag_status == "local":
         return {"mode": "mock", "healthy": True,
                 "detail": "RAG 미연결(로컬) → Mock 데이터로 미리보기"}
-    # missing_dep / error : Mock 으로 동작은 하지만 '문제 있음'을 분명히 표시
     return {"mode": "mock", "healthy": False,
             "detail": f"백엔드 연결 실패 → Mock 폴백 (사유: {_rag_error})"}
 
