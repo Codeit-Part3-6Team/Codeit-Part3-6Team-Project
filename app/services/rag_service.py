@@ -658,7 +658,7 @@ def list_runs() -> list[dict[str, Any]]:
                 "run_id": run_id,
                 "created_at": datetime.fromtimestamp(run_dir.stat().st_mtime).isoformat(),
                 "status": status,
-                "documents": 0,
+                "documents": len(get_documents(run_id)),
             }
 
     # DB 우선 병합

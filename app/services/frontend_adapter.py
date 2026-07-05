@@ -158,6 +158,13 @@ def _citations_to_sources(citations: list[dict] | None) -> list[tuple[str, str]]
 # Public API — views 가 호출하는 함수들
 # ──────────────────────────────────────────────────────────────────────
 
+def _rag_unavailable_error() -> dict[str, Any] | None:
+    """RAG_MODE=rag 이면서 백엔드가 없는 경우 에러 반환, 아니면 None."""
+    if os.environ.get("RAG_MODE", "").lower() == "rag":
+        return {"mode": "rag", "error": "RAG_MODE=rag 로 설정되었으나 백엔드 연결에 실패했습니다."}
+    return None
+
+
 # 내부 corpus run 은 세션 내내 동일하므로 1회 해석 후 캐시.
 _corpus_cache: dict[str, Any] | None = None
 
@@ -181,6 +188,12 @@ def internal_corpus(force_refresh: bool = False) -> dict[str, Any]:
 
     # ── Mock 경로: 내부 98개 문서 메타데이터로 목록 구성 ──
     if rag is None:
+        if os.environ.get("RAG_MODE", "").lower() == "rag":
+            _corpus_cache = {
+                "mode": "rag", "run_id": None, "documents": [], "warning": None,
+                "error": "RAG_MODE=rag 로 설정되었으나 백엔드 연결에 실패했습니다.",
+            }
+            return _corpus_cache
         from utils.mock_data import mock_documents
         _corpus_cache = {
             "mode": "mock",
@@ -262,6 +275,9 @@ def analyze_selection(run_id: str | None,
 
     # ── Mock 경로 ──
     if rag is None or not run_id:
+        blocked = _rag_unavailable_error()
+        if blocked:
+            return blocked
         from utils.mock_data import mock_analyze_selection
         result = mock_analyze_selection(doc_ids, titles)
         return {
@@ -338,6 +354,9 @@ def compare_selection(run_id: str | None,
 
     # ── Mock 경로: 표 형태 비교 ──
     if rag is None or not run_id:
+        blocked = _rag_unavailable_error()
+        if blocked:
+            return blocked
         from utils.mock_data import mock_compare
         result = mock_compare(docs)
         return {"mode": "mock", "summary": result["summary"],
@@ -368,6 +387,8 @@ def chat_ask(question: str, run_id: str | None,
     rag = _load_rag()
 
     if rag is None or not run_id:
+        if os.environ.get("RAG_MODE", "").lower() == "rag":
+            return ("RAG_MODE=rag 로 설정되었으나 백엔드 연결에 실패했습니다.", [])
         from utils.mock_data import mock_chat
         return mock_chat(question, titles)
 
