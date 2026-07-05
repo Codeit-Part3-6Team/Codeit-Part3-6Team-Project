@@ -15,13 +15,17 @@ import 시점 실행 금지 — 모든 동작은 함수 호출 시점에 발생�
 from __future__ import annotations
 
 import csv
+import logging
 import time
 import shutil
 import sys
 import uuid
 from datetime import datetime
+from functools import wraps
 from pathlib import Path
 from typing import Any
+
+logger = logging.getLogger("rag_service")
 
 import yaml
 
@@ -42,6 +46,23 @@ _TEMPLATE_CONFIG_PATH = (
 # ── run_id별 챗봇 인스턴스 캐시 ──
 _chatbot_cache: dict[str, Any] = {}
 _SUPPORTED_FILE_TYPES = ["pdf", "docx", "hwp", "hwpx", "txt", "csv"]
+
+
+def _service_error(error_code: str, message: str, exc: Exception | None = None) -> dict[str, Any]:
+    if exc:
+        logger.error("[%s] %s: %s", error_code, message, exc)
+    else:
+        logger.warning("[%s] %s", error_code, message)
+    return {
+        "reply": "",
+        "tool_used": None,
+        "structured_output": None,
+        "citations": [],
+        "status": "error",
+        "duration_ms": 0,
+        "error": message,
+        "error_code": error_code,
+    }
 
 
 def _generate_run_id() -> str:
@@ -395,21 +416,7 @@ def _execute_tool(bot: Any, tool_name: str, question: str) -> Any:
 
 
 def ask(run_id: str, question: str) -> dict[str, Any]:
-    """챗봇에게 질문하고 답변 + citation을 반환합니다.
-
-    Args:
-        run_id: 실행 ID
-        question: 사용자 질문
-
-    Returns:
-        {
-            "reply": str,
-            "tool_used": str | list[str] | None,
-            "citations": list[dict],
-            "status": str,
-            "error": str | None,
-        }
-    """
+    """챗봇에게 질문하고 답변 + citation을 반환합니다."""
     try:
         bot = _get_or_build_chatbot(run_id)
         response = bot.chat(question)
@@ -435,15 +442,7 @@ def ask(run_id: str, question: str) -> dict[str, Any]:
         }
 
     except Exception as exc:
-        return {
-            "reply": "",
-            "tool_used": None,
-            "structured_output": None,
-            "citations": [],
-            "status": "error",
-            "duration_ms": 0,
-            "error": str(exc),
-        }
+        return _service_error("ASK_FAILED", "답변 생성 중 오류가 발생했습니다.", exc)
 
 
 def ask_with_document_filter(

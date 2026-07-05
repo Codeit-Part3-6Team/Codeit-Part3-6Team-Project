@@ -7,11 +7,14 @@ config의 agent.chatbot.enabled: true일 때, LLM이 Tool description을 읽고
 from __future__ import annotations
 
 import json
+import logging
 import time
 from pathlib import Path
 from typing import Any
 
 from src.rag.tool import Tool, ToolResult
+
+logger = logging.getLogger("rag.chatbot")
 
 
 class ChatbotRunner:
@@ -265,8 +268,7 @@ class ChatbotRunner:
             text = getattr(response, "content", str(response)).strip()
             parsed = _extract_json(text)
         except Exception as exc:
-            import sys
-            print(f"[Chatbot] Tool selection failed ({type(exc).__name__}: {exc})", file=sys.stderr)
+            logger.error("Tool selection failed (%s: %s)", type(exc).__name__, exc)
             return self._fallback_tool_selection(user_input)
 
         # Fallback: JSON parsing failed, try natural language
@@ -418,8 +420,7 @@ def _extract_json(text: str) -> dict[str, Any]:
     try:
         return json.loads(text)
     except Exception:
-        import sys
-        print(f"[Chatbot] JSON parse failed for: {text[:100]}", file=sys.stderr)
+        logger.warning("JSON parse failed for: %s", text[:100])
         raise
 
 

@@ -7,11 +7,14 @@ Tool을 순차/병렬 dispatch하며 Phase 간 State를 전파합니다.
 from __future__ import annotations
 
 from collections import deque
+import logging
 from pathlib import Path
 from typing import Any
 
 from src.config import write_json
 from src.rag.tool import OnFailure, Tool, ToolResult, build_tool_from_config
+
+logger = logging.getLogger("rag.agent")
 
 
 class AgentRunner:
@@ -99,7 +102,7 @@ class AgentRunner:
 
         if self.verbose:
             mode = "parallel" if parallel else "serial"
-            print(f"[Agent] Phase: {phase_name} | Tools: {tool_names} | Mode: {mode}")
+            logger.info("[Agent] Phase: %s | Tools: %s | Mode: %s", phase_name, tool_names, mode)
 
         if parallel:
             return self._run_phase_parallel(phase_name, tool_names, question, chunks, embeddings)
@@ -209,7 +212,7 @@ class AgentRunner:
         if self.verbose:
             status_map = {"ok": "OK", "partial": "PARTIAL", "not_found": "NF", "failed": "FAIL", "skipped": "SKIP"}
             status_icon = status_map.get(tool_result.status, tool_result.status.upper())
-            print(f"  Tool {tool_name}: {status_icon} ({tool_result.duration_ms}ms)")
+            logger.info("  Tool %s: %s (%dms)", tool_name, status_icon, tool_result.duration_ms)
 
         abort = False
         if tool_result.status == "failed":
