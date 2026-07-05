@@ -29,10 +29,11 @@ def load_config(path: str | Path) -> dict[str, Any]:
     base_config = loaded.pop("base_config", None)
     if base_config:
         base_path = config_path.parent / str(base_config)
-        if base_path.exists():
-            base = load_config(base_path)
-            merged = _deep_merge(base, loaded)
-            return merged
+        if not base_path.exists():
+            raise FileNotFoundError(f"base_config not found: {base_path} (referenced from {config_path})")
+        base = load_config(base_path)
+        merged = _deep_merge(base, loaded)
+        return merged
 
     return loaded
 

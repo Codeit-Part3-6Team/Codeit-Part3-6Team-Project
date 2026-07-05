@@ -54,6 +54,7 @@ class ChatbotRunner:
         self._output_dir: Path | None = None
         self._use_chroma: bool = False
         self._run_id: str | None = None
+        self._selected_doc_ids: list[str] = []
 
     def load_document_context(self, output_dir: str | Path | None) -> None:
         """CSV/JSONL에서 문서 context를 로딩하거나 ChromaDB에 연결합니다."""
@@ -98,6 +99,7 @@ class ChatbotRunner:
     def _run_agent_loop(self, user_input: str, max_iterations: int = 3):
         self._add_history('user', user_input)
         tool_history = []
+        run_state: dict[str, ToolResult] = {}
 
         for iteration in range(max_iterations):
             tool_name, refined_question = self._select_tool(user_input)
@@ -112,6 +114,8 @@ class ChatbotRunner:
                     'reply': reply,
                     'tool_used': None,
                     'tool_result': None,
+                    'structured_output': None,
+                    'citations': [],
                 }
             tool = self.tools.get(tool_name)
             if tool is None:
@@ -125,17 +129,19 @@ class ChatbotRunner:
                     'reply': reply,
                     'tool_used': None,
                     'tool_result': None,
+                    'structured_output': None,
+                    'citations': [],
                 }
 
             for dep_name in tool.input_from:
-                if dep_name not in self.state:
+                if dep_name not in run_state:
                     dep_tool = self.tools.get(dep_name)
                     if dep_tool:
                         dep_result = self._run_tool_with_retry(dep_tool, user_input)
-                        self.state[dep_name] = dep_result
+                        run_state[dep_name] = dep_result
 
             result = self._run_tool_with_retry(tool, refined_question)
-            self.state[tool_name] = result
+            run_state[tool_name] = result
             tool_history.append(tool_name)
             self.current_context["last_tool"] = tool_name
             self.current_context["last_question"] = user_input
@@ -143,12 +149,16 @@ class ChatbotRunner:
 
             is_complete, next_tool = self._evaluate_result(user_input, tool_name, result, iteration, max_iterations)
             if is_complete:
+                # 질문 실행 결과를 self.state에 반영
+                self.state.update(run_state)
                 reply = self._format_tool_result(result)
                 self._add_history('assistant', reply)
                 return {
                     'reply': reply,
                     'tool_used': tool_history,
                     'tool_result': {'status': result.status, 'answer': result.answer[:500], 'citations_count': len(result.citations), 'duration_ms': result.duration_ms},
+                    'structured_output': result.structured_output,
+                    'citations': [dict(c) for c in result.citations],
                 }
             if next_tool and next_tool in self.tools:
                 continue
@@ -202,17 +212,17 @@ class ChatbotRunner:
             self._add_history("assistant", reply)
             return {"reply": reply, "tool_used": None, "tool_result": None}
 
-        cache_key = user_input.strip()
+        cache_key = (user_input.strip(), tuple(sorted(self._selected_doc_ids or [])))
         if cache_key in self._cache:
             ts, cached = self._cache[cache_key]
             if time.time() - ts < self.cache_ttl:
                 self._add_history("assistant", cached.get("reply", ""))
-                return cached
+                return dict(cached)
             del self._cache[cache_key]
 
         result = self._run_agent_loop(user_input, max_iterations=3)
         if result:
-            self._cache[cache_key] = (time.time(), result)
+            self._cache[cache_key] = (time.time(), dict(result))
             return result
 
         reply = "죄송합니다. 해당 질문에 적합한 도구를 찾지 못했습니다."

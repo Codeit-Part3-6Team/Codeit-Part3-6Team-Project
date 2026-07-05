@@ -226,6 +226,7 @@ class ChromaRetrieverAdapter:
     embedding_adapter: RagEmbeddingAdapter | None = None
     top_k: int = 3
     score_threshold: float = 0.0
+    document_ids: list[str] = field(default_factory=list)
 
     def retrieve(
         self,
@@ -245,7 +246,12 @@ class ChromaRetrieverAdapter:
 
         embedding_fn = self._build_embedding_fn()
         store = Chroma(persist_directory=self.persist_dir, embedding_function=embedding_fn)
-        rows = store.similarity_search_with_score(question, k=self.top_k)
+
+        where_filter = None
+        if self.document_ids:
+            where_filter = {"document_id": {"$in": self.document_ids}}
+
+        rows = store.similarity_search_with_score(question, k=self.top_k, filter=where_filter)
         results: list[dict[str, str | float | int]] = []
         for rank, (doc, score) in enumerate(rows, start=1):
             results.append({
@@ -604,11 +610,13 @@ def build_retriever_adapter(
         )
     if method == "chroma":
         persist_dir = config.get("persist_dir", "")
+        document_ids = config.get("document_ids", [])
         return ChromaRetrieverAdapter(
             persist_dir=str(persist_dir),
             embedding_adapter=embedding_adapter,
             top_k=top_k,
             score_threshold=score_threshold,
+            document_ids=list(document_ids) if document_ids else [],
         )
     if method in {"hybrid", "mmr"}:
         return HybridRetrieverAdapter(

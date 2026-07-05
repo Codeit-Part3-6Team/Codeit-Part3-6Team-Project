@@ -253,8 +253,13 @@ def _build_chatbot(run_id: str) -> Any:
 def _filter_bot_documents(bot: Any, selected_doc_ids: list[str] | None) -> bool:
     if not selected_doc_ids:
         return True
-    # ChromaDB 모드에서는 in-memory 필터링을 건너뜀 (ChromaDB 쿼리 레벨 필터는 추후 추가)
+
+    bot._selected_doc_ids = list(selected_doc_ids)
+
     if getattr(bot, "_use_chroma", False):
+        for tool in bot.tools.values():
+            if tool.retriever_cfg.get("method") == "chroma":
+                tool.retriever_cfg["document_ids"] = list(selected_doc_ids)
         return True
 
     doc_ids = set(selected_doc_ids)
