@@ -256,6 +256,11 @@ class ChatbotRunner:
         if projected:
             return self._render_projected_answer(presentation.answer_type, projected)
 
+        # 질문 의도에 맞는 필드가 비었으면 문서에 없다고 안내
+        if presentation.answer_type in ("scalar", "list", "checklist", "evaluation"):
+            missing_label = presentation.fields[0] if presentation.fields else "해당 정보"
+            return f"문서에서 {missing_label}을(를) 확인하지 못했습니다."
+
         natural_reply = self._strip_source_block(natural_reply).strip()
         if natural_reply and natural_reply != "(응답 없음)":
             return natural_reply
