@@ -137,13 +137,9 @@ if job_running:
         unsafe_allow_html=True,
     )
     st.caption("문서에서 근거를 찾는 중입니다...")
-    # 모든 대화 메시지를 동일한 위치(bottom)에 표시
     for message in ss.messages:
         if message["role"] == "user":
             with st.chat_message("user"):
-                st.markdown(str(message["content"] or ""))
-        else:
-            with st.chat_message("assistant"):
                 st.markdown(str(message["content"] or ""))
     with st.chat_message("assistant"):
         with st.spinner(""):
