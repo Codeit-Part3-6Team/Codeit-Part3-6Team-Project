@@ -104,6 +104,20 @@ def backend_mode() -> dict[str, Any]:
 # ── structured_output → UI 데이터 변환 헬퍼 ─────────────────────────────────
 _META_KEYS = ["사업명", "발주기관", "사업예산", "사업기간", "제출마감"]
 _NOT_SPECIFIED = "명시되지 않음"
+_FAST_CHAT_FIELDS = {
+    "사업예산": ("예산", "금액", "얼마"),
+    "발주기관": ("발주", "기관"),
+    "사업명": ("사업명", "문서명"),
+    "사업기간": ("사업 기간", "사업기간", "계약기간", "용역기간", "수행기간", "과업기간", "기간"),
+    "제출마감": ("제출 마감", "제출마감", "마감일", "입찰마감", "접수마감", "기한"),
+}
+_FAST_CHAT_LABELS = {
+    "사업예산": "사업예산",
+    "발주기관": "발주기관",
+    "사업명": "사업명",
+    "사업기간": "사업 기간",
+    "제출마감": "제출 마감일",
+}
 
 
 def _build_meta(structured: dict | None, title: str) -> dict[str, str]:
@@ -152,6 +166,88 @@ def _citations_to_sources(citations: list[dict] | None) -> list[tuple[str, str]]
         seen.add(key)
         sources.append(key)
     return sources[:5]
+
+
+def _try_fast_chat_reply(
+    question: str,
+    run_id: str | None,
+    selected_doc_ids: list[str] | None,
+    titles: list[str] | None,
+) -> tuple[str, list[tuple[str, str]]] | None:
+    """메타데이터로 즉답 가능한 조회형 질문이면 RAG 호출 없이 답변합니다."""
+    field = _classify_fast_chat_field(question)
+    if field is None:
+        return None
+
+    docs = _selected_corpus_documents(run_id, selected_doc_ids, titles)
+    if len(docs) != 1:
+        return None
+
+    value = _metadata_value_for_field(docs[0], field)
+    label = _FAST_CHAT_LABELS.get(field, field)
+    source = [("문서 메타데이터", "사전 추출")]
+
+    if _is_unspecified(value):
+        return None
+    return (f"{label}{_topic_particle(label)} {value}입니다.", source)
+
+
+def _classify_fast_chat_field(question: str) -> str | None:
+    text = str(question or "").lower().replace(" ", "")
+    for field, keywords in _FAST_CHAT_FIELDS.items():
+        if any(keyword.replace(" ", "").lower() in text for keyword in keywords):
+            return field
+    return None
+
+
+def _selected_corpus_documents(
+    run_id: str | None,
+    selected_doc_ids: list[str] | None,
+    titles: list[str] | None,
+) -> list[dict[str, Any]]:
+    selected_ids = [str(doc_id) for doc_id in (selected_doc_ids or []) if doc_id]
+    if not selected_ids:
+        return []
+
+    corpus = internal_corpus()
+    docs = corpus.get("documents") or []
+    by_id = {str(doc.get("document_id")): doc for doc in docs}
+    selected = [by_id[doc_id] for doc_id in selected_ids if doc_id in by_id]
+    if selected:
+        return selected
+
+    if len(selected_ids) == 1:
+        title = (titles or [selected_ids[0]])[0]
+        return [{"document_id": selected_ids[0], "title": title}]
+    return []
+
+
+def _metadata_value_for_field(doc: dict[str, Any], field: str) -> str:
+    if field == "사업명":
+        return str(doc.get("title") or doc.get("document_id") or "").strip()
+    if field == "발주기관":
+        return str(doc.get("org") or "").strip()
+    if field == "사업예산":
+        return str(doc.get("amount") or "").strip()
+    if field == "사업기간":
+        return str(doc.get("period") or "").strip()
+    if field == "제출마감":
+        return str(doc.get("deadline") or "").strip()
+    return ""
+
+
+def _is_unspecified(value: str | None) -> bool:
+    text = str(value or "").strip()
+    return text in {"", _NOT_SPECIFIED, "(응답 없음)", "문서에서 확인하지 못했습니다."}
+
+
+def _topic_particle(label: str) -> str:
+    if not label:
+        return "은"
+    last = label[-1]
+    if not ("가" <= last <= "힣"):
+        return "은"
+    return "은" if (ord(last) - 0xAC00) % 28 else "는"
 
 
 # ──────────────────────────────────────────────────────────────────────
@@ -513,6 +609,10 @@ def chat_ask(question: str, run_id: str | None,
 
     run_id 가 있으면 실제 RAG(ask_with_document_filter), 없으면 Mock.
     """
+    fast_reply = _try_fast_chat_reply(question, run_id, selected_doc_ids, titles)
+    if fast_reply is not None:
+        return fast_reply
+
     rag = _load_rag()
 
     if rag is None or not run_id:

@@ -62,6 +62,83 @@ def test_chat_job_transitions_to_failed(monkeypatch):
     chat_jobs.clear_chat_job(job_id)
 
 
+def test_chat_ask_fast_path_uses_metadata_without_rag_call(monkeypatch):
+    monkeypatch.setattr(
+        frontend_adapter,
+        "internal_corpus",
+        lambda: {
+            "mode": "rag",
+            "run_id": "run-1",
+            "documents": [
+                {
+                    "document_id": "doc-1",
+                    "title": "테스트 사업",
+                    "org": "테스트 기관",
+                    "amount": "780,230,000원",
+                    "period": "계약일로부터 3개월",
+                    "deadline": "",
+                }
+            ],
+            "error": None,
+        },
+    )
+
+    def fail_load_rag():
+        raise AssertionError("fast path should not load rag")
+
+    monkeypatch.setattr(frontend_adapter, "_load_rag", fail_load_rag)
+
+    answer, sources = frontend_adapter.chat_ask("사업 예산은?", "run-1", ["doc-1"], ["테스트 사업"])
+
+    assert answer == "사업예산은 780,230,000원입니다."
+    assert sources == [("문서 메타데이터", "사전 추출")]
+
+
+def test_chat_ask_slow_path_handles_missing_fast_metadata(monkeypatch):
+    class FakeRag:
+        def ask_with_document_filter(self, run_id, question, selected_doc_ids):
+            return {"reply": "문서에서 제출 마감일 정보를 확인하지 못했습니다.", "citations": [], "error": None}
+
+    monkeypatch.setattr(
+        frontend_adapter,
+        "internal_corpus",
+        lambda: {
+            "mode": "rag",
+            "run_id": "run-1",
+            "documents": [{"document_id": "doc-1", "title": "테스트 사업", "deadline": ""}],
+            "error": None,
+        },
+    )
+    monkeypatch.setattr(frontend_adapter, "_load_rag", lambda: FakeRag())
+
+    answer, _ = frontend_adapter.chat_ask("제출 마감일은?", "run-1", ["doc-1"], ["테스트 사업"])
+
+    assert answer == "문서에서 제출 마감일 정보를 확인하지 못했습니다."
+
+
+def test_chat_ask_slow_path_keeps_reasoning_questions_on_rag(monkeypatch):
+    class FakeRag:
+        def ask_with_document_filter(self, run_id, question, selected_doc_ids):
+            return {"reply": "정밀 분석 답변", "citations": [], "error": None}
+
+    monkeypatch.setattr(
+        frontend_adapter,
+        "internal_corpus",
+        lambda: {
+            "mode": "rag",
+            "run_id": "run-1",
+            "documents": [{"document_id": "doc-1", "title": "테스트 사업"}],
+            "error": None,
+        },
+    )
+    monkeypatch.setattr(frontend_adapter, "_load_rag", lambda: FakeRag())
+
+    answer, sources = frontend_adapter.chat_ask("이 사업 참여 가능할까?", "run-1", ["doc-1"], ["테스트 사업"])
+
+    assert answer == "정밀 분석 답변"
+    assert sources == []
+
+
 def test_get_documents_uses_parsed_document_metadata(tmp_path, monkeypatch):
     monkeypatch.setattr(rag_service, "_STREAMLIT_EXPERIMENTS", tmp_path)
     output_dir = tmp_path / "run-1" / "output"
