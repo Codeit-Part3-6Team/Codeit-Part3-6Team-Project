@@ -88,6 +88,7 @@ set RAG_MODE=mock
 - `RAG_MODE=mock`: RAG 연결 없이 mock 데이터로 화면 미리보기
 - `RAG_MODE=rag`: RAG 연결 실패 시 상단 배너에 실패 상태 표시
 - 미설정: RAG import 가능하면 실제 RAG, 아니면 mock fallback
+- `RAG_EAGER_ANALYSIS=1`: 문서 선택 시점에 LLM 요약/요구사항 추출까지 즉시 수행합니다. 미설정 시 저장된 corpus 메타데이터로 워크스페이스를 빠르게 엽니다.
 
 ## 현재 점검 메모
 

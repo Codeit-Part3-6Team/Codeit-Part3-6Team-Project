@@ -294,6 +294,9 @@ def analyze_selection(run_id: str | None,
     if not doc_ids:
         return _analysis_error("선택된 문서가 없습니다.")
 
+    if os.environ.get("RAG_EAGER_ANALYSIS", "").lower() not in {"1", "true", "yes"}:
+        return _fast_analysis_from_corpus_metadata(rag, run_id, doc_ids, titles)
+
     try:
         summary_res = rag.summarize(run_id, doc_ids)
         req_res = rag.extract_requirements(run_id, doc_ids)
@@ -318,6 +321,64 @@ def analyze_selection(run_id: str | None,
         }
     except Exception as exc:
         return _analysis_error(str(exc))
+
+
+def _fast_analysis_from_corpus_metadata(
+    rag: Any,
+    run_id: str,
+    doc_ids: list[str],
+    titles: list[str],
+) -> dict[str, Any]:
+    """저장된 corpus 메타데이터만으로 즉시 워크스페이스용 분석 초안을 만듭니다."""
+    docs_by_id = {
+        str(doc.get("document_id")): doc
+        for doc in rag.get_documents(run_id)
+    }
+    selected = [docs_by_id.get(doc_id, {"document_id": doc_id}) for doc_id in doc_ids]
+    if not selected:
+        return _analysis_error("선택한 문서를 corpus에서 찾지 못했습니다.")
+
+    title = titles[0] if len(titles) == 1 and titles else f"{len(doc_ids)}개 문서"
+    first = selected[0]
+    summaries = [
+        str(doc.get("summary") or "").strip()
+        for doc in selected
+        if str(doc.get("summary") or "").strip()
+    ]
+    if len(selected) == 1:
+        summary = summaries[0] if summaries else "저장된 문서 메타데이터에서 요약을 찾지 못했습니다."
+    else:
+        summary_lines = []
+        for doc in selected:
+            doc_title = str(doc.get("title") or doc.get("document_id") or "문서")
+            doc_summary = str(doc.get("summary") or "").strip()
+            if doc_summary:
+                summary_lines.append(f"- {doc_title}: {doc_summary}")
+            else:
+                summary_lines.append(f"- {doc_title}: 저장된 요약 없음")
+        summary = "\n".join(summary_lines)
+
+    meta = {
+        "사업명": str(first.get("title") or title),
+        "발주기관": str(first.get("org") or "명시되지 않음"),
+        "사업예산": str(first.get("amount") or "명시되지 않음"),
+        "사업기간": "명시되지 않음",
+        "제출마감": "명시되지 않음",
+        "문서": title,
+    }
+    requirements = [
+        "상세 참가자격과 제출서류는 오른쪽 대화형 탐색에서 질문하면 문서 근거와 함께 확인할 수 있습니다."
+    ]
+    return {
+        "mode": "rag",
+        "run_id": run_id,
+        "meta": meta,
+        "summary": summary,
+        "summary_ok": _has_content(summary),
+        "requirements": requirements,
+        "sources": {"summary": [], "requirements": []},
+        "error": None,
+    }
 
 
 # 백엔드가 내용 없이 돌려보내는 빈 응답 표식들
