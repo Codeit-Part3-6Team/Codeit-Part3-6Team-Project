@@ -438,6 +438,31 @@ def test_chatbot_splits_long_evaluation_text_into_bullets():
     assert len([line for line in reply.splitlines() if line.startswith("- ")]) >= 4
 
 
+def test_chatbot_splits_evaluation_sentences_without_tiny_fragments():
+    bot = ChatbotRunner(tools={})
+    result = ToolResult(
+        tool_name="extract_requirements",
+        structured_output={
+            "평가기준": (
+                "종합평가 = 기술평가(90%) + 가격평가(10%). "
+                "기술평가는 전문가로 구성된 기술평가위원회가 실시하며, 각 위원이 평가한 점수에서 "
+                "최고·최저 점수를 제외한 나머지 점수의 산술평균을 산출하여 90점 만점으로 환산한다. "
+                "기술능력평가 분야에서 배점한도의 85% 이상 득점한 자를 협상 적격자로 선정한다. "
+                "기술평가는 정량평가·정성평가로 구성되며 PT(발표15분, 질의응답10분)가 평가절차에 포함된다. "
+                "신용평가등급에 따른 배점비율은 공고문에 제시된 등급구간표를 준용한다."
+            )
+        },
+    )
+
+    reply = bot._format_chat_result("평가 기준은?", result)
+    bullets = [line for line in reply.splitlines() if line.startswith("- ")]
+
+    assert any("종합평가 = 기술평가" in line for line in bullets)
+    assert any("기술능력평가 분야" in line for line in bullets)
+    assert any("정량평가" in line and "정성평가" in line for line in bullets)
+    assert all(line.strip() not in {"- 정량평가·", "- 정성평가"} for line in bullets)
+
+
 def test_chatbot_missing_scalar_reply_uses_natural_korean_label():
     bot = ChatbotRunner(tools={})
     result = ToolResult(

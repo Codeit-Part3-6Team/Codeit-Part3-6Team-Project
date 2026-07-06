@@ -442,41 +442,63 @@ class ChatbotRunner:
         for pattern in drop_patterns:
             text = re.sub(pattern, "", text).strip()
 
-        section_keywords = [
-            "총점", "종합평가점수", "기술능력평가", "정량평가", "경영상태",
-            "사업수행실적", "사회적 책임", "신인도", "정성평가", "전략 및 방법론",
-            "입찰가격평가", "제안서 설명", "평가 결과", "보안 위반", "근로·고용",
-            "근로ㆍ고용", "기타 평가",
+        sentences = [
+            part.strip(" .")
+            for part in re.split(r"(?<=[.!?。])\s+|;\s+", text)
+            if part.strip(" .")
         ]
-        keyword_pattern = re.compile("|".join(re.escape(keyword) for keyword in section_keywords))
-        matches = list(keyword_pattern.finditer(text))
-        merged = []
-        if matches:
-            if matches[0].start() > 0:
-                merged.append(text[:matches[0].start()])
-            for index, match in enumerate(matches):
-                start = match.start()
-                end = matches[index + 1].start() if index + 1 < len(matches) else len(text)
-                merged.append(text[start:end])
-
-        if not merged:
-            merged = [
-                part.strip(" .")
-                for part in re.split(r"(?<=[.!?。])\s+|;\s+", text)
-                if part.strip(" .")
-            ]
+        if not sentences:
+            sentences = [text]
 
         cleaned: list[str] = []
+        for sentence in sentences:
+            for item in self._split_long_evaluation_sentence(sentence):
+                item = re.sub(r"\s+", " ", item).strip(" .")
+                if not item or self._is_missing_value(item):
+                    continue
+                if len(item) > 220:
+                    item = item[:217].rstrip() + "..."
+                cleaned.append(item)
+                if len(cleaned) >= 10:
+                    return cleaned
+        return cleaned or ([text[:217].rstrip() + "..."] if text else [])
+
+    def _split_long_evaluation_sentence(self, sentence: str) -> list[str]:
+        """평가기준의 긴 문장을 읽기 좋은 항목으로 보조 분할합니다."""
+        import re
+
+        sentence = sentence.strip()
+        if len(sentence) <= 180:
+            return [sentence] if sentence else []
+
+        split_keywords = [
+            "기술능력평가", "기술평가", "정량평가", "정성평가", "입찰가격평가", "가격평가",
+            "경영상태", "사업수행실적", "사회적 책임", "신인도", "제안서 설명",
+            "평가 결과", "보안", "개인정보보호", "PT",
+        ]
+        keyword_pattern = re.compile("|".join(re.escape(keyword) for keyword in split_keywords))
+        matches = list(keyword_pattern.finditer(sentence))
+        merged: list[str] = []
+        if matches:
+            if matches[0].start() > 0:
+                merged.append(sentence[:matches[0].start()].strip(" ,"))
+            for index, match in enumerate(matches):
+                start = match.start()
+                end = matches[index + 1].start() if index + 1 < len(matches) else len(sentence)
+                merged.append(sentence[start:end].strip(" ,"))
+
+        if len(merged) <= 1:
+            merged = [part.strip(" ,") for part in re.split(r",\s+(?=[가-힣A-Za-z].{8,})", sentence) if part.strip(" ,")]
+
+        compacted: list[str] = []
         for item in merged:
-            item = re.sub(r"\s+", " ", item).strip(" .")
             if not item or self._is_missing_value(item):
                 continue
-            if len(item) > 220:
-                item = item[:217].rstrip() + "..."
-            cleaned.append(item)
-            if len(cleaned) >= 10:
-                break
-        return cleaned or ([text[:217].rstrip() + "..."] if text else [])
+            if compacted and len(item) < 24:
+                compacted[-1] = f"{compacted[-1]} {item}".strip()
+            else:
+                compacted.append(item)
+        return compacted or [sentence]
 
     def _clean_item(self, text: str) -> str:
         """LLM이 붙인 내부 chunk 참조를 제거합니다."""
