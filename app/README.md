@@ -61,6 +61,10 @@ python app/examples/build_internal_corpus.py --raw-docs-dir /shared/data/raw_doc
 python app/examples/list_corpus_runs.py
 ```
 
+VM에서는 corpus run과 `rag_service.db`가 기본적으로 `/shared/experiments/streamlit/`에 저장됩니다.
+로컬처럼 `/shared/experiments`가 없으면 프로젝트 내부 `experiments/streamlit/`로 fallback합니다.
+필요하면 `RAG_STREAMLIT_EXPERIMENTS=/path/to/streamlit-runs`로 저장 위치를 직접 지정할 수 있습니다.
+
 특정 run을 앱에서 고정해서 쓰고 싶으면 환경변수로 지정합니다.
 
 ```bash

@@ -10,10 +10,11 @@ import json
 import sqlite3
 import threading
 from datetime import datetime
-from pathlib import Path
 from typing import Any
 
-_DB_DIR = Path(__file__).resolve().parents[2] / "experiments" / "streamlit"
+from .paths import streamlit_experiments_dir
+
+_DB_DIR = streamlit_experiments_dir()
 _DB_PATH = _DB_DIR / "rag_service.db"
 _lock = threading.Lock()
 

@@ -37,8 +37,9 @@ if str(_PROJECT_ROOT) not in sys.path:
 from src.config import load_config
 from src.rag.pipeline import run_rag_ingest
 from . import sqlite_store
+from .paths import streamlit_experiments_dir
 
-_STREAMLIT_EXPERIMENTS = _PROJECT_ROOT / "experiments" / "streamlit"
+_STREAMLIT_EXPERIMENTS = streamlit_experiments_dir()
 # 전용 streamlit 템플릿 사용 (base_config 상속으로 config_final/agent_lplus 포함)
 _TEMPLATE_CONFIG_PATH = (
     _PROJECT_ROOT / "configs" / "experiments" / "rag" / "streamlit.yaml"
