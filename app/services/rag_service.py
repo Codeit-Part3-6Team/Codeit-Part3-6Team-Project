@@ -36,7 +36,7 @@ if str(_PROJECT_ROOT) not in sys.path:
 
 from src.config import load_config
 from src.rag.pipeline import run_rag_ingest
-from app.services import sqlite_store
+from . import sqlite_store
 
 _STREAMLIT_EXPERIMENTS = _PROJECT_ROOT / "experiments" / "streamlit"
 # 전용 streamlit 템플릿 사용 (base_config 상속으로 config_final/agent_lplus 포함)
