@@ -12,12 +12,32 @@
 import streamlit as st
 
 from utils.components import topbar, esc, P_DOCS
-from utils.mock_data import stream_words
 from services.frontend_adapter import chat_ask
 
 ss = st.session_state
 topbar()
 st.markdown('<div style="height:14px"></div>', unsafe_allow_html=True)
+
+
+def _summary_cards(summary: str) -> str:
+    """요약 문장을 작은 카드 목록 HTML로 변환합니다."""
+    items: list[str] = []
+    for line in str(summary or "").splitlines():
+        item = line.strip()
+        if item.startswith(("-", "•", "*")):
+            item = item[1:].strip()
+        if item:
+            items.append(item)
+    if not items:
+        return ""
+    cards = "".join(f'<div class="summary-card">{esc(item)}</div>' for item in items[:6])
+    return f'<div class="summary-grid">{cards}</div>'
+
+
+def _render_chat_sources(sources: list[tuple[str, str]] | None) -> None:
+    """채팅 답변 아래 출처를 안전하게 표시합니다."""
+    if sources:
+        st.caption("근거: " + " · ".join(f"{p} {s}" for p, s in sources))
 
 # ── 가드: 분석 결과가 없으면 문서 선택 페이지로 유도 ─────────────────────────
 if not ss.analyzed or not ss.analysis:
@@ -77,9 +97,14 @@ with left:
             # F2: 요약은 RAG/문서에서 온 값 → esc 처리.
             #     줄바꿈은 <br> 로 살려 가독성 유지 (esc 후 변환이라 안전).
             summary_html = esc(data["summary"]).replace("\n", "<br>")
-            st.markdown(f'<div class="panel" style="margin-top:10px">'
-                        f'<div style="color:var(--text-2);font-size:.95rem;line-height:1.75">'
-                        f'{summary_html}</div></div>', unsafe_allow_html=True)
+            cards_html = _summary_cards(data["summary"])
+            if cards_html:
+                st.markdown(f'<div class="panel" style="margin-top:10px">{cards_html}</div>',
+                            unsafe_allow_html=True)
+            else:
+                st.markdown(f'<div class="panel" style="margin-top:10px">'
+                            f'<div style="color:var(--text-2);font-size:.95rem;line-height:1.75">'
+                            f'{summary_html}</div></div>', unsafe_allow_html=True)
             _summary_srcs = (data.get("sources") or {}).get("summary") or []
             if _summary_srcs:
                 st.caption("근거: " + " · ".join(f"{p} {s}" for p, s in _summary_srcs))
@@ -132,22 +157,15 @@ with right:
                 ss.pending_q = q
                 st.rerun()
 
-    # 대화 기록 렌더 (F2: 사용자 입력·모델 답변·출처 모두 esc 처리)
+    # 대화 기록 렌더. 기본 chat_message를 사용해 페이지 UI와 답변 영역 경계를 분리한다.
     for m in ss.messages:
         if m["role"] == "user":
-            st.markdown(f'<div class="role u">You</div>'
-                        f'<div class="msg-user">{esc(m["content"])}</div>',
-                        unsafe_allow_html=True)
+            with st.chat_message("user"):
+                st.markdown(str(m["content"]))
         else:
-            tags = "".join(
-                f'<span class="src-tag">📑 {esc(p)} · {esc(s)}</span>'
-                for p, s in m.get("sources", [])
-            )
-            body = esc(m["content"]).replace("\n", "<br>")
-            st.markdown(f'<div class="role a">IT&#39;S MINE</div>'
-                        f'<div class="msg-ai">{body}'
-                        f'<div style="margin-top:4px">{tags}</div></div>',
-                        unsafe_allow_html=True)
+            with st.chat_message("assistant"):
+                st.markdown(str(m["content"]))
+                _render_chat_sources(m.get("sources", []))
 
     # 입력 처리 (추천칩 또는 직접 입력)
     typed = st.chat_input("선택한 문서에 대해 질문해보세요")
@@ -156,23 +174,14 @@ with right:
 
     if question:
         ss.messages.append({"role": "user", "content": question})
-        st.markdown(f'<div class="role u">You</div>'
-                    f'<div class="msg-user">{esc(question)}</div>',
-                    unsafe_allow_html=True)
+        with st.chat_message("user"):
+            st.markdown(question)
 
-        ans, srcs = chat_ask(question, ss.run_id, selected_ids or None, titles)
-        st.markdown('<div class="role a">IT&#39;S MINE</div>', unsafe_allow_html=True)
-        ph = st.empty()
-        acc = ""
-        with st.spinner("문서에서 검색 중..."):
-            for acc in stream_words(ans):
-                ph.markdown(f'<div class="msg-ai">{esc(acc)}▌</div>',
-                            unsafe_allow_html=True)
-        tags = "".join(f'<span class="src-tag">📑 {esc(p)} · {esc(s)}</span>'
-                       for p, s in srcs)
-        body = esc(acc).replace("\n", "<br>")
-        ph.markdown(f'<div class="msg-ai">{body}'
-                    f'<div style="margin-top:4px">{tags}</div></div>',
-                    unsafe_allow_html=True)
-        ss.messages.append({"role": "assistant", "content": acc.strip(), "sources": srcs})
+        with st.chat_message("assistant"):
+            with st.spinner("문서에서 검색 중..."):
+                ans, srcs = chat_ask(question, ss.run_id, selected_ids or None, titles)
+            st.markdown(ans)
+            _render_chat_sources(srcs)
+
+        ss.messages.append({"role": "assistant", "content": ans.strip(), "sources": srcs})
         st.rerun()
