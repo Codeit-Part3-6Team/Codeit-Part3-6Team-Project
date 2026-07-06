@@ -360,10 +360,10 @@ def _strip_source_block(reply: str) -> str:
 def _display_reply(raw_reply: str, structured: dict[str, Any] | None = None) -> str:
     reply = _strip_source_block(raw_reply)
     structured_reply = _format_structured_output(structured)
-    if structured_reply:
-        return structured_reply
     if reply:
         return reply
+    if structured_reply:
+        return structured_reply
     return reply
 
 

@@ -151,7 +151,7 @@ class ChatbotRunner:
             if is_complete:
                 # 질문 실행 결과를 self.state에 반영
                 self.state.update(run_state)
-                reply = self._format_tool_result(result)
+                reply = self._format_chat_result(user_input, result)
                 self._add_history('assistant', reply)
                 return {
                     'reply': reply,
@@ -194,6 +194,70 @@ class ChatbotRunner:
                 source_lines.append(f'📄 {label} chunk_id: {chunk_id}')
             out += '\n\n[출처]\n' + '\n'.join(source_lines)
         return out
+
+    def _format_chat_result(self, user_input: str, result: ToolResult) -> str:
+        """챗봇 화면에 맞게 ToolResult를 자연스러운 답변으로 변환합니다."""
+        if result.structured_output:
+            return self._format_structured_chat_reply(user_input, result.structured_output)
+        return self._strip_source_block(self._format_tool_result(result))
+
+    def _format_structured_chat_reply(self, user_input: str, structured: dict[str, Any]) -> str:
+        question = user_input.lower()
+        preferred_keys = self._preferred_structured_keys(question, structured)
+        lines = ["문서에서 확인한 내용은 아래와 같습니다."]
+
+        for key in preferred_keys:
+            value = structured.get(key)
+            if self._is_missing_value(value):
+                continue
+            lines.append("")
+            lines.append(str(key))
+            if isinstance(value, list):
+                for item in value:
+                    if not self._is_missing_value(item):
+                        lines.append(f"- {item}")
+            else:
+                lines.append(f"- {value}")
+
+        if len(lines) == 1:
+            fallback = self._strip_source_block(self._format_tool_result(ToolResult(
+                tool_name="structured_fallback",
+                answer="",
+                structured_output=structured,
+            )))
+            return fallback or "문서에서 확인 가능한 항목을 찾지 못했습니다."
+        return "\n".join(lines)
+
+    def _preferred_structured_keys(self, question: str, structured: dict[str, Any]) -> list[str]:
+        keys = list(structured.keys())
+        priority: list[str] = []
+        if any(token in question for token in ("서류", "제출")):
+            priority.extend(["제출서류", "필요서류", "구비서류"])
+        if any(token in question for token in ("자격", "요건", "참가")):
+            priority.extend(["참가자격", "자격요건", "참가요건"])
+        if any(token in question for token in ("평가", "배점", "기준")):
+            priority.extend(["평가기준", "평가항목"])
+        if any(token in question for token in ("예산", "금액", "얼마")):
+            priority.extend(["사업예산", "예산", "사업금액"])
+        if any(token in question for token in ("기간", "마감", "언제", "일정")):
+            priority.extend(["사업기간", "제출마감", "마감일"])
+
+        ordered = [key for key in priority if key in structured]
+        ordered.extend(key for key in keys if key not in ordered)
+        return ordered
+
+    def _is_missing_value(self, value: Any) -> bool:
+        if value in (None, "", [], {}):
+            return True
+        if isinstance(value, str):
+            return value.strip() in {"", "명시되지 않음", "(응답 없음)"}
+        return False
+
+    def _strip_source_block(self, reply: str) -> str:
+        marker = "\n\n[출처]\n"
+        if marker in reply:
+            return reply.split(marker, 1)[0].rstrip()
+        return reply
 
     def chat(self, user_input: str) -> dict[str, Any]:
         """사용자 입력을 받아 Tool 선택 → 실행 → 응답을 반환합니다.

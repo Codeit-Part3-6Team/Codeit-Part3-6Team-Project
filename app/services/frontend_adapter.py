@@ -526,8 +526,34 @@ def chat_ask(question: str, run_id: str | None,
     if response.get("error"):
         return (f"답변 생성 중 오류가 발생했습니다: {response['error']}", [])
 
-    reply = response.get("reply") or "문서에서 확인하지 못했습니다."
+    reply = _sanitize_chat_reply(response.get("reply") or "문서에서 확인하지 못했습니다.")
     return (reply, _citations_to_sources(response.get("citations")))
+
+
+def _sanitize_chat_reply(reply: str) -> str:
+    """답변에 Streamlit 페이지 chrome이 섞였을 때 화면 노출을 방지합니다."""
+    blocked_exact = {
+        "IT'S MINE",
+        "서비스 소개",
+        "정부제안서 검색",
+        "요금제",
+        "선택한 문서에 대해 질문해보세요",
+    }
+    cleaned: list[str] = []
+    for line in str(reply or "").splitlines():
+        stripped = line.strip()
+        if not stripped:
+            cleaned.append(line)
+            continue
+        if stripped in blocked_exact:
+            continue
+        if "localhost:8501" in stripped:
+            continue
+        if stripped.startswith("[IT'S MINE](") or stripped.startswith("[서비스 소개]("):
+            continue
+        cleaned.append(line)
+    result = "\n".join(cleaned).strip()
+    return result or "문서에서 확인하지 못했습니다."
 
 
 def ingest_progress(run_id: str | None) -> dict[str, Any]:

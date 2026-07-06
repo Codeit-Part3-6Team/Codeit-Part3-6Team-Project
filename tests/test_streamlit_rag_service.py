@@ -5,6 +5,8 @@ from pathlib import Path
 
 from app.services import rag_service
 from app.services import frontend_adapter
+from src.rag.chatbot import ChatbotRunner
+from src.rag.tool import ToolResult
 
 
 def _write_csv(path: Path, rows: list[dict[str, str]], columns: list[str]) -> None:
@@ -199,6 +201,46 @@ def test_format_structured_output_keeps_fields_readable():
     assert "발주기관: 한국농어촌공사" in formatted
     assert "사업기간: 명시되지 않음" in formatted
     assert "자격요건\n- PM은 ODA 유경험자\n- 중복투입 불가" in formatted
+
+
+def test_display_reply_prefers_natural_reply_over_structured_output():
+    reply = "참가 자격은 소프트웨어사업자 신고와 중소기업 확인이 핵심입니다."
+    structured = {"참가자격": ["소프트웨어사업자 신고", "중소기업확인서"]}
+
+    assert rag_service._display_reply(reply, structured) == reply
+
+
+def test_sanitize_chat_reply_removes_streamlit_chrome():
+    reply = (
+        "사업예산은 100원입니다.\n"
+        "[IT'S MINE](http://localhost:8501/workspace)\n"
+        "[서비스 소개](http://localhost:8501/about)\n"
+        "근거는 문서 본문입니다."
+    )
+
+    sanitized = frontend_adapter._sanitize_chat_reply(reply)
+
+    assert "localhost:8501" not in sanitized
+    assert "사업예산은 100원입니다." in sanitized
+    assert "근거는 문서 본문입니다." in sanitized
+
+
+def test_chatbot_formats_structured_output_as_chat_reply():
+    bot = ChatbotRunner(tools={})
+    result = ToolResult(
+        tool_name="extract_requirements",
+        structured_output={
+            "제출서류": ["제안서 1부", "가격제안서 1부"],
+            "참가자격": ["소프트웨어사업자"],
+        },
+    )
+
+    reply = bot._format_chat_result("제출 서류는?", result)
+
+    assert "문서에서 확인한 내용" in reply
+    assert "제출서류" in reply
+    assert "- 제안서 1부" in reply
+    assert "['" not in reply
 
 
 def test_dedupe_citations_by_chunk_id():
