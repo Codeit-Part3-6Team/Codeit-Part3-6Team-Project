@@ -312,9 +312,59 @@ def test_chatbot_scalar_projection_omits_unasked_fields():
 
     reply = bot._format_chat_result("사업 예산은?", result)
 
-    assert reply == "사업예산은(는) 133,812,000원입니다."
+    assert reply == "사업예산은 133,812,000원입니다."
     assert "발주기관" not in reply
     assert "사업명" not in reply
+
+
+def test_chatbot_scalar_projection_strips_embedded_label_and_sentence_ending():
+    bot = ChatbotRunner(tools={})
+    result = ToolResult(
+        tool_name="extract_facts",
+        structured_output={"사업예산": "사업 예산은 780,230,000원입니다."},
+    )
+
+    reply = bot._format_chat_result("사업 예산은?", result)
+
+    assert reply == "사업예산은 780,230,000원입니다."
+    assert "입니다.입니다" not in reply
+    assert "사업예산은 사업 예산은" not in reply
+
+
+def test_chatbot_missing_scalar_reply_uses_natural_korean_label():
+    bot = ChatbotRunner(tools={})
+    result = ToolResult(
+        tool_name="extract_facts",
+        structured_output={
+            "사업예산": "133,812,000원",
+            "사업기간": "명시되지 않음",
+            "제출마감": "명시되지 않음",
+        },
+    )
+
+    period_reply = bot._format_chat_result("사업 기간은?", result)
+    deadline_reply = bot._format_chat_result("제출 마감일은?", result)
+
+    assert period_reply == "문서에서 사업 기간 정보를 확인하지 못했습니다."
+    assert deadline_reply == "문서에서 제출 마감일 정보를 확인하지 못했습니다."
+    assert "을(를)" not in period_reply
+    assert "을(를)" not in deadline_reply
+
+
+def test_chatbot_deadline_question_does_not_fall_back_to_project_period():
+    bot = ChatbotRunner(tools={})
+    result = ToolResult(
+        tool_name="extract_facts",
+        structured_output={
+            "사업기간": "계약일로부터 3개월",
+            "제출마감": "명시되지 않음",
+        },
+    )
+
+    reply = bot._format_chat_result("제출 마감일은?", result)
+
+    assert reply == "문서에서 제출 마감일 정보를 확인하지 못했습니다."
+    assert "계약일로부터 3개월" not in reply
 
 
 def test_chatbot_fast_router_skips_llm_selection_for_common_question():

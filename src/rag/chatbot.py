@@ -40,6 +40,19 @@ FIELD_ALIASES = {
     "요약": ("요약", "사업개요", "사업 개요", "사업범위", "기대효과", "추진목표"),
 }
 
+FIELD_DISPLAY_LABELS = {
+    "사업예산": "사업예산",
+    "발주기관": "발주기관",
+    "사업명": "사업명",
+    "사업기간": "사업 기간",
+    "제출마감": "제출 마감일",
+    "제출서류": "제출서류",
+    "참가자격": "참가자격",
+    "평가기준": "평가기준",
+    "리스크": "리스크",
+    "요약": "핵심 요약",
+}
+
 
 def _has_batchim(word: str) -> bool:
     """한글 마지막 글자에 받침이 있는지 확인합니다."""
@@ -259,7 +272,7 @@ class ChatbotRunner:
         # 질문 의도에 맞는 필드가 비었으면 문서에 없다고 안내
         if presentation.answer_type in ("scalar", "list", "checklist", "evaluation"):
             missing_label = presentation.fields[0] if presentation.fields else "해당 정보"
-            return f"문서에서 {missing_label}을(를) 확인하지 못했습니다."
+            return self._missing_field_message(missing_label)
 
         natural_reply = self._strip_source_block(natural_reply).strip()
         if natural_reply and natural_reply != "(응답 없음)":
@@ -276,7 +289,9 @@ class ChatbotRunner:
     def _classify_chat_presentation(self, user_input: str) -> ChatPresentation:
         """사용자 질문을 챗봇 출력 유형으로 분류합니다."""
         text = user_input.lower()
-        if any(token in text for token in ("마감", "언제", "일정", "기한")):
+        if any(token in text for token in ("마감", "기한")):
+            return ChatPresentation("scalar", "extract_facts", ("제출마감",))
+        if any(token in text for token in ("언제", "일정")):
             return ChatPresentation("scalar", "extract_facts", ("제출마감", "사업기간"))
         if any(token in text for token in ("제출", "서류", "구비")):
             return ChatPresentation("list", "extract_requirements", ("제출서류",))
@@ -323,12 +338,13 @@ class ChatbotRunner:
     def _render_projected_answer(self, answer_type: str, fields: list[tuple[str, Any]]) -> str:
         if answer_type == "scalar":
             label, value = fields[0]
-            particle = "은" if _has_batchim(label) else "는"
+            display_label = self._display_label(label)
+            particle = "은" if _has_batchim(display_label) else "는"
             clean_value = self._strip_field_prefix(label, self._format_scalar_value(value))
             # 이미 문장 종결이면 "입니다" 추가하지 않음
-            if clean_value.rstrip().endswith(("입니다", "니다", "한다", "됨", "함", "것")):
-                return f"{label}{particle} {clean_value}"
-            return f"{label}{particle} {clean_value}입니다."
+            if self._is_complete_sentence(clean_value):
+                return f"{display_label}{particle} {clean_value}"
+            return f"{display_label}{particle} {clean_value}입니다."
         if answer_type in {"list", "checklist"}:
             return self._render_table_answer(answer_type, fields)
         if answer_type in {"evaluation", "comparison"}:
@@ -349,7 +365,7 @@ class ChatbotRunner:
         lines = [title_by_type.get(answer_type, "문서에서 확인한 내용입니다."), "", "| 구분 | 내용 |", "|---|---|"]
         for label, value in fields:
             for item in self._value_items(value):
-                lines.append(f"| {label} | {self._escape_table_cell(item)} |")
+                lines.append(f"| {self._display_label(label)} | {self._escape_table_cell(item)} |")
         return "\n".join(lines)
 
     def _render_bullet_answer(self, answer_type: str, fields: list[tuple[str, Any]]) -> str:
@@ -360,7 +376,7 @@ class ChatbotRunner:
         lines = [title_by_type.get(answer_type, "문서에서 확인한 내용입니다."), ""]
         for label, value in fields:
             items = self._value_items(value)
-            lines.append(f"**{label}**")
+            lines.append(f"**{self._display_label(label)}**")
             for item in items:
                 lines.append(f"- {item}")
             lines.append("")
@@ -370,14 +386,14 @@ class ChatbotRunner:
         lines = ["핵심 내용은 아래와 같습니다."]
         for label, value in fields:
             for item in self._value_items(value):
-                lines.append(f"- {label}: {item}")
+                lines.append(f"- {self._display_label(label)}: {item}")
         return "\n".join(lines)
 
     def _render_judgement_answer(self, fields: list[tuple[str, Any]]) -> str:
         lines = ["문서 기준으로는 아래 항목을 먼저 확인해야 합니다."]
         for label, value in fields:
             for item in self._value_items(value):
-                lines.append(f"- {label}: {item}")
+                lines.append(f"- {self._display_label(label)}: {item}")
         lines.append("- 최종 참여 가능 여부는 원문 자격요건과 제출서류를 함께 대조해 판단하세요.")
         return "\n".join(lines)
 
@@ -385,8 +401,17 @@ class ChatbotRunner:
         lines = ["문서에서 확인한 내용은 아래와 같습니다."]
         for label, value in fields:
             for item in self._value_items(value):
-                lines.append(f"- {label}: {item}")
+                lines.append(f"- {self._display_label(label)}: {item}")
         return "\n".join(lines)
+
+    def _display_label(self, label: str) -> str:
+        """UI에 표시할 필드명을 반환합니다."""
+        return FIELD_DISPLAY_LABELS.get(label, label)
+
+    def _missing_field_message(self, label: str) -> str:
+        """필드 누락 안내를 자연스러운 문장으로 반환합니다."""
+        display_label = self._display_label(label)
+        return f"문서에서 {display_label} 정보를 확인하지 못했습니다."
 
     def _value_items(self, value: Any) -> list[str]:
         if isinstance(value, list):
@@ -412,15 +437,26 @@ class ChatbotRunner:
         """LLM이 값에 라벨을 포함시킨 경우 제거합니다."""
         import re
         value = str(value).strip()
-        label_clean = label.strip()
-        label_nosp = label_clean.replace(" ", "")
-        patterns = [
-            re.compile(rf"^{re.escape(label_clean)}\s*(은|는|이|가|을|를|의)?\s*"),
-            re.compile(rf"^{re.escape(label_nosp)}\s*(은|는|이|가|을|를|의)?\s*"),
-        ]
-        for pattern in patterns:
-            value = pattern.sub("", value).strip()
+        labels = {label, self._display_label(label), *FIELD_ALIASES.get(label, ())}
+        for candidate in sorted(labels, key=len, reverse=True):
+            label_clean = candidate.strip()
+            if not label_clean:
+                continue
+            spaced = r"\s*".join(re.escape(ch) for ch in label_clean.replace(" ", ""))
+            patterns = [
+                re.compile(rf"^{re.escape(label_clean)}\s*(은|는|이|가|을|를|의)?\s*"),
+                re.compile(rf"^{spaced}\s*(은|는|이|가|을|를|의)?\s*"),
+            ]
+            for pattern in patterns:
+                value = pattern.sub("", value).strip()
         return value
+
+    def _is_complete_sentence(self, value: str) -> bool:
+        """값이 이미 문장형이면 추가 종결어미를 붙이지 않습니다."""
+        text = str(value or "").strip()
+        if not text:
+            return False
+        return text.rstrip(".。!！?？").endswith(("입니다", "니다", "한다", "된다", "됨", "함", "것"))
 
     def _escape_table_cell(self, value: str) -> str:
         return str(value).replace("|", "\\|").replace("\n", "<br>")
