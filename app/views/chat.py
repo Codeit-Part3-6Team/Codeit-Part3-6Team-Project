@@ -169,13 +169,6 @@ with h2:
 
 st.markdown('<div style="height:10px"></div>', unsafe_allow_html=True)
 
-suggested = ["사업 예산은?", "참가 자격은?", "제출 서류는?", "평가 기준은?"]
-chip_cols = st.columns(4)
-for col, question in zip(chip_cols, suggested):
-    with col:
-        if st.button(question, type="secondary", use_container_width=True, key=f"chat_chip_{question}"):
-            _start_question(question, selected_ids, titles)
-
 if ss.get("pending_q"):
     _start_question(str(ss.pending_q), selected_ids, titles)
 
@@ -190,6 +183,15 @@ for message in ss.messages:
         with st.chat_message("assistant"):
             st.markdown(str(message.get("content") or ""))
             _render_sources(message.get("sources") or [])
+
+suggested = ["사업 예산은?", "참가 자격은?", "제출 서류는?", "평가 기준은?"]
+chip_cols = st.columns(4)
+for col, question in zip(chip_cols, suggested):
+    with col:
+        if st.button(question, type="secondary", use_container_width=True, key=f"chat_chip_{question}"):
+            _start_question(question, selected_ids, titles)
+
+st.markdown('<div style="height:6px"></div>', unsafe_allow_html=True)
 
 question = st.chat_input("선택한 문서에 대해 질문해보세요")
 if question:

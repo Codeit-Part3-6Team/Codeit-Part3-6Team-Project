@@ -299,7 +299,7 @@ class ChatbotRunner:
     def _render_projected_answer(self, answer_type: str, fields: list[tuple[str, Any]]) -> str:
         if answer_type == "scalar":
             label, value = fields[0]
-            return f"{label}은(는) {self._format_scalar_value(value)}입니다."
+            return f"{label}은 {self._format_scalar_value(value)}입니다."
         if answer_type in {"list", "checklist", "evaluation", "comparison"}:
             return self._render_table_answer(answer_type, fields)
         if answer_type == "judgement":
