@@ -389,10 +389,16 @@ class ChatbotRunner:
 
     def _value_items(self, value: Any) -> list[str]:
         if isinstance(value, list):
-            return [str(item) for item in value if not self._is_missing_value(item)]
+            return [self._clean_item(str(item)) for item in value if not self._is_missing_value(item)]
         if isinstance(value, dict):
-            return [f"{key}: {item}" for key, item in value.items() if not self._is_missing_value(item)]
-        return [str(value)]
+            return [f"{key}: {self._clean_item(str(item))}" for key, item in value.items() if not self._is_missing_value(item)]
+        return [self._clean_item(str(value))]
+
+    def _clean_item(self, text: str) -> str:
+        """LLM이 붙인 내부 chunk 참조를 제거합니다."""
+        import re
+        text = re.sub(r"\s*[—―-]+\s*근거\s*:\s*\S+", "", text)
+        return text.strip()
 
     def _format_scalar_value(self, value: Any) -> str:
         if isinstance(value, list):
