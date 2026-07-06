@@ -10,6 +10,12 @@ base_config: agent/agent_lplus.yaml
 experiment:
   name: streamlit
 
+evaluation:
+  llm_judge:
+    enabled: false
+    provider: ollama
+    model_name: "exaone3.5:7.8b"
+
 rag:
   embedding:
     provider: ollama
@@ -20,7 +26,7 @@ rag:
   answerer:
     mode: llm
     provider: ollama
-    model_name: exaone3.5:7.8b
+    model_name: "exaone3.5:7.8b"
     temperature: 0.0
   reranker:
     enabled: false
@@ -30,7 +36,12 @@ agent:
     enabled: true
     cache_ttl: 300
     tool_selection_provider: ollama
-    tool_selection_model: exaone3.5:7.8b
+    tool_selection_model: "exaone3.5:7.8b"
+  tools:
+    decide_participation:
+      answerer:
+        provider: ollama
+        model_name: "exaone3.5:7.8b"
   performance:
     target_first_response_ms: 3000
     target_full_analysis_ms: 10000
