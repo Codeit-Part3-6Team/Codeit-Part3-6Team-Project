@@ -3,11 +3,13 @@
 ===========
 선택한 문서 범위에서 RAG 질의를 수행하는 전용 화면입니다.
 
-RAG 호출은 백그라운드 job으로 분리하고, @st.fragment(run_every=2)로
-풀페이지 리렌더 없이 결과를 수신합니다.
+RAG 호출은 백그라운드 job으로 분리하고, job_running 중에는
+최소 UI만 렌더링하며 2초 간격으로 polling합니다.
 """
 
 from __future__ import annotations
+
+import time
 
 import streamlit as st
 
@@ -70,28 +72,25 @@ def _start_question(question: str, selected_ids: list[str], titles: list[str]) -
     st.rerun()
 
 
-@st.fragment(run_every=2)
-def _poll_job():
-    """백그라운드 job을 폴링합니다. 완료 시 messages에 추가."""
+def _check_and_collect_job() -> bool:
+    """job 상태를 확인합니다. 완료 시 messages에 저장. 실행중이면 True."""
     job_id = ss.get("active_chat_job_id")
     if not job_id:
-        return
+        return False
 
     job = get_chat_job(job_id)
     if not job:
         ss.messages.append({
             "role": "assistant",
-            "content": "진행 중이던 답변 작업을 찾지 못했습니다. 다시 질문해주세요.",
+            "content": "진행 중이던 답변 작업을 찾지 못했습니다.",
             "sources": [],
         })
         ss.active_chat_job_id = None
-        return
+        return False
 
     status = job.get("status")
     if status == "running":
-        with st.chat_message("assistant"):
-            st.info("문서에서 근거를 찾는 중입니다...")
-        return
+        return True
 
     if status == "done":
         ss.messages.append({
@@ -108,6 +107,7 @@ def _poll_job():
 
     clear_chat_job(job_id)
     ss.active_chat_job_id = None
+    st.rerun()
 
 
 # ── 가드 ──
@@ -125,14 +125,30 @@ if not ss.analyzed or not ss.analysis:
 selected_ids = list(ss.selected_doc_ids or [])
 titles = _selected_titles()
 data = ss.analysis or {}
-job_running = bool(ss.get("active_chat_job_id"))
+job_running = _check_and_collect_job()
 
-# ── 헤더 ──
+# ── polling: job 실행 중엔 최소 UI → sleep → rerun ──
+if job_running:
+    st.markdown(
+        f'<div class="panel-title">💬 대화형 탐색 · {esc(_head_label(titles))}'
+        f'<span class="status-wait" style="margin-left:12px">● 분석 중</span></div>',
+        unsafe_allow_html=True,
+    )
+    for message in ss.messages:
+        if message["role"] == "user":
+            with st.chat_message("user"):
+                st.markdown(str(message["content"] or ""))
+    with st.chat_message("assistant"):
+        with st.spinner("문서에서 근거를 찾는 중입니다..."):
+            time.sleep(2)
+    st.rerun()
+
+# ── job 완료: 전체 UI ──
 h1, h2 = st.columns([3, 1], vertical_alignment="center")
 with h1:
-    status_badge = '<span class="status-wait" style="margin-left:12px">● 분석 중</span>' if job_running else '<span class="status-ok" style="margin-left:12px">● 분석 완료</span>'
     st.markdown(
-        f'<div class="panel-title">💬 대화형 탐색 · {esc(_head_label(titles))}{status_badge}</div>',
+        f'<div class="panel-title">💬 대화형 탐색 · {esc(_head_label(titles))}'
+        f'<span class="status-ok" style="margin-left:12px">● 분석 완료</span></div>',
         unsafe_allow_html=True,
     )
     if data.get("mode") == "rag" and ss.run_id:
@@ -148,20 +164,18 @@ with h2:
 
 st.markdown('<div style="height:10px"></div>', unsafe_allow_html=True)
 
-# ── 추천 질문 ──
 suggested = ["사업 예산은?", "참가 자격은?", "제출 서류는?", "평가 기준은?"]
 chip_cols = st.columns(4)
 for col, question in zip(chip_cols, suggested):
     with col:
-        if st.button(question, type="secondary", use_container_width=True, key=f"chat_chip_{question}", disabled=job_running):
+        if st.button(question, type="secondary", use_container_width=True, key=f"chat_chip_{question}"):
             _start_question(question, selected_ids, titles)
 
-if ss.get("pending_q") and not job_running:
+if ss.get("pending_q"):
     _start_question(str(ss.pending_q), selected_ids, titles)
 
 st.markdown('<div style="height:10px"></div>', unsafe_allow_html=True)
 
-# ── 대화 기록 ──
 for message in ss.messages:
     role = message.get("role")
     if role == "user":
@@ -172,10 +186,6 @@ for message in ss.messages:
             st.markdown(str(message.get("content") or ""))
             _render_sources(message.get("sources") or [])
 
-# ── job polling (fragment: 이 영역만 2초마다 자동 갱신) ──
-_poll_job()
-
-# ── 입력 ──
-question = st.chat_input("선택한 문서에 대해 질문해보세요", disabled=job_running)
+question = st.chat_input("선택한 문서에 대해 질문해보세요")
 if question:
     _start_question(question, selected_ids, titles)
