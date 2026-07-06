@@ -325,8 +325,10 @@ class ChatbotRunner:
             label, value = fields[0]
             particle = "은" if _has_batchim(label) else "는"
             return f"{label}{particle} {self._format_scalar_value(value)}입니다."
-        if answer_type in {"list", "checklist", "evaluation", "comparison"}:
+        if answer_type in {"list", "checklist"}:
             return self._render_table_answer(answer_type, fields)
+        if answer_type in {"evaluation", "comparison"}:
+            return self._render_bullet_answer(answer_type, fields)
         if answer_type == "judgement":
             return self._render_judgement_answer(fields)
         if answer_type == "summary":
@@ -344,6 +346,19 @@ class ChatbotRunner:
         for label, value in fields:
             for item in self._value_items(value):
                 lines.append(f"| {label} | {self._escape_table_cell(item)} |")
+        return "\n".join(lines)
+
+    def _render_bullet_answer(self, answer_type: str, fields: list[tuple[str, Any]]) -> str:
+        title_by_type = {
+            "evaluation": "문서에서 확인한 평가 기준입니다.",
+            "comparison": "문서에서 확인한 비교 항목입니다.",
+        }
+        lines = [title_by_type.get(answer_type, "문서에서 확인한 내용입니다."), ""]
+        for label, value in fields:
+            lines.append(f"**{label}**")
+            for item in self._value_items(value):
+                lines.append(f"- {item}")
+            lines.append("")
         return "\n".join(lines)
 
     def _render_summary_answer(self, fields: list[tuple[str, Any]]) -> str:
