@@ -246,16 +246,31 @@ def _build_chatbot(run_id: str) -> Any:
     return bot
 
 
-def _filter_bot_documents(bot: Any, selected_doc_ids: list[str] | None) -> bool:
-    if not selected_doc_ids:
-        return True
+def _get_chatbot_for_filter(run_id: str, selected_doc_ids: list[str] | None) -> Any:
+    """선택 문서 필터에 맞는 챗봇을 반환합니다.
 
-    bot._selected_doc_ids = list(selected_doc_ids)
+    Chroma는 retriever filter만 바꾸면 되므로 run_id별 캐시를 재사용합니다.
+    CSV/JSONL 메모리 경로는 chunks를 직접 잘라내야 하므로 임시 챗봇을 씁니다.
+    """
+    bot = _get_or_build_chatbot(run_id)
+    if not selected_doc_ids or getattr(bot, "_use_chroma", False):
+        return bot
+    return _build_chatbot(run_id)
+
+
+def _filter_bot_documents(bot: Any, selected_doc_ids: list[str] | None) -> bool:
+    bot._selected_doc_ids = list(selected_doc_ids or [])
 
     if getattr(bot, "_use_chroma", False):
         for tool in bot.tools.values():
             if tool.retriever_cfg.get("method") == "chroma":
-                tool.retriever_cfg["document_ids"] = list(selected_doc_ids)
+                if selected_doc_ids:
+                    tool.retriever_cfg["document_ids"] = list(selected_doc_ids)
+                else:
+                    tool.retriever_cfg.pop("document_ids", None)
+        return True
+
+    if not selected_doc_ids:
         return True
 
     doc_ids = set(selected_doc_ids)
@@ -439,6 +454,7 @@ def ask(run_id: str, question: str) -> dict[str, Any]:
     """챗봇에게 질문하고 답변 + citation을 반환합니다."""
     try:
         bot = _get_or_build_chatbot(run_id)
+        _filter_bot_documents(bot, None)
         response = bot.chat(question)
 
         citations = _dedupe_citations(list(response.get("citations") or []))
@@ -469,7 +485,7 @@ def ask_with_document_filter(
     선택 문서가 없으면 기본 ask()와 동일하게 동작합니다.
     """
     try:
-        bot = _get_or_build_chatbot(run_id) if not selected_doc_ids else _build_chatbot(run_id)
+        bot = _get_chatbot_for_filter(run_id, selected_doc_ids)
         if not _filter_bot_documents(bot, selected_doc_ids):
             return {
                 "reply": "선택한 문서에 해당하는 분석 데이터가 없습니다.",
@@ -507,7 +523,7 @@ def run_tool(
     """지정한 Tool을 명시적으로 실행합니다."""
     started = time.perf_counter()
     try:
-        bot = _build_chatbot(run_id)
+        bot = _get_chatbot_for_filter(run_id, selected_doc_ids)
         if not _filter_bot_documents(bot, selected_doc_ids):
             return {
                 "reply": "선택한 문서에 해당하는 분석 데이터가 없습니다.",
