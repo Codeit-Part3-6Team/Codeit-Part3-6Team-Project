@@ -3,7 +3,7 @@
 ============================
 내부 문서를 선택·분석한 뒤 사용하는 작업 화면.
 왼쪽: 분석 결과 탭(핵심 요약 / 핵심 요구사항 / 사업 개요)
-오른쪽: RAG 대화형 탐색(질문 → 출처와 함께 답변)
+오른쪽: 대화형 탐색 진입점
 
 세션 상태(ss.analysis, ss.messages, ss.selected_docs)는 페이지가 바뀌어도
 유지되므로 '문서 분석'에서 만든 결과를 여기서 그대로 사용합니다.
@@ -11,21 +11,10 @@
 
 import streamlit as st
 
-from utils.components import topbar, esc, P_DOCS
-from services.frontend_adapter import chat_ask
+from utils.components import topbar, esc, P_DOCS, P_CHAT
 
 ss = st.session_state
-if ss.get("pending_chat_request"):
-    pending_request = ss.pending_chat_request
-    ans, srcs = chat_ask(
-        str(pending_request.get("question") or ""),
-        pending_request.get("run_id"),
-        pending_request.get("selected_ids") or None,
-        pending_request.get("titles") or [],
-    )
-    ss.messages.append({"role": "assistant", "content": ans.strip(), "sources": srcs})
-    ss.pending_chat_request = None
-    st.rerun()
+ss.pending_chat_request = None
 
 topbar()
 st.markdown('<div style="height:14px"></div>', unsafe_allow_html=True)
@@ -57,11 +46,6 @@ def _summary_card(item: str) -> str:
         )
     return f'<div class="summary-card"><div class="summary-v">{esc(item)}</div></div>'
 
-
-def _render_chat_sources(sources: list[tuple[str, str]] | None) -> None:
-    """채팅 답변 아래 출처를 안전하게 표시합니다."""
-    if sources:
-        st.caption("근거: " + " · ".join(f"{p} {s}" for p, s in sources))
 
 # ── 가드: 분석 결과가 없으면 문서 선택 페이지로 유도 ─────────────────────────
 if not ss.analyzed or not ss.analysis:
@@ -104,11 +88,12 @@ with h2:
         ss.messages = []
         ss.pending_q = None
         ss.pending_chat_request = None
+        ss.active_chat_job_id = None
         st.switch_page(P_DOCS)
 
 st.markdown('<div style="height:14px"></div>', unsafe_allow_html=True)
 
-# ── 다중 레이아웃: 좌(분석) / 우(채팅) ───────────────────────────────────────
+# ── 다중 레이아웃: 좌(분석) / 우(대화형 탐색 진입점) ─────────────────────────
 left, right = st.columns([1.25, 1], gap="large")
 
 # ----- 왼쪽: 분석 결과 탭 -----
@@ -162,47 +147,41 @@ with left:
                     f'<div class="meta-grid">{meta_cells}</div></div>',
                     unsafe_allow_html=True)
 
-# ----- 오른쪽: RAG 대화형 탐색 -----
+# ----- 오른쪽: RAG 대화형 탐색 진입점 -----
 with right:
     st.markdown('<div class="panel-title" style="margin-bottom:6px">💬 대화형 탐색</div>',
                 unsafe_allow_html=True)
-    # 백엔드 모드에 맞는 안내 문구
     if data.get("mode") == "rag" and ss.run_id:
         scope = f"선택한 {len(selected_ids)}개 문서" if len(selected_ids) > 1 else "선택한 문서"
-        st.caption(f"{scope} 범위에서 검색하는 RAG 응답입니다. 출처는 문서 내 실제 근거 위치입니다.")
+        st.caption(f"{scope} 범위에서 질문합니다. 표와 체크리스트는 별도 화면에서 넓게 표시됩니다.")
     else:
         st.caption("RAG 미연결(Mock) 모드입니다. 예시 응답과 예시 출처가 표시됩니다.")
 
-    # 추천 질문 칩
+    st.markdown(
+        '<div class="panel" style="margin-top:12px">'
+        '<div style="color:var(--text-2);font-size:.94rem;line-height:1.65">'
+        '질문 답변은 전용 대화 화면에서 처리합니다. 긴 RAG 실행 중에도 분석 화면 UI가 '
+        '답변에 섞이지 않도록 분리했습니다.'
+        '</div></div>',
+        unsafe_allow_html=True,
+    )
+
+    if st.button("대화형 탐색 열기", type="primary", use_container_width=True, key="open_chat"):
+        ss.pending_q = None
+        ss.pending_chat_request = None
+        st.switch_page(P_CHAT)
+
     suggested = ["사업 예산은?", "참가 자격은?", "제출 서류는?"]
+    st.caption("추천 질문")
     chip_cols = st.columns(3)
     for col, q in zip(chip_cols, suggested):
         with col:
             if st.button(q, type="secondary", use_container_width=True, key=f"chip_{q}"):
                 ss.pending_q = q
-                st.rerun()
+                ss.pending_chat_request = None
+                st.switch_page(P_CHAT)
 
-    # 대화 기록 렌더. 기본 chat_message를 사용해 페이지 UI와 답변 영역 경계를 분리한다.
-    for m in ss.messages:
-        if m["role"] == "user":
-            with st.chat_message("user"):
-                st.markdown(str(m["content"]))
-        else:
-            with st.chat_message("assistant"):
-                st.markdown(str(m["content"]))
-                _render_chat_sources(m.get("sources", []))
-
-    # 입력 처리 (추천칩 또는 직접 입력)
-    typed = st.chat_input("선택한 문서에 대해 질문해보세요")
-    question = ss.pending_q or typed
-    ss.pending_q = None
-
-    if question:
-        ss.messages.append({"role": "user", "content": question})
-        ss.pending_chat_request = {
-            "question": question,
-            "run_id": ss.run_id,
-            "selected_ids": list(selected_ids),
-            "titles": list(titles),
-        }
-        st.rerun()
+    if ss.messages:
+        last_user = next((m for m in reversed(ss.messages) if m.get("role") == "user"), None)
+        if last_user:
+            st.caption(f"최근 질문: {last_user.get('content')}")

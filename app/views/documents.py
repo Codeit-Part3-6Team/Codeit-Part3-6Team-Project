@@ -104,6 +104,7 @@ def _reset_workspace() -> None:
     ss.messages = []
     ss.pending_q = None
     ss.pending_chat_request = None
+    ss.active_chat_job_id = None
 
 
 def _run_analysis(doc_ids: list[str], docs: list[dict]) -> None:
@@ -125,6 +126,7 @@ def _run_analysis(doc_ids: list[str], docs: list[dict]) -> None:
     ss.messages = []
     ss.pending_q = None
     ss.pending_chat_request = None
+    ss.active_chat_job_id = None
     st.switch_page(P_WORKSPACE)
 
 

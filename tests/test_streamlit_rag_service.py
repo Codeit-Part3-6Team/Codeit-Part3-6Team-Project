@@ -1,9 +1,11 @@
 from __future__ import annotations
 
 import csv
+import time
 from pathlib import Path
 
 from app.services import rag_service
+from app.services import chat_jobs
 from app.services import frontend_adapter
 from src.rag.chatbot import ChatbotRunner
 from src.rag.tool import ToolResult
@@ -15,6 +17,49 @@ def _write_csv(path: Path, rows: list[dict[str, str]], columns: list[str]) -> No
         writer = csv.DictWriter(f, fieldnames=columns)
         writer.writeheader()
         writer.writerows(rows)
+
+
+def _wait_for_chat_job(job_id: str, timeout: float = 2.0) -> dict:
+    deadline = time.time() + timeout
+    while time.time() < deadline:
+        job = chat_jobs.get_chat_job(job_id)
+        if job and job["status"] != "running":
+            return job
+        time.sleep(0.01)
+    raise AssertionError("chat job did not finish")
+
+
+def test_chat_job_transitions_to_done(monkeypatch):
+    monkeypatch.setattr(
+        chat_jobs,
+        "chat_ask",
+        lambda question, run_id, selected_doc_ids, titles: ("답변입니다.", [("p.1", "본문")]),
+    )
+
+    job_id = chat_jobs.start_chat_job("사업 예산은?", "run-1", ["doc-1"], ["문서"])
+
+    job = _wait_for_chat_job(job_id)
+
+    assert job["status"] == "done"
+    assert job["answer"] == "답변입니다."
+    assert job["sources"] == [("p.1", "본문")]
+    chat_jobs.clear_chat_job(job_id)
+    assert chat_jobs.get_chat_job(job_id) is None
+
+
+def test_chat_job_transitions_to_failed(monkeypatch):
+    def fail_chat(*args, **kwargs):
+        raise RuntimeError("boom")
+
+    monkeypatch.setattr(chat_jobs, "chat_ask", fail_chat)
+
+    job_id = chat_jobs.start_chat_job("질문", "run-1", ["doc-1"], ["문서"])
+
+    job = _wait_for_chat_job(job_id)
+
+    assert job["status"] == "failed"
+    assert "boom" in job["error"]
+    chat_jobs.clear_chat_job(job_id)
 
 
 def test_get_documents_uses_parsed_document_metadata(tmp_path, monkeypatch):

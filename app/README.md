@@ -13,9 +13,11 @@ app/
 |-- views/
 |   |-- home.py               # 홈
 |   |-- documents.py          # 내부 문서 검색/선택/분석 시작
-|   |-- workspace.py          # 분석 결과 + 선택 문서 RAG 채팅
+|   |-- workspace.py          # 분석 결과 + 대화형 탐색 진입점
+|   |-- chat.py               # 선택 문서 RAG 채팅 전용 화면
 |   |-- pricing.py            # 요금제
 |-- services/
+|   |-- chat_jobs.py          # 백그라운드 채팅 job queue
 |   |-- frontend_adapter.py   # 화면 코드와 RAG 서비스 사이 변환 계층
 |   |-- rag_service.py        # Streamlit UI용 RAG 서비스 함수
 |   |-- sqlite_store.py       # run/document/chat_history 저장소
@@ -37,7 +39,7 @@ pip install -r requirements.txt
 python -m streamlit run app/app.py
 ```
 
-기본 화면은 앱 내부 네비게이션을 통해 `documents.py`로 이동해 문서를 선택하고, 분석 완료 후 `workspace.py`에서 결과와 채팅을 확인하는 흐름입니다.
+기본 화면은 앱 내부 네비게이션을 통해 `documents.py`로 이동해 문서를 선택하고, 분석 완료 후 `workspace.py`에서 분석 결과를 확인한 뒤 `chat.py`에서 선택 문서 범위 RAG 채팅을 수행하는 흐름입니다.
 
 ## RAG 연결 흐름
 
@@ -49,7 +51,7 @@ python -m streamlit run app/app.py
 2. `documents.py`가 `internal_corpus()`로 가장 적합한 corpus run과 문서 목록 조회
 3. 사용자가 문서 1건 또는 여러 건 선택
 4. `analyze_selection()`이 `summarize()`와 `extract_requirements()` 실행
-5. `workspace.py`가 `chat_ask()`로 선택 문서 범위 RAG 질의 수행
+5. `chat.py`가 `chat_jobs.py`를 통해 선택 문서 범위 RAG 질의를 백그라운드 job으로 수행
 6. UI는 `reply`, `structured_output`, `citations`를 분리해 표시
 
 ## 내부 corpus 준비
@@ -94,5 +96,5 @@ set RAG_MODE=mock
 
 - Streamlit config는 `configs/experiments/rag/streamlit.yaml`을 사용하며, `agent/agent_lplus.yaml`과 `config_final.yaml`을 `base_config`로 상속합니다.
 - 앱 경로에서는 `streamlit.yaml`이 `vector_store.type: chroma`를 override하므로 Chroma 기반 검색을 사용합니다.
-- 선택 문서 채팅은 `ask_with_document_filter(run_id, question, selected_doc_ids)`를 통해 문서 범위를 전달합니다.
+- 선택 문서 채팅은 `chat_jobs.py`의 백그라운드 job에서 `ask_with_document_filter(run_id, question, selected_doc_ids)`를 호출해 문서 범위를 전달합니다.
 - 내일 VM 실테스트에서는 내부 corpus ingest, 문서 목록 선택, 단일 문서 요약, 다중 문서 비교, 선택 문서 채팅, citation 범위를 우선 확인합니다.

@@ -45,6 +45,7 @@ P_HOME      = "views/home.py"
 P_ABOUT     = "views/about.py"       # 서비스 소개
 P_DOCS      = "views/documents.py"   # 내부 문서 목록/검색/선택 (구 analyze)
 P_WORKSPACE = "views/workspace.py"   # 요약·요구사항·질문
+P_CHAT      = "views/chat.py"        # 선택 문서 대화형 탐색
 P_PRICING   = "views/pricing.py"
 P_SEARCH    = "views/search.py"      # 정부제안서 검색(외부 사이트 모음)
 

@@ -37,6 +37,7 @@ ss.setdefault("analysis", None)          # 분석 결과 dict
 ss.setdefault("messages", [])            # 채팅 기록
 ss.setdefault("pending_q", None)         # 추천 질문 클릭 처리용
 ss.setdefault("pending_chat_request", None)  # rerun 후 안전하게 처리할 채팅 요청
+ss.setdefault("active_chat_job_id", None)    # 백그라운드 채팅 job ID
 
 # ── 2) 페이지 등록 ───────────────────────────────────────────────────────────
 home = st.Page("views/home.py", title="홈", icon="🏠", default=True)
@@ -44,12 +45,13 @@ about = st.Page("views/about.py", title="서비스 소개", icon="✨")
 documents = st.Page("views/documents.py", title="문서 분석", icon="📚")
 search = st.Page("views/search.py", title="정부제안서 검색", icon="🔎")
 workspace = st.Page("views/workspace.py", title="워크스페이스", icon="🗂️")
+chat = st.Page("views/chat.py", title="대화형 탐색", icon="💬")
 pricing = st.Page("views/pricing.py", title="요금제", icon="💳")
 
 # ── 3) 내비게이션 실행 ───────────────────────────────────────────────────────
 # position="hidden" : 자동 사이드바 메뉴를 만들지 않음. 이동은 상단바로만.
 pg = st.navigation(
-    [home, about, documents, search, workspace, pricing],
+    [home, about, documents, search, workspace, chat, pricing],
     position="hidden",
 )
 pg.run()
