@@ -41,6 +41,16 @@ FIELD_ALIASES = {
 }
 
 
+def _has_batchim(word: str) -> bool:
+    """한글 마지막 글자에 받침이 있는지 확인합니다."""
+    if not word:
+        return False
+    last = word[-1]
+    if not ("가" <= last <= "힣"):
+        return False
+    return (ord(last) - 0xAC00) % 28 != 0
+
+
 class ChatbotRunner:
     """LLM 기반 Tool 선택 + 실행 챗봇입니다.
 
@@ -299,7 +309,8 @@ class ChatbotRunner:
     def _render_projected_answer(self, answer_type: str, fields: list[tuple[str, Any]]) -> str:
         if answer_type == "scalar":
             label, value = fields[0]
-            return f"{label}은 {self._format_scalar_value(value)}입니다."
+            particle = "은" if _has_batchim(label) else "는"
+            return f"{label}{particle} {self._format_scalar_value(value)}입니다."
         if answer_type in {"list", "checklist", "evaluation", "comparison"}:
             return self._render_table_answer(answer_type, fields)
         if answer_type == "judgement":
