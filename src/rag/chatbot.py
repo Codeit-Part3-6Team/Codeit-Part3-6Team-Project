@@ -249,7 +249,7 @@ class ChatbotRunner:
             stripped = self._strip_source_block(natural_reply).strip()
             _, value = projected[0]
             value_text = str(self._format_scalar_value(value))
-            is_natural = "\n" not in stripped or ":" not in stripped
+            is_natural = stripped.count(":") <= 1 and len(stripped) < 200
             if is_natural and stripped and value_text in stripped:
                 return stripped
 
