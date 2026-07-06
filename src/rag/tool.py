@@ -8,7 +8,10 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from enum import Enum
+import logging
 from typing import Any
+
+logger = logging.getLogger("rag.tool")
 
 
 class OnFailure(str, Enum):
@@ -93,6 +96,10 @@ class Tool:
                     self.full_rag_config,
                 )
                 retrieved = retriever.retrieve(enriched_question, chunks, embeddings or [])
+                # 디버깅: 기간/마감 관련 정보가 검색됐는지 확인
+                period_hits = sum(1 for r in retrieved if any(kw in str(r.get("text", "")) for kw in ("기간", "마감", "일정")))
+                logger.info("Tool=%s retrieved=%d period_keyword_hits=%d",
+                            self.name, len(retrieved), period_hits)
         except Exception as exc:
             errors.append(f"retrieve: {exc}")
             if self.on_failure in (OnFailure.ABORT_PHASE, OnFailure.ABORT_AGENT):
@@ -139,6 +146,12 @@ class Tool:
             }
 
         finished_ms = int(time.time() * 1000)
+        structured = answer_payload.get("structured_output")
+        if structured:
+            missing = [k for k, v in structured.items() if v in (None, "", [], "명시되지 않음")]
+            logger.info("Tool=%s retrieved=%d structured_fields=%d missing=%s",
+                        self.name, len(retrieved), len(structured),
+                        ", ".join(missing) if missing else "none")
         return ToolResult(
             tool_name=self.name,
             status=self._resolve_status(errors, answer_payload),
