@@ -141,9 +141,13 @@ def _parse_csv_document(project_root: Path, path: Path) -> list[dict[str, str]]:
                 "사업 금액",
                 "발주 기관",
                 "공고 차수",
+                "공개 일자",
+                "공개일자",
                 "파일형식",
                 "파일명",
                 "사업 요약",
+                "입찰 참여 시작일",
+                "입찰참여시작일",
                 "사업 기간",
                 "사업기간",
                 "계약 기간",
@@ -158,6 +162,8 @@ def _parse_csv_document(project_root: Path, path: Path) -> list[dict[str, str]]:
                 "입찰마감",
                 "입찰 마감일",
                 "입찰마감일",
+                "입찰 참여 마감일",
+                "입찰참여마감일",
                 "마감일",
                 "마감일시",
             ):
@@ -176,9 +182,15 @@ def _build_meta_preamble(entry: dict[str, str], title: str) -> str:
     금액 = _first_entry_value(entry, ["사업 금액", "사업금액", "예산", "사업예산"])
     if 금액:
         parts.append(f"사업금액: {_format_amount(금액)}")
+    공개일자 = _first_entry_value(entry, ["공개 일자", "공개일자"])
+    if 공개일자:
+        parts.append(f"공개일자: {공개일자}")
     기간 = _first_entry_value(entry, ["사업 기간", "사업기간", "계약 기간", "계약기간", "용역 기간", "용역기간"])
     if 기간:
         parts.append(f"사업기간: {기간}")
+    입찰시작 = _first_entry_value(entry, ["입찰 참여 시작일", "입찰참여시작일"])
+    if 입찰시작:
+        parts.append(f"입찰시작: {입찰시작}")
     마감 = _first_entry_value(
         entry,
         [
@@ -190,6 +202,8 @@ def _build_meta_preamble(entry: dict[str, str], title: str) -> str:
             "입찰마감",
             "입찰 마감일",
             "입찰마감일",
+            "입찰 참여 마감일",
+            "입찰참여마감일",
             "마감일",
             "마감일시",
         ],

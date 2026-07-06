@@ -57,8 +57,8 @@ def test_load_documents_keeps_csv_period_and_deadline_metadata(tmp_path: Path):
     (docs_dir / "data_list.csv").write_text(
         "\n".join(
             [
-                "공고 번호,사업명,텍스트,사업 금액,발주 기관,사업 기간,제출마감일",
-                "RFP-1,테스트 사업,본문입니다.,123000000,테스트기관,계약일로부터 3개월,2026-07-20 17:00",
+                "공고 번호,공고 차수,사업명,사업 금액,발주 기관,공개 일자,입찰 참여 시작일,입찰 참여 마감일,사업 요약,파일형식,파일명,텍스트",
+                "RFP-1,1,테스트 사업,123000000,테스트기관,2026-06-30,2026-07-01 09:00,2026-07-20 17:00,요약입니다,pdf,test.pdf,본문입니다.",
             ]
         ),
         encoding="utf-8-sig",
@@ -67,11 +67,13 @@ def test_load_documents_keeps_csv_period_and_deadline_metadata(tmp_path: Path):
     rows = load_documents(tmp_path, "docs", ["csv"], csv_file="data_list.csv")
 
     assert rows[0]["preamble"] == (
-        "사업명: 테스트 사업 | 발주기관: 테스트기관 | 사업금액: 123,000,000원 | "
-        "사업기간: 계약일로부터 3개월 | 제출마감: 2026-07-20 17:00"
+        "사업명: 테스트 사업 | 발주기관: 테스트기관 | 사업금액: 123,000,000원 | 공개일자: 2026-06-30 | "
+        "사업기간: 계약일로부터 3개월 | 입찰시작: 2026-07-01 09:00 | 제출마감: 2026-07-20 17:00"
     )
+    assert rows[0]["meta_공개 일자"] == "2026-06-30"
     assert rows[0]["meta_사업 기간"] == "계약일로부터 3개월"
-    assert rows[0]["meta_제출마감일"] == "2026-07-20 17:00"
+    assert rows[0]["meta_입찰 참여 시작일"] == "2026-07-01 09:00"
+    assert rows[0]["meta_입찰 참여 마감일"] == "2026-07-20 17:00"
 
 
 def test_load_documents_rejects_unknown_file_type(tmp_path: Path):

@@ -670,6 +670,8 @@ def _enrich_document_card_metadata(
             "meta_입찰마감",
             "meta_입찰 마감일",
             "meta_입찰마감일",
+            "meta_입찰 참여 마감일",
+            "meta_입찰참여마감일",
             "meta_마감일",
             "meta_마감일시",
         ],
@@ -681,10 +683,10 @@ def _enrich_document_card_metadata(
         org = org or preamble.get("발주기관", "")
         amount = amount or preamble.get("사업금액", "")
         period = period or preamble.get("사업기간", "") or preamble.get("계약기간", "")
-        deadline = deadline or preamble.get("제출마감", "") or preamble.get("입찰마감", "")
+        deadline = deadline or preamble.get("제출마감", "") or preamble.get("입찰마감", "") or preamble.get("입찰참여마감", "")
 
     period = period or _extract_labeled_value(summary, ["사업기간", "계약기간", "용역기간", "수행기간"])
-    deadline = deadline or _extract_labeled_value(summary, ["제출마감", "제출마감일", "입찰마감", "입찰마감일", "마감일", "마감일시"])
+    deadline = deadline or _extract_labeled_value(summary, ["제출마감", "제출마감일", "입찰마감", "입찰마감일", "입찰참여마감", "입찰참여마감일", "마감일", "마감일시"])
 
     if org:
         document.setdefault("org", org)

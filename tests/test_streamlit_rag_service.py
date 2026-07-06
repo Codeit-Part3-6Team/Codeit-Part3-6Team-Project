@@ -368,6 +368,60 @@ def test_get_documents_enriches_period_and_deadline(tmp_path, monkeypatch):
     assert document["deadline"] == "2026-07-20 17:00"
 
 
+def test_get_documents_reads_actual_bid_deadline_column(tmp_path, monkeypatch):
+    monkeypatch.setattr(rag_service, "_STREAMLIT_EXPERIMENTS", tmp_path)
+    output_dir = tmp_path / "run-1" / "output"
+
+    _write_csv(
+        output_dir / "parsed_documents.csv",
+        [
+            {
+                "document_id": "doc-1",
+                "title": "테스트 제안요청서",
+                "source_path": "raw_docs/test.pdf",
+                "meta_입찰 참여 시작일": "2026-07-01 09:00",
+                "meta_입찰 참여 마감일": "2026-07-20 17:00",
+            }
+        ],
+        [
+            "document_id",
+            "title",
+            "source_path",
+            "meta_입찰 참여 시작일",
+            "meta_입찰 참여 마감일",
+        ],
+    )
+    _write_csv(
+        output_dir / "chunks.csv",
+        [
+            {
+                "chunk_id": "chunk-1",
+                "document_id": "doc-1",
+                "source_path": "raw_docs/test.pdf",
+                "page_start": "1",
+                "page_end": "1",
+                "section": "",
+                "text": "본문",
+                "token_count": "10",
+            }
+        ],
+        [
+            "chunk_id",
+            "document_id",
+            "source_path",
+            "page_start",
+            "page_end",
+            "section",
+            "text",
+            "token_count",
+        ],
+    )
+
+    document = rag_service.get_documents("run-1")[0]
+
+    assert document["deadline"] == "2026-07-20 17:00"
+
+
 def test_labeled_summary_builds_fast_workspace_sections():
     summary = (
         "- 사업개요: 통합사회정보시스템 운영 지원 "
