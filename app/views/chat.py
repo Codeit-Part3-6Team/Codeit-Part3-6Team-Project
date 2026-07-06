@@ -18,7 +18,8 @@ from utils.components import P_DOCS, P_WORKSPACE, esc, topbar
 
 CHAT_CSS = """
 <style>
-.block-container{ max-width:960px !important; }
+.block-container{ max-width:960px !important; padding-left:2rem !important; padding-right:2rem !important; }
+[data-testid="stChatInput"]{ max-width:720px !important; margin:0 auto !important; }
 [data-testid="stChatMessage"] table{ width:100%; border-collapse:collapse; font-size:.92rem;
   margin:8px 0; background:var(--panel-2); border-radius:10px; overflow:hidden; }
 [data-testid="stChatMessage"] td, [data-testid="stChatMessage"] th{
@@ -27,7 +28,7 @@ CHAT_CSS = """
   text-align:left; white-space:nowrap; }
 [data-testid="stChatMessage"] td{ color:var(--text); }
 [data-testid="stChatMessage"] td:first-child{ color:var(--blue-bright); font-weight:600;
-  white-space:nowrap; min-width:90px; }
+  white-space:nowrap; min-width:100px; }
 </style>
 """
 st.markdown(CHAT_CSS, unsafe_allow_html=True)
@@ -126,6 +127,25 @@ titles = _selected_titles()
 data = ss.analysis or {}
 job_running = _resolve_active_job()
 
+# ── polling 중에는 최소한의 UI만 렌더링 ──
+if job_running:
+    st.markdown(
+        f'<div class="panel-title">💬 대화형 탐색 · {esc(_head_label(titles))}'
+        f'<span class="status-wait" style="margin-left:12px">● 분석 중</span></div>',
+        unsafe_allow_html=True,
+    )
+    for message in ss.messages:
+        role = message.get("role")
+        if role == "user":
+            with st.chat_message("user"):
+                st.markdown(str(message.get("content") or ""))
+    with st.chat_message("assistant"):
+        with st.spinner("문서에서 근거를 찾는 중입니다..."):
+            time.sleep(2)
+    st.rerun()
+
+# ── job 완료 시 전체 UI ──
+
 h1, h2 = st.columns([3, 1], vertical_alignment="center")
 with h1:
     st.markdown(
@@ -167,12 +187,6 @@ for message in ss.messages:
         with st.chat_message("assistant"):
             st.markdown(str(message.get("content") or ""))
             _render_sources(message.get("sources") or [])
-
-if job_running:
-    with st.chat_message("assistant"):
-        st.info("문서에서 근거를 찾는 중입니다.")
-    time.sleep(1)
-    st.rerun()
 
 question = st.chat_input("선택한 문서에 대해 질문해보세요")
 if question:
