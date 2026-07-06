@@ -183,20 +183,18 @@ with right:
                 _render_chat_sources(m.get("sources", []))
 
     if pending_request:
-        with st.chat_message("assistant"):
-            status = st.empty()
-            status.info("문서에서 근거를 찾는 중입니다.")
-            ans, srcs = chat_ask(
-                str(pending_request.get("question") or ""),
-                pending_request.get("run_id"),
-                pending_request.get("selected_ids") or None,
-                pending_request.get("titles") or [],
-            )
-            status.empty()
-            st.markdown(ans)
-            _render_chat_sources(srcs)
+        status = st.empty()
+        status.info("문서에서 근거를 찾는 중입니다.")
+        ans, srcs = chat_ask(
+            str(pending_request.get("question") or ""),
+            pending_request.get("run_id"),
+            pending_request.get("selected_ids") or None,
+            pending_request.get("titles") or [],
+        )
+        status.empty()
         ss.messages.append({"role": "assistant", "content": ans.strip(), "sources": srcs})
         ss.pending_chat_request = None
+        st.rerun()
 
     # 입력 처리 (추천칩 또는 직접 입력)
     typed = st.chat_input("선택한 문서에 대해 질문해보세요")
