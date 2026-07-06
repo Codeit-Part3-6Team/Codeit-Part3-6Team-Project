@@ -19,8 +19,6 @@ from utils.components import topbar, footer, esc, P_WORKSPACE
 from services.frontend_adapter import backend_mode, internal_corpus, analyze_selection
 
 ss = st.session_state
-ss["_documents_page_seq"] = int(ss.get("_documents_page_seq", 0)) + 1
-PAGE_KEY = f"documents_{ss['_documents_page_seq']}"
 topbar()
 
 st.markdown('<div style="height:20px"></div>', unsafe_allow_html=True)
@@ -62,7 +60,7 @@ with sc1:
         "문서 검색",
         placeholder="사업명 또는 발주기관으로 검색  (예: 시스템 고도화, 한국수자원공사)",
         label_visibility="collapsed",
-        key=f"{PAGE_KEY}_doc_query",
+        key="doc_query",
     )
 with sc2:
     st.markdown(
@@ -142,11 +140,11 @@ if picked:
     with b1:
         label = ("📊 선택 문서 비교 분석" if len(picked) >= 2
                  else "⚡ 선택 문서 분석 시작")
-        if st.button(label, type="primary", use_container_width=True, key=f"{PAGE_KEY}_run_selected"):
+        if st.button(label, type="primary", use_container_width=True, key="run_selected"):
             _reset_workspace()
             _run_analysis(picked, list(ss.selected_docs))
     with b2:
-        if st.button("선택 비우기", type="secondary", use_container_width=True, key=f"{PAGE_KEY}_clear_sel"):
+        if st.button("선택 비우기", type="secondary", use_container_width=True, key="clear_sel"):
             ss.selected_doc_ids = []
             ss.selected_docs = []
             st.rerun()
@@ -188,14 +186,14 @@ else:
                 a1, a2 = st.columns([1, 1])
                 with a1:
                     if st.button("분석 →", type="primary", use_container_width=True,
-                                 key=f"{PAGE_KEY}_go_{doc_id}"):
+                                 key=f"go_{doc_id}"):
                         _reset_workspace()
                         _run_analysis([doc_id], [doc])
                 with a2:
                     st.checkbox(
-                        "비교 담기", value=is_sel, key=f"{PAGE_KEY}_pick_{doc_id}",
+                        "비교 담기", value=is_sel, key=f"pick_{doc_id}",
                         on_change=lambda d=doc, i=doc_id: _toggle(
-                            i, d, st.session_state.get(f"{PAGE_KEY}_pick_{i}", False)),
+                            i, d, st.session_state.get(f"pick_{i}", False)),
                     )
         st.markdown('<div style="height:6px"></div>', unsafe_allow_html=True)
 

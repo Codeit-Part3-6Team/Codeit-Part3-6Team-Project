@@ -581,13 +581,11 @@ def compare(run_id: str, selected_doc_ids: list[str] | None = None) -> dict[str,
 def get_documents(run_id: str) -> list[dict[str, Any]]:
     """SQLite 또는 CSV에서 문서 목록을 조회합니다."""
     db_docs = sqlite_store.get_documents(run_id)
-    if db_docs:
-        return db_docs
 
     output_dir = _output_dir(run_id)
     chunks_path = output_dir / "chunks.csv"
     if not chunks_path.exists():
-        return []
+        return db_docs
 
     rows = _read_csv_rows(chunks_path)
     document_rows = _read_csv_rows(output_dir / "parsed_documents.csv")
@@ -597,7 +595,13 @@ def get_documents(run_id: str) -> list[dict[str, Any]]:
         if row.get("document_id")
     }
 
-    docs: dict[str, dict[str, Any]] = {}
+    docs: dict[str, dict[str, Any]] = {
+        str(doc.get("document_id")): dict(doc)
+        for doc in db_docs
+        if doc.get("document_id")
+    }
+    for doc in docs.values():
+        doc["chunk_count"] = 0
     for row in rows:
         doc_id = row.get("document_id", "unknown")
         meta = meta_by_doc_id.get(doc_id, {})
@@ -610,9 +614,62 @@ def get_documents(run_id: str) -> list[dict[str, Any]]:
                 "source_path": source_path,
                 "chunk_count": 0,
             }
+        docs[doc_id]["title"] = docs[doc_id].get("title") or title
+        docs[doc_id]["source_path"] = docs[doc_id].get("source_path") or source_path
+        _enrich_document_card_metadata(docs[doc_id], meta, row)
         docs[doc_id]["chunk_count"] += 1
 
     return list(docs.values())
+
+
+def _enrich_document_card_metadata(
+    document: dict[str, Any],
+    parsed_row: dict[str, str],
+    chunk_row: dict[str, str],
+) -> None:
+    """문서 카드에 표시할 발주기관/금액/요약 메타데이터를 채웁니다."""
+    org = parsed_row.get("meta_발주 기관", "")
+    amount = parsed_row.get("meta_사업 금액", "")
+    summary = parsed_row.get("meta_사업 요약", "")
+    ftype = parsed_row.get("meta_파일형식", "")
+
+    if not (org and amount):
+        preamble = _extract_chunk_preamble(chunk_row.get("text", ""))
+        org = org or preamble.get("발주기관", "")
+        amount = amount or preamble.get("사업금액", "")
+
+    if org:
+        document.setdefault("org", org)
+    if amount:
+        document.setdefault("amount", _format_amount_label(amount))
+    if summary:
+        document.setdefault("summary", summary)
+    if ftype:
+        document.setdefault("ftype", ftype)
+
+
+def _extract_chunk_preamble(text: str) -> dict[str, str]:
+    if not text.startswith("[") or "]" not in text:
+        return {}
+    raw = text[1:text.find("]")]
+    items: dict[str, str] = {}
+    for part in raw.split("|"):
+        key, sep, value = part.partition(":")
+        if sep:
+            items[key.strip()] = value.strip()
+    return items
+
+
+def _format_amount_label(value: str) -> str:
+    stripped = str(value or "").strip()
+    if not stripped:
+        return ""
+    if stripped.endswith("원"):
+        return stripped
+    try:
+        return f"{int(float(stripped)):,}원"
+    except ValueError:
+        return stripped
 
 
 def get_citation(run_id: str, chunk_id: str) -> dict[str, Any] | None:
