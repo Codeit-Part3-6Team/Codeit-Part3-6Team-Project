@@ -41,7 +41,9 @@ st.markdown('<div style="height:14px"></div>', unsafe_allow_html=True)
 
 def _render_sources(sources: list[tuple[str, str]] | None) -> None:
     if sources:
-        st.caption("근거: " + " · ".join(f"{p} {s}" for p, s in sources))
+        with st.expander("📄 출처 보기"):
+            for p, s in sources:
+                st.caption(f"• {p} {s}")
 
 
 def _selected_titles() -> list[str]:
@@ -183,6 +185,7 @@ for message in ss.messages:
         with st.chat_message("assistant"):
             st.markdown(str(message.get("content") or ""))
             _render_sources(message.get("sources") or [])
+    st.markdown('<div style="height:4px"></div>', unsafe_allow_html=True)
 
 suggested = ["사업 예산은?", "참가 자격은?", "제출 서류는?", "평가 기준은?"]
 chip_cols = st.columns(4)
