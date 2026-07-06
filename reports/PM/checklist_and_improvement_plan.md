@@ -156,3 +156,29 @@ _classify_intent(user_input)   ← 신규
 ```
 
 ---
+
+## 5. 2026-07-06 구현 재검토 메모
+
+> 코드 기준 재검토 결과입니다. 세부 동작은 VM에서 실제 ingest/Streamlit 실행으로 최종 확인합니다.
+
+### 반영 확인
+
+- P1-1 Chroma 선택 문서 필터: `document_ids`가 retriever config에 주입되고, `ChromaRetrieverAdapter`가 `{"document_id": {"$in": ...}}` filter로 검색합니다.
+- P1-2 cache payload: 챗봇 응답 payload에 `structured_output`, `citations`가 포함되고, `rag_service.ask()` 계열은 `bot.state` 재조회 대신 response payload를 사용합니다.
+- P1-3 cache scope: cache key가 `(question, tuple(sorted(doc_ids)))` 형태로 문서 범위를 포함합니다.
+- P1-4 질문별 state 격리: `_run_agent_loop()` 내부 `run_state`로 dependency Tool 결과를 질문 단위로 분리합니다.
+- P1-5 config fail-fast: `base_config`가 명시됐는데 파일이 없으면 `FileNotFoundError`를 발생시킵니다.
+- P2 주요 항목: Chroma persist 재생성, failed progress, `list_runs()` DB+filesystem merge, DAG unknown dependency warning은 코드에 반영되어 있습니다.
+
+### 내일 VM 실테스트 우선 확인
+
+- 내부 corpus 생성 스크립트가 `create_and_ingest()` 비동기 기본값 때문에 즉시 `processing`을 반환하는지 확인합니다. 필요하면 `async_mode=False` 또는 완료 polling으로 보완합니다.
+- filesystem에만 남은 run이 `documents=0`으로 병합되어 `internal_corpus()` 후보에서 빠지지 않는지 확인합니다.
+- `RAG_MODE=rag`에서 import 실패 시 mock 문서/분석/채팅 fallback이 의도한 정책과 맞는지 확인합니다.
+- 앱 실행 중 새 corpus ingest 후 `internal_corpus(force_refresh=True)`를 UI에서 호출할 필요가 있는지 확인합니다.
+- 선택 문서 질의의 citation `document_id`가 선택 범위 밖으로 새지 않는지 단일/다중 문서 모두 확인합니다.
+
+### 문서 상태
+
+- `app/README.md`는 업로드 기반 설명에서 내부 corpus 기반 `documents.py -> workspace.py` 흐름으로 갱신했습니다.
+- 이 PM 체크리스트의 기존 표에는 과거 목표/상태가 함께 남아 있으므로, 최종 VM 검증 이후 표 상태를 한 번 더 정리합니다.
