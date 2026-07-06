@@ -14,8 +14,13 @@ rag:
   vector_store:
     type: chroma
     path: vector_store
+  answerer:
+    mode: llm
+    provider: ollama
+    model_name: exaone3.5:2.4b
+    temperature: 0.0
   reranker:
-    enabled: false   # 속도 우선 시 false, 정밀도 우선 시 true
+    enabled: false
 
 agent:
   chatbot:
