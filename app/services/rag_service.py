@@ -39,7 +39,7 @@ from src.rag.pipeline import run_rag_ingest
 from app.services import sqlite_store
 
 _STREAMLIT_EXPERIMENTS = _PROJECT_ROOT / "experiments" / "streamlit"
-# 전용 streamlit 템플릿 사용 (base_config 상속으로 rag-baseline/agent_lplus 포함)
+# 전용 streamlit 템플릿 사용 (base_config 상속으로 config_final/agent_lplus 포함)
 _TEMPLATE_CONFIG_PATH = (
     _PROJECT_ROOT / "configs" / "experiments" / "rag" / "streamlit.yaml"
 )
@@ -47,7 +47,6 @@ _TEMPLATE_CONFIG_PATH = (
 # ── run_id별 챗봇 인스턴스 캐시 ──
 _chatbot_cache: dict[str, Any] = {}
 _chatbot_lock = threading.Lock()
-_SUPPORTED_FILE_TYPES = ["pdf", "docx", "hwp", "hwpx", "txt", "csv"]
 
 
 def _service_error(error_code: str, message: str, exc: Exception | None = None) -> dict[str, Any]:
@@ -98,8 +97,8 @@ def _output_dir(run_id: str) -> Path:
 def _build_streamlit_config(run_id: str) -> dict[str, Any]:
     """streamlit.yaml 템플릿을 로드해 run별 경로만 덮어씁니다.
 
-    base_config 상속으로 rag-baseline.yaml → agent_lplus.yaml 설정을
-    그대로 가져오며, paths만 run_id 기반으로 바꿉니다.
+    base_config 상속으로 config_final.yaml → agent_lplus.yaml 설정을
+    그대로 가져오며, paths와 서비스용 Chroma 경로만 run_id 기반으로 바꿉니다.
     """
     base = load_config(_TEMPLATE_CONFIG_PATH)
     run_dir = _run_dir(run_id)
@@ -107,9 +106,6 @@ def _build_streamlit_config(run_id: str) -> dict[str, Any]:
     base["experiment"]["name"] = f"streamlit-{run_id}"
     base["paths"]["raw_docs_dir"] = str(run_dir / "raw_docs")
     base["paths"]["output_dir"] = str(run_dir / "output")
-    base.setdefault("rag", {}).setdefault("loader", {})["file_types"] = list(
-        _SUPPORTED_FILE_TYPES
-    )
     base.setdefault("agent", {}).setdefault("chatbot", {})["enabled"] = True
     base["artifact_policy"] = {"on_existing": "overwrite"}
 

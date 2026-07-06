@@ -1,5 +1,5 @@
 # Agent 데모 config — L+ 적합도 판단 시나리오
-# rag-baseline.yaml을 base_config로 상속받아 RAG 설정은 그대로 사용하고
+# config_final.yaml을 base_config로 상속받아 최종 RAG 설정은 그대로 사용하고
 # agent 확장만 덧붙입니다.
 #
 # 실행:
@@ -14,8 +14,8 @@ experiment:
   author: team
   contract_version: rag-v0.2
 
-# RAG 설정을 rag-baseline.yaml에서 상속
-base_config: ../rag-baseline.yaml
+# RAG 설정을 최종 실험 config에서 상속
+base_config: ../config_final.yaml
 
 paths:
   output_dir: /shared/experiments/agent-lplus

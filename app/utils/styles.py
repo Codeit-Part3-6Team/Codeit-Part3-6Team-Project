@@ -47,22 +47,22 @@ html, body, [class*="css"]{
 [data-testid="stPageLink"] a p{ font-size:.92rem !important; }
 
 /* 브랜드 링크(IT'S MINE) — 서비스 이름이라 크게 강조. 클릭하면 홈으로 이동.
-   topbar() 의 st.container(key="brandbar") 안에 있는 page_link 만 골라서 키운다. */
-.st-key-brandbar [data-testid="stPageLink"] a{
+   topbar() 의 st.container(key="*_brandbar") 안에 있는 page_link 만 골라서 키운다. */
+[class*="st-key-"][class*="_brandbar"] [data-testid="stPageLink"] a{
   justify-content:flex-start !important; padding:4px 2px !important; }
-.st-key-brandbar [data-testid="stPageLink"] a p{
+[class*="st-key-"][class*="_brandbar"] [data-testid="stPageLink"] a p{
   font-size:1.7rem !important; font-weight:800 !important;
   color:var(--blue) !important; letter-spacing:-.02em; }
-.st-key-brandbar [data-testid="stPageLink"] a:hover p{ color:var(--blue-bright) !important; }
+[class*="st-key-"][class*="_brandbar"] [data-testid="stPageLink"] a:hover p{ color:var(--blue-bright) !important; }
 
 /* 상단바 메뉴 링크 hover 효과 — 메뉴(navbar)에만 적용(요구사항 4).
    밑줄은 빼고, 옅은 파란 배경 알약 + 글자색 강조 + 살짝 떠오르는 반응. */
-.st-key-navbar [data-testid="stPageLink"] a{
+[class*="st-key-"][class*="_navbar"] [data-testid="stPageLink"] a{
   text-decoration:none !important;
   transition:background .16s ease, color .16s ease, transform .16s ease; }
-.st-key-navbar [data-testid="stPageLink"] a:hover{
+[class*="st-key-"][class*="_navbar"] [data-testid="stPageLink"] a:hover{
   background:rgba(79,124,255,.12) !important; transform:translateY(-1px); }
-.st-key-navbar [data-testid="stPageLink"] a:hover p{ color:var(--blue-bright) !important; }
+[class*="st-key-"][class*="_navbar"] [data-testid="stPageLink"] a:hover p{ color:var(--blue-bright) !important; }
 
 /* ── 히어로 ───────────────────────────────────────────────── */
 .hero-pad{ padding-top:60px; }

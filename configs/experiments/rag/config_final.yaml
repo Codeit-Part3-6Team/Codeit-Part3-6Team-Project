@@ -1,0 +1,59 @@
+artifact_policy:
+  on_existing: overwrite
+  run_id: null
+
+evaluation:
+  llm_judge:
+    enabled: true
+    model_name: gpt-5-mini
+  questions_path: /shared/data/raw_docs/eval_questions_v12_mini50.csv
+
+experiment:
+  author: team
+  contract_version: rag-v0.2
+  name: rag-baseline-v12mini-bm25-top15-reranker
+  seed: 42
+
+metric:
+  mode: max
+  monitor: judge_correct_rate
+
+paths:
+  output_dir: /shared/experiments/rag-baseline-v12mini-bm25-top15-reranker
+  raw_docs_dir: /shared/data/raw_docs
+
+rag:
+  answerer:
+    fallback_message: 문서에서 확인하지 못했습니다.
+    mode: llm
+    model_name: gpt-5-mini
+    provider: openai
+    temperature: 0.0
+  checkpoint:
+    enabled: true
+    resume: true
+  embedding:
+    model_name: text-embedding-3-small
+    provider: openai
+  engine: langchain
+  loader:
+    csv_file: data_list_v5.csv
+    file_types:
+      - csv
+  reranker:
+    enabled: true
+    model_name: BAAI/bge-reranker-v2-m3
+    provider: huggingface
+  retriever:
+    hybrid_bm25: true
+    method: similarity
+    score_threshold: 0.0
+    top_k: 15
+  splitter:
+    chunk_overlap: 40
+    chunk_size: 500
+    type: recursive_character
+  vector_store:
+    collection_name: rag_baseline
+    path: null
+    type: memory

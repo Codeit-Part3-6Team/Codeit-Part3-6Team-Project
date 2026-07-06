@@ -6,6 +6,7 @@
 """
 
 import html
+from pathlib import Path
 
 import streamlit as st
 
@@ -48,17 +49,29 @@ P_PRICING   = "views/pricing.py"
 P_SEARCH    = "views/search.py"      # 정부제안서 검색(외부 사이트 모음)
 
 
-def topbar():
+def _page_key_prefix() -> str:
+    """현재 실행 중인 Streamlit view 파일명으로 위젯 key prefix를 만듭니다."""
+    try:
+        import inspect
+
+        caller = inspect.stack()[2].filename
+        return Path(caller).stem.replace("-", "_")
+    except Exception:
+        return "topbar"
+
+
+def topbar(key_prefix: str | None = None):
     """상단 네비바.
     좌측 끝 : 브랜드 'IT'S MINE' (크게 · 클릭하면 홈으로 이동)
     우측 끝 : 서비스 소개 / 정부제안서 검색 / 요금제 (균등 폭으로 모음)
     """
+    prefix = key_prefix or _page_key_prefix()
     left, mid, right = st.columns([2, 3, 3], vertical_alignment="center")
     with left:
-        with st.container(key="brandbar"):
+        with st.container(key=f"{prefix}_brandbar"):
             st.page_link(P_HOME, label="IT'S MINE")
     with right:
-        with st.container(key="navbar"):
+        with st.container(key=f"{prefix}_navbar"):
             n1, n2, n3 = st.columns(3)
             with n1:
                 st.page_link(P_ABOUT, label="서비스 소개")

@@ -1,6 +1,6 @@
 # Streamlit 서비스 전용 RAG config 템플릿
-# agent_lplus.yaml을 상속받아 실험 config를 그대로 사용하고,
-# 업로드 환경에 맞는 loader 확장 + 챗봇 활성화만 덮어씁니다.
+# agent_lplus.yaml을 상속받아 최종 실험 config를 그대로 사용하고,
+# 서비스 환경에 맞는 Chroma 저장소 + 챗봇 활성화만 덮어씁니다.
 #
 # paths.raw_docs_dir / paths.output_dir 는 create_and_ingest() 에서
 # run_id 기반으로 동적 override 됩니다.
@@ -11,8 +11,6 @@ experiment:
   name: streamlit
 
 rag:
-  loader:
-    file_types: [pdf, docx, hwp, hwpx, txt, csv]
   vector_store:
     type: chroma
     path: vector_store

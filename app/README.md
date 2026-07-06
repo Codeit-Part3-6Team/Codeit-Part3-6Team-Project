@@ -88,7 +88,7 @@ set RAG_MODE=mock
 
 ## 현재 점검 메모
 
-- Streamlit config는 `configs/experiments/rag/streamlit.yaml`을 사용하며, `agent/agent_lplus.yaml`과 `rag-baseline.yaml`을 `base_config`로 상속합니다.
+- Streamlit config는 `configs/experiments/rag/streamlit.yaml`을 사용하며, `agent/agent_lplus.yaml`과 `config_final.yaml`을 `base_config`로 상속합니다.
 - 앱 경로에서는 `streamlit.yaml`이 `vector_store.type: chroma`를 override하므로 Chroma 기반 검색을 사용합니다.
 - 선택 문서 채팅은 `ask_with_document_filter(run_id, question, selected_doc_ids)`를 통해 문서 범위를 전달합니다.
 - 내일 VM 실테스트에서는 내부 corpus ingest, 문서 목록 선택, 단일 문서 요약, 다중 문서 비교, 선택 문서 채팅, citation 범위를 우선 확인합니다.
