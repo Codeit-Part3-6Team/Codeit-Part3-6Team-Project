@@ -356,12 +356,9 @@ class ChatbotRunner:
         lines = [title_by_type.get(answer_type, "문서에서 확인한 내용입니다."), ""]
         for label, value in fields:
             items = self._value_items(value)
-            if len(items) == 1 and len(str(items[0])) > 100:
-                lines.append(str(items[0]))
-            else:
-                lines.append(f"**{label}**")
-                for item in items:
-                    lines.append(f"- {item}")
+            lines.append(f"**{label}**")
+            for item in items:
+                lines.append(f"- {item}")
             lines.append("")
         return "\n".join(lines)
 
