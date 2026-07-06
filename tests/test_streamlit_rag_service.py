@@ -115,6 +115,54 @@ def test_get_citation_returns_chunk_text(tmp_path, monkeypatch):
     assert citation["section"] == "사업 개요"
 
 
+def test_get_documents_enriches_period_and_deadline(tmp_path, monkeypatch):
+    monkeypatch.setattr(rag_service, "_STREAMLIT_EXPERIMENTS", tmp_path)
+    output_dir = tmp_path / "run-1" / "output"
+
+    _write_csv(
+        output_dir / "parsed_documents.csv",
+        [
+            {
+                "document_id": "doc-1",
+                "title": "테스트 제안요청서",
+                "source_path": "raw_docs/test.pdf",
+                "meta_사업 요약": "- 사업기간: 계약일로부터 3개월\n- 제출마감: 2026-07-20 17:00",
+            }
+        ],
+        ["document_id", "title", "source_path", "meta_사업 요약"],
+    )
+    _write_csv(
+        output_dir / "chunks.csv",
+        [
+            {
+                "chunk_id": "chunk-1",
+                "document_id": "doc-1",
+                "source_path": "raw_docs/test.pdf",
+                "page_start": "1",
+                "page_end": "1",
+                "section": "",
+                "text": "본문",
+                "token_count": "10",
+            }
+        ],
+        [
+            "chunk_id",
+            "document_id",
+            "source_path",
+            "page_start",
+            "page_end",
+            "section",
+            "text",
+            "token_count",
+        ],
+    )
+
+    document = rag_service.get_documents("run-1")[0]
+
+    assert document["period"] == "계약일로부터 3개월"
+    assert document["deadline"] == "2026-07-20 17:00"
+
+
 def test_strip_source_block_removes_inline_citations():
     reply = "답변입니다.\n\n[출처]\n문서 1\n문서 2"
 

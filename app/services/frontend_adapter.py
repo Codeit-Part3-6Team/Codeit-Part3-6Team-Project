@@ -362,8 +362,8 @@ def _fast_analysis_from_corpus_metadata(
         "사업명": str(first.get("title") or title),
         "발주기관": str(first.get("org") or "명시되지 않음"),
         "사업예산": str(first.get("amount") or "명시되지 않음"),
-        "사업기간": "명시되지 않음",
-        "제출마감": "명시되지 않음",
+        "사업기간": str(first.get("period") or "명시되지 않음"),
+        "제출마감": str(first.get("deadline") or "명시되지 않음"),
         "문서": title,
     }
     requirements = [

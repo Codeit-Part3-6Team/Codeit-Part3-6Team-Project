@@ -646,12 +646,19 @@ def _enrich_document_card_metadata(
     org = parsed_row.get("meta_발주 기관", "")
     amount = parsed_row.get("meta_사업 금액", "")
     summary = parsed_row.get("meta_사업 요약", "")
+    period = _first_present(parsed_row, ["meta_사업 기간", "meta_사업기간", "meta_계약 기간", "meta_계약기간"])
+    deadline = _first_present(parsed_row, ["meta_제출 마감", "meta_제출마감", "meta_입찰 마감", "meta_입찰마감"])
     ftype = parsed_row.get("meta_파일형식", "")
 
-    if not (org and amount):
+    if not (org and amount and period and deadline):
         preamble = _extract_chunk_preamble(chunk_row.get("text", ""))
         org = org or preamble.get("발주기관", "")
         amount = amount or preamble.get("사업금액", "")
+        period = period or preamble.get("사업기간", "") or preamble.get("계약기간", "")
+        deadline = deadline or preamble.get("제출마감", "") or preamble.get("입찰마감", "")
+
+    period = period or _extract_labeled_value(summary, ["사업기간", "계약기간", "용역기간"])
+    deadline = deadline or _extract_labeled_value(summary, ["제출마감", "입찰마감", "마감일"])
 
     if org:
         document.setdefault("org", org)
@@ -659,8 +666,36 @@ def _enrich_document_card_metadata(
         document.setdefault("amount", _format_amount_label(amount))
     if summary:
         document.setdefault("summary", summary)
+    if period:
+        document.setdefault("period", period)
+    if deadline:
+        document.setdefault("deadline", deadline)
     if ftype:
         document.setdefault("ftype", ftype)
+
+
+def _first_present(row: dict[str, str], keys: list[str]) -> str:
+    for key in keys:
+        value = str(row.get(key) or "").strip()
+        if value:
+            return value
+    return ""
+
+
+def _extract_labeled_value(text: str, labels: list[str]) -> str:
+    """요약문 안의 '사업기간: ...' 같은 짧은 라벨 값을 가져옵니다."""
+    import re
+
+    if not text:
+        return ""
+    for label in labels:
+        pattern = rf"{re.escape(label)}\s*[:：]\s*([^\n\-]+)"
+        match = re.search(pattern, text)
+        if match:
+            value = match.group(1).strip(" .·,;")
+            if value:
+                return value
+    return ""
 
 
 def _extract_chunk_preamble(text: str) -> dict[str, str]:
