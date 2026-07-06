@@ -3,13 +3,11 @@
 ===========
 선택한 문서 범위에서 RAG 질의를 수행하는 전용 화면입니다.
 
-RAG 호출은 백그라운드 job으로 분리해, 페이지 상단 UI가 assistant 답변에
-섞여 보이는 Streamlit 렌더링 문제를 피합니다.
+RAG 호출은 백그라운드 job으로 분리하고, @st.fragment(run_every=2)로
+풀페이지 리렌더 없이 결과를 수신합니다.
 """
 
 from __future__ import annotations
-
-import time
 
 import streamlit as st
 
@@ -19,7 +17,7 @@ from utils.components import P_DOCS, P_WORKSPACE, esc, topbar
 CHAT_CSS = """
 <style>
 .block-container{ max-width:960px !important; padding-left:2rem !important; padding-right:2rem !important; }
-[data-testid="stChatInput"]{ max-width:720px !important; margin:0 auto !important; }
+[data-testid="stChatInput"]{ max-width:800px !important; margin:0 auto !important; }
 [data-testid="stChatMessage"] table{ width:100%; border-collapse:collapse; font-size:.92rem;
   margin:8px 0; background:var(--panel-2); border-radius:10px; overflow:hidden; }
 [data-testid="stChatMessage"] td, [data-testid="stChatMessage"] th{
@@ -40,7 +38,6 @@ st.markdown('<div style="height:14px"></div>', unsafe_allow_html=True)
 
 
 def _render_sources(sources: list[tuple[str, str]] | None) -> None:
-    """채팅 답변 아래 출처를 표시합니다."""
     if sources:
         st.caption("근거: " + " · ".join(f"{p} {s}" for p, s in sources))
 
@@ -73,11 +70,12 @@ def _start_question(question: str, selected_ids: list[str], titles: list[str]) -
     st.rerun()
 
 
-def _resolve_active_job() -> bool:
-    """활성 job을 transcript에 반영합니다. 실행 중이면 True를 반환합니다."""
+@st.fragment(run_every=2)
+def _poll_job():
+    """백그라운드 job을 폴링합니다. 완료 시 messages에 추가."""
     job_id = ss.get("active_chat_job_id")
     if not job_id:
-        return False
+        return
 
     job = get_chat_job(job_id)
     if not job:
@@ -87,11 +85,13 @@ def _resolve_active_job() -> bool:
             "sources": [],
         })
         ss.active_chat_job_id = None
-        st.rerun()
+        return
 
     status = job.get("status")
     if status == "running":
-        return True
+        with st.chat_message("assistant"):
+            st.info("문서에서 근거를 찾는 중입니다...")
+        return
 
     if status == "done":
         ss.messages.append({
@@ -108,9 +108,9 @@ def _resolve_active_job() -> bool:
 
     clear_chat_job(job_id)
     ss.active_chat_job_id = None
-    st.rerun()
 
 
+# ── 가드 ──
 if not ss.analyzed or not ss.analysis:
     st.markdown(
         '<div class="eyebrow">CHAT</div>'
@@ -125,32 +125,14 @@ if not ss.analyzed or not ss.analysis:
 selected_ids = list(ss.selected_doc_ids or [])
 titles = _selected_titles()
 data = ss.analysis or {}
-job_running = _resolve_active_job()
+job_running = bool(ss.get("active_chat_job_id"))
 
-# ── polling 중에는 최소한의 UI만 렌더링 ──
-if job_running:
-    st.markdown(
-        f'<div class="panel-title">💬 대화형 탐색 · {esc(_head_label(titles))}'
-        f'<span class="status-wait" style="margin-left:12px">● 분석 중</span></div>',
-        unsafe_allow_html=True,
-    )
-    for message in ss.messages:
-        role = message.get("role")
-        if role == "user":
-            with st.chat_message("user"):
-                st.markdown(str(message.get("content") or ""))
-    with st.chat_message("assistant"):
-        with st.spinner("문서에서 근거를 찾는 중입니다..."):
-            time.sleep(2)
-    st.rerun()
-
-# ── job 완료 시 전체 UI ──
-
+# ── 헤더 ──
 h1, h2 = st.columns([3, 1], vertical_alignment="center")
 with h1:
+    status_badge = '<span class="status-wait" style="margin-left:12px">● 분석 중</span>' if job_running else '<span class="status-ok" style="margin-left:12px">● 분석 완료</span>'
     st.markdown(
-        f'<div class="panel-title">💬 대화형 탐색 · {esc(_head_label(titles))}'
-        f'<span class="status-ok" style="margin-left:12px">● 분석 완료</span></div>',
+        f'<div class="panel-title">💬 대화형 탐색 · {esc(_head_label(titles))}{status_badge}</div>',
         unsafe_allow_html=True,
     )
     if data.get("mode") == "rag" and ss.run_id:
@@ -166,6 +148,7 @@ with h2:
 
 st.markdown('<div style="height:10px"></div>', unsafe_allow_html=True)
 
+# ── 추천 질문 ──
 suggested = ["사업 예산은?", "참가 자격은?", "제출 서류는?", "평가 기준은?"]
 chip_cols = st.columns(4)
 for col, question in zip(chip_cols, suggested):
@@ -178,6 +161,7 @@ if ss.get("pending_q") and not job_running:
 
 st.markdown('<div style="height:10px"></div>', unsafe_allow_html=True)
 
+# ── 대화 기록 ──
 for message in ss.messages:
     role = message.get("role")
     if role == "user":
@@ -188,6 +172,10 @@ for message in ss.messages:
             st.markdown(str(message.get("content") or ""))
             _render_sources(message.get("sources") or [])
 
-question = st.chat_input("선택한 문서에 대해 질문해보세요")
+# ── job polling (fragment: 이 영역만 2초마다 자동 갱신) ──
+_poll_job()
+
+# ── 입력 ──
+question = st.chat_input("선택한 문서에 대해 질문해보세요", disabled=job_running)
 if question:
     _start_question(question, selected_ids, titles)
