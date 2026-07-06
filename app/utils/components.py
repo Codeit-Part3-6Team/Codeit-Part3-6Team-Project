@@ -66,12 +66,15 @@ def topbar(key_prefix: str | None = None):
     우측 끝 : 서비스 소개 / 정부제안서 검색 / 요금제 (균등 폭으로 모음)
     """
     prefix = key_prefix or _page_key_prefix()
+    counter_key = "_topbar_instance_seq"
+    st.session_state[counter_key] = int(st.session_state.get(counter_key, 0)) + 1
+    instance_key = f"{prefix}_{st.session_state[counter_key]}"
     left, mid, right = st.columns([2, 3, 3], vertical_alignment="center")
     with left:
-        with st.container(key=f"{prefix}_brandbar"):
+        with st.container(key=f"{instance_key}_brandbar"):
             st.page_link(P_HOME, label="IT'S MINE")
     with right:
-        with st.container(key=f"{prefix}_navbar"):
+        with st.container(key=f"{instance_key}_navbar"):
             n1, n2, n3 = st.columns(3)
             with n1:
                 st.page_link(P_ABOUT, label="서비스 소개")
