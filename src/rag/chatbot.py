@@ -324,7 +324,11 @@ class ChatbotRunner:
         if answer_type == "scalar":
             label, value = fields[0]
             particle = "은" if _has_batchim(label) else "는"
-            return f"{label}{particle} {self._strip_field_prefix(label, self._format_scalar_value(value))}입니다."
+            clean_value = self._strip_field_prefix(label, self._format_scalar_value(value))
+            # 이미 문장 종결이면 "입니다" 추가하지 않음
+            if clean_value.rstrip().endswith(("입니다", "니다", "한다", "됨", "함", "것")):
+                return f"{label}{particle} {clean_value}"
+            return f"{label}{particle} {clean_value}입니다."
         if answer_type in {"list", "checklist"}:
             return self._render_table_answer(answer_type, fields)
         if answer_type in {"evaluation", "comparison"}:
@@ -409,8 +413,14 @@ class ChatbotRunner:
         import re
         value = str(value).strip()
         label_clean = label.strip()
-        pattern = re.compile(rf"^{re.escape(label_clean)}\s*(은|는|이|가|을|를|의)?\s*")
-        return pattern.sub("", value).strip()
+        label_nosp = label_clean.replace(" ", "")
+        patterns = [
+            re.compile(rf"^{re.escape(label_clean)}\s*(은|는|이|가|을|를|의)?\s*"),
+            re.compile(rf"^{re.escape(label_nosp)}\s*(은|는|이|가|을|를|의)?\s*"),
+        ]
+        for pattern in patterns:
+            value = pattern.sub("", value).strip()
+        return value
 
     def _escape_table_cell(self, value: str) -> str:
         return str(value).replace("|", "\\|").replace("\n", "<br>")
