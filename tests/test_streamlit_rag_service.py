@@ -116,6 +116,42 @@ def test_chat_ask_slow_path_handles_missing_fast_metadata(monkeypatch):
     assert answer == "문서에서 제출 마감일 정보를 확인하지 못했습니다."
 
 
+def test_chat_ask_fast_path_returns_field_candidate_before_slow_rag(monkeypatch):
+    class FakeRag:
+        def find_field_candidates(self, run_id, selected_doc_ids, field, limit=3):
+            assert field == "사업기간"
+            return [
+                {
+                    "chunk_id": "chunk-1",
+                    "source_path": "raw_docs/test.pdf",
+                    "page": "4",
+                    "section": "계약 조건",
+                    "text": "사업기간은 계약체결일로부터 120일입니다.",
+                }
+            ]
+
+        def ask_with_document_filter(self, run_id, question, selected_doc_ids):
+            raise AssertionError("candidate fast path should not call slow rag")
+
+    monkeypatch.setattr(
+        frontend_adapter,
+        "internal_corpus",
+        lambda: {
+            "mode": "rag",
+            "run_id": "run-1",
+            "documents": [{"document_id": "doc-1", "title": "테스트 사업", "period": ""}],
+            "error": None,
+        },
+    )
+    monkeypatch.setattr(frontend_adapter, "_load_rag", lambda: FakeRag())
+
+    answer, sources = frontend_adapter.chat_ask("사업 기간은?", "run-1", ["doc-1"], ["테스트 사업"])
+
+    assert "문서 메타데이터에는 사업 기간 정보가 없지만" in answer
+    assert "- 사업기간은 계약체결일로부터 120일입니다." in answer
+    assert sources == [("p.4", "계약 조건")]
+
+
 def test_chat_ask_slow_path_keeps_reasoning_questions_on_rag(monkeypatch):
     class FakeRag:
         def ask_with_document_filter(self, run_id, question, selected_doc_ids):
@@ -238,6 +274,50 @@ def test_get_citation_returns_chunk_text(tmp_path, monkeypatch):
     assert citation is not None
     assert citation["text"] == "근거 원문입니다."
     assert citation["section"] == "사업 개요"
+
+
+def test_find_field_candidates_returns_period_sentence(tmp_path, monkeypatch):
+    monkeypatch.setattr(rag_service, "_STREAMLIT_EXPERIMENTS", tmp_path)
+    output_dir = tmp_path / "run-1" / "output"
+
+    _write_csv(
+        output_dir / "chunks.csv",
+        [
+            {
+                "chunk_id": "chunk-1",
+                "document_id": "doc-1",
+                "source_path": "raw_docs/test.pdf",
+                "page_start": "4",
+                "page_end": "4",
+                "section": "계약 조건",
+                "text": "계약 조건입니다. 사업기간은 계약체결일로부터 120일입니다. 다른 문장입니다.",
+                "token_count": "10",
+            }
+        ],
+        [
+            "chunk_id",
+            "document_id",
+            "source_path",
+            "page_start",
+            "page_end",
+            "section",
+            "text",
+            "token_count",
+        ],
+    )
+
+    candidates = rag_service.find_field_candidates("run-1", ["doc-1"], "사업기간")
+
+    assert candidates == [
+        {
+            "chunk_id": "chunk-1",
+            "document_id": "doc-1",
+            "source_path": "raw_docs/test.pdf",
+            "page": "4",
+            "section": "계약 조건",
+            "text": "사업기간은 계약체결일로부터 120일입니다.",
+        }
+    ]
 
 
 def test_get_documents_enriches_period_and_deadline(tmp_path, monkeypatch):

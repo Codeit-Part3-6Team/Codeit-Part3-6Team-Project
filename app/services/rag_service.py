@@ -730,6 +730,87 @@ def get_citation(run_id: str, chunk_id: str) -> dict[str, Any] | None:
     return None
 
 
+def find_field_candidates(
+    run_id: str,
+    document_ids: list[str] | None,
+    field: str,
+    limit: int = 3,
+) -> list[dict[str, Any]]:
+    """사업기간/제출마감 후보 문장을 chunks.csv에서 빠르게 검색합니다."""
+    keywords = _field_candidate_keywords(field)
+    if not keywords:
+        return []
+
+    doc_filter = {str(doc_id) for doc_id in (document_ids or []) if doc_id}
+    candidates: list[dict[str, Any]] = []
+    seen_texts: set[str] = set()
+    for row in _read_csv_rows(_output_dir(run_id) / "chunks.csv"):
+        doc_id = str(row.get("document_id") or "")
+        if doc_filter and doc_id not in doc_filter:
+            continue
+        text = _strip_chunk_preamble(str(row.get("text") or ""))
+        for keyword in keywords:
+            if keyword not in text:
+                continue
+            sentence = _extract_candidate_sentence(text, keyword)
+            if not sentence or sentence in seen_texts:
+                continue
+            seen_texts.add(sentence)
+            candidates.append({
+                "chunk_id": row.get("chunk_id", ""),
+                "document_id": doc_id,
+                "source_path": row.get("source_path", ""),
+                "page": row.get("page_start") or row.get("page") or "",
+                "section": row.get("section") or "본문",
+                "text": sentence,
+            })
+            break
+        if len(candidates) >= limit:
+            break
+    return candidates
+
+
+def _field_candidate_keywords(field: str) -> list[str]:
+    if field == "사업기간":
+        return [
+            "사업기간", "계약기간", "용역기간", "수행기간", "과업기간",
+            "착수일", "계약일", "완료일", "계약체결일로부터", "착수일로부터",
+        ]
+    if field == "제출마감":
+        return [
+            "제출마감", "입찰마감", "접수마감", "마감일시", "제출기한",
+            "제안서 제출", "가격입찰", "전자입찰", "개찰",
+        ]
+    return []
+
+
+def _strip_chunk_preamble(text: str) -> str:
+    stripped = str(text or "").strip()
+    if stripped.startswith("[") and "]" in stripped[:500]:
+        return stripped[stripped.find("]") + 1:].strip()
+    return stripped
+
+
+def _extract_candidate_sentence(text: str, keyword: str) -> str:
+    import re
+
+    normalized = re.sub(r"\s+", " ", str(text or "")).strip()
+    index = normalized.find(keyword)
+    if index < 0:
+        return ""
+
+    delimiters = ".。\n\r;"
+    start = max(normalized.rfind(delim, 0, index) for delim in delimiters)
+    start = 0 if start < 0 else start + 1
+    end_positions = [normalized.find(delim, index + len(keyword)) for delim in delimiters]
+    end_positions = [pos for pos in end_positions if pos >= 0]
+    end = min(end_positions) + 1 if end_positions else len(normalized)
+    sentence = normalized[start:end].strip(" -•*.;")
+    if len(sentence) > 220:
+        sentence = sentence[:217].rstrip() + "..."
+    return sentence
+
+
 def list_runs() -> list[dict[str, Any]]:
     """SQLite + 파일시스템 run 목록을 병합하여 반환합니다."""
     db_runs = {r["run_id"]: r for r in sqlite_store.list_runs()}

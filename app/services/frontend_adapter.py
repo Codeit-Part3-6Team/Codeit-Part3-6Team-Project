@@ -188,8 +188,44 @@ def _try_fast_chat_reply(
     source = [("문서 메타데이터", "사전 추출")]
 
     if _is_unspecified(value):
+        candidate_reply = _try_field_candidate_reply(run_id, selected_doc_ids, field, label)
+        if candidate_reply is not None:
+            return candidate_reply
         return None
     return (f"{label}{_topic_particle(label)} {value}입니다.", source)
+
+
+def _try_field_candidate_reply(
+    run_id: str | None,
+    selected_doc_ids: list[str] | None,
+    field: str,
+    label: str,
+) -> tuple[str, list[tuple[str, str]]] | None:
+    """메타가 비어 있을 때 chunks 본문에서 기간/마감 후보를 빠르게 찾습니다."""
+    if field not in {"사업기간", "제출마감"} or not run_id:
+        return None
+    rag = _load_rag()
+    finder = getattr(rag, "find_field_candidates", None) if rag is not None else None
+    if finder is None:
+        return None
+    try:
+        candidates = finder(run_id, selected_doc_ids, field, limit=3)
+    except Exception:
+        return None
+    if not candidates:
+        return None
+
+    lines = [
+        f"문서 메타데이터에는 {label} 정보가 없지만, 본문에서 관련 후보를 찾았습니다.",
+        "",
+    ]
+    for candidate in candidates:
+        text = str(candidate.get("text") or "").strip()
+        if text:
+            lines.append(f"- {text}")
+    if len(lines) <= 2:
+        return None
+    return ("\n".join(lines), _citations_to_sources(candidates))
 
 
 def _classify_fast_chat_field(question: str) -> str | None:
