@@ -11,6 +11,9 @@ experiment:
   name: streamlit
 
 rag:
+  embedding:
+    provider: ollama
+    model_name: bge-m3
   vector_store:
     type: chroma
     path: vector_store
@@ -26,6 +29,8 @@ agent:
   chatbot:
     enabled: true
     cache_ttl: 300
+    tool_selection_provider: ollama
+    tool_selection_model: exaone3.5:7.8b
   performance:
     target_first_response_ms: 3000
     target_full_analysis_ms: 10000
