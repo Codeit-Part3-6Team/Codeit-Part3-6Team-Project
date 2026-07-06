@@ -141,7 +141,7 @@ class ChatbotRunner:
                 reply = (
                     refined_question
                     if refined_question and refined_question != user_input
-                    else "죄송합니다. 해당 질문에 적합한 도구를 찾지 못했습니다."
+                    else "어떤 분석을 도와드릴까요? 예산, 요구사항, 비교, 참여 가능 여부 등에 대해 질문해 주세요."
                 )
                 self._add_history('assistant', reply)
                 return {
@@ -422,7 +422,7 @@ class ChatbotRunner:
             self._cache[cache_key] = (time.time(), dict(result))
             return result
 
-        reply = "죄송합니다. 해당 질문에 적합한 도구를 찾지 못했습니다."
+        reply = "어떤 분석을 도와드릴까요? 예산, 요구사항, 비교, 참여 가능 여부 등에 대해 질문해 주세요."
         self._add_history("assistant", reply)
         return {"reply": reply, "tool_used": None, "tool_result": None}
 
@@ -540,13 +540,6 @@ class ChatbotRunner:
                 self._add_history("user", user_input)
                 return name, user_input
 
-        if "extract_facts" in self.tools:
-            self._add_history("user", user_input)
-            return "extract_facts", user_input
-        if self.tools:
-            first = next(iter(self.tools))
-            self._add_history("user", user_input)
-            return first, user_input
         return None, user_input
 
     def _run_tool_with_retry(self, tool: Tool, question: str, state: dict[str, ToolResult] | None = None) -> ToolResult:
