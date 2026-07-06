@@ -36,6 +36,7 @@ ss.setdefault("analyzed", False)         # 분석(요약/요구사항) 완료 �
 ss.setdefault("analysis", None)          # 분석 결과 dict
 ss.setdefault("messages", [])            # 채팅 기록
 ss.setdefault("pending_q", None)         # 추천 질문 클릭 처리용
+ss.setdefault("pending_chat_request", None)  # rerun 후 안전하게 처리할 채팅 요청
 
 # ── 2) 페이지 등록 ───────────────────────────────────────────────────────────
 home = st.Page("views/home.py", title="홈", icon="🏠", default=True)

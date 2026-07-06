@@ -9,12 +9,36 @@ from __future__ import annotations
 import json
 import logging
 import time
+from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
 from src.rag.tool import Tool, ToolResult
 
 logger = logging.getLogger("rag.chatbot")
+
+
+@dataclass(frozen=True)
+class ChatPresentation:
+    """챗봇 질문 유형과 출력 형식을 나타냅니다."""
+
+    answer_type: str
+    tool_name: str | None
+    fields: tuple[str, ...]
+
+
+FIELD_ALIASES = {
+    "사업예산": ("사업예산", "예산", "사업금액", "사업 금액"),
+    "발주기관": ("발주기관", "발주 기관", "기관"),
+    "사업명": ("사업명", "사업 명", "문서명"),
+    "사업기간": ("사업기간", "사업 기간", "계약기간", "용역기간"),
+    "제출마감": ("제출마감", "제출 마감", "입찰마감", "마감일"),
+    "제출서류": ("제출서류", "제출 서류", "필요서류", "구비서류"),
+    "참가자격": ("참가자격", "참가 자격", "자격요건", "참가요건", "참여조건"),
+    "평가기준": ("평가기준", "평가 기준", "평가항목", "평가 항목", "배점"),
+    "리스크": ("리스크", "위험", "주의사항", "제안_주의사항"),
+    "요약": ("요약", "사업개요", "사업 개요", "사업범위", "기대효과", "추진목표"),
+}
 
 
 class ChatbotRunner:
@@ -198,53 +222,143 @@ class ChatbotRunner:
     def _format_chat_result(self, user_input: str, result: ToolResult) -> str:
         """챗봇 화면에 맞게 ToolResult를 자연스러운 답변으로 변환합니다."""
         if result.structured_output:
-            return self._format_structured_chat_reply(user_input, result.structured_output)
+            return self._format_structured_chat_reply(user_input, result.structured_output, result.answer)
         return self._strip_source_block(self._format_tool_result(result))
 
-    def _format_structured_chat_reply(self, user_input: str, structured: dict[str, Any]) -> str:
-        question = user_input.lower()
-        preferred_keys = self._preferred_structured_keys(question, structured)
-        lines = ["문서에서 확인한 내용은 아래와 같습니다."]
+    def _format_structured_chat_reply(
+        self,
+        user_input: str,
+        structured: dict[str, Any],
+        natural_reply: str = "",
+    ) -> str:
+        presentation = self._classify_chat_presentation(user_input)
+        projected = self._project_structured_fields(structured, presentation.fields)
 
-        for key in preferred_keys:
-            value = structured.get(key)
-            if self._is_missing_value(value):
-                continue
-            lines.append("")
-            lines.append(str(key))
-            if isinstance(value, list):
-                for item in value:
-                    if not self._is_missing_value(item):
-                        lines.append(f"- {item}")
-            else:
-                lines.append(f"- {value}")
+        if projected:
+            return self._render_projected_answer(presentation.answer_type, projected)
 
-        if len(lines) == 1:
-            fallback = self._strip_source_block(self._format_tool_result(ToolResult(
-                tool_name="structured_fallback",
-                answer="",
-                structured_output=structured,
-            )))
-            return fallback or "문서에서 확인 가능한 항목을 찾지 못했습니다."
+        natural_reply = self._strip_source_block(natural_reply).strip()
+        if natural_reply and natural_reply != "(응답 없음)":
+            return natural_reply
+
+        fallback_fields = self._project_structured_fields(
+            structured,
+            ("사업예산", "발주기관", "사업명", "사업기간", "제출마감", "참가자격", "제출서류", "평가기준"),
+        )
+        if fallback_fields:
+            return self._render_projected_answer("general", fallback_fields)
+        return "문서에서 확인하지 못했습니다."
+
+    def _classify_chat_presentation(self, user_input: str) -> ChatPresentation:
+        """사용자 질문을 챗봇 출력 유형으로 분류합니다."""
+        text = user_input.lower()
+        if any(token in text for token in ("제출", "서류", "구비")):
+            return ChatPresentation("list", "extract_requirements", ("제출서류",))
+        if any(token in text for token in ("참가", "자격", "요건", "참여조건")):
+            return ChatPresentation("checklist", "extract_requirements", ("참가자격",))
+        if any(token in text for token in ("평가", "배점", "기준")):
+            return ChatPresentation("evaluation", "extract_requirements", ("평가기준",))
+        if any(token in text for token in ("비교", "차이", "대조")):
+            return ChatPresentation("comparison", "compare_rfps", ("사업명", "사업예산", "사업기간", "참가자격", "평가기준"))
+        if any(token in text for token in ("참여", "가능", "할만", "리스크", "위험", "특이사항")):
+            return ChatPresentation("judgement", "decide_participation", ("리스크", "참가자격", "평가기준", "제출서류"))
+        if any(token in text for token in ("요약", "중요", "핵심", "사업 내용", "뭐가")):
+            return ChatPresentation("summary", "extract_facts", ("요약", "사업명", "발주기관", "사업예산", "사업기간"))
+        if any(token in text for token in ("예산", "금액", "얼마")):
+            return ChatPresentation("scalar", "extract_facts", ("사업예산",))
+        if "발주" in text:
+            return ChatPresentation("scalar", "extract_facts", ("발주기관",))
+        if "사업명" in text or "문서명" in text:
+            return ChatPresentation("scalar", "extract_facts", ("사업명",))
+        if any(token in text for token in ("마감", "언제", "일정")):
+            return ChatPresentation("scalar", "extract_facts", ("제출마감", "사업기간"))
+        if "기간" in text:
+            return ChatPresentation("scalar", "extract_facts", ("사업기간",))
+        return ChatPresentation("general", None, ())
+
+    def _project_structured_fields(
+        self,
+        structured: dict[str, Any],
+        desired_fields: tuple[str, ...],
+    ) -> list[tuple[str, Any]]:
+        projected: list[tuple[str, Any]] = []
+        used_keys: set[str] = set()
+        for field in desired_fields:
+            aliases = FIELD_ALIASES.get(field, (field,))
+            for key, value in structured.items():
+                if key in used_keys:
+                    continue
+                normalized = str(key).replace(" ", "")
+                if any(normalized == alias.replace(" ", "") for alias in aliases):
+                    if not self._is_missing_value(value):
+                        projected.append((field, value))
+                        used_keys.add(key)
+                    break
+        return projected
+
+    def _render_projected_answer(self, answer_type: str, fields: list[tuple[str, Any]]) -> str:
+        if answer_type == "scalar":
+            label, value = fields[0]
+            return f"{label}은(는) {self._format_scalar_value(value)}입니다."
+        if answer_type in {"list", "checklist", "evaluation", "comparison"}:
+            return self._render_table_answer(answer_type, fields)
+        if answer_type == "judgement":
+            return self._render_judgement_answer(fields)
+        if answer_type == "summary":
+            return self._render_summary_answer(fields)
+        return self._render_general_answer(fields)
+
+    def _render_table_answer(self, answer_type: str, fields: list[tuple[str, Any]]) -> str:
+        title_by_type = {
+            "list": "문서에서 확인한 목록입니다.",
+            "checklist": "문서에서 확인한 체크리스트입니다.",
+            "evaluation": "문서에서 확인한 평가 관련 항목입니다.",
+            "comparison": "문서에서 확인한 비교 항목입니다.",
+        }
+        lines = [title_by_type.get(answer_type, "문서에서 확인한 내용입니다."), "", "| 구분 | 내용 |", "|---|---|"]
+        for label, value in fields:
+            for item in self._value_items(value):
+                lines.append(f"| {label} | {self._escape_table_cell(item)} |")
         return "\n".join(lines)
 
-    def _preferred_structured_keys(self, question: str, structured: dict[str, Any]) -> list[str]:
-        keys = list(structured.keys())
-        priority: list[str] = []
-        if any(token in question for token in ("서류", "제출")):
-            priority.extend(["제출서류", "필요서류", "구비서류"])
-        if any(token in question for token in ("자격", "요건", "참가")):
-            priority.extend(["참가자격", "자격요건", "참가요건"])
-        if any(token in question for token in ("평가", "배점", "기준")):
-            priority.extend(["평가기준", "평가항목"])
-        if any(token in question for token in ("예산", "금액", "얼마")):
-            priority.extend(["사업예산", "예산", "사업금액"])
-        if any(token in question for token in ("기간", "마감", "언제", "일정")):
-            priority.extend(["사업기간", "제출마감", "마감일"])
+    def _render_summary_answer(self, fields: list[tuple[str, Any]]) -> str:
+        lines = ["핵심 내용은 아래와 같습니다."]
+        for label, value in fields:
+            for item in self._value_items(value):
+                lines.append(f"- {label}: {item}")
+        return "\n".join(lines)
 
-        ordered = [key for key in priority if key in structured]
-        ordered.extend(key for key in keys if key not in ordered)
-        return ordered
+    def _render_judgement_answer(self, fields: list[tuple[str, Any]]) -> str:
+        lines = ["문서 기준으로는 아래 항목을 먼저 확인해야 합니다."]
+        for label, value in fields:
+            for item in self._value_items(value):
+                lines.append(f"- {label}: {item}")
+        lines.append("- 최종 참여 가능 여부는 원문 자격요건과 제출서류를 함께 대조해 판단하세요.")
+        return "\n".join(lines)
+
+    def _render_general_answer(self, fields: list[tuple[str, Any]]) -> str:
+        lines = ["문서에서 확인한 내용은 아래와 같습니다."]
+        for label, value in fields:
+            for item in self._value_items(value):
+                lines.append(f"- {label}: {item}")
+        return "\n".join(lines)
+
+    def _value_items(self, value: Any) -> list[str]:
+        if isinstance(value, list):
+            return [str(item) for item in value if not self._is_missing_value(item)]
+        if isinstance(value, dict):
+            return [f"{key}: {item}" for key, item in value.items() if not self._is_missing_value(item)]
+        return [str(value)]
+
+    def _format_scalar_value(self, value: Any) -> str:
+        if isinstance(value, list):
+            return ", ".join(self._value_items(value))
+        if isinstance(value, dict):
+            return "; ".join(self._value_items(value))
+        return str(value)
+
+    def _escape_table_cell(self, value: str) -> str:
+        return str(value).replace("|", "\\|").replace("\n", "<br>")
 
     def _is_missing_value(self, value: Any) -> bool:
         if value in (None, "", [], {}):
@@ -306,6 +420,11 @@ class ChatbotRunner:
 
     def _select_tool(self, user_input: str) -> tuple[str | None, str]:
         """LLM에게 Tool 목록을 보여주고 선택하게 합니다."""
+        routed = self._select_tool_by_presentation(user_input)
+        if routed:
+            self._add_history("user", user_input)
+            return routed, user_input
+
         tool_descriptions = "\n".join(
             f"- {name}: {tool.description}" for name, tool in self.tools.items()
         )
@@ -358,6 +477,13 @@ class ChatbotRunner:
         if direct_answer:
             return None, direct_answer
         return self._fallback_tool_selection(user_input)
+
+    def _select_tool_by_presentation(self, user_input: str) -> str | None:
+        """흔한 질문은 LLM tool selection 없이 바로 tool을 선택합니다."""
+        presentation = self._classify_chat_presentation(user_input)
+        if presentation.tool_name and presentation.tool_name in self.tools:
+            return presentation.tool_name
+        return None
 
     def _fallback_tool_selection(
         self,

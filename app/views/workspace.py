@@ -91,6 +91,7 @@ with h2:
         ss.analysis = None
         ss.messages = []
         ss.pending_q = None
+        ss.pending_chat_request = None
         st.switch_page(P_DOCS)
 
 st.markdown('<div style="height:14px"></div>', unsafe_allow_html=True)
@@ -169,6 +170,8 @@ with right:
                 ss.pending_q = q
                 st.rerun()
 
+    pending_request = ss.get("pending_chat_request")
+
     # 대화 기록 렌더. 기본 chat_message를 사용해 페이지 UI와 답변 영역 경계를 분리한다.
     for m in ss.messages:
         if m["role"] == "user":
@@ -179,6 +182,22 @@ with right:
                 st.markdown(str(m["content"]))
                 _render_chat_sources(m.get("sources", []))
 
+    if pending_request:
+        with st.chat_message("assistant"):
+            status = st.empty()
+            status.info("문서에서 근거를 찾는 중입니다.")
+            ans, srcs = chat_ask(
+                str(pending_request.get("question") or ""),
+                pending_request.get("run_id"),
+                pending_request.get("selected_ids") or None,
+                pending_request.get("titles") or [],
+            )
+            status.empty()
+            st.markdown(ans)
+            _render_chat_sources(srcs)
+        ss.messages.append({"role": "assistant", "content": ans.strip(), "sources": srcs})
+        ss.pending_chat_request = None
+
     # 입력 처리 (추천칩 또는 직접 입력)
     typed = st.chat_input("선택한 문서에 대해 질문해보세요")
     question = ss.pending_q or typed
@@ -186,14 +205,10 @@ with right:
 
     if question:
         ss.messages.append({"role": "user", "content": question})
-        with st.chat_message("user"):
-            st.markdown(question)
-
-        with st.chat_message("assistant"):
-            with st.spinner("문서에서 검색 중..."):
-                ans, srcs = chat_ask(question, ss.run_id, selected_ids or None, titles)
-            st.markdown(ans)
-            _render_chat_sources(srcs)
-
-        ss.messages.append({"role": "assistant", "content": ans.strip(), "sources": srcs})
+        ss.pending_chat_request = {
+            "question": question,
+            "run_id": ss.run_id,
+            "selected_ids": list(selected_ids),
+            "titles": list(titles),
+        }
         st.rerun()

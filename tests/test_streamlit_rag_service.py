@@ -237,10 +237,46 @@ def test_chatbot_formats_structured_output_as_chat_reply():
 
     reply = bot._format_chat_result("제출 서류는?", result)
 
-    assert "문서에서 확인한 내용" in reply
+    assert "문서에서 확인한 목록" in reply
     assert "제출서류" in reply
-    assert "- 제안서 1부" in reply
+    assert "| 제출서류 | 제안서 1부 |" in reply
+    assert "참가자격" not in reply
     assert "['" not in reply
+
+
+def test_chatbot_classifies_representative_question_types():
+    bot = ChatbotRunner(tools={})
+
+    assert bot._classify_chat_presentation("사업 예산은?").answer_type == "scalar"
+    assert bot._classify_chat_presentation("제출 서류는?").answer_type == "list"
+    assert bot._classify_chat_presentation("참가 자격은?").answer_type == "checklist"
+    assert bot._classify_chat_presentation("평가 기준은?").answer_type == "evaluation"
+    assert bot._classify_chat_presentation("참여 가능할까?").answer_type == "judgement"
+
+
+def test_chatbot_scalar_projection_omits_unasked_fields():
+    bot = ChatbotRunner(tools={})
+    result = ToolResult(
+        tool_name="extract_facts",
+        structured_output={
+            "사업예산": "133,812,000원",
+            "발주기관": "경기도사회서비스원",
+            "사업명": "2024년 통합사회정보시스템 운영지원",
+        },
+    )
+
+    reply = bot._format_chat_result("사업 예산은?", result)
+
+    assert reply == "사업예산은(는) 133,812,000원입니다."
+    assert "발주기관" not in reply
+    assert "사업명" not in reply
+
+
+def test_chatbot_fast_router_skips_llm_selection_for_common_question():
+    bot = ChatbotRunner(tools={"extract_facts": object(), "extract_requirements": object()})
+
+    assert bot._select_tool_by_presentation("사업 예산은?") == "extract_facts"
+    assert bot._select_tool_by_presentation("제출 서류는?") == "extract_requirements"
 
 
 def test_dedupe_citations_by_chunk_id():
