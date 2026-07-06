@@ -17,7 +17,7 @@ rag:
   answerer:
     mode: llm
     provider: ollama
-    model_name: exaone3.5:2.4b
+    model_name: exaone3.5:7.8b
     temperature: 0.0
   reranker:
     enabled: false
