@@ -408,6 +408,36 @@ def test_chatbot_scalar_projection_strips_embedded_label_and_sentence_ending():
     assert "사업예산은 사업 예산은" not in reply
 
 
+def test_chatbot_splits_long_evaluation_text_into_bullets():
+    bot = ChatbotRunner(tools={})
+    result = ToolResult(
+        tool_name="extract_requirements",
+        structured_output={
+            "평가기준": (
+                "총점 100점(기술능력평가 90% + 입찰가격평가 10%). "
+                "기술능력평가(90 = 정량 20 + 정성 70) "
+                "정량평가(20점) a. 경영상태(6점) 기업신용평가등급에 따라 배점. "
+                "사업수행실적(6점) 최근 3년 실적 비율에 따라 부여. "
+                "정성평가(70점) 전략 및 방법론(15점) 등 세부배점에 따라 평가. "
+                "입찰가격평가(10점) 입찰가격에 대한 정량적 평가. "
+                "제안서 설명: 발표 20분 이내, 질의응답 10분 이내. "
+                "명시되지 않음 항목 예: 입찰참가 자격의 국적·등록요건은 근거에 없음"
+            )
+        },
+    )
+
+    reply = bot._format_chat_result("평가 기준은?", result)
+
+    assert "문서에서 확인한 평가 기준입니다." in reply
+    assert "- 총점 100점" in reply
+    assert "- 기술능력평가" in reply
+    assert "- 정량평가" in reply
+    assert "- 정성평가" in reply
+    assert "- 입찰가격평가" in reply
+    assert "명시되지 않음 항목 예" not in reply
+    assert len([line for line in reply.splitlines() if line.startswith("- ")]) >= 4
+
+
 def test_chatbot_missing_scalar_reply_uses_natural_korean_label():
     bot = ChatbotRunner(tools={})
     result = ToolResult(

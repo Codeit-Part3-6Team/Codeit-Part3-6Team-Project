@@ -375,7 +375,7 @@ class ChatbotRunner:
         }
         lines = [title_by_type.get(answer_type, "문서에서 확인한 내용입니다."), ""]
         for label, value in fields:
-            items = self._value_items(value)
+            items = self._bullet_items(answer_type, value)
             lines.append(f"**{self._display_label(label)}**")
             for item in items:
                 lines.append(f"- {item}")
@@ -419,6 +419,64 @@ class ChatbotRunner:
         if isinstance(value, dict):
             return [f"{key}: {self._clean_item(str(item))}" for key, item in value.items() if not self._is_missing_value(item)]
         return [self._clean_item(str(value))]
+
+    def _bullet_items(self, answer_type: str, value: Any) -> list[str]:
+        """bullet 렌더링에 맞게 값을 항목 목록으로 정리합니다."""
+        if answer_type == "evaluation" and isinstance(value, str):
+            return self._split_long_evaluation_text(value)
+        return self._value_items(value)
+
+    def _split_long_evaluation_text(self, value: str) -> list[str]:
+        """긴 평가기준 문자열을 화면용 bullet 항목으로 분할합니다."""
+        import re
+
+        text = self._clean_item(str(value or ""))
+        text = re.sub(r"\s+", " ", text).strip()
+        if len(text) <= 140:
+            return [text] if text else []
+
+        drop_patterns = [
+            r"\(?명시되지 않음 항목 예\s*:.*$",
+            r"그 외 세부 적용[·ㆍ\w\s]*발주처의 해석에 따름\.?$",
+        ]
+        for pattern in drop_patterns:
+            text = re.sub(pattern, "", text).strip()
+
+        section_keywords = [
+            "총점", "종합평가점수", "기술능력평가", "정량평가", "경영상태",
+            "사업수행실적", "사회적 책임", "신인도", "정성평가", "전략 및 방법론",
+            "입찰가격평가", "제안서 설명", "평가 결과", "보안 위반", "근로·고용",
+            "근로ㆍ고용", "기타 평가",
+        ]
+        keyword_pattern = re.compile("|".join(re.escape(keyword) for keyword in section_keywords))
+        matches = list(keyword_pattern.finditer(text))
+        merged = []
+        if matches:
+            if matches[0].start() > 0:
+                merged.append(text[:matches[0].start()])
+            for index, match in enumerate(matches):
+                start = match.start()
+                end = matches[index + 1].start() if index + 1 < len(matches) else len(text)
+                merged.append(text[start:end])
+
+        if not merged:
+            merged = [
+                part.strip(" .")
+                for part in re.split(r"(?<=[.!?。])\s+|;\s+", text)
+                if part.strip(" .")
+            ]
+
+        cleaned: list[str] = []
+        for item in merged:
+            item = re.sub(r"\s+", " ", item).strip(" .")
+            if not item or self._is_missing_value(item):
+                continue
+            if len(item) > 220:
+                item = item[:217].rstrip() + "..."
+            cleaned.append(item)
+            if len(cleaned) >= 10:
+                break
+        return cleaned or ([text[:217].rstrip() + "..."] if text else [])
 
     def _clean_item(self, text: str) -> str:
         """LLM이 붙인 내부 chunk 참조를 제거합니다."""
