@@ -134,17 +134,17 @@ if job_running:
         f'<span class="status-wait" style="margin-left:12px">● 분석 중</span></div>',
         unsafe_allow_html=True,
     )
-    # 마지막 사용자 질문만 표시
-    last_user = ""
-    for msg in reversed(ss.messages):
-        if msg.get("role") == "user":
-            last_user = str(msg.get("content", ""))
-            break
-    if last_user:
-        with st.chat_message("user"):
-            st.markdown(last_user)
+    st.caption("문서에서 근거를 찾는 중입니다...")
+    # 모든 대화 메시지를 동일한 위치(bottom)에 표시
+    for message in ss.messages:
+        if message["role"] == "user":
+            with st.chat_message("user"):
+                st.markdown(str(message["content"] or ""))
+        else:
+            with st.chat_message("assistant"):
+                st.markdown(str(message["content"] or ""))
     with st.chat_message("assistant"):
-        with st.spinner("문서에서 근거를 찾는 중입니다..."):
+        with st.spinner(""):
             time.sleep(2)
     st.rerun()
 
