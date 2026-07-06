@@ -137,7 +137,16 @@ def _parse_csv_document(project_root: Path, path: Path) -> list[dict[str, str]]:
                 "preamble": _build_meta_preamble(entry, title),
                 "text": _normalize_text(_remove_toc(text)),
             }
-            for meta_key in ("사업 금액", "발주 기관", "공고 차수", "파일형식", "파일명", "사업 요약"):
+            for meta_key in (
+                "사업 금액",
+                "발주 기관",
+                "공고 차수",
+                "파일형식",
+                "파일명",
+                "사업 요약",
+                "입찰 참여 시작일",
+                "입찰 참여 마감일",
+            ):
                 value = entry.get(meta_key, "").strip()
                 if value:
                     row[f"meta_{meta_key}"] = value
@@ -156,6 +165,12 @@ def _build_meta_preamble(entry: dict[str, str], title: str) -> str:
     차수 = entry.get("공고 차수", "").strip()
     if 차수:
         parts.append(f"공고차수: {차수}")
+    시작일 = entry.get("입찰 참여 시작일", "").strip()
+    if 시작일:
+        parts.append(f"입찰참여시작일: {시작일}")
+    마감일 = entry.get("입찰 참여 마감일", "").strip()
+    if 마감일:
+        parts.append(f"입찰참여마감일(제출마감일): {마감일}")
     return " | ".join(parts)
 
 
