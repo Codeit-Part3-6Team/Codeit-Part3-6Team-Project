@@ -4,6 +4,7 @@ import csv
 from pathlib import Path
 
 from app.services import rag_service
+from app.services import frontend_adapter
 
 
 def _write_csv(path: Path, rows: list[dict[str, str]], columns: list[str]) -> None:
@@ -161,6 +162,23 @@ def test_get_documents_enriches_period_and_deadline(tmp_path, monkeypatch):
 
     assert document["period"] == "계약일로부터 3개월"
     assert document["deadline"] == "2026-07-20 17:00"
+
+
+def test_labeled_summary_builds_fast_workspace_sections():
+    summary = (
+        "- 사업개요: 통합사회정보시스템 운영 지원 "
+        "- 추진배경: 안정적인 서비스 제공 필요 "
+        "- 사업범위: 시스템 유지관리 및 기능개선 "
+        "- 기대효과: 업무 효율 제고 "
+        "- 추진목표: 서비스 향상"
+    )
+
+    overview = frontend_adapter._parse_labeled_summary(summary)
+
+    assert overview["사업개요"] == "통합사회정보시스템 운영 지원"
+    assert overview["사업범위"] == "시스템 유지관리 및 기능개선"
+    assert "주요 범위: 시스템 유지관리 및 기능개선" in frontend_adapter._build_summary_from_overview(overview)
+    assert "[주요 과업] 시스템 유지관리 및 기능개선" in frontend_adapter._build_requirements_from_overview(overview)
 
 
 def test_strip_source_block_removes_inline_citations():

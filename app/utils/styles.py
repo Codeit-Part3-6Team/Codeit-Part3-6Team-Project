@@ -166,8 +166,9 @@ html, body, [class*="css"]{
 .req-num{ color:var(--blue); font-weight:800; flex-shrink:0; }
 .summary-grid{ display:grid; grid-template-columns:1fr; gap:10px; }
 .summary-card{ background:var(--panel-2); border:1px solid var(--border-soft);
-  border-radius:10px; padding:13px 15px; color:var(--text-2);
-  font-size:.94rem; line-height:1.65; }
+  border-radius:10px; padding:13px 15px; }
+.summary-k{ color:var(--blue-bright); font-size:.78rem; font-weight:800; margin-bottom:6px; }
+.summary-v{ color:var(--text-2); font-size:.94rem; line-height:1.65; }
 
 /* ── 채팅 ─────────────────────────────────────────────────── */
 .msg-user{ background:linear-gradient(135deg,#1d2c50,#1a2745); border:1px solid #2a3d68;

@@ -340,13 +340,20 @@ def _fast_analysis_from_corpus_metadata(
 
     title = titles[0] if len(titles) == 1 and titles else f"{len(doc_ids)}개 문서"
     first = selected[0]
+    first_summary = str(first.get("summary") or "").strip()
+    first_overview = _parse_labeled_summary(first_summary)
     summaries = [
         str(doc.get("summary") or "").strip()
         for doc in selected
         if str(doc.get("summary") or "").strip()
     ]
     if len(selected) == 1:
-        summary = summaries[0] if summaries else "저장된 문서 메타데이터에서 요약을 찾지 못했습니다."
+        summary = (
+            _build_summary_from_overview(first_overview)
+            if first_overview
+            else summaries[0] if summaries
+            else "저장된 문서 메타데이터에서 요약을 찾지 못했습니다."
+        )
     else:
         summary_lines = []
         for doc in selected:
@@ -358,6 +365,7 @@ def _fast_analysis_from_corpus_metadata(
                 summary_lines.append(f"- {doc_title}: 저장된 요약 없음")
         summary = "\n".join(summary_lines)
 
+    overview_meta = _build_overview_meta(first_overview)
     meta = {
         "사업명": str(first.get("title") or title),
         "발주기관": str(first.get("org") or "명시되지 않음"),
@@ -366,9 +374,8 @@ def _fast_analysis_from_corpus_metadata(
         "제출마감": str(first.get("deadline") or "명시되지 않음"),
         "문서": title,
     }
-    requirements = [
-        "상세 참가자격과 제출서류는 오른쪽 대화형 탐색에서 질문하면 문서 근거와 함께 확인할 수 있습니다."
-    ]
+    meta.update(overview_meta)
+    requirements = _build_requirements_from_overview(first_overview)
     return {
         "mode": "rag",
         "run_id": run_id,
@@ -379,6 +386,67 @@ def _fast_analysis_from_corpus_metadata(
         "sources": {"summary": [], "requirements": []},
         "error": None,
     }
+
+
+def _parse_labeled_summary(summary: str) -> dict[str, str]:
+    """저장된 사업 요약 문자열에서 '사업개요: ...' 형식의 라벨 값을 추출합니다."""
+    import re
+
+    labels = ["사업개요", "사업 개요", "추진배경", "추진 배경", "사업범위", "사업 범위", "기대효과", "기대 효과", "추진목표", "추진 목표"]
+    normalized = str(summary or "").replace("\r", "\n")
+    matches = list(re.finditer(r"(?P<label>" + "|".join(re.escape(label) for label in labels) + r")\s*[:：]", normalized))
+    parsed: dict[str, str] = {}
+    for index, match in enumerate(matches):
+        start = match.end()
+        end = matches[index + 1].start() if index + 1 < len(matches) else len(normalized)
+        label = match.group("label").replace(" ", "")
+        value = normalized[start:end].strip(" \n\r\t-•*.;")
+        if value:
+            parsed[label] = value
+    return parsed
+
+
+def _build_summary_from_overview(overview: dict[str, str]) -> str:
+    lines: list[str] = []
+    mapping = [
+        ("사업개요", "사업 개요"),
+        ("추진배경", "추진 배경"),
+        ("사업범위", "주요 범위"),
+        ("기대효과", "기대 효과"),
+        ("추진목표", "추진 목표"),
+    ]
+    for key, label in mapping:
+        value = overview.get(key)
+        if value:
+            lines.append(f"{label}: {value}")
+    return "\n".join(lines)
+
+
+def _build_overview_meta(overview: dict[str, str]) -> dict[str, str]:
+    mapping = {
+        "사업개요": "사업개요",
+        "추진배경": "추진배경",
+        "사업범위": "사업범위",
+        "기대효과": "기대효과",
+        "추진목표": "추진목표",
+    }
+    return {label: overview[key] for key, label in mapping.items() if overview.get(key)}
+
+
+def _build_requirements_from_overview(overview: dict[str, str]) -> list[str]:
+    items: list[str] = []
+    if overview.get("사업범위"):
+        items.append(f"[주요 과업] {overview['사업범위']}")
+    if overview.get("추진목표"):
+        items.append(f"[추진 목표] {overview['추진목표']}")
+    if overview.get("기대효과"):
+        items.append(f"[기대 효과] {overview['기대효과']}")
+    if items:
+        items.append("[상세 확인 필요] 참가자격과 제출서류는 대화형 탐색에서 문서 근거와 함께 확인하세요.")
+        return items
+    return [
+        "상세 참가자격과 제출서류는 오른쪽 대화형 탐색에서 질문하면 문서 근거와 함께 확인할 수 있습니다."
+    ]
 
 
 # 백엔드가 내용 없이 돌려보내는 빈 응답 표식들

@@ -30,8 +30,20 @@ def _summary_cards(summary: str) -> str:
             items.append(item)
     if not items:
         return ""
-    cards = "".join(f'<div class="summary-card">{esc(item)}</div>' for item in items[:6])
+    cards = "".join(_summary_card(item) for item in items[:6])
     return f'<div class="summary-grid">{cards}</div>'
+
+
+def _summary_card(item: str) -> str:
+    label, sep, body = item.partition(":")
+    if sep and len(label) <= 12:
+        return (
+            '<div class="summary-card">'
+            f'<div class="summary-k">{esc(label.strip())}</div>'
+            f'<div class="summary-v">{esc(body.strip())}</div>'
+            '</div>'
+        )
+    return f'<div class="summary-card"><div class="summary-v">{esc(item)}</div></div>'
 
 
 def _render_chat_sources(sources: list[tuple[str, str]] | None) -> None:
