@@ -276,6 +276,8 @@ class ChatbotRunner:
     def _classify_chat_presentation(self, user_input: str) -> ChatPresentation:
         """사용자 질문을 챗봇 출력 유형으로 분류합니다."""
         text = user_input.lower()
+        if any(token in text for token in ("마감", "언제", "일정", "기한")):
+            return ChatPresentation("scalar", "extract_facts", ("제출마감", "사업기간"))
         if any(token in text for token in ("제출", "서류", "구비")):
             return ChatPresentation("list", "extract_requirements", ("제출서류",))
         if any(token in text for token in ("참가", "자격", "요건", "참여조건")):
@@ -294,8 +296,6 @@ class ChatbotRunner:
             return ChatPresentation("scalar", "extract_facts", ("발주기관",))
         if "사업명" in text or "문서명" in text:
             return ChatPresentation("scalar", "extract_facts", ("사업명",))
-        if any(token in text for token in ("마감", "언제", "일정")):
-            return ChatPresentation("scalar", "extract_facts", ("제출마감", "사업기간"))
         if "기간" in text:
             return ChatPresentation("scalar", "extract_facts", ("사업기간",))
         return ChatPresentation("general", None, ())
@@ -324,7 +324,7 @@ class ChatbotRunner:
         if answer_type == "scalar":
             label, value = fields[0]
             particle = "은" if _has_batchim(label) else "는"
-            return f"{label}{particle} {self._format_scalar_value(value)}입니다."
+            return f"{label}{particle} {self._strip_field_prefix(label, self._format_scalar_value(value))}입니다."
         if answer_type in {"list", "checklist"}:
             return self._render_table_answer(answer_type, fields)
         if answer_type in {"evaluation", "comparison"}:
@@ -406,6 +406,14 @@ class ChatbotRunner:
         if isinstance(value, dict):
             return "; ".join(self._value_items(value))
         return str(value)
+
+    def _strip_field_prefix(self, label: str, value: str) -> str:
+        """LLM이 값에 라벨을 포함시킨 경우 제거합니다."""
+        import re
+        value = str(value).strip()
+        label_clean = label.strip()
+        pattern = re.compile(rf"^{re.escape(label_clean)}\s*(은|는|이|가|을|를|의)?\s*")
+        return pattern.sub("", value).strip()
 
     def _escape_table_cell(self, value: str) -> str:
         return str(value).replace("|", "\\|").replace("\n", "<br>")
@@ -503,9 +511,11 @@ class ChatbotRunner:
             if self.tool_selection_provider == "ollama":
                 from langchain_ollama import ChatOllama
                 model = ChatOllama(model=self.tool_selection_model, temperature=0)
-            else:
+            elif self.tool_selection_provider == "openai":
                 from langchain_openai import ChatOpenAI
                 model = ChatOpenAI(model=self.tool_selection_model, temperature=0)
+            else:
+                return self._fallback_tool_selection(user_input)
 
             response = model.invoke(prompt)
             text = getattr(response, "content", str(response)).strip()
@@ -548,22 +558,13 @@ class ChatbotRunner:
                 return name, user_input
 
         keyword_map = {
-            "compare_rfps": ["비교", "차이", "대조"],
-            "extract_requirements": ["참가", "자격", "서류", "요건", "체크리스트", "필요한"],
-            "decide_participation": ["참여", "판단", "추천", "가능", "적합", "리스크"],
-            "search_rfp_documents": ["검색", "찾아", "조건", "필터", "골라"],
+            "compare_rfps": ["비교", "차이", "대조", "어느", "어떤 게", "더 큰", "더 높은", "더 많은", "vs", "대비"],
+            "extract_requirements": ["참가", "자격", "서류", "제출", "요건", "체크리스트", "필요한", "구비", "준비", "등록", "제안", "입찰참가", "경쟁"],
+            "decide_participation": ["참여", "판단", "추천", "가능", "적합", "리스크", "위험", "할만", "어려움", "문제점", "주의"],
+            "search_rfp_documents": ["검색", "찾아", "조건", "필터", "골라", "어디", "있는", "문서 중", "관련"],
             "extract_facts": [
-                "추출",
-                "요약",
-                "분석",
-                "정보",
-                "예산",
-                "기간",
-                "마감",
-                "발주",
-                "사업",
-                "얼마",
-                "언제",
+                "추출", "요약", "분석", "정보", "예산", "기간", "마감", "발주", "사업",
+                "얼마", "언제", "무엇", "뭐", "어떤", "알려", "말해", "설명", "정리",
             ],
         }
         for name, keywords in keyword_map.items():
