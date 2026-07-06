@@ -244,6 +244,14 @@ class ChatbotRunner:
         presentation = self._classify_chat_presentation(user_input)
         projected = self._project_structured_fields(structured, presentation.fields)
 
+        # scalar 타입: natural_reply에 이미 핵심 값이 포함되어 있으면 그대로 사용
+        if presentation.answer_type == "scalar" and projected:
+            stripped = self._strip_source_block(natural_reply).strip()
+            _, value = projected[0]
+            value_text = str(self._format_scalar_value(value))
+            if stripped and value_text in stripped:
+                return stripped
+
         if projected:
             return self._render_projected_answer(presentation.answer_type, projected)
 
