@@ -19,9 +19,6 @@ rag:
     provider: ollama
     model_name: exaone3.5:2.4b
     temperature: 0.0
-  embedding:
-    provider: ollama
-    model_name: bge-m3
   reranker:
     enabled: false
 
