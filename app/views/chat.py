@@ -16,6 +16,22 @@ import streamlit as st
 from services.chat_jobs import clear_chat_job, get_chat_job, start_chat_job
 from utils.components import P_DOCS, P_WORKSPACE, esc, topbar
 
+CHAT_CSS = """
+<style>
+.block-container{ max-width:960px !important; }
+[data-testid="stChatMessage"] table{ width:100%; border-collapse:collapse; font-size:.92rem;
+  margin:8px 0; background:var(--panel-2); border-radius:10px; overflow:hidden; }
+[data-testid="stChatMessage"] td, [data-testid="stChatMessage"] th{
+  padding:10px 14px; border-bottom:1px solid var(--border-soft); vertical-align:top; line-height:1.55; }
+[data-testid="stChatMessage"] th{ color:var(--text-3); font-weight:600; font-size:.8rem;
+  text-align:left; white-space:nowrap; }
+[data-testid="stChatMessage"] td{ color:var(--text); }
+[data-testid="stChatMessage"] td:first-child{ color:var(--blue-bright); font-weight:600;
+  white-space:nowrap; min-width:90px; }
+</style>
+"""
+st.markdown(CHAT_CSS, unsafe_allow_html=True)
+
 
 ss = st.session_state
 topbar()
