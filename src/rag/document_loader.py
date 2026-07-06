@@ -137,7 +137,30 @@ def _parse_csv_document(project_root: Path, path: Path) -> list[dict[str, str]]:
                 "preamble": _build_meta_preamble(entry, title),
                 "text": _normalize_text(_remove_toc(text)),
             }
-            for meta_key in ("사업 금액", "발주 기관", "공고 차수", "파일형식", "파일명", "사업 요약"):
+            for meta_key in (
+                "사업 금액",
+                "발주 기관",
+                "공고 차수",
+                "파일형식",
+                "파일명",
+                "사업 요약",
+                "사업 기간",
+                "사업기간",
+                "계약 기간",
+                "계약기간",
+                "용역 기간",
+                "용역기간",
+                "제출 마감",
+                "제출마감",
+                "제출 마감일",
+                "제출마감일",
+                "입찰 마감",
+                "입찰마감",
+                "입찰 마감일",
+                "입찰마감일",
+                "마감일",
+                "마감일시",
+            ):
                 value = entry.get(meta_key, "").strip()
                 if value:
                     row[f"meta_{meta_key}"] = value
@@ -147,16 +170,44 @@ def _parse_csv_document(project_root: Path, path: Path) -> list[dict[str, str]]:
 
 def _build_meta_preamble(entry: dict[str, str], title: str) -> str:
     parts = [f"사업명: {title}"] if title else []
-    기관 = entry.get("발주 기관", "").strip()
+    기관 = _first_entry_value(entry, ["발주 기관", "발주기관"])
     if 기관:
         parts.append(f"발주기관: {기관}")
-    금액 = entry.get("사업 금액", "").strip()
+    금액 = _first_entry_value(entry, ["사업 금액", "사업금액", "예산", "사업예산"])
     if 금액:
         parts.append(f"사업금액: {_format_amount(금액)}")
-    차수 = entry.get("공고 차수", "").strip()
+    기간 = _first_entry_value(entry, ["사업 기간", "사업기간", "계약 기간", "계약기간", "용역 기간", "용역기간"])
+    if 기간:
+        parts.append(f"사업기간: {기간}")
+    마감 = _first_entry_value(
+        entry,
+        [
+            "제출 마감",
+            "제출마감",
+            "제출 마감일",
+            "제출마감일",
+            "입찰 마감",
+            "입찰마감",
+            "입찰 마감일",
+            "입찰마감일",
+            "마감일",
+            "마감일시",
+        ],
+    )
+    if 마감:
+        parts.append(f"제출마감: {마감}")
+    차수 = _first_entry_value(entry, ["공고 차수", "공고차수"])
     if 차수:
         parts.append(f"공고차수: {차수}")
     return " | ".join(parts)
+
+
+def _first_entry_value(entry: dict[str, str], keys: list[str]) -> str:
+    for key in keys:
+        value = entry.get(key, "").strip()
+        if value:
+            return value
+    return ""
 
 
 def _format_amount(value: str) -> str:
