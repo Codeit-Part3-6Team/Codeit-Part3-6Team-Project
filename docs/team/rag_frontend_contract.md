@@ -2,12 +2,14 @@
 
 이 문서는 Streamlit 화면이 RAG 내부 구현을 직접 알지 않고 붙을 수 있도록 만든 연결 약속입니다. 최종 UI는 자유롭게 바꿔도 되지만, 화면에서는 `app/services/rag_service.py`의 함수만 호출하는 것을 기준으로 합니다.
 
+현재 시연 UI는 내부 corpus 기반 단일 문서 분석과 선택 문서 RAG 채팅에 집중합니다. `compare()`와 `decide_participation`은 서비스 어댑터/Agent Tool 계약에는 남아 있지만, 현재 시연 화면의 기본 동선에는 노출하지 않습니다.
+
 ## 한 줄 구조
 
 ```mermaid
 flowchart LR
-  A["사용자 업로드 문서"] --> B["app/services/rag_service.py"]
-  B --> C["RAG ingest"]
+  A["내부 RFP 원문 디렉터리"] --> B["app/services/rag_service.py"]
+  B --> C["RAG ingest / 기존 corpus run 재사용"]
   C --> D["experiments/streamlit/{run_id}"]
   D --> E["ChatbotRunner + Agent Tools"]
   E --> F["UI 응답: reply, structured_output, citations"]
@@ -30,7 +32,7 @@ flowchart LR
 | `get_documents(run_id)` | run 안의 문서 목록 조회 | 문서 선택 필터 |
 | `summarize(run_id, selected_doc_ids=None)` | 핵심 정보 요약 | 분석 완료 직후 기본 카드 |
 | `extract_requirements(run_id, selected_doc_ids=None)` | 참가 자격/제출 서류 추출 | 분석 완료 직후 기본 카드 |
-| `compare(run_id, selected_doc_ids=None)` | 여러 문서 비교 | 문서 2개 이상 선택 시 |
+| `compare(run_id, selected_doc_ids=None)` | 여러 문서 비교 | 현재 시연 UI 기본 노출 없음. 고도화 후보 |
 | `ask_with_document_filter(run_id, question, selected_doc_ids=None)` | 선택 문서 범위로 챗봇 질의 | 채팅 입력 |
 | `get_citation(run_id, chunk_id)` | 특정 근거 원문 조회 | citation 상세 보기 |
 | `clear_chatbot(run_id=None)` | 챗봇 캐시 초기화 | run 변경 또는 새 분석 |
@@ -108,7 +110,7 @@ create_and_ingest("/shared/data/raw_docs")
 | `extract_facts` | `summarize()` | `facts_schema` |
 | `extract_requirements` | `extract_requirements()` | `requirements_schema` |
 | `compare_rfps` | `compare()` | `comparison_schema` |
-| `decide_participation` | `run_tool(..., "decide_participation", ...)` | `decision_schema` |
+| `decide_participation` | `run_tool(..., "decide_participation", ...)` 또는 챗봇 질문 시 선택 가능 | `decision_schema` |
 
 ### facts_schema
 
@@ -149,7 +151,7 @@ create_and_ingest("/shared/data/raw_docs")
 
 ### comparison_schema
 
-`compare(run_id, selected_doc_ids)`에서 사용합니다. 여러 문서를 선택한 뒤 표나 비교 카드로 표시하기 좋습니다.
+`compare(run_id, selected_doc_ids)`에서 사용합니다. 여러 문서를 선택한 뒤 표나 비교 카드로 표시하기 좋습니다. 현재 시연 UI에서는 단일 문서 분석에 집중하기 위해 다중 문서 비교 화면을 숨겼습니다.
 
 ```python
 {
@@ -230,6 +232,8 @@ BodyText/Section0
 
 ### 외부 업로드 문서 분석
 
+현재 시연 UI는 외부 업로드를 사용하지 않습니다. 아래 흐름은 서비스 어댑터 계약을 재사용해 외부 업로드 화면을 붙일 때의 참고 절차입니다.
+
 1. 사용자가 파일을 업로드합니다.
 2. UI가 임시 디렉토리에 파일을 저장합니다.
 3. `create_and_ingest(temp_dir)`를 호출합니다.
@@ -245,13 +249,13 @@ BodyText/Section0
 내부 문서가 하나만 보인다면 보통 전체 내부 문서가 한 run으로 ingest되지 않은 상태입니다. 먼저 `/shared/data/raw_docs/` 같은 내부 원문 디렉토리를 한 번에 ingest해서 전체 문서 인덱스를 만들어야 합니다.
 
 ```bash
-streamlit run app/examples/internal_document_summary_draft.py
+streamlit run app/app.py
 
 # 내부 문서 인덱스가 없거나 문서가 하나만 보이면 먼저 실행
 python app/examples/build_internal_corpus.py --raw-docs-dir /shared/data/raw_docs
 ```
 
-위 명령은 `streamlit.yaml`이 상속하는 RAG 설정을 그대로 사용합니다. 현재 실험 설정이 `ollama / nomic-embed-text` 임베딩을 사용한다면, VM에서 Ollama 서버와 모델이 준비되어 있어야 합니다.
+위 명령은 `streamlit.yaml`이 상속하는 RAG 설정을 그대로 사용합니다. 현재 서비스 config는 OpenAI embedding과 Ollama answerer 조합을 사용하므로, corpus를 새로 만들 때는 OpenAI API 키가 필요하고 질의 시에는 Ollama 서버와 모델이 준비되어 있어야 합니다.
 
 아래와 같은 에러가 나면 문서 로딩 문제가 아니라 임베딩 서버 또는 모델 호출 문제입니다.
 
@@ -266,9 +270,9 @@ Post "http://127.0.0.1:38635/tokenize": EOF
 3. 문서가 있는 최신 run을 내부적으로 선택합니다.
 4. `get_documents(run_id)`로 전체 내부 문서 목록을 가져옵니다.
 5. 화면에는 run 선택이 아니라 문서 선택 필터만 보여줍니다.
-6. 문서를 선택하지 않으면 전체 내부 문서를 대상으로 둡니다.
+6. 현재 시연 UI는 문서 1건을 선택해 단일 공고 분석을 수행합니다.
 7. 선택 문서가 있으면 `selected_doc_ids`로 넘깁니다.
-8. `summarize(run_id, selected_doc_ids)`, `extract_requirements(run_id, selected_doc_ids)`, `compare(run_id, selected_doc_ids)`를 호출합니다.
+8. `summarize(run_id, selected_doc_ids)`, `extract_requirements(run_id, selected_doc_ids)`를 호출합니다.
 9. 질문형 UI는 `ask_with_document_filter(run_id, question, selected_doc_ids)`를 호출합니다.
 
 ```python
@@ -289,8 +293,8 @@ response = summarize(run_id, selected_doc_ids or None)
 - 서비스 어댑터: `app/services/rag_service.py`
 - 내부 문서 인덱스 생성 예시: `app/examples/build_internal_corpus.py`
 - 호출 예시: `app/examples/rag_contract_example.py`
+- 최종 Streamlit 앱: `app/app.py`
 - 내부 문서 선택 UI 초안: `app/examples/internal_document_summary_draft.py`
-- 참고 화면: `app/views/rag_contract_demo.py`
 - 실행 config: `configs/experiments/rag/streamlit.yaml`
 
-`app.py`에는 이 예시를 연결하지 않습니다. 기존 UI 구현자는 화면 구조를 유지한 채 `app/services/rag_service.py`의 함수 계약만 가져다 붙이면 됩니다.
+`app/examples/*`는 계약 확인용 예시이고, 최종 시연 앱은 `app/app.py`에서 실행합니다. UI 구현자는 화면 구조를 바꾸더라도 `app/services/rag_service.py`의 함수 계약을 유지하면 됩니다.

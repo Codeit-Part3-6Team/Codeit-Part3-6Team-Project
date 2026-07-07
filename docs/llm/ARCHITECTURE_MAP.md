@@ -48,9 +48,9 @@ experiments/streamlit/{run_id}/         ← 서비스 산출물
 | `docs/llm/` | LLM 작업용 컨텍스트 | 실제 코드/문서 구조가 바뀌면 함께 갱신 |
 | `app/` | Streamlit 웹앱 | mock_data.py는 데모 전용, 실제 연결은 services/rag_service.py |
 | `app/services/rag_service.py` | UI ↔ RAG 서비스 어댑터 | Streamlit은 이 함수만 호출, src.rag 직접 import 금지 |
-| `app/views/rag_contract_demo.py` | 서비스 계약 검증 데모 | 계약에 맞춘 최소 화면 예시 |
-| `app/examples/` | CLI/UI 연동 참고 예제 | 최종 UI가 아니라 연결 패턴 확인용 |
-| `configs/experiments/rag/streamlit.yaml` | Streamlit 서비스 전용 config | agent_lplus.yaml 상속, paths만 동적 override |
+| `app/views/` | 최종 Streamlit 화면 | 홈, 문서 목록, 워크스페이스, 채팅 전용 화면 |
+| `app/examples/` | CLI/UI 연동 참고 예제 | 내부 corpus 생성과 계약 호출 패턴 확인용 |
+| `configs/experiments/rag/streamlit.yaml` | Streamlit 서비스 전용 config | agent_lplus.yaml 상속, Chroma/챗봇/서비스 provider override |
 | `docs/team/rag_frontend_contract.md` | 프론트엔드 연결 계약서 | UI 개발자에게 전달하는 함수/응답 스키마 명세 |
 | `tests/` | 회귀 방지 테스트 | 기능 변경 시 함께 갱신 |
 
@@ -111,7 +111,7 @@ app/services/rag_service.py  (서비스 계층)
 | `configs/experiments/rag/rag_semantic.yaml` | `data/rag_sample/` | local semantic retriever 비교 |
 | `configs/experiments/rag/rag_hybrid.yaml` | `data/rag_sample/` | local hybrid retriever 비교 |
 | `configs/experiments/rag/agent/agent_lplus.yaml` | `data/rag_sample/` | Agent 모드 Phase DAG + Tool dispatch 실행 |
-| `configs/experiments/rag/streamlit.yaml` | 사용자 업로드 | Streamlit 서비스 전용 (agent_lplus.yaml 상속, paths만 동적 override) |
+| `configs/experiments/rag/streamlit.yaml` | 내부 RFP corpus | Streamlit 서비스 전용 (agent_lplus.yaml 상속, Chroma/챗봇/서비스 provider override) |
 
 ## 작업별 수정 위치
 
