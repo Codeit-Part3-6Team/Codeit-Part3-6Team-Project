@@ -259,7 +259,7 @@ docs/md/rag/RAG_PIPELINE_SPEC.md
 - HTML은 필요한 설명 자료만 유지하고, 세부 문서는 Markdown을 원본으로 관리합니다.
 
 ## 팀 보고서 주소
-[TBD](https://github.com/Codeit-Part3-6Team/Codeit-Part3-6Team-Project/tree/main/reports/final_report.md)
+[팀 보고서](https://github.com/Codeit-Part3-6Team/Codeit-Part3-6Team-Project/tree/main/reports/final_report.md)
 
 ## 데일리 리포트 주소
 [데일리 리포트](https://github.com/Codeit-Part3-6Team/Codeit-Part3-6Team-Project/discussions)
