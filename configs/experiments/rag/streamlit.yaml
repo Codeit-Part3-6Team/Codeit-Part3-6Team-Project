@@ -29,7 +29,10 @@ rag:
     model_name: "exaone3.5:7.8b"
     temperature: 0.0
   reranker:
-    enabled: false
+    enabled: true
+    provider: huggingface
+    model_name: BAAI/bge-reranker-v2-m3
+    top_k: 15
 
 agent:
   chatbot:
