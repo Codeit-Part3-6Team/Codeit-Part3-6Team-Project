@@ -18,8 +18,8 @@ evaluation:
 
 rag:
   embedding:
-    provider: ollama
-    model_name: bge-m3
+    provider: openai
+    model_name: text-embedding-3-small
   vector_store:
     type: chroma
     path: vector_store
