@@ -28,7 +28,7 @@ def main() -> None:
     )
     args = parser.parse_args()
 
-    result = create_and_ingest(args.raw_docs_dir)
+    result = create_and_ingest(args.raw_docs_dir, async_mode=False)
     if result.get("status") != "ready":
         raise RuntimeError(result.get("error") or "internal corpus ingest failed")
 

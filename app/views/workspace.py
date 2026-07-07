@@ -3,7 +3,7 @@
 ============================
 내부 문서를 선택·분석한 뒤 사용하는 작업 화면.
 왼쪽: 분석 결과 탭(핵심 요약 / 핵심 요구사항 / 사업 개요)
-오른쪽: RAG 대화형 탐색(질문 → 출처와 함께 답변)
+오른쪽: 대화형 탐색 진입점
 
 세션 상태(ss.analysis, ss.messages, ss.selected_docs)는 페이지가 바뀌어도
 유지되므로 '문서 분석'에서 만든 결과를 여기서 그대로 사용합니다.
@@ -11,13 +11,53 @@
 
 import streamlit as st
 
-from utils.components import topbar, esc, P_DOCS
-from utils.mock_data import stream_words
-from services.frontend_adapter import chat_ask
+from utils.components import topbar, esc, P_DOCS, P_CHAT
 
 ss = st.session_state
+ss.pending_chat_request = None
+
 topbar()
 st.markdown('<div style="height:14px"></div>', unsafe_allow_html=True)
+
+
+def _summary_cards(summary: str) -> str:
+    """요약 문장을 작은 카드 목록 HTML로 변환합니다."""
+    items: list[str] = []
+    for line in str(summary or "").splitlines():
+        item = line.strip()
+        if item.startswith(("-", "•", "*")):
+            item = item[1:].strip()
+        if item:
+            items.append(item)
+    if not items:
+        return ""
+    cards = "".join(_summary_card(item) for item in items[:6])
+    return f'<div class="summary-grid">{cards}</div>'
+
+
+def _summary_card(item: str) -> str:
+    label, sep, body = item.partition(":")
+    if sep and len(label) <= 12:
+        return (
+            '<div class="summary-card">'
+            f'<div class="summary-k">{esc(label.strip())}</div>'
+            f'<div class="summary-v">{esc(body.strip())}</div>'
+            '</div>'
+        )
+    return f'<div class="summary-card"><div class="summary-v">{esc(item)}</div></div>'
+
+
+def _is_missing_meta_value(value) -> bool:
+    """사업 개요 카드에서 숨길 미확인 값을 판정합니다."""
+    text = str(value or "").strip()
+    if not text:
+        return True
+    return text in {
+        "명시되지 않음",
+        "(응답 없음)",
+        "문서에서 확인하지 못했습니다.",
+    } or "정보를 확인하지 못했습니다" in text
+
 
 # ── 가드: 분석 결과가 없으면 문서 선택 페이지로 유도 ─────────────────────────
 if not ss.analyzed or not ss.analysis:
@@ -59,16 +99,20 @@ with h2:
         ss.analysis = None
         ss.messages = []
         ss.pending_q = None
+        ss.pending_chat_request = None
+        ss.active_chat_job_id = None
         st.switch_page(P_DOCS)
 
 st.markdown('<div style="height:14px"></div>', unsafe_allow_html=True)
 
-# ── 다중 레이아웃: 좌(분석) / 우(채팅) ───────────────────────────────────────
+# ── 다중 레이아웃: 좌(분석) / 우(대화형 탐색 진입점) ─────────────────────────
 left, right = st.columns([1.25, 1], gap="large")
 
 # ----- 왼쪽: 분석 결과 탭 -----
 with left:
-    tab1, tab2, tab3 = st.tabs(["핵심 요약", "핵심 요구사항", "사업 개요"])
+    tab_labels = ["핵심 요약", "핵심 요구사항", "사업 개요"]
+    tabs = st.tabs(tab_labels)
+    tab1, tab2, tab3 = tabs[:3]
 
     with tab1:
         # summary_ok=False 면 백엔드가 빈 응답("(응답 없음)" 등)을 준 경우 →
@@ -77,9 +121,14 @@ with left:
             # F2: 요약은 RAG/문서에서 온 값 → esc 처리.
             #     줄바꿈은 <br> 로 살려 가독성 유지 (esc 후 변환이라 안전).
             summary_html = esc(data["summary"]).replace("\n", "<br>")
-            st.markdown(f'<div class="panel" style="margin-top:10px">'
-                        f'<div style="color:var(--text-2);font-size:.95rem;line-height:1.75">'
-                        f'{summary_html}</div></div>', unsafe_allow_html=True)
+            cards_html = _summary_cards(data["summary"])
+            if cards_html:
+                st.markdown(f'<div class="panel" style="margin-top:10px">{cards_html}</div>',
+                            unsafe_allow_html=True)
+            else:
+                st.markdown(f'<div class="panel" style="margin-top:10px">'
+                            f'<div style="color:var(--text-2);font-size:.95rem;line-height:1.75">'
+                            f'{summary_html}</div></div>', unsafe_allow_html=True)
             _summary_srcs = (data.get("sources") or {}).get("summary") or []
             if _summary_srcs:
                 st.caption("근거: " + " · ".join(f"{p} {s}" for p, s in _summary_srcs))
@@ -103,76 +152,57 @@ with left:
             st.caption("근거: " + " · ".join(f"{p} {s}" for p, s in _req_srcs))
 
     with tab3:
+        visible_meta = {
+            k: v for k, v in data["meta"].items()
+            if not _is_missing_meta_value(v)
+        }
         meta_cells = "".join(
             f'<div class="meta-cell"><div class="meta-k">{esc(k)}</div>'
             f'<div class="meta-v">{esc(v)}</div></div>'
-            for k, v in data["meta"].items()
+            for k, v in visible_meta.items()
         )
-        st.markdown(f'<div class="panel" style="margin-top:10px">'
-                    f'<div class="meta-grid">{meta_cells}</div></div>',
-                    unsafe_allow_html=True)
+        if meta_cells:
+            st.markdown(f'<div class="panel" style="margin-top:10px">'
+                        f'<div class="meta-grid">{meta_cells}</div></div>',
+                        unsafe_allow_html=True)
+        else:
+            st.info("이 문서에서 자동으로 확인된 사업 정보가 없습니다.")
 
-# ----- 오른쪽: RAG 대화형 탐색 -----
+# ----- 오른쪽: RAG 대화형 탐색 진입점 -----
 with right:
     st.markdown('<div class="panel-title" style="margin-bottom:6px">💬 대화형 탐색</div>',
                 unsafe_allow_html=True)
-    # 백엔드 모드에 맞는 안내 문구
     if data.get("mode") == "rag" and ss.run_id:
         scope = f"선택한 {len(selected_ids)}개 문서" if len(selected_ids) > 1 else "선택한 문서"
-        st.caption(f"{scope} 범위에서 검색하는 RAG 응답입니다. 출처는 문서 내 실제 근거 위치입니다.")
+        st.caption(f"{scope} 범위에서 질문합니다. 표와 체크리스트는 별도 화면에서 넓게 표시됩니다.")
     else:
         st.caption("RAG 미연결(Mock) 모드입니다. 예시 응답과 예시 출처가 표시됩니다.")
 
-    # 추천 질문 칩
+    st.markdown(
+        '<div class="panel" style="margin-top:12px">'
+        '<div style="color:var(--text-2);font-size:.94rem;line-height:1.65">'
+        '질문 답변은 전용 대화 화면에서 처리합니다. 긴 RAG 실행 중에도 분석 화면 UI가 '
+        '답변에 섞이지 않도록 분리했습니다.'
+        '</div></div>',
+        unsafe_allow_html=True,
+    )
+
+    if st.button("대화형 탐색 열기", type="primary", use_container_width=True, key="open_chat"):
+        ss.pending_q = None
+        ss.pending_chat_request = None
+        st.switch_page(P_CHAT)
+
     suggested = ["사업 예산은?", "참가 자격은?", "제출 서류는?"]
+    st.caption("추천 질문")
     chip_cols = st.columns(3)
     for col, q in zip(chip_cols, suggested):
         with col:
             if st.button(q, type="secondary", use_container_width=True, key=f"chip_{q}"):
                 ss.pending_q = q
-                st.rerun()
+                ss.pending_chat_request = None
+                st.switch_page(P_CHAT)
 
-    # 대화 기록 렌더 (F2: 사용자 입력·모델 답변·출처 모두 esc 처리)
-    for m in ss.messages:
-        if m["role"] == "user":
-            st.markdown(f'<div class="role u">You</div>'
-                        f'<div class="msg-user">{esc(m["content"])}</div>',
-                        unsafe_allow_html=True)
-        else:
-            tags = "".join(
-                f'<span class="src-tag">📑 {esc(p)} · {esc(s)}</span>'
-                for p, s in m.get("sources", [])
-            )
-            body = esc(m["content"]).replace("\n", "<br>")
-            st.markdown(f'<div class="role a">IT&#39;S MINE</div>'
-                        f'<div class="msg-ai">{body}'
-                        f'<div style="margin-top:4px">{tags}</div></div>',
-                        unsafe_allow_html=True)
-
-    # 입력 처리 (추천칩 또는 직접 입력)
-    typed = st.chat_input("선택한 문서에 대해 질문해보세요")
-    question = ss.pending_q or typed
-    ss.pending_q = None
-
-    if question:
-        ss.messages.append({"role": "user", "content": question})
-        st.markdown(f'<div class="role u">You</div>'
-                    f'<div class="msg-user">{esc(question)}</div>',
-                    unsafe_allow_html=True)
-
-        ans, srcs = chat_ask(question, ss.run_id, selected_ids or None, titles)
-        st.markdown('<div class="role a">IT&#39;S MINE</div>', unsafe_allow_html=True)
-        ph = st.empty()
-        acc = ""
-        with st.spinner("문서에서 검색 중..."):
-            for acc in stream_words(ans):
-                ph.markdown(f'<div class="msg-ai">{esc(acc)}▌</div>',
-                            unsafe_allow_html=True)
-        tags = "".join(f'<span class="src-tag">📑 {esc(p)} · {esc(s)}</span>'
-                       for p, s in srcs)
-        body = esc(acc).replace("\n", "<br>")
-        ph.markdown(f'<div class="msg-ai">{body}'
-                    f'<div style="margin-top:4px">{tags}</div></div>',
-                    unsafe_allow_html=True)
-        ss.messages.append({"role": "assistant", "content": acc.strip(), "sources": srcs})
-        st.rerun()
+    if ss.messages:
+        last_user = next((m for m in reversed(ss.messages) if m.get("role") == "user"), None)
+        if last_user:
+            st.caption(f"최근 질문: {last_user.get('content')}")

@@ -23,13 +23,21 @@
 python -m streamlit run app/app.py
 ```
 
-서비스 어댑터 계약 검증 데모:
+VM 시연 환경에서는 검증된 내부 corpus run을 고정해서 실행하는 방식을 권장합니다.
 
 ```bash
-python -m streamlit run app/views/rag_contract_demo.py
+export RAG_CORPUS_RUN_ID=<verified_run_id>
+streamlit run app/app.py
 ```
 
-자세한 계약은 `docs/team/rag_frontend_contract.md`를 봅니다.
+내부 corpus가 없으면 먼저 전체 원문 디렉터리를 ingest합니다.
+
+```bash
+python app/examples/build_internal_corpus.py --raw-docs-dir /shared/data/raw_docs
+python app/examples/list_corpus_runs.py
+```
+
+서비스 어댑터 계약은 `docs/team/rag_frontend_contract.md`를 봅니다. 호출 예시는 `app/examples/rag_contract_example.py`를 참고합니다.
 
 ## Shell 스크립트 (GCP VM)
 

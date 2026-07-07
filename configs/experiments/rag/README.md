@@ -9,6 +9,7 @@
 | config | 목적 | 먼저 바꿔볼 옵션 |
 | --- | --- | --- |
 | `rag-baseline.yaml` | **Phase A 베이스라인** (nomic-embed-text + gpt-5-mini) | `rag.retriever.top_k`, `rag.splitter.chunk_size` |
+| `config_final.yaml` | **최종 실험 config** (OpenAI embedding + BM25 hybrid + top15 + reranker) | `rag.loader.csv_file`, `rag.retriever.top_k`, `rag.reranker` |
 | `rag_langchain.yaml` | LangChain 엔진 기반 기본 RAG 실험 | `rag.splitter`, `rag.embedding`, `rag.retriever.top_k` |
 | `rag_realistic_docs.yaml` | DOCX/HWPX 준실제 RFP fixture E2E 검증 | `rag.loader.file_types`, `rag.splitter`, `rag.retriever.top_k` |
 | `rag_semantic.yaml` | local semantic retriever 비교 실험 | `rag.chunk`, `rag.retriever.top_k` |
@@ -17,7 +18,7 @@
 | `rag_agent.yaml` | Agent 확장 참조 템플릿 (`agent.enabled: false` 기본) | `agent.enabled`, `agent.phases`, `agent.tools.*` |
 | `agent/agent_lplus.yaml` | L+ 시나리오 예시 (`agent.enabled: true` + `chatbot`) | `agent.phases`, `agent.tools.*`, `chatbot.*` |
 | `rag_agent_demo.yaml` | Agent + Chatbot 데모 config |
-| `streamlit.yaml` | **Streamlit 서비스 전용** — agent_lplus.yaml 상속, 업로드 loader + 챗봇 활성화, `create_and_ingest()`가 paths 동적 override |
+| `streamlit.yaml` | **Streamlit 서비스 전용** — config_final → agent_lplus 상속, Chroma + 챗봇 활성화, `create_and_ingest()`가 paths 동적 override |
 
 ## 실험 명명 규칙
 

@@ -10,7 +10,7 @@ import streamlit as st
 
 from utils.components import (
     topbar, footer, P_DOCS, P_PRICING,
-    IC_SEARCH, IC_BOLT, IC_CHAT, IC_COMPARE, IC_SHIELD, IC_FILES, IC_LAYERS,
+    IC_SEARCH, IC_BOLT, IC_CHAT, IC_SHIELD, IC_FILES, IC_LAYERS,
 )
 
 ss = st.session_state
@@ -40,7 +40,7 @@ with right:
       <div class="upload-title">내부 RFP 문서 98건 분석 준비 완료</div>
       <div class="upload-sub">사업명·발주기관으로 검색 → 선택 → 즉시 분석</div>
       <div class="pill-row"><span class="pill">요약</span>
-      <span class="pill">비교</span><span class="pill">질의응답</span></div>
+      <span class="pill">요구사항</span><span class="pill">질의응답</span></div>
     </div>
     """, unsafe_allow_html=True)
 
@@ -65,7 +65,7 @@ feats = [
     (IC_SEARCH,  "문서 검색·선택", "사업명·발주기관으로 원하는 RFP를 찾아 바로 선택합니다.", "row1"),
     (IC_BOLT,    "즉각적인 요약",  "선택한 문서의 핵심 내용을 AI가 정리해 보여줍니다.", "row1"),
     (IC_CHAT,    "대화형 탐색",    "궁금한 걸 물어보면 문서 어디에 나온 내용인지와 함께 답변합니다.", "row1"),
-    (IC_COMPARE, "문서 비교",      "여러 공고를 담아 예산·발주기관·요건을 한눈에 비교합니다.", "row2"),
+    (IC_FILES,   "핵심 요구사항",  "제출서류·참가자격·평가기준처럼 실무자가 먼저 확인할 항목을 정리합니다.", "row2"),
     (IC_FILES,   "다양한 형식",    "PDF, DOCX, HWP 등 공공기관 문서를 모두 처리해 두었습니다.", "row2"),
     (IC_SHIELD,  "안전한 인덱스",  "내부에 구축된 문서 인덱스만 사용해 안정적으로 동작합니다.", "row2"),
 ]

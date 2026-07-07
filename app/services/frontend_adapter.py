@@ -45,6 +45,17 @@ def _load_rag():
     if _rag_checked:
         return _rag
     _rag_checked = True
+
+    # 환경변수로 명시적 모드 전환 (RAG_MODE=mock → 강제 Mock)
+    forced_mode = os.environ.get("RAG_MODE", "").lower()
+    if forced_mode == "mock":
+        _rag = None
+        _rag_status = "local"
+        _rag_error = "RAG_MODE=mock 으로 강제 지정됨"
+        return _rag
+    if forced_mode == "rag":
+        pass  # 강제 RAG 모드 — import 실패 시 fatal로 처리
+
     try:
         from services import rag_service  # 여기서 src.* import 가 실행됨
         _rag = rag_service
@@ -79,10 +90,13 @@ def backend_mode() -> dict[str, Any]:
     rag = _load_rag()
     if rag is not None:
         return {"mode": "rag", "healthy": True, "detail": "RAG 파이프라인 연결됨"}
+    forced_mode = os.environ.get("RAG_MODE", "").lower()
+    if forced_mode == "rag":
+        return {"mode": "rag", "healthy": False,
+                "detail": f"RAG_MODE=rag 강제 지정됐으나 백엔드 연결 실패 (사유: {_rag_error})"}
     if _rag_status == "local":
         return {"mode": "mock", "healthy": True,
                 "detail": "RAG 미연결(로컬) → Mock 데이터로 미리보기"}
-    # missing_dep / error : Mock 으로 동작은 하지만 '문제 있음'을 분명히 표시
     return {"mode": "mock", "healthy": False,
             "detail": f"백엔드 연결 실패 → Mock 폴백 (사유: {_rag_error})"}
 
@@ -90,6 +104,20 @@ def backend_mode() -> dict[str, Any]:
 # ── structured_output → UI 데이터 변환 헬퍼 ─────────────────────────────────
 _META_KEYS = ["사업명", "발주기관", "사업예산", "사업기간", "제출마감"]
 _NOT_SPECIFIED = "명시되지 않음"
+_FAST_CHAT_FIELDS = {
+    "사업예산": ("예산", "금액", "얼마"),
+    "발주기관": ("발주", "기관"),
+    "사업명": ("사업명", "문서명"),
+    "사업기간": ("사업 기간", "사업기간", "계약기간", "용역기간", "수행기간", "과업기간", "기간"),
+    "제출마감": ("제출 마감", "제출마감", "마감일", "입찰마감", "접수마감", "기한"),
+}
+_FAST_CHAT_LABELS = {
+    "사업예산": "사업예산",
+    "발주기관": "발주기관",
+    "사업명": "사업명",
+    "사업기간": "사업 기간",
+    "제출마감": "제출 마감일",
+}
 
 
 def _build_meta(structured: dict | None, title: str) -> dict[str, str]:
@@ -140,9 +168,134 @@ def _citations_to_sources(citations: list[dict] | None) -> list[tuple[str, str]]
     return sources[:5]
 
 
+def _try_fast_chat_reply(
+    question: str,
+    run_id: str | None,
+    selected_doc_ids: list[str] | None,
+    titles: list[str] | None,
+) -> tuple[str, list[tuple[str, str]]] | None:
+    """메타데이터로 즉답 가능한 조회형 질문이면 RAG 호출 없이 답변합니다."""
+    field = _classify_fast_chat_field(question)
+    if field is None:
+        return None
+
+    docs = _selected_corpus_documents(run_id, selected_doc_ids, titles)
+    if len(docs) != 1:
+        return None
+
+    value = _metadata_value_for_field(docs[0], field)
+    label = _FAST_CHAT_LABELS.get(field, field)
+    source = [("문서 메타데이터", "사전 추출")]
+
+    if _is_unspecified(value):
+        candidate_reply = _try_field_candidate_reply(run_id, selected_doc_ids, field, label)
+        if candidate_reply is not None:
+            return candidate_reply
+        return None
+    return (f"{label}{_topic_particle(label)} {value}입니다.", source)
+
+
+def _try_field_candidate_reply(
+    run_id: str | None,
+    selected_doc_ids: list[str] | None,
+    field: str,
+    label: str,
+) -> tuple[str, list[tuple[str, str]]] | None:
+    """메타가 비어 있을 때 chunks 본문에서 기간/마감 후보를 빠르게 찾습니다."""
+    if field not in {"사업기간", "제출마감"} or not run_id:
+        return None
+    rag = _load_rag()
+    finder = getattr(rag, "find_field_candidates", None) if rag is not None else None
+    if finder is None:
+        return None
+    try:
+        candidates = finder(run_id, selected_doc_ids, field, limit=3)
+    except Exception:
+        return None
+    if not candidates:
+        return None
+
+    lines = [
+        f"문서 메타데이터에는 {label} 정보가 없지만, 본문에서 관련 후보를 찾았습니다.",
+        "",
+    ]
+    for candidate in candidates:
+        text = str(candidate.get("text") or "").strip()
+        if text:
+            lines.append(f"- {text}")
+    if len(lines) <= 2:
+        return None
+    return ("\n".join(lines), _citations_to_sources(candidates))
+
+
+def _classify_fast_chat_field(question: str) -> str | None:
+    text = str(question or "").lower().replace(" ", "")
+    for field, keywords in _FAST_CHAT_FIELDS.items():
+        if any(keyword.replace(" ", "").lower() in text for keyword in keywords):
+            return field
+    return None
+
+
+def _selected_corpus_documents(
+    run_id: str | None,
+    selected_doc_ids: list[str] | None,
+    titles: list[str] | None,
+) -> list[dict[str, Any]]:
+    selected_ids = [str(doc_id) for doc_id in (selected_doc_ids or []) if doc_id]
+    if not selected_ids:
+        return []
+
+    corpus = internal_corpus()
+    docs = corpus.get("documents") or []
+    by_id = {str(doc.get("document_id")): doc for doc in docs}
+    selected = [by_id[doc_id] for doc_id in selected_ids if doc_id in by_id]
+    if selected:
+        return selected
+
+    if len(selected_ids) == 1:
+        title = (titles or [selected_ids[0]])[0]
+        return [{"document_id": selected_ids[0], "title": title}]
+    return []
+
+
+def _metadata_value_for_field(doc: dict[str, Any], field: str) -> str:
+    if field == "사업명":
+        return str(doc.get("title") or doc.get("document_id") or "").strip()
+    if field == "발주기관":
+        return str(doc.get("org") or "").strip()
+    if field == "사업예산":
+        return str(doc.get("amount") or "").strip()
+    if field == "사업기간":
+        return str(doc.get("period") or "").strip()
+    if field == "제출마감":
+        return str(doc.get("deadline") or "").strip()
+    return ""
+
+
+def _is_unspecified(value: str | None) -> bool:
+    text = str(value or "").strip()
+    return text in {"", _NOT_SPECIFIED, "(응답 없음)", "문서에서 확인하지 못했습니다."}
+
+
+def _topic_particle(label: str) -> str:
+    if not label:
+        return "은"
+    last = label[-1]
+    if not ("가" <= last <= "힣"):
+        return "은"
+    return "은" if (ord(last) - 0xAC00) % 28 else "는"
+
+
 # ──────────────────────────────────────────────────────────────────────
 # Public API — views 가 호출하는 함수들
 # ──────────────────────────────────────────────────────────────────────
+
+def _rag_unavailable_error() -> dict[str, Any] | None:
+    """RAG_MODE=rag 이면서 백엔드가 없는 경우 에러 반환, 아니면 None."""
+    if os.environ.get("RAG_MODE", "").lower() == "rag":
+        return {"mode": "rag", "error": "RAG_MODE=rag 로 설정되었으나 백엔드 연결에 실패했습니다."}
+    return None
+
 
 # 내부 corpus run 은 세션 내내 동일하므로 1회 해석 후 캐시.
 _corpus_cache: dict[str, Any] | None = None
@@ -167,6 +320,12 @@ def internal_corpus(force_refresh: bool = False) -> dict[str, Any]:
 
     # ── Mock 경로: 내부 98개 문서 메타데이터로 목록 구성 ──
     if rag is None:
+        if os.environ.get("RAG_MODE", "").lower() == "rag":
+            _corpus_cache = {
+                "mode": "rag", "run_id": None, "documents": [], "warning": None,
+                "error": "RAG_MODE=rag 로 설정되었으나 백엔드 연결에 실패했습니다.",
+            }
+            return _corpus_cache
         from utils.mock_data import mock_documents
         _corpus_cache = {
             "mode": "mock",
@@ -248,6 +407,9 @@ def analyze_selection(run_id: str | None,
 
     # ── Mock 경로 ──
     if rag is None or not run_id:
+        blocked = _rag_unavailable_error()
+        if blocked:
+            return blocked
         from utils.mock_data import mock_analyze_selection
         result = mock_analyze_selection(doc_ids, titles)
         return {
@@ -263,6 +425,9 @@ def analyze_selection(run_id: str | None,
     # ── 실제 RAG 경로 ──
     if not doc_ids:
         return _analysis_error("선택된 문서가 없습니다.")
+
+    if os.environ.get("RAG_EAGER_ANALYSIS", "").lower() not in {"1", "true", "yes"}:
+        return _fast_analysis_from_corpus_metadata(rag, run_id, doc_ids, titles)
 
     try:
         summary_res = rag.summarize(run_id, doc_ids)
@@ -288,6 +453,132 @@ def analyze_selection(run_id: str | None,
         }
     except Exception as exc:
         return _analysis_error(str(exc))
+
+
+def _fast_analysis_from_corpus_metadata(
+    rag: Any,
+    run_id: str,
+    doc_ids: list[str],
+    titles: list[str],
+) -> dict[str, Any]:
+    """저장된 corpus 메타데이터만으로 즉시 워크스페이스용 분석 초안을 만듭니다."""
+    docs_by_id = {
+        str(doc.get("document_id")): doc
+        for doc in rag.get_documents(run_id)
+    }
+    selected = [docs_by_id.get(doc_id, {"document_id": doc_id}) for doc_id in doc_ids]
+    if not selected:
+        return _analysis_error("선택한 문서를 corpus에서 찾지 못했습니다.")
+
+    title = titles[0] if len(titles) == 1 and titles else f"{len(doc_ids)}개 문서"
+    first = selected[0]
+    first_summary = str(first.get("summary") or "").strip()
+    first_overview = _parse_labeled_summary(first_summary)
+    summaries = [
+        str(doc.get("summary") or "").strip()
+        for doc in selected
+        if str(doc.get("summary") or "").strip()
+    ]
+    if len(selected) == 1:
+        summary = (
+            _build_summary_from_overview(first_overview)
+            if first_overview
+            else summaries[0] if summaries
+            else "저장된 문서 메타데이터에서 요약을 찾지 못했습니다."
+        )
+    else:
+        summary_lines = []
+        for doc in selected:
+            doc_title = str(doc.get("title") or doc.get("document_id") or "문서")
+            doc_summary = str(doc.get("summary") or "").strip()
+            if doc_summary:
+                summary_lines.append(f"- {doc_title}: {doc_summary}")
+            else:
+                summary_lines.append(f"- {doc_title}: 저장된 요약 없음")
+        summary = "\n".join(summary_lines)
+
+    overview_meta = _build_overview_meta(first_overview)
+    meta = {
+        "사업명": str(first.get("title") or title),
+        "발주기관": str(first.get("org") or "명시되지 않음"),
+        "사업예산": str(first.get("amount") or "명시되지 않음"),
+        "사업기간": str(first.get("period") or "명시되지 않음"),
+        "제출마감": str(first.get("deadline") or "명시되지 않음"),
+        "문서": title,
+    }
+    meta.update(overview_meta)
+    requirements = _build_requirements_from_overview(first_overview)
+    return {
+        "mode": "rag",
+        "run_id": run_id,
+        "meta": meta,
+        "summary": summary,
+        "summary_ok": _has_content(summary),
+        "requirements": requirements,
+        "sources": {"summary": [], "requirements": []},
+        "error": None,
+    }
+
+
+def _parse_labeled_summary(summary: str) -> dict[str, str]:
+    """저장된 사업 요약 문자열에서 '사업개요: ...' 형식의 라벨 값을 추출합니다."""
+    import re
+
+    labels = ["사업개요", "사업 개요", "추진배경", "추진 배경", "사업범위", "사업 범위", "기대효과", "기대 효과", "추진목표", "추진 목표"]
+    normalized = str(summary or "").replace("\r", "\n")
+    matches = list(re.finditer(r"(?P<label>" + "|".join(re.escape(label) for label in labels) + r")\s*[:：]", normalized))
+    parsed: dict[str, str] = {}
+    for index, match in enumerate(matches):
+        start = match.end()
+        end = matches[index + 1].start() if index + 1 < len(matches) else len(normalized)
+        label = match.group("label").replace(" ", "")
+        value = normalized[start:end].strip(" \n\r\t-•*.;")
+        if value:
+            parsed[label] = value
+    return parsed
+
+
+def _build_summary_from_overview(overview: dict[str, str]) -> str:
+    lines: list[str] = []
+    mapping = [
+        ("사업개요", "사업 개요"),
+        ("추진배경", "추진 배경"),
+        ("사업범위", "주요 범위"),
+        ("기대효과", "기대 효과"),
+        ("추진목표", "추진 목표"),
+    ]
+    for key, label in mapping:
+        value = overview.get(key)
+        if value:
+            lines.append(f"{label}: {value}")
+    return "\n".join(lines)
+
+
+def _build_overview_meta(overview: dict[str, str]) -> dict[str, str]:
+    mapping = {
+        "사업개요": "사업개요",
+        "추진배경": "추진배경",
+        "사업범위": "사업범위",
+        "기대효과": "기대효과",
+        "추진목표": "추진목표",
+    }
+    return {label: overview[key] for key, label in mapping.items() if overview.get(key)}
+
+
+def _build_requirements_from_overview(overview: dict[str, str]) -> list[str]:
+    items: list[str] = []
+    if overview.get("사업범위"):
+        items.append(f"[주요 과업] {overview['사업범위']}")
+    if overview.get("추진목표"):
+        items.append(f"[추진 목표] {overview['추진목표']}")
+    if overview.get("기대효과"):
+        items.append(f"[기대 효과] {overview['기대효과']}")
+    if items:
+        items.append("[상세 확인 필요] 참가자격과 제출서류는 대화형 탐색에서 문서 근거와 함께 확인하세요.")
+        return items
+    return [
+        "상세 참가자격과 제출서류는 오른쪽 대화형 탐색에서 질문하면 문서 근거와 함께 확인할 수 있습니다."
+    ]
 
 
 # 백엔드가 내용 없이 돌려보내는 빈 응답 표식들
@@ -318,12 +609,26 @@ def compare_selection(run_id: str | None,
     Returns:
         {"mode", "summary": str, "reply": str, "rows": [dict]|None, "error"}
     """
-    rag = _load_rag()
     docs = docs or []
     doc_ids = [d.get("document_id") for d in docs if d.get("document_id")]
 
+    if len(docs) >= 2:
+        rows = _comparison_rows_from_docs(docs)
+        return {
+            "mode": "rag" if run_id else "mock",
+            "summary": _comparison_summary(rows),
+            "reply": _comparison_recommendation(rows),
+            "rows": rows,
+            "error": None,
+        }
+
+    rag = _load_rag()
+
     # ── Mock 경로: 표 형태 비교 ──
     if rag is None or not run_id:
+        blocked = _rag_unavailable_error()
+        if blocked:
+            return blocked
         from utils.mock_data import mock_compare
         result = mock_compare(docs)
         return {"mode": "mock", "summary": result["summary"],
@@ -344,6 +649,63 @@ def compare_selection(run_id: str | None,
                 "rows": None, "error": str(exc)}
 
 
+def _comparison_rows_from_docs(docs: list[dict]) -> list[dict[str, str]]:
+    rows: list[dict[str, str]] = []
+    for index, doc in enumerate(docs, start=1):
+        rows.append(
+            {
+                "순위": str(index),
+                "문서": str(doc.get("title") or doc.get("document_id") or ""),
+                "발주기관": str(doc.get("org") or "명시되지 않음"),
+                "사업예산": str(doc.get("amount") or "명시되지 않음"),
+                "사업기간": str(doc.get("period") or "명시되지 않음"),
+                "제출마감": str(doc.get("deadline") or "명시되지 않음"),
+                "파일": str(doc.get("ftype") or "").upper(),
+                "chunks": str(doc.get("chunk_count") or ""),
+            }
+        )
+    return rows
+
+
+def _comparison_summary(rows: list[dict[str, str]]) -> str:
+    return f"선택한 {len(rows)}개 문서를 예산·기간·마감일 기준으로 비교했습니다."
+
+
+def _comparison_recommendation(rows: list[dict[str, str]]) -> str:
+    scored: list[tuple[int, int, dict[str, str]]] = []
+    for row in rows:
+        amount = _amount_to_int(row.get("사업예산", ""))
+        completeness = sum(
+            1
+            for key in ("발주기관", "사업예산", "사업기간", "제출마감")
+            if row.get(key) and row.get(key) != "명시되지 않음"
+        )
+        scored.append((completeness, amount, row))
+    scored.sort(key=lambda item: (item[0], item[1]), reverse=True)
+    best = scored[0][2] if scored else None
+    if not best:
+        return ""
+    missing = [
+        key
+        for key in ("사업기간", "제출마감")
+        if best.get(key) == "명시되지 않음"
+    ]
+    caution = ""
+    if missing:
+        caution = f" 다만 {', '.join(missing)} 정보는 원문 확인이 필요합니다."
+    return (
+        f"우선 검토 후보는 '{best.get('문서')}'입니다. "
+        f"비교 항목 정보가 가장 충실하고 예산 규모가 상대적으로 큽니다.{caution}"
+    )
+
+
+def _amount_to_int(value: str) -> int:
+    import re
+
+    digits = re.sub(r"[^0-9]", "", str(value or ""))
+    return int(digits) if digits else 0
+
+
 def chat_ask(question: str, run_id: str | None,
              selected_doc_ids: list[str] | None = None,
              titles: list[str] | None = None) -> tuple[str, list[tuple[str, str]]]:
@@ -351,9 +713,15 @@ def chat_ask(question: str, run_id: str | None,
 
     run_id 가 있으면 실제 RAG(ask_with_document_filter), 없으면 Mock.
     """
+    fast_reply = _try_fast_chat_reply(question, run_id, selected_doc_ids, titles)
+    if fast_reply is not None:
+        return fast_reply
+
     rag = _load_rag()
 
     if rag is None or not run_id:
+        if os.environ.get("RAG_MODE", "").lower() == "rag":
+            return ("RAG_MODE=rag 로 설정되었으나 백엔드 연결에 실패했습니다.", [])
         from utils.mock_data import mock_chat
         return mock_chat(question, titles)
 
@@ -362,5 +730,39 @@ def chat_ask(question: str, run_id: str | None,
     if response.get("error"):
         return (f"답변 생성 중 오류가 발생했습니다: {response['error']}", [])
 
-    reply = response.get("reply") or "문서에서 확인하지 못했습니다."
+    reply = _sanitize_chat_reply(response.get("reply") or "문서에서 확인하지 못했습니다.")
     return (reply, _citations_to_sources(response.get("citations")))
+
+
+def _sanitize_chat_reply(reply: str) -> str:
+    """답변에 Streamlit 페이지 chrome이 섞였을 때 화면 노출을 방지합니다."""
+    blocked_exact = {
+        "IT'S MINE",
+        "서비스 소개",
+        "정부제안서 검색",
+        "요금제",
+        "선택한 문서에 대해 질문해보세요",
+    }
+    cleaned: list[str] = []
+    for line in str(reply or "").splitlines():
+        stripped = line.strip()
+        if not stripped:
+            cleaned.append(line)
+            continue
+        if stripped in blocked_exact:
+            continue
+        if "localhost:8501" in stripped:
+            continue
+        if stripped.startswith("[IT'S MINE](") or stripped.startswith("[서비스 소개]("):
+            continue
+        cleaned.append(line)
+    result = "\n".join(cleaned).strip()
+    return result or "문서에서 확인하지 못했습니다."
+
+
+def ingest_progress(run_id: str | None) -> dict[str, Any]:
+    """ingest 진행률을 조회합니다."""
+    rag = _load_rag()
+    if rag is None or not run_id:
+        return {"stage": "mock", "progress": 1.0, "message": "Mock 모드"}
+    return rag.get_ingest_progress(run_id)

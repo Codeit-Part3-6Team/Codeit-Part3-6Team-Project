@@ -1,6 +1,6 @@
 # Streamlit 서비스 전용 RAG config 템플릿
-# agent_lplus.yaml을 상속받아 실험 config를 그대로 사용하고,
-# 업로드 환경에 맞는 loader 확장 + 챗봇 활성화만 덮어씁니다.
+# agent_lplus.yaml을 상속받아 최종 실험 config를 그대로 사용하고,
+# 서비스 환경에 맞는 Chroma 저장소 + 챗봇 활성화만 덮어씁니다.
 #
 # paths.raw_docs_dir / paths.output_dir 는 create_and_ingest() 에서
 # run_id 기반으로 동적 override 됩니다.
@@ -10,13 +10,44 @@ base_config: agent/agent_lplus.yaml
 experiment:
   name: streamlit
 
+evaluation:
+  llm_judge:
+    enabled: false
+    provider: ollama
+    model_name: "exaone3.5:7.8b"
+
 rag:
-  loader:
-    file_types: [pdf, docx, hwp, hwpx, txt, csv]
+  embedding:
+    provider: openai
+    model_name: text-embedding-3-small
+  vector_store:
+    type: chroma
+    path: vector_store
+  answerer:
+    mode: llm
+    provider: ollama
+    model_name: "exaone3.5:7.8b"
+    temperature: 0.0
+  reranker:
+    enabled: true
+    provider: huggingface
+    model_name: BAAI/bge-reranker-v2-m3
+    top_k: 15
 
 agent:
   chatbot:
     enabled: true
+    cache_ttl: 300
+    tool_selection_provider: ollama
+    tool_selection_model: "exaone3.5:7.8b"
+  tools:
+    decide_participation:
+      answerer:
+        provider: ollama
+        model_name: "exaone3.5:7.8b"
+  performance:
+    target_first_response_ms: 3000
+    target_full_analysis_ms: 10000
 
 artifact_policy:
   on_existing: overwrite
