@@ -320,6 +320,46 @@ def test_find_field_candidates_returns_period_sentence(tmp_path, monkeypatch):
     ]
 
 
+def test_find_field_candidates_compacts_labeled_period_bullet(tmp_path, monkeypatch):
+    monkeypatch.setattr(rag_service, "_STREAMLIT_EXPERIMENTS", tmp_path)
+    output_dir = tmp_path / "run-1" / "output"
+
+    _write_csv(
+        output_dir / "chunks.csv",
+        [
+            {
+                "chunk_id": "chunk-1",
+                "document_id": "doc-1",
+                "source_path": "raw_docs/test.pdf",
+                "page_start": "1",
+                "page_end": "1",
+                "section": "본문",
+                "text": (
+                    "용역개요 ㅇ 사 업 명 : 2024년 장애인문화예술정보시스템 이음온라인 운영 "
+                    "ㅇ 사업기간 : 계약체결일 ~ 2024년 12월 31일 "
+                    "ㅇ 과업 관리 및 성과품 제출 구분 필수포함사항 제출형식 비고 착수보고 "
+                    "ㅇ 세부추진계획 - 콘텐츠 운영계획, 세부일정표, 과업별 참여인력 등"
+                ),
+                "token_count": "40",
+            }
+        ],
+        [
+            "chunk_id",
+            "document_id",
+            "source_path",
+            "page_start",
+            "page_end",
+            "section",
+            "text",
+            "token_count",
+        ],
+    )
+
+    candidates = rag_service.find_field_candidates("run-1", ["doc-1"], "사업기간")
+
+    assert candidates[0]["text"] == "사업기간: 계약체결일 ~ 2024년 12월 31일"
+
+
 def test_get_documents_enriches_period_and_deadline(tmp_path, monkeypatch):
     monkeypatch.setattr(rag_service, "_STREAMLIT_EXPERIMENTS", tmp_path)
     output_dir = tmp_path / "run-1" / "output"

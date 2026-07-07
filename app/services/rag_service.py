@@ -780,7 +780,7 @@ def find_field_candidates(
         for keyword in keywords:
             if keyword not in text:
                 continue
-            sentence = _extract_candidate_sentence(text, keyword)
+            sentence = _extract_candidate_snippet(text, keyword)
             if not sentence or sentence in seen_texts:
                 continue
             seen_texts.add(sentence)
@@ -837,6 +837,68 @@ def _extract_candidate_sentence(text: str, keyword: str) -> str:
     if len(sentence) > 220:
         sentence = sentence[:217].rstrip() + "..."
     return sentence
+
+
+def _extract_candidate_snippet(text: str, keyword: str) -> str:
+    import re
+
+    normalized = re.sub(r"\s+", " ", str(text or "")).strip()
+    index = normalized.find(keyword)
+    if index < 0:
+        return ""
+
+    labeled = _extract_labeled_candidate(normalized, keyword)
+    if labeled:
+        return labeled
+
+    start = max(0, index - 24)
+    end = min(len(normalized), index + 116)
+    snippet = normalized[start:end].strip(" -•.;")
+    return snippet[:137].rstrip() + "..." if len(snippet) > 140 else snippet
+
+
+def _extract_labeled_candidate(text: str, keyword: str) -> str:
+    import re
+
+    label_patterns = {
+        "사업기간": r"사\s*업\s*기\s*간",
+        "계약기간": r"계\s*약\s*기\s*간",
+        "용역기간": r"용\s*역\s*기\s*간",
+        "수행기간": r"수\s*행\s*기\s*간",
+        "과업기간": r"과\s*업\s*기\s*간",
+        "제출마감": r"제\s*출\s*마\s*감(?:일)?",
+        "입찰마감": r"입\s*찰\s*마\s*감(?:일)?",
+        "입찰참여마감": r"입\s*찰\s*참\s*여\s*마\s*감(?:일)?",
+        "접수마감": r"접\s*수\s*마\s*감(?:일)?",
+        "마감일시": r"마\s*감\s*일\s*시",
+    }
+    compact_keyword = re.sub(r"\s+", "", keyword)
+    preferred = [
+        label
+        for label in label_patterns
+        if compact_keyword in label or label in compact_keyword
+    ]
+    labels = preferred + [label for label in label_patterns if label not in preferred]
+    stop_pattern = (
+        r"(?=\s+[ㅇ○●■□▪▫-]\s*[가-힣A-Za-z])"
+        r"|(?=\s+(?:사\s*업\s*명|발\s*주\s*기\s*관|사\s*업\s*금\s*액|예\s*산|"
+        r"공\s*개\s*일\s*자|입\s*찰\s*참\s*여\s*시\s*작\s*일|제\s*출\s*서\s*류|"
+        r"참\s*가\s*자\s*격|평\s*가\s*기\s*준)\s*[:：])"
+        r"|(?=[.;])"
+    )
+
+    for label in labels:
+        pattern = rf"({label_patterns[label]})\s*[:：]\s*(.+?)(?:{stop_pattern}|$)"
+        match = re.search(pattern, text)
+        if not match:
+            continue
+        value = re.sub(r"\s+", " ", match.group(2).strip(" -•;."))
+        if not value:
+            continue
+        if len(value) > 90:
+            value = value[:87].rstrip() + "..."
+        return f"{label}: {value}"
+    return ""
 
 
 def list_runs() -> list[dict[str, Any]]:
