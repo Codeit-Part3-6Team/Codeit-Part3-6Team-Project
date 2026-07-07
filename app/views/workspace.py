@@ -47,6 +47,18 @@ def _summary_card(item: str) -> str:
     return f'<div class="summary-card"><div class="summary-v">{esc(item)}</div></div>'
 
 
+def _is_missing_meta_value(value) -> bool:
+    """사업 개요 카드에서 숨길 미확인 값을 판정합니다."""
+    text = str(value or "").strip()
+    if not text:
+        return True
+    return text in {
+        "명시되지 않음",
+        "(응답 없음)",
+        "문서에서 확인하지 못했습니다.",
+    } or "정보를 확인하지 못했습니다" in text
+
+
 # ── 가드: 분석 결과가 없으면 문서 선택 페이지로 유도 ─────────────────────────
 if not ss.analyzed or not ss.analysis:
     st.markdown('<div class="eyebrow">WORKSPACE</div>'
@@ -140,14 +152,21 @@ with left:
             st.caption("근거: " + " · ".join(f"{p} {s}" for p, s in _req_srcs))
 
     with tab3:
+        visible_meta = {
+            k: v for k, v in data["meta"].items()
+            if not _is_missing_meta_value(v)
+        }
         meta_cells = "".join(
             f'<div class="meta-cell"><div class="meta-k">{esc(k)}</div>'
             f'<div class="meta-v">{esc(v)}</div></div>'
-            for k, v in data["meta"].items()
+            for k, v in visible_meta.items()
         )
-        st.markdown(f'<div class="panel" style="margin-top:10px">'
-                    f'<div class="meta-grid">{meta_cells}</div></div>',
-                    unsafe_allow_html=True)
+        if meta_cells:
+            st.markdown(f'<div class="panel" style="margin-top:10px">'
+                        f'<div class="meta-grid">{meta_cells}</div></div>',
+                        unsafe_allow_html=True)
+        else:
+            st.info("이 문서에서 자동으로 확인된 사업 정보가 없습니다.")
 
 # ----- 오른쪽: RAG 대화형 탐색 진입점 -----
 with right:
