@@ -16,7 +16,7 @@
 import streamlit as st
 
 from utils.components import topbar, footer, esc, P_WORKSPACE
-from services.frontend_adapter import backend_mode, internal_corpus, analyze_selection
+from services.frontend_adapter import backend_mode, internal_corpus, analyze_selection, compare_selection
 
 ss = st.session_state
 topbar()
@@ -112,6 +112,8 @@ def _run_analysis(doc_ids: list[str], docs: list[dict]) -> None:
     titles = [str(d.get("title") or d.get("document_id")) for d in docs]
     with st.spinner(f"{len(doc_ids)}개 문서를 분석하고 있습니다... (요약 → 요구사항 추출)"):
         result = analyze_selection(ss.run_id, doc_ids, titles)
+        if len(doc_ids) >= 2:
+            result["comparison"] = compare_selection(ss.run_id, docs)
 
     if result["error"] and not result["summary"]:
         st.error(f"분석에 실패했습니다: {result['error']}")

@@ -609,9 +609,20 @@ def compare_selection(run_id: str | None,
     Returns:
         {"mode", "summary": str, "reply": str, "rows": [dict]|None, "error"}
     """
-    rag = _load_rag()
     docs = docs or []
     doc_ids = [d.get("document_id") for d in docs if d.get("document_id")]
+
+    if len(docs) >= 2:
+        rows = _comparison_rows_from_docs(docs)
+        return {
+            "mode": "rag" if run_id else "mock",
+            "summary": _comparison_summary(rows),
+            "reply": _comparison_recommendation(rows),
+            "rows": rows,
+            "error": None,
+        }
+
+    rag = _load_rag()
 
     # ── Mock 경로: 표 형태 비교 ──
     if rag is None or not run_id:
@@ -636,6 +647,63 @@ def compare_selection(run_id: str | None,
     except Exception as exc:
         return {"mode": "rag", "summary": "", "reply": "",
                 "rows": None, "error": str(exc)}
+
+
+def _comparison_rows_from_docs(docs: list[dict]) -> list[dict[str, str]]:
+    rows: list[dict[str, str]] = []
+    for index, doc in enumerate(docs, start=1):
+        rows.append(
+            {
+                "순위": str(index),
+                "문서": str(doc.get("title") or doc.get("document_id") or ""),
+                "발주기관": str(doc.get("org") or "명시되지 않음"),
+                "사업예산": str(doc.get("amount") or "명시되지 않음"),
+                "사업기간": str(doc.get("period") or "명시되지 않음"),
+                "제출마감": str(doc.get("deadline") or "명시되지 않음"),
+                "파일": str(doc.get("ftype") or "").upper(),
+                "chunks": str(doc.get("chunk_count") or ""),
+            }
+        )
+    return rows
+
+
+def _comparison_summary(rows: list[dict[str, str]]) -> str:
+    return f"선택한 {len(rows)}개 문서를 예산·기간·마감일 기준으로 비교했습니다."
+
+
+def _comparison_recommendation(rows: list[dict[str, str]]) -> str:
+    scored: list[tuple[int, int, dict[str, str]]] = []
+    for row in rows:
+        amount = _amount_to_int(row.get("사업예산", ""))
+        completeness = sum(
+            1
+            for key in ("발주기관", "사업예산", "사업기간", "제출마감")
+            if row.get(key) and row.get(key) != "명시되지 않음"
+        )
+        scored.append((completeness, amount, row))
+    scored.sort(key=lambda item: (item[0], item[1]), reverse=True)
+    best = scored[0][2] if scored else None
+    if not best:
+        return ""
+    missing = [
+        key
+        for key in ("사업기간", "제출마감")
+        if best.get(key) == "명시되지 않음"
+    ]
+    caution = ""
+    if missing:
+        caution = f" 다만 {', '.join(missing)} 정보는 원문 확인이 필요합니다."
+    return (
+        f"우선 검토 후보는 '{best.get('문서')}'입니다. "
+        f"비교 항목 정보가 가장 충실하고 예산 규모가 상대적으로 큽니다.{caution}"
+    )
+
+
+def _amount_to_int(value: str) -> int:
+    import re
+
+    digits = re.sub(r"[^0-9]", "", str(value or ""))
+    return int(digits) if digits else 0
 
 
 def chat_ask(question: str, run_id: str | None,

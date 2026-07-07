@@ -726,3 +726,55 @@ def test_compare_selected_documents_includes_every_selected_doc(monkeypatch):
     assert "doc-a 사업" in result["reply"]
     assert "doc-b 사업" in result["reply"]
     assert "doc-c 사업" in result["reply"]
+
+
+def test_compare_selection_returns_metadata_rows_without_slow_rag(monkeypatch):
+    docs = [
+        {
+            "document_id": "doc-a",
+            "title": "문서 A",
+            "org": "기관 A",
+            "amount": "100,000,000원",
+            "period": "3개월",
+            "deadline": "2026-07-20 17:00",
+            "ftype": "pdf",
+            "chunk_count": 10,
+        },
+        {
+            "document_id": "doc-b",
+            "title": "문서 B",
+            "org": "기관 B",
+            "amount": "200,000,000원",
+            "period": "",
+            "deadline": "2026-07-30 17:00",
+            "ftype": "hwp",
+            "chunk_count": 20,
+        },
+    ]
+    monkeypatch.setattr(frontend_adapter, "_load_rag", lambda: (_ for _ in ()).throw(AssertionError("slow rag should not run")))
+
+    result = frontend_adapter.compare_selection("run-1", docs)
+
+    assert result["rows"] == [
+        {
+            "순위": "1",
+            "문서": "문서 A",
+            "발주기관": "기관 A",
+            "사업예산": "100,000,000원",
+            "사업기간": "3개월",
+            "제출마감": "2026-07-20 17:00",
+            "파일": "PDF",
+            "chunks": "10",
+        },
+        {
+            "순위": "2",
+            "문서": "문서 B",
+            "발주기관": "기관 B",
+            "사업예산": "200,000,000원",
+            "사업기간": "명시되지 않음",
+            "제출마감": "2026-07-30 17:00",
+            "파일": "HWP",
+            "chunks": "20",
+        },
+    ]
+    assert "우선 검토 후보" in result["reply"]
