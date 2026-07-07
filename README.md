@@ -255,5 +255,11 @@ docs/md/rag/RAG_PIPELINE_SPEC.md
 - 실험 결과에는 config snapshot, metric, retrieval 결과, answer, citation, 실패 사례를 남깁니다.
 - LangChain 객체는 엔진 내부에서 프로젝트 표준 dict로 변환합니다.
 - 원본 문서는 직접 수정하지 않습니다.
+
+## 팀 보고서 주소
+[TBD]()
+
+## 데일리 리포트 주소
+[데일리 리포트](https://github.com/Codeit-Part3-6Team/Codeit-Part3-6Team-Project/discussions)
 - 대용량 모델 weight, checkpoint, 원본 데이터, 임시 산출물은 Git에 올리지 않습니다.
 - HTML은 필요한 설명 자료만 유지하고, 세부 문서는 Markdown을 원본으로 관리합니다.
