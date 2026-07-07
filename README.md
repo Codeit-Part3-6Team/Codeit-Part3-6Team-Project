@@ -6,6 +6,23 @@
 
 이 저장소는 검색/답변 품질을 체계적으로 실험하고 검증할 수 있는 **config 기반 RAG 실험 파이프라인**을 제공합니다. 최종 목표는 실험으로 검증된 파이프라인 위에 서비스 가능한 수준의 RAG 시스템을 완성하는 것입니다.
 
+## 최종 서비스 앱
+
+최종 시연 앱은 `app/` 아래의 Streamlit 서비스입니다. 내부 RFP corpus를 미리 인덱싱해두고, 사용자가 문서를 검색/선택하면 단일 공고의 핵심 요약, 요구사항, 확인된 사업 정보를 확인할 수 있습니다. 추가 질문은 선택 문서 범위의 RAG 채팅으로 처리하며, 답변과 함께 citation을 제공합니다.
+
+```bash
+python -m streamlit run app/app.py
+```
+
+VM 시연 환경에서는 검증된 corpus run을 고정해서 실행하는 방식을 권장합니다.
+
+```bash
+export RAG_CORPUS_RUN_ID=<verified_run_id>
+streamlit run app/app.py
+```
+
+현재 시연 UI는 단일 문서 분석과 출처 기반 질의응답에 집중합니다. 다중 문서 비교 UI는 시연 화면에서 제외했으며, 평가표/배점표 포맷팅과 사업기간/제출마감 후보 정제는 고도화 과제로 남겨두었습니다.
+
 ## 팀 문서 바로가기
 
 처음 보는 팀원은 [docs/team/README.md](docs/team/README.md)에서 시작합니다.
@@ -31,6 +48,7 @@ raw docs -> chunk -> embedding/index -> retrieve -> answer -> citation/evaluate
 | 문서 로딩 | `txt`, `pdf`, `docx`, `hwpx`, `hwp` |
 | 검색 | LangChain similarity, local keyword/semantic/hybrid 비교 |
 | 답변 | local extractive answer, LangChain Ollama/OpenAI answerer 후보 |
+| 서비스 앱 | 내부 corpus 검색, 단일 문서 요약/요구사항 추출, 선택 문서 RAG 채팅 |
 | 산출물 | retrieval, answer, citation, metric, 실패 분석 CSV |
 | 문서화 | 팀 공유 문서, 세부 Markdown, 설명용 HTML, LLM 작업 컨텍스트 |
 

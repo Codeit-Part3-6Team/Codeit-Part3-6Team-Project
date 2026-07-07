@@ -49,7 +49,7 @@ python -m streamlit run app/app.py
 
 1. VM에서 내부 원문 폴더를 한 번 ingest해 corpus run 생성
 2. `documents.py`가 `internal_corpus()`로 가장 적합한 corpus run과 문서 목록 조회
-3. 사용자가 문서 1건 또는 여러 건 선택
+3. 사용자가 문서 1건 선택
 4. `analyze_selection()`이 `summarize()`와 `extract_requirements()` 실행
 5. `chat.py`가 `chat_jobs.py`를 통해 선택 문서 범위 RAG 질의를 백그라운드 job으로 수행
 6. UI는 `reply`, `structured_output`, `citations`를 분리해 표시
@@ -97,4 +97,16 @@ set RAG_MODE=mock
 - Streamlit config는 `configs/experiments/rag/streamlit.yaml`을 사용하며, `agent/agent_lplus.yaml`과 `config_final.yaml`을 `base_config`로 상속합니다.
 - 앱 경로에서는 `streamlit.yaml`이 `vector_store.type: chroma`를 override하므로 Chroma 기반 검색을 사용합니다.
 - 선택 문서 채팅은 `chat_jobs.py`의 백그라운드 job에서 `ask_with_document_filter(run_id, question, selected_doc_ids)`를 호출해 문서 범위를 전달합니다.
-- 내일 VM 실테스트에서는 내부 corpus ingest, 문서 목록 선택, 단일 문서 요약, 핵심 요구사항 추출, 선택 문서 채팅, citation 범위를 우선 확인합니다.
+- 워크스페이스의 `사업 개요` 탭은 문서에서 확인된 값만 보여주며, `명시되지 않음` 같은 미확인 값은 화면에서 숨깁니다.
+- 시연 안정성을 위해 `RAG_CORPUS_RUN_ID`로 검증된 corpus run을 고정하는 방식을 권장합니다.
+- 시연 추천 질문은 `사업 예산은?`, `참가 자격은?`, `제출 서류는?`입니다.
+- `평가 기준`, `사업기간`, `제출마감`처럼 문서마다 표기와 표 구조가 크게 다른 항목은 후보 근거 검색은 가능하지만, 확정값 추출과 포맷팅은 고도화 과제로 둡니다.
+
+## 현재 기능 범위와 제외 범위
+
+현재 시연 UI는 단일 공고 분석에 집중합니다.
+
+- 제공: 내부 RFP 문서 검색, 단일 문서 분석, 핵심 요약, 핵심 요구사항, 확인된 사업 정보, 선택 문서 기반 RAG 채팅, citation 표시
+- 제공: 채팅 전용 페이지와 백그라운드 job queue 기반 질의 처리
+- 숨김/제외: 다중 문서 비교 UI
+- 고도화 과제: 평가표/배점표 포맷팅, 사업기간/제출마감 후보 정제, 여러 공고 비교와 추천, 참여 리스크 판단의 서비스 화면 연결
