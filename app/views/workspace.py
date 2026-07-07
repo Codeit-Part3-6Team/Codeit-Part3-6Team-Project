@@ -99,8 +99,6 @@ left, right = st.columns([1.25, 1], gap="large")
 # ----- 왼쪽: 분석 결과 탭 -----
 with left:
     tab_labels = ["핵심 요약", "핵심 요구사항", "사업 개요"]
-    if data.get("comparison"):
-        tab_labels.append("문서 비교")
     tabs = st.tabs(tab_labels)
     tab1, tab2, tab3 = tabs[:3]
 
@@ -150,25 +148,6 @@ with left:
         st.markdown(f'<div class="panel" style="margin-top:10px">'
                     f'<div class="meta-grid">{meta_cells}</div></div>',
                     unsafe_allow_html=True)
-
-    if data.get("comparison"):
-        with tabs[3]:
-            comparison = data.get("comparison") or {}
-            if comparison.get("summary"):
-                st.caption(str(comparison.get("summary")))
-            rows = comparison.get("rows") or []
-            if rows:
-                st.dataframe(rows, use_container_width=True, hide_index=True)
-            reply = str(comparison.get("reply") or "").strip()
-            if reply:
-                st.markdown(
-                    f'<div class="panel" style="margin-top:10px">'
-                    f'<div style="color:var(--text-2);font-size:.95rem;line-height:1.7">'
-                    f'{esc(reply)}</div></div>',
-                    unsafe_allow_html=True,
-                )
-            if comparison.get("error"):
-                st.warning(str(comparison.get("error")))
 
 # ----- 오른쪽: RAG 대화형 탐색 진입점 -----
 with right:

@@ -5,8 +5,7 @@
 외부 파일 업로드는 없습니다 — 문서를 고르면 바로 분석이 시작됩니다.
 
 - 검색칸: 사업명·발주기관으로 실시간 필터
-- 문서 카드: [분석 →] 단일 문서 분석 / [☐ 비교 담기] 여러 문서 비교
-- 2건 이상 담으면 상단 바에서 [선택 문서 N건 분석] 실행
+- 문서 카드: [분석 →] 단일 문서 분석
 
 백엔드 연결은 services/frontend_adapter.py 를 통합니다:
   - VM(src/ 존재): 실제 RAG corpus run 의 문서 목록
@@ -16,7 +15,7 @@
 import streamlit as st
 
 from utils.components import topbar, footer, esc, P_WORKSPACE
-from services.frontend_adapter import backend_mode, internal_corpus, analyze_selection, compare_selection
+from services.frontend_adapter import backend_mode, internal_corpus, analyze_selection
 
 ss = st.session_state
 topbar()
@@ -26,7 +25,7 @@ st.markdown('<div class="eyebrow">DOCUMENTS</div>'
             '<h2 class="sec-title" style="margin-bottom:10px">내부 RFP 문서 분석</h2>'
             '<div style="color:var(--text-2);margin-bottom:4px">'
             '등록된 나라장터 RFP 문서를 검색하고, 분석할 문서를 선택하세요. '
-            '여러 문서를 담으면 비교 분석도 가능합니다.</div>',
+            '요약과 핵심 요구사항을 확인한 뒤 대화형 탐색으로 근거를 확인할 수 있습니다.</div>',
             unsafe_allow_html=True)
 
 # ── 백엔드 모드 배너 (F1: 비정상 폴백은 빨간색으로 분명히 표시) ──────────────
@@ -82,21 +81,6 @@ st.markdown(
     f'<b>{len(filtered)}</b>건</div>', unsafe_allow_html=True)
 
 # ── 선택 상태 헬퍼 ───────────────────────────────────────────────────────────
-def _selected_ids() -> list[str]:
-    return list(ss.selected_doc_ids or [])
-
-
-def _toggle(doc_id: str, doc: dict, on: bool) -> None:
-    ids = _selected_ids()
-    if on and doc_id not in ids:
-        ids.append(doc_id)
-        ss.selected_docs = ss.selected_docs + [doc]
-    if not on and doc_id in ids:
-        ids.remove(doc_id)
-        ss.selected_docs = [d for d in ss.selected_docs if d.get("document_id") != doc_id]
-    ss.selected_doc_ids = ids
-
-
 def _reset_workspace() -> None:
     """새 분석을 시작할 때 이전 결과/대화를 비웁니다 (F5와 동일한 초기화 규칙)."""
     ss.analyzed = False
@@ -112,8 +96,6 @@ def _run_analysis(doc_ids: list[str], docs: list[dict]) -> None:
     titles = [str(d.get("title") or d.get("document_id")) for d in docs]
     with st.spinner(f"{len(doc_ids)}개 문서를 분석하고 있습니다... (요약 → 요구사항 추출)"):
         result = analyze_selection(ss.run_id, doc_ids, titles)
-        if len(doc_ids) >= 2:
-            result["comparison"] = compare_selection(ss.run_id, docs)
 
     if result["error"] and not result["summary"]:
         st.error(f"분석에 실패했습니다: {result['error']}")
@@ -132,29 +114,6 @@ def _run_analysis(doc_ids: list[str], docs: list[dict]) -> None:
     st.switch_page(P_WORKSPACE)
 
 
-# ── 선택 바 (2건 이상 담았을 때 비교 분석 실행) ─────────────────────────────
-picked = _selected_ids()
-if picked:
-    names = " · ".join(
-        esc(d.get("title")) for d in ss.selected_docs[:3]
-    ) + (" 외" if len(picked) > 3 else "")
-    st.markdown(
-        f'<div class="sel-bar"><div class="sel-bar-t">🗂️ 선택한 문서 {len(picked)}건</div>'
-        f'<div class="sel-bar-d">{names}</div></div>',
-        unsafe_allow_html=True)
-    b1, b2, _sp = st.columns([1.3, 1, 2.7])
-    with b1:
-        label = ("📊 선택 문서 비교 분석" if len(picked) >= 2
-                 else "⚡ 선택 문서 분석 시작")
-        if st.button(label, type="primary", use_container_width=True, key="run_selected"):
-            _reset_workspace()
-            _run_analysis(picked, list(ss.selected_docs))
-    with b2:
-        if st.button("선택 비우기", type="secondary", use_container_width=True, key="clear_sel"):
-            ss.selected_doc_ids = []
-            ss.selected_docs = []
-            st.rerun()
-
 # ── 문서 카드 그리드 (3열) ───────────────────────────────────────────────────
 if not filtered:
     st.info("검색 결과가 없습니다. 다른 키워드로 검색해보세요.")
@@ -169,7 +128,6 @@ else:
             amount = str(doc.get("amount") or "")
             summary = str(doc.get("summary") or "")
             chunks = doc.get("chunk_count")
-            is_sel = doc_id in picked
 
             with col:
                 # F2: 문서에서 온 값(title/org/summary)은 전부 esc() 처리
@@ -182,25 +140,16 @@ else:
                     chips += f'<span class="doc-chip">{esc(chunks)} chunks</span>'
                 sum_html = (f'<div class="doc-sum">{esc(summary)}</div>'
                             if summary else "")
-                card_cls = "doc-card selected" if is_sel else "doc-card"
                 st.markdown(
-                    f'<div class="{card_cls}">'
+                    '<div class="doc-card">'
                     f'<div class="doc-title" title="{esc(title)}">{esc(title)}</div>'
                     f'<div class="doc-meta">{chips}</div>{sum_html}</div>',
                     unsafe_allow_html=True)
 
-                a1, a2 = st.columns([1, 1])
-                with a1:
-                    if st.button("분석 →", type="primary", use_container_width=True,
-                                 key=f"go_{doc_id}"):
-                        _reset_workspace()
-                        _run_analysis([doc_id], [doc])
-                with a2:
-                    st.checkbox(
-                        "비교 담기", value=is_sel, key=f"pick_{doc_id}",
-                        on_change=lambda d=doc, i=doc_id: _toggle(
-                            i, d, st.session_state.get(f"pick_{i}", False)),
-                    )
+                if st.button("분석 →", type="primary", use_container_width=True,
+                             key=f"go_{doc_id}"):
+                    _reset_workspace()
+                    _run_analysis([doc_id], [doc])
         st.markdown('<div style="height:6px"></div>', unsafe_allow_html=True)
 
 footer()

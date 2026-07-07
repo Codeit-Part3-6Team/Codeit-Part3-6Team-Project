@@ -11,7 +11,7 @@ import streamlit as st
 
 from utils.components import (
     topbar, footer, P_DOCS, P_PRICING,
-    IC_BOLT, IC_CHAT, IC_COMPARE,
+    IC_BOLT, IC_CHAT, IC_SHIELD,
 )
 
 topbar()
@@ -26,14 +26,14 @@ st.markdown(
     'IT\'S MINE 은 나라장터에 올라온 RFP(제안요청서)를 미리 수집·분석해 둔 '
     '내부 문서 분석 서비스입니다. 수백 페이지짜리 공고문을 AI가 대신 읽어, '
     '핵심 요구사항·예산·일정·참가자격을 자동으로 뽑아줍니다. '
-    '문서를 선택하기만 하면 요약부터 비교, 질의응답까지 한 화면에서 끝납니다.'
+    '문서를 선택하기만 하면 요약부터 출처 기반 질의응답까지 한 화면에서 확인할 수 있습니다.'
     '</div>', unsafe_allow_html=True)
 
 # ── 무엇을 해주나 (3카드) ────────────────────────────────────────────────────
 FEATURES = [
     (IC_BOLT,    "핵심 요약",   "수백 페이지를 몇 초 만에 요약합니다. 사업 개요·요구사항·제출 조건을 한눈에 확인하세요."),
     (IC_CHAT,    "대화형 탐색", "RAG 기반 챗봇에게 \u201c참가 자격은?\u201d처럼 물어보면, 문서 속 출처(페이지)와 함께 답해줍니다."),
-    (IC_COMPARE, "문서 비교",   "여러 공고를 함께 담으면 예산·발주기관·자격요건을 같은 기준으로 비교해줍니다."),
+    (IC_SHIELD,  "근거 확인",   "답변에 사용된 문서 위치를 함께 보여주어 중요한 입찰 조건을 다시 검증할 수 있습니다."),
 ]
 st.markdown('<div class="eyebrow" style="margin-top:46px">무엇을 해주나요</div>',
             unsafe_allow_html=True)
