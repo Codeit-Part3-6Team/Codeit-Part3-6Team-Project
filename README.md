@@ -261,6 +261,6 @@ docs/md/rag/RAG_PIPELINE_SPEC.md
 ## 팀 보고서 주소
 [TBD]()
 
-## 데일리 리포트 주소
+## 협업 일지 주소
 [데일리 리포트](https://github.com/Codeit-Part3-6Team/Codeit-Part3-6Team-Project/discussions)
 
