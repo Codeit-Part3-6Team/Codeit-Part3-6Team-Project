@@ -14,7 +14,7 @@ import time
 import streamlit as st
 
 from services.chat_jobs import clear_chat_job, get_chat_job, start_chat_job
-from utils.components import P_DOCS, P_WORKSPACE, esc, topbar
+from utils.components import P_DOCS, P_WORKSPACE, esc
 
 CHAT_CSS = """
 <style>
@@ -35,8 +35,7 @@ st.markdown(CHAT_CSS, unsafe_allow_html=True)
 
 
 ss = st.session_state
-topbar()
-st.markdown('<div style="height:14px"></div>', unsafe_allow_html=True)
+st.markdown('<div style="height:8px"></div>', unsafe_allow_html=True)
 
 
 def _render_sources(sources: list[tuple[str, str]] | None) -> None:
@@ -72,6 +71,31 @@ def _start_question(question: str, selected_ids: list[str], titles: list[str]) -
     ss.pending_q = None
     ss.pending_chat_request = None
     st.rerun()
+
+
+def _render_chat_header(titles: list[str], selected_ids: list[str], *, running: bool) -> None:
+    """채팅 전용 상단 헤더를 렌더링합니다."""
+    h1, h2 = st.columns([3, 1], vertical_alignment="center")
+    status_class = "status-wait" if running else "status-ok"
+    status_text = "● 답변 생성 중" if running else "● 분석 완료"
+    with h1:
+        st.markdown(
+            f'<div class="panel-title">💬 대화형 탐색 · {esc(_head_label(titles))}'
+            f'<span class="{status_class}" style="margin-left:12px">{status_text}</span></div>',
+            unsafe_allow_html=True,
+        )
+        if running:
+            st.caption("문서에서 근거를 찾는 중입니다...")
+        elif (ss.analysis or {}).get("mode") == "rag" and ss.run_id:
+            scope = f"선택한 {len(selected_ids)}개 문서" if len(selected_ids) > 1 else "선택한 문서"
+            st.caption(f"{scope} 범위에서 검색합니다. 출처는 문서 내 실제 근거 위치입니다.")
+        else:
+            st.caption("RAG 미연결(Mock) 모드입니다. 예시 응답과 예시 출처가 표시됩니다.")
+    with h2:
+        if st.button("분석 결과로 돌아가기", type="secondary", use_container_width=True, key=f"chat_back_{running}"):
+            ss.pending_q = None
+            ss.pending_chat_request = None
+            st.switch_page(P_WORKSPACE)
 
 
 def _check_and_collect_job() -> bool:
@@ -131,12 +155,7 @@ job_running = _check_and_collect_job()
 
 # ── polling: job 실행 중엔 최소 UI → sleep → rerun ──
 if job_running:
-    st.markdown(
-        f'<div class="panel-title">💬 대화형 탐색 · {esc(_head_label(titles))}'
-        f'<span class="status-wait" style="margin-left:12px">● 분석 중</span></div>',
-        unsafe_allow_html=True,
-    )
-    st.caption("문서에서 근거를 찾는 중입니다...")
+    _render_chat_header(titles, selected_ids, running=True)
     for message in ss.messages:
         if message["role"] == "user":
             with st.chat_message("user"):
@@ -147,23 +166,7 @@ if job_running:
     st.rerun()
 
 # ── job 완료: 전체 UI ──
-h1, h2 = st.columns([3, 1], vertical_alignment="center")
-with h1:
-    st.markdown(
-        f'<div class="panel-title">💬 대화형 탐색 · {esc(_head_label(titles))}'
-        f'<span class="status-ok" style="margin-left:12px">● 분석 완료</span></div>',
-        unsafe_allow_html=True,
-    )
-    if data.get("mode") == "rag" and ss.run_id:
-        scope = f"선택한 {len(selected_ids)}개 문서" if len(selected_ids) > 1 else "선택한 문서"
-        st.caption(f"{scope} 범위에서 검색합니다. 출처는 문서 내 실제 근거 위치입니다.")
-    else:
-        st.caption("RAG 미연결(Mock) 모드입니다. 예시 응답과 예시 출처가 표시됩니다.")
-with h2:
-    if st.button("분석 결과로 돌아가기", type="secondary", use_container_width=True, key="chat_back"):
-        ss.pending_q = None
-        ss.pending_chat_request = None
-        st.switch_page(P_WORKSPACE)
+_render_chat_header(titles, selected_ids, running=False)
 
 st.markdown('<div style="height:10px"></div>', unsafe_allow_html=True)
 
